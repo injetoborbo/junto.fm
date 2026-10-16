@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Junto.fm — ouvir junto</title>
+<style>
+:root{color-scheme:dark;--bg:#101110;--panel:#1a1d1b;--muted:#a9b2ac;--green:#7df0a7;--line:#303632}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#20372a 0,#101110 55%);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#f5f7f5;min-height:100vh}
+main{max-width:760px;margin:auto;padding:26px 18px 50px}.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:23px;letter-spacing:-.5px}.logo{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--green);color:#102017;font-size:22px}
+.tag{margin-left:auto;font-size:12px;color:var(--green);border:1px solid #3d6549;padding:6px 10px;border-radius:99px}
+h1{font-size:clamp(30px,7vw,48px);letter-spacing:-1.5px;line-height:1.05;margin:34px 0 10px}p{color:var(--muted);line-height:1.55}.panel{background:rgba(26,29,27,.94);border:1px solid var(--line);border-radius:22px;padding:20px;margin-top:18px;box-shadow:0 16px 50px #0002}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}input{width:100%;background:#101311;border:1px solid #39423c;color:white;border-radius:12px;padding:13px;font-size:16px;outline:none}input:focus{border-color:var(--green)}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}.btn{border:0;border-radius:12px;padding:13px 15px;font-weight:750;font-size:14px;cursor:pointer;background:var(--green);color:#102017}.btn.secondary{background:#303833;color:#f3f6f3;border:1px solid #424a44}.btn:disabled{opacity:.45;cursor:not-allowed}
+.status{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;margin-top:14px}.dot{width:9px;height:9px;border-radius:50%;background:#707970}.dot.ok{background:var(--green);box-shadow:0 0 10px #7df0a766}
+.player{display:flex;align-items:center;gap:15px}.cover{width:72px;height:72px;flex-shrink:0;border-radius:16px;background:linear-gradient(135deg,#314b3a,#121c16);display:grid;place-items:center;font-size:29px}.player h2{margin:0 0 4px;font-size:18px}.player p{margin:0;font-size:13px}
+audio{width:100%;margin-top:18px}.small{font-size:12px;color:#a9b2ac}.notice{border-left:3px solid var(--green);padding:10px 13px;background:#17221a;border-radius:0 10px 10px 0;color:#dce8df;font-size:13px;line-height:1.5;margin-top:15px}
+.steps{display:grid;gap:12px}.step{display:flex;gap:12px;align-items:flex-start}.num{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;border-radius:9px;background:#2d3c31;color:var(--green);font-weight:800}.step strong{display:block;margin-bottom:3px}.step span{color:var(--muted);font-size:13px;line-height:1.45}
+footer{text-align:center;color:#78817a;font-size:12px;margin-top:25px}
+@media(max-width:480px){main{padding:18px 13px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:10px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">BETA · PROTÓTIPO</span></div>
+  <h1>Música boa é<br>melhor junto.</h1>
+  <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+
+  <section class="panel">
+    <label for="room">Nome da sala (use o mesmo nos dois aparelhos)</label>
+    <div class="row">
+      <input id="room" maxlength="40" value="noite" autocomplete="off" placeholder="ex.: nossa-sala">
+      <button class="btn" id="join">Entrar na sala</button>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+  </section>
+
+  <section class="panel">
+    <div class="player">
+      <div class="cover">♫</div>
+      <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
+      <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
+    </div>
+    <audio id="remoteAudio" controls autoplay playsinline></audio>
+    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
+    <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin:0 0 14px">Comandos da sala</h2>
+    <p style="margin-top:0">Esses botões enviam comandos para a outra pessoa. No protótipo, eles não controlam diretamente o Spotify — quem está transmitindo ainda precisa pausar ou trocar a música na aba do Spotify.</p>
+    <div class="row">
+      <button class="btn secondary" id="pauseCmd" disabled>⏸ Avisar: pausar</button>
+      <button class="btn secondary" id="nextCmd" disabled>⏭ Avisar: próxima</button>
+    </div>
+    <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
+  </section>
+
+  <section class="panel">
+    <h2 style="margin:0 0 14px">Como usar</h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div><strong>Abra esta página nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versão hospedada do site.</span></div></div>
+      <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, “noite”. Escolham um nome difícil de adivinhar se quiserem privacidade básica.</span></div></div>
+      <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissão</strong><span>Compartilhe a aba do Spotify Web Player com áudio. No Android, aceite tocar o áudio quando solicitado.</span></div></div>
+    </div>
+    <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
+  </section>
+  <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
+</main>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(() => {
+  const socket = io();
+  const $ = id => document.getElementById(id);
+  let room = "noite";
+  let pc = null;
+  let localStream = null;
+  let joined = false;
+  let isSender = false;
+  let pendingCandidates = [];
+  let offerInProgress = false;
+
+  // STUN ajuda a descobrir o caminho entre os aparelhos. Algumas redes ainda
+  // precisam de um servidor TURN para conseguir estabelecer uma conexão estável.
+  const config = {
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  };
+
+  function setStatus(message, ok = false) {
+    $("status").textContent = message;
+    $("dot").className = ok ? "dot ok" : "dot";
+  }
+
+  function enableControls() {
+    $("start").disabled = !joined || isSender;
+    $("stop").disabled = !isSender;
+    $("pauseCmd").disabled = !joined;
+    $("nextCmd").disabled = !joined;
+  }
+
+  function closePeerOnly() {
+    if (pc) {
+      pc.onicecandidate = null;
+      pc.ontrack = null;
+      pc.onconnectionstatechange = null;
+      pc.close();
+      pc = null;
+    }
+  }
+
+  function resetPeer({ stopLocal = true } = {}) {
+    closePeerOnly();
+    if (stopLocal && localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+      localStream = null;
+    }
+    pendingCandidates = [];
+    offerInProgress = false;
+    isSender = false;
+    $("remoteAudio").pause();
+    $("remoteAudio").srcObject = null;
+    enableControls();
+  }
+
+  function makePeer() {
+    closePeerOnly();
+    const peer = new RTCPeerConnection(config);
+    pc = peer;
+
+    peer.onicecandidate = event => {
+      if (event.candidate && pc === peer) {
+        socket.emit("signal", {
+          room,
+          data: { type: "candidate", candidate: event.candidate }
+        });
+      }
+    };
+
+    peer.ontrack = event => {
+      if (pc !== peer) return;
+      const stream = event.streams && event.streams[0];
+      if (stream) $("remoteAudio").srcObject = stream;
+      $("remoteAudio").play().then(() => {
+        setStatus("Áudio recebido e reproduzindo.", true);
+      }).catch(() => {
+        setStatus("Conexão pronta. Toque em Play no player para liberar o áudio.", true);
+      });
+    };
+
+    peer.onconnectionstatechange = () => {
+      if (pc !== peer) return;
+      if (peer.connectionState === "connected") {
+        setStatus(isSender ? "Transmissão conectada." : "Áudio conectado.", true);
+      } else if (peer.connectionState === "disconnected") {
+        setStatus("Conexão instável; tentando recuperar o áudio.");
+      } else if (peer.connectionState === "failed") {
+        setStatus("A conexão de áudio falhou. Pode ser necessário configurar TURN para esta rede.");
+      }
+    };
+
+    return peer;
+  }
+
+  async function applyPendingCandidates(peer) {
+    const candidates = pendingCandidates;
+    pendingCandidates = [];
+    for (const candidate of candidates) {
+      try {
+        if (pc === peer && peer.remoteDescription) {
+          await peer.addIceCandidate(candidate);
+        }
+      } catch (error) {
+        console.warn("Não foi possível aplicar um candidato ICE:", error);
+      }
+    }
+  }
+
+  // Preferências de áudio para música. O SDP é ajustado de forma conservadora:
+  // Opus estéreo, sem DTX, e até 256 kbps quando o navegador suportar.
+  function optimizeMusicSdp(sdp) {
+    const lines = sdp.split(/\r?\n/);
+    const opusPayloads = new Set();
+    for (const line of lines) {
+      const match = line.match(/^a=rtpmap:(\d+)\s+opus\/48000(?:\/2)?\s*$/i);
+      if (match) opusPayloads.add(match[1]);
+    }
+    return lines.map(line => {
+      const match = line.match(/^a=fmtp:(\d+)\s*(.*)$/i);
+      if (!match || !opusPayloads.has(match[1])) return line;
+      const payload = match[1];
+      const params = new Map();
+      for (const item of match[2].split(';')) {
+        const pair = item.trim().match(/^([^=]+)=(.*)$/);
+        if (pair) params.set(pair[1].trim().toLowerCase(), pair[2].trim());
+      }
+      params.set('stereo', '1');
+      params.set('sprop-stereo', '1');
+      params.set('maxaveragebitrate', '256000');
+      params.set('useinbandfec', '1');
+      params.set('usedtx', '0');
+      return `a=fmtp:${payload} ${Array.from(params, ([key, value]) => `${key}=${value}`).join(';')}`;
+    }).join('\r\n');
+  }
+
+  async function tuneAudioSender(peer) {
+    for (const sender of peer.getSenders()) {
+      if (!sender.track || sender.track.kind !== 'audio') continue;
+      // A dica "music" ajuda implementações compatíveis a otimizar o encoder para música,
+      // em vez de priorizar voz. É uma dica, não uma garantia de qualidade.
+      try { sender.track.contentHint = 'music'; } catch (_) {}
+      try {
+        const params = sender.getParameters();
+        params.encodings = params.encodings && params.encodings.length ? params.encodings : [{}];
+        params.encodings[0].maxBitrate = 256000;
+        await sender.setParameters(params);
+      } catch (error) {
+        console.warn('O navegador não aceitou o ajuste de bitrate; usando o padrão:', error);
+      }
+    }
+  }
+
+  async function createSenderOffer({ replacePeer = false } = {}) {
+    if (!isSender || !localStream || !joined || offerInProgress) return;
+    offerInProgress = true;
+    try {
+      if (replacePeer) pendingCandidates = [];
+      const peer = replacePeer ? makePeer() : (pc || makePeer());
+      // Ao reconectar alguém que entrou depois, recria a ligação usando
+      // a captura que já está ativa, sem pedir para o transmissor compartilhar de novo.
+      const alreadyHasTracks = peer.getSenders().some(sender => sender.track && sender.track.kind === "audio");
+      if (!alreadyHasTracks) {
+        localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
+      }
+      await tuneAudioSender(peer);
+      const offer = await peer.createOffer();
+      offer.sdp = optimizeMusicSdp(offer.sdp);
+      if (pc !== peer) return;
+      await peer.setLocalDescription(offer);
+      socket.emit("signal", { room, data: { type: "offer", sdp: peer.localDescription } });
+      setStatus("Transmitindo música em alta qualidade. Mantenha a aba do Spotify compartilhada.", true);
+    } catch (error) {
+      console.error("Erro ao iniciar oferta WebRTC:", error);
+      setStatus("Não foi possível iniciar a conexão de áudio. Tente parar e transmitir novamente.");
+    } finally {
+      offerInProgress = false;
+    }
+  }
+
+  $("join").onclick = () => {
+    room = $("room").value.trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || "noite";
+    $("room").value = room;
+    socket.emit("join-room", { room });
+  };
+
+  socket.on("connect", () => {
+    setStatus("Conectado ao servidor. Clique em “Entrar na sala”.", true);
+    $("help").textContent = "Entre na sala nos dois aparelhos. Depois, o transmissor inicia a captura de áudio.";
+  });
+
+  socket.on("connect_error", () => {
+    joined = false;
+    resetPeer();
+    enableControls();
+    setStatus("Não conectou ao servidor. Verifique se o Node.js está rodando.");
+    $("help").textContent = "No terminal da pasta do projeto, execute npm install e npm start. Abra http://localhost:3000; não abra o HTML diretamente.";
+  });
+
+  socket.on("disconnect", () => {
+    joined = false;
+    resetPeer();
+    enableControls();
+    setStatus("Conexão com o servidor perdida. Reconecte e entre na sala novamente.");
+  });
+
+  socket.on("joined-room", ({ room: joinedRoom }) => {
+    joined = true;
+    room = joinedRoom;
+    setStatus("Você entrou na sala “" + room + "”. Compartilhe esse nome com a outra pessoa.", true);
+    enableControls();
+  });
+
+  socket.on("peer-ready", async () => {
+    setStatus("Outra pessoa entrou na sala.", true);
+    // Corrige o caso em que a transmissão já estava ativa antes da chegada
+    // do ouvinte: cria uma nova oferta para o aparelho recém-chegado.
+    if (isSender && localStream) {
+      await createSenderOffer({ replacePeer: true });
+    }
+  });
+
+  socket.on("peer-left", () => {
+    if (!isSender) resetPeer();
+    setStatus(isSender
+      ? "A outra pessoa saiu. A transmissão continua ativa e poderá receber alguém novo."
+      : "A outra pessoa saiu da sala.");
+  });
+
+  socket.on("signal", async data => {
+    try {
+      if (data.type === "offer") {
+        // Uma oferta nova representa uma nova tentativa de conexão. O ouvinte
+        // substitui a ligação antiga, caso exista, antes de responder.
+        if (!isSender) {
+          closePeerOnly();
+          const peer = makePeer();
+          await peer.setRemoteDescription(data.sdp);
+          await applyPendingCandidates(peer);
+          const answer = await peer.createAnswer();
+          if (pc !== peer) return;
+          await peer.setLocalDescription(answer);
+          socket.emit("signal", { room, data: { type: "answer", sdp: peer.localDescription } });
+        }
+       } else if (data.type === "answer") {
+  const peer = pc;
+
+  if (peer && isSender) {
+    if (peer.signalingState !== "have-local-offer") {
+      console.warn(
+        "Resposta WebRTC antiga ignorada. Estado:",
+        peer.signalingState
+      );
+      return;
+    }
+
+    await peer.setRemoteDescription(data.sdp);
+    await applyPendingCandidates(peer);
+  }
+        const peer = pc;
+        if (peer && isSender) {
+          await peer.setRemoteDescription(data.sdp);
+          await applyPendingCandidates(peer);
+        }
+      } else if (data.type === "candidate" && data.candidate) {
+        const peer = pc;
+        if (peer && peer.remoteDescription) {
+          try {
+            await peer.addIceCandidate(data.candidate);
+          } catch (error) {
+            console.warn("Candidato ICE ignorado:", error);
+          }
+        } else {
+          pendingCandidates.push(data.candidate);
+        }
+      } else if (data.type === "transmission-stopped") {
+        if (!isSender) {
+          resetPeer();
+          setStatus("O transmissor encerrou o áudio.");
+        }
+      }
+    } catch (error) {
+      console.error("Falha na sinalização WebRTC:", error);
+      setStatus("Falha ao conectar o áudio. Tente entrar novamente na sala.");
+    }
+  });
+
+  $("start").onclick = async () => {
+    try {
+      if (!joined) {
+        setStatus("Primeiro clique em “Entrar na sala”.");
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        setStatus("Este navegador não permite captura de áudio/tela aqui. Use Chrome ou Edge em localhost ou HTTPS.");
+        return;
+      }
+
+      // Captura o áudio da aba como áudio digital, sem passar por microfone.
+      // Algumas versões do navegador permitem desativar processamento voltado à voz.
+      const capturedStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      const audioTracks = capturedStream.getAudioTracks();
+      if (!audioTracks.length) {
+        capturedStream.getTracks().forEach(track => track.stop());
+        setStatus("A captura não incluiu áudio. Escolha a aba do Spotify e marque “Compartilhar áudio da aba”.");
+        return;
+      }
+
+      // Captura de áudio de aba já é digital; evite forçar constraints de microfone
+      // que alguns navegadores ignoram ou não suportam para getDisplayMedia.
+      for (const track of audioTracks) {
+        try { track.contentHint = "music"; } catch (_) {}
+      }
+      console.info("Junto.fm captura de áudio da aba:", audioTracks.map(track => ({
+        label: track.label,
+        settings: track.getSettings ? track.getSettings() : {},
+        constraints: track.getConstraints ? track.getConstraints() : {}
+      })));
+
+      resetPeer();
+      localStream = capturedStream;
+      isSender = true;
+      const peer = makePeer();
+      localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
+
+      // O vídeo é necessário para a janela de captura, mas não é enviado.
+      localStream.getVideoTracks().forEach(track => track.stop());
+      await createSenderOffer();
+
+      localStream.getAudioTracks()[0].addEventListener("ended", () => {
+        socket.emit("signal", { room, data: { type: "transmission-stopped" } });
+        resetPeer();
+        setStatus("Transmissão encerrada.");
+      }, { once: true });
+
+      enableControls();
+    } catch (error) {
+      console.error("Captura cancelada ou bloqueada:", error);
+      resetPeer();
+      setStatus("Transmissão cancelada ou não permitida pelo navegador.");
+    }
+  };
+
+  $("stop").onclick = () => {
+    socket.emit("signal", { room, data: { type: "transmission-stopped" } });
+    resetPeer();
+    setStatus("Você encerrou a transmissão.");
+  };
+
+  $("pauseCmd").onclick = () => socket.emit("room-command", { room, command: "pause" });
+  $("nextCmd").onclick = () => socket.emit("room-command", { room, command: "next" });
+
+  socket.on("room-command", ({ command }) => {
+    $("commandStatus").textContent = command === "pause"
+      ? "A outra pessoa pediu para pausar a música."
+      : "A outra pessoa pediu para passar para a próxima música.";
+    setStatus("Comando recebido. O controle do Spotify ainda é manual neste protótipo.", true);
+  });
+})();
+</script>
+</body>
+</html>
