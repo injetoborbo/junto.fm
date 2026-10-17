@@ -593,7 +593,7 @@ const config = {
   function jfInit(){
     $("jfName").value=jfProfile.name;jfRenderAvatar();
     let t={};try{t=JSON.parse(localStorage.getItem("junto_theme")||"{}");}catch(_){}
-    $("jfTheme").value=jfThemes[t.name]||t.name==="custom"?"custom"===t.name?"custom":t.name:"y2k";
+    $("jfTheme").value=(jfThemes[t.name]||t.name==="custom")?t.name:"y2k";
     if(jfThemes[t.name])$("jfTheme").value=t.name;
     if(t.name==="custom")$("jfTheme").value="custom";
     if(/^#[0-9a-f]{6}$/i.test(t.color||""))$("jfColor").value=t.color;
