@@ -192,7 +192,7 @@ app.get("/api/spotify/now-playing", async (req, res) => {
       is_playing: Boolean(data.is_playing), progress_ms: data.progress_ms || 0,
       item: { id: item.id, uri: item.uri || (item.id ? `spotify:track:${item.id}` : ""), name: item.name, artists: (item.artists || []).map(a => a.name),
         album: item.album?.name || "", image: item.album?.images?.[0]?.url || "",
-        duration_ms: item.duration_ms || 0, uri: item.uri || "" },
+        duration_ms: item.duration_ms || 0 },
       fetched_at: Date.now()
     });
   } catch (err) {
