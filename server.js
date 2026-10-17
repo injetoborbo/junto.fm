@@ -178,6 +178,38 @@ app.get("/api/spotify/now-playing", async (req, res) => {
   }
 });
 
+function normalizeMusicText(value) {
+  return String(value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\\s+/g, " ");
+}
+async function findRealSong(input) {
+  const raw = String(input || "").trim().slice(0, 180);
+  if (!raw || raw.length < 2) return false;
+  const parts = raw.split(/\\s+[—–-]\\s+/);
+  const requestedTitle = normalizeMusicText(parts[0]);
+  const requestedArtist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
+  if (!requestedTitle) return false;
+  const endpoint = new URL("https://itunes.apple.com/search");
+  endpoint.search = new URLSearchParams({ term: raw, entity: "song", media: "music", country: "BR", limit: "25" }).toString();
+  const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error("Catálogo de músicas indisponível.");
+  const data = await response.json();
+  return (data.results || []).some(track => {
+    if (normalizeMusicText(track.trackName) !== requestedTitle) return false;
+    return !requestedArtist || normalizeMusicText(track.artistName) === requestedArtist;
+  });
+}
+
+app.get("/api/music/validate-suggestion", async (req, res) => {
+  const title = String(req.query.title || "").trim().slice(0, 180);
+  if (!title) return res.status(400).json({ valid: false, error: "Digite o nome de uma música." });
+  try {
+    const valid = await findRealSong(title);
+    return res.json({ valid, error: valid ? "" : "Não encontrei uma faixa com esse título exato. Confira o nome e o artista." });
+  } catch (_) {
+    return res.status(503).json({ valid: false, error: "Não foi possível consultar o catálogo de músicas agora. Tente novamente." });
+  }
+});
+
 function cleanRoom(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
 }
@@ -344,10 +376,19 @@ io.on("connection", socket => {
     socket.data.receiveMusicSuggestions = Boolean(payload.enabled);
   });
 
-  socket.on("music-suggestion", payload => {
+  socket.on("music-suggestion", async payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
     const suggestion = String(payload.suggestion || "").trim().slice(0, 180);
-    if (!suggestion) return;
+    if (!suggestion || isRateLimited(socket, "music-suggestion", 5, 60000)) return;
+    try {
+      if (!(await findRealSong(suggestion))) {
+        socket.emit("music-suggestion-error", { error: "Sugestão recusada: não encontrei uma música com esse título exato." });
+        return;
+      }
+    } catch (_) {
+      socket.emit("music-suggestion-error", { error: "Não foi possível verificar a música agora. Tente novamente." });
+      return;
+    }
     const peer = io.sockets.sockets.get(socket.id);
     const fromName = String(payload.fromName || peer?.data.profile?.name || "Ouvinte").trim().slice(0, 24) || "Ouvinte";
     const roomMembers = io.sockets.adapter.rooms.get(socket.data.room) || new Set();
