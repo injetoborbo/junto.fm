@@ -1184,10 +1184,18 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
       if (!navigator.mediaDevices?.getDisplayMedia) { setStatus('A captura exige Chrome/Edge em localhost ou HTTPS.'); return; }
-      const captured = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      // Música capturada da aba deve permanecer estéreo, sem tratamento de voz.
+      // Alguns navegadores ignoram estas preferências na captura de tela.
+      const musicAudio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
+      const captured = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: musicAudio });
       const audioTracks = captured.getAudioTracks();
       if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus('A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
-      audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
+      for (const track of audioTracks) {
+        try { track.contentHint = 'music'; } catch (_) {}
+        // applyConstraints é best-effort: não interrompe a transmissão caso falhe.
+        try { await track.applyConstraints({ echoCancellation: false, noiseSuppression: false, autoGainControl: false }); }
+        catch (error) { console.info('Captura não aceita todas as preferências de música:', error); }
+      }
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
       localStream = captured; isSender = true; socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
