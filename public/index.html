@@ -43,6 +43,26 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 .tag{animation:glowPulse 3s ease-in-out infinite}
 @media(max-width:520px){main{padding:22px 13px 42px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:9px;letter-spacing:.6px;padding:6px}.brand{font-size:22px}body:after{letter-spacing:.7rem}.row>*{flex-basis:100%}.track-card{grid-template-columns:112px minmax(0,1fr);gap:13px;padding:11px}.track-art{width:112px}.track-title{font-size:16px}.track-album{margin-bottom:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* Personalização Junto.fm */
+:root{--jf-primary:#ff78d2;--jf-secondary:#70f4ff;--jf-glow:#5656a8}
+.track-kicker{color:var(--jf-secondary)}
+.track-card{border-color:var(--jf-secondary);box-shadow:inset 0 1px 0 #ffffff25,0 0 20px color-mix(in srgb,var(--jf-primary) 18%,transparent)}
+.progress-fill{background:linear-gradient(90deg,var(--jf-secondary),var(--jf-primary))}
+.jf-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,.7fr);gap:12px;align-items:end}
+.jf-grid select,.jf-fields input[type=text]{width:100%;min-width:0;background:#080d2b;border:2px solid #7376ce;border-radius:5px;color:#fff;padding:10px}
+.jf-color{display:flex;gap:10px;align-items:center}
+.jf-color input{width:48px;height:40px;padding:2px}
+.jf-profile{display:grid;grid-template-columns:66px minmax(0,1fr);gap:13px;align-items:center}
+.jf-avatar{width:66px;height:66px;border-radius:50%;object-fit:cover;border:2px solid var(--jf-secondary);background:#101333;display:grid;place-items:center;font-size:24px;color:white}
+.jf-fields{display:grid;gap:8px;min-width:0}
+.jf-fields input[type=file]{width:100%;font-size:11px}
+.jf-people{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.jf-person{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #7678d8;border-radius:8px;background:#101333aa;max-width:100%}
+.jf-person img,.jf-person .jf-avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover}
+.jf-person strong{font-size:12px;overflow-wrap:anywhere}
+@media(max-width:520px){.jf-grid{grid-template-columns:1fr}.jf-profile{grid-template-columns:54px minmax(0,1fr)}.jf-avatar{width:54px;height:54px}}
+
 </style>
 </head>
 <body>
@@ -60,6 +80,32 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
     </div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+  </section>
+
+
+  <section class="panel" aria-labelledby="jfProfileHeading">
+    <h2 id="jfProfileHeading" style="margin:0 0 13px">Seu perfil</h2>
+    <div class="jf-profile">
+      <img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden>
+      <div id="jfAvatarPlaceholder" class="jf-avatar">♫</div>
+      <div class="jf-fields">
+        <label for="jfName">Nome de exibição</label>
+        <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
+        <label for="jfAvatarFile">Foto ou avatar (opcional)</label>
+        <input id="jfAvatarFile" type="file" accept="image/*">
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="jfSaveProfile" type="button">Salvar perfil</button><span class="small" id="jfProfileStatus" aria-live="polite">Salvo neste navegador.</span></div>
+    <h3 style="font-size:14px;margin:17px 0 7px">Quem está na sala</h3>
+    <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
+  </section>
+  <section class="panel" aria-labelledby="jfThemeHeading">
+    <h2 id="jfThemeHeading" style="margin:0 0 13px">Aparência</h2>
+    <div class="jf-grid">
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
+    </div>
+    <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
   </section>
 
   <section class="panel">
@@ -514,6 +560,59 @@ const config = {
   socket.on('peer-joined', ({id}) => knownPeers.add(id));
   socket.on('peer-left', ({id}) => knownPeers.delete(id));
   socket.on('disconnect', () => knownPeers.clear());
+
+  // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
+  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"]};
+  let jfProfile={name:"Ouvinte",avatar:""};
+  const jfPeerProfiles=new Map();
+  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";}catch(_){}
+  function jfApplyTheme(name,color){
+    const t=name==="custom"?[color,color,color]:(jfThemes[name]||jfThemes.y2k);
+    document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
+    document.documentElement.style.setProperty("--pink",t[0]);document.documentElement.style.setProperty("--cyan",t[1]);
+  }
+  function jfSaveTheme(){
+    const name=$("jfTheme").value,color=$("jfColor").value;jfApplyTheme(name,color);
+    try{localStorage.setItem("junto_theme",JSON.stringify({name,color}));}catch(_){}
+  }
+  function jfRenderAvatar(){
+    $("jfAvatarPreview").hidden=!jfProfile.avatar;$("jfAvatarPlaceholder").hidden=!!jfProfile.avatar;
+    if(jfProfile.avatar)$("jfAvatarPreview").src=jfProfile.avatar;
+  }
+  function jfRenderPeople(){
+    const list=$("jfPeople");list.replaceChildren();
+    if(!joined){const p=document.createElement("p");p.className="small";p.textContent="Entre em uma sala para ver os participantes.";list.appendChild(p);return;}
+    const all=[...(socket.id?[[socket.id,jfProfile]]:[]),...jfPeerProfiles.entries()];
+    if(!all.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
+    for(const [id,p] of all){
+      const card=document.createElement("div");card.className="jf-person";
+      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="♫";card.appendChild(av);}
+      const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");card.appendChild(label);list.appendChild(card);
+    }
+  }
+  function jfInit(){
+    $("jfName").value=jfProfile.name;jfRenderAvatar();
+    let t={};try{t=JSON.parse(localStorage.getItem("junto_theme")||"{}");}catch(_){}
+    $("jfTheme").value=jfThemes[t.name]||t.name==="custom"?"custom"===t.name?"custom":t.name:"y2k";
+    if(jfThemes[t.name])$("jfTheme").value=t.name;
+    if(t.name==="custom")$("jfTheme").value="custom";
+    if(/^#[0-9a-f]{6}$/i.test(t.color||""))$("jfColor").value=t.color;
+    jfApplyTheme($("jfTheme").value,$("jfColor").value);
+    $("jfTheme").addEventListener("change",jfSaveTheme);$("jfColor").addEventListener("input",()=>{$("jfTheme").value="custom";jfSaveTheme();});
+    $("jfAvatarFile").addEventListener("change",()=>{
+      const file=$("jfAvatarFile").files&&$("jfAvatarFile").files[0];if(!file)return;
+      if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
+      const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
+    });
+    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";$("jfName").value=jfProfile.name;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
+  }
+  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();}});
+  socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:""});jfRenderPeople();});
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();});
+  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();socket.emit("profile-update",{profile:jfProfile});});
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();});
+
+  jfInit();jfRenderPeople();
   enableControls();
   refreshSpotifyStatus();
   setInterval(updateTrackProgress, 1000);
