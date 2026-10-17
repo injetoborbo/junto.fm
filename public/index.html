@@ -553,20 +553,23 @@ html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece
   const pendingCandidates = new Map();
   
 const config = {
-  iceServers: [
-    { urls: "stun:stun.relay.metered.ca:80" },
-    {
-      urls: [
-        "turn:standard.relay.metered.ca:80",
-        "turn:standard.relay.metered.ca:80?transport=tcp",
-        "turn:standard.relay.metered.ca:443",
-        "turns:standard.relay.metered.ca:443?transport=tcp"
-      ],
-      username: "bb7ecb4be75a9bcedd093efe",
-      credential: "Ab8amlhjUC7kGK3K"
-    }
-  ]
+  iceServers: [{ urls: "stun:stun.relay.metered.ca:80" }]
 };
+// Busca os ICE servers pelo backend; a API key da credencial não é enviada ao navegador.
+const turnConfigReady = fetch("/api/turn/ice-servers")
+  .then(response => {
+    if (!response.ok) throw new Error("TURN não configurado");
+    return response.json();
+  })
+  .then(iceServers => {
+    if (!Array.isArray(iceServers) || !iceServers.length) throw new Error("Resposta TURN inválida");
+    config.iceServers = iceServers;
+    return true;
+  })
+  .catch(() => {
+    console.warn("TURN indisponível; usando STUN como alternativa.");
+    return false;
+  });
 
 
   function setStatus(message, ok = false) {
