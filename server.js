@@ -31,7 +31,7 @@ const roomTracks = new Map();
 const roomTransmitters = new Map();
 const roomChatMessages = new Map();
 const roomAccess = new Map();
-const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
+const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state user-library-modify";
 
 function cookieValue(req, name) {
   const cookies = String(req.headers.cookie || "").split(";");
@@ -82,6 +82,7 @@ async function validSpotifyAccessToken(session) {
   return session.accessToken;
 }
 
+app.use(express.json({ limit: "10kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
@@ -157,6 +158,26 @@ app.post("/api/spotify/logout", (req, res) => {
   res.setHeader("Set-Cookie", "junto_spotify_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
   res.json({ ok: true });
 });
+app.post("/api/spotify/save-track", async (req, res) => {
+  try {
+    if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
+    const uri = String(req.body && req.body.uri || "").trim();
+    if (!/^spotify:track:[A-Za-z0-9]{22}$/.test(uri)) return res.status(400).json({ error: "Não consegui identificar esta faixa do Spotify." });
+    const token = await validSpotifyAccessToken(getSession(req, res));
+    const endpoint = new URL("https://api.spotify.com/v1/me/library");
+    endpoint.searchParams.set("uris", uri);
+    const response = await fetch(endpoint, { method: "PUT", headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const message = data.error?.message || (response.status === 403 ? "O Spotify não autorizou salvar esta faixa. Reconecte sua conta e aceite a permissão de biblioteca." : "Não foi possível favoritar a música no Spotify.");
+      return res.status(response.status).json({ error: message });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(401).json({ error: err.message || "Conecte sua conta do Spotify primeiro." });
+  }
+});
+
 app.get("/api/spotify/now-playing", async (req, res) => {
   try {
     if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
@@ -169,7 +190,7 @@ app.get("/api/spotify/now-playing", async (req, res) => {
     if (!item) return res.json({ item: null, is_playing: Boolean(data.is_playing) });
     res.json({
       is_playing: Boolean(data.is_playing), progress_ms: data.progress_ms || 0,
-      item: { id: item.id, name: item.name, artists: (item.artists || []).map(a => a.name),
+      item: { id: item.id, uri: item.uri || (item.id ? `spotify:track:${item.id}` : ""), name: item.name, artists: (item.artists || []).map(a => a.name),
         album: item.album?.name || "", image: item.album?.images?.[0]?.url || "",
         duration_ms: item.duration_ms || 0, uri: item.uri || "" },
       fetched_at: Date.now()
@@ -366,6 +387,8 @@ io.on("connection", socket => {
     const track = payload.track;
     if (typeof track.name !== "string" || typeof track.artists !== "string") return;
     const safeTrack = {
+      id: /^[A-Za-z0-9]{22}$/.test(String(track.id || "")) ? String(track.id) : "",
+      uri: /^spotify:track:[A-Za-z0-9]{22}$/.test(String(track.uri || "")) ? String(track.uri) : "",
       name: track.name.slice(0, 200), artists: track.artists.slice(0, 300),
       album: String(track.album || "").slice(0, 200), image: /^https:\/\//.test(track.image || "") ? track.image.slice(0, 2000) : "",
       duration_ms: Math.max(0, Math.min(Number(track.duration_ms) || 0, 24 * 60 * 60 * 1000)),
