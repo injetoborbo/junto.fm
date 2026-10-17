@@ -31,8 +31,8 @@ input::placeholder{color:#858bbd}input:focus{border-color:var(--cyan);box-shadow
 .status{display:flex;align-items:center;gap:9px;color:#d1d4ff;font-size:13px;margin-top:15px}.dot{width:10px;height:10px;border-radius:50%;background:#7479a7;border:1px solid #b9bcff;box-shadow:inset 0 1px 2px #0008}.dot.ok{background:#70ffbf;border-color:#d4ffec;box-shadow:0 0 8px #70ffbf,0 0 16px #70ffbf77}
 .player{display:flex;align-items:center;gap:15px}.cover{width:76px;height:76px;flex-shrink:0;border-radius:12px;border:2px solid #fff;background:linear-gradient(135deg,#fff,#c8c8ff 22%,#9c6bff 48%,#ff7bd5 73%,#73f5ff);display:grid;place-items:center;font-size:32px;color:#211b60;text-shadow:0 1px #fff;box-shadow:inset 0 2px 4px #fff,0 0 0 3px #3b3c7a,0 0 22px #c77dff44}
 .player h2{margin:0 0 4px;font-size:19px;color:#fff;text-shadow:0 2px 0 #35326d}.player p{margin:0;font-size:13px;color:#c6c9ff}
-.track-card{display:grid;grid-template-columns:116px minmax(0,1fr);gap:17px;align-items:center;margin-top:18px;padding:14px;border:1px solid #9c9cff;border-radius:9px;background:linear-gradient(135deg,#292452,#10152f 72%);box-shadow:inset 0 1px 0 #ffffff25,0 0 20px #8b7bff1c}
-.track-art[hidden]{display:none}.track-art{width:116px;aspect-ratio:1;object-fit:cover;border-radius:6px;border:2px solid #fff;box-shadow:0 0 0 3px #4b448a,0 0 22px #ff78d266;background:linear-gradient(135deg,#fff,#a6a7ff 35%,#ff78d2 70%,#70f4ff);display:grid;place-items:center;color:#19153e;font-size:42px}
+.track-card{display:grid;grid-template-columns:164px minmax(0,1fr);gap:17px;align-items:center;margin-top:18px;padding:14px;border:1px solid #9c9cff;border-radius:9px;background:linear-gradient(135deg,#292452,#10152f 72%);box-shadow:inset 0 1px 0 #ffffff25,0 0 20px #8b7bff1c}
+.track-art[hidden]{display:none}.track-art{width:164px;aspect-ratio:1;object-fit:cover;border-radius:6px;border:2px solid #fff;box-shadow:0 0 0 3px #4b448a,0 0 22px #ff78d266;background:linear-gradient(135deg,#fff,#a6a7ff 35%,#ff78d2 70%,#70f4ff);display:grid;place-items:center;color:#19153e;font-size:42px}
 .track-kicker{font-size:10px;font-weight:900;letter-spacing:1.4px;color:var(--cyan);text-transform:uppercase;margin-bottom:8px}.track-title{font-size:20px;font-weight:900;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}.track-artist{font-size:13px;color:#d5d5ff;margin:0 0 5px}.track-album{font-size:11px;color:#a8aedb;margin:0 0 14px}.progress-wrap{height:7px;border:1px solid #7478c6;background:#080b24;border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 3px #000}.progress-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#70f4ff,#9b86ff,#ff78d2);box-shadow:0 0 12px #70f4ff;transition:width .4s linear}.track-times{display:flex;justify-content:space-between;color:#bfc5f5;font-size:10px;margin-top:6px;font-variant-numeric:tabular-nums}.track-empty{color:#c5c9f2;font-size:12px;line-height:1.6}.spotify-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}.spotify-actions .btn{flex:0 1 auto}.spotify-note{font-size:11px;color:#aeb5e6;line-height:1.6;margin:10px 0 0}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 audio{width:100%;margin-top:18px;filter:hue-rotate(220deg) saturate(1.25)}.small{font-size:12px;color:#b9bee9;line-height:1.6}.notice{border:1px solid #6869b5;border-left:4px solid var(--pink);padding:11px 13px;background:linear-gradient(100deg,#2e2453,#171a3a);border-radius:4px;color:#e8e4ff;font-size:13px;line-height:1.6;margin-top:15px;box-shadow:inset 0 1px 0 #ffffff12}.notice strong{color:#ffb9e9}
@@ -41,7 +41,7 @@ audio{width:100%;margin-top:18px;filter:hue-rotate(220deg) saturate(1.25)}.small
 footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin-top:30px;text-shadow:0 0 8px #787cff55}
 @keyframes glowPulse{0%,100%{text-shadow:0 0 8px #70f4ff66}50%{text-shadow:0 0 16px #ff78d2aa}}
 .tag{animation:glowPulse 3s ease-in-out infinite}
-@media(max-width:520px){main{padding:22px 13px 42px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:9px;letter-spacing:.6px;padding:6px}.brand{font-size:22px}body:after{letter-spacing:.7rem}.row>*{flex-basis:100%}.track-card{grid-template-columns:84px minmax(0,1fr);gap:13px;padding:11px}.track-art{width:84px}.track-title{font-size:16px}.track-album{margin-bottom:10px}}
+@media(max-width:520px){main{padding:22px 13px 42px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:9px;letter-spacing:.6px;padding:6px}.brand{font-size:22px}body:after{letter-spacing:.7rem}.row>*{flex-basis:100%}.track-card{grid-template-columns:112px minmax(0,1fr);gap:13px;padding:11px}.track-art{width:112px}.track-title{font-size:16px}.track-album{margin-bottom:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -144,8 +144,8 @@ const config = {
         "turn:standard.relay.metered.ca:443",
         "turns:standard.relay.metered.ca:443?transport=tcp"
       ],
-      username: "bb7ecb4be75a9bcedd093efe",
-      credential: "Ab8amlhjUC7kGK3K"
+      username: "",
+      credential: ""
     }
   ]
 };
