@@ -388,6 +388,12 @@ html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0
 @media(prefers-reduced-motion:reduce){.jf-dj-character,.jf-dj-arm-right{animation:none!important}}
 
 /* Novas paletas pastéis e mascote macaquinho de camiseta vermelha. */
+html[data-jf-theme="pastel"]{color-scheme:light;--ink:#40354d;--muted:#766781}
+html[data-jf-theme="pastel"] body{background:radial-gradient(ellipse at 50% -10%,#fff6fc 0,#f8e5f3 38%,#dff4f0 72%,#d2e6f8 100%) fixed}
+html[data-jf-theme="pastel"] .panel{background:linear-gradient(145deg,#fffafdF2,#f6eefaF5 60%,#e9f5f4F5);border-color:#d6c3e9;box-shadow:0 8px 0 #d9cce8,0 13px 28px #8c7a9e22}
+html[data-jf-theme="pastel"] .track-card{background:linear-gradient(135deg,#fff0f8,#e4f6f1);color:#40354d}
+html[data-jf-theme="pastel"] .track-title,html[data-jf-theme="pastel"] .player h2,html[data-jf-theme="pastel"] .panel h2{color:#40354d;text-shadow:none}
+html[data-jf-theme="pastel"] .track-artist,html[data-jf-theme="pastel"] .track-album,html[data-jf-theme="pastel"] .small,html[data-jf-theme="pastel"] .player p{color:#766781}
 html[data-jf-theme="lavender"]{color-scheme:light;--ink:#302b49;--muted:#655d83}
 html[data-jf-theme="lavender"] body{background:radial-gradient(ellipse at 50% -10%,#f8f1ff 0,#e8dcff 38%,#d8e5ff 72%,#c4d7fa 100%) fixed}
 html[data-jf-theme="lavender"] .panel{background:linear-gradient(145deg,#fffaffef,#f1eafff5 60%,#e6eafff5);border-color:#b8a4e8;box-shadow:0 8px 0 #c9bde8,0 13px 28px #7d6ba322}
@@ -699,6 +705,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
       currentTrack = null;
+      $("spotifyFavorite").textContent = "♡ Favoritar música";
+      $("spotifyFavoriteStatus").textContent = "";
       $("trackTitle").textContent = "A música aparece aqui";
       $("trackArtist").textContent = "Conecte o Spotify para mostrar os metadados";
       $("trackAlbum").textContent = "JUNTO.FM · Y2K RADIO";
@@ -708,6 +716,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       $("trackProgress").setAttribute("aria-valuenow", "0");
       jfUpdateFavoriteButton();
       return;
+    }
+    const nextTrackUri = String(track.uri || "");
+    if (!currentTrack || String(currentTrack.uri || "") !== nextTrackUri) {
+      $("spotifyFavorite").textContent = "♡ Favoritar música";
+      $("spotifyFavoriteStatus").textContent = "";
     }
     currentTrack = { ...track };
     trackBaseTime = Date.now();
