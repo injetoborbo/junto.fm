@@ -63,19 +63,32 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 #jfSaveProfile{min-width:160px}
 #jfProfileStatus{align-self:center}
 .jf-people{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
-.jf-chat-log{height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--jf-secondary);border-radius:8px;background:color-mix(in srgb,var(--jf-glow) 20%,#080d2b);scroll-behavior:smooth}
+/* Chat flutuante, discreto e recolhível */
+.jf-chat-launcher{position:fixed;right:24px;bottom:24px;z-index:10020;width:56px;height:56px;padding:0;border:1px solid var(--jf-secondary);border-radius:50%;display:grid;place-items:center;background:var(--jf-primary);color:white;box-shadow:0 8px 28px #0008;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.jf-chat-launcher:hover{transform:translateY(-2px);box-shadow:0 11px 32px #0009}
+.jf-chat-launcher svg{width:25px;height:25px;display:block}
+.jf-chat-unread{position:absolute;right:1px;top:1px;width:12px;height:12px;border:2px solid #fff;border-radius:50%;background:#ff304f;box-shadow:0 0 0 2px #ff304f;display:none}
+.jf-chat-launcher.has-unread .jf-chat-unread{display:block}
+.jf-chat-window{position:fixed;right:24px;bottom:92px;z-index:10019;width:min(360px,calc(100vw - 28px));height:min(480px,calc(100dvh - 120px));min-height:300px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--jf-secondary);border-radius:15px;background:color-mix(in srgb,var(--jf-glow) 20%,#080d2b);box-shadow:0 16px 48px #0009;backdrop-filter:blur(18px)}
+.jf-chat-window[hidden]{display:none}
+.jf-chat-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border-bottom:1px solid color-mix(in srgb,var(--jf-secondary) 55%,transparent);background:color-mix(in srgb,var(--jf-primary) 35%,#101333)}
+.jf-chat-heading{margin:0;font-size:15px;font-weight:800}
+.jf-chat-subheading{font-size:11px;color:var(--muted);margin-top:3px}
+.jf-chat-close{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--jf-secondary) 60%,transparent);border-radius:50%;background:transparent;color:var(--ink);font-size:21px;cursor:pointer}
+.jf-chat-log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:13px;scroll-behavior:smooth}
 .jf-chat-empty{margin:auto;text-align:center;color:var(--muted);font-size:13px}
 .jf-chat-message{display:flex;gap:9px;align-items:flex-start;min-width:0}
 .jf-chat-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;object-fit:cover;border:1px solid var(--jf-secondary);background:var(--jf-glow);display:grid;place-items:center;color:white;font-size:16px}
-.jf-chat-bubble{min-width:0;max-width:100%;padding:8px 11px;border:1px solid color-mix(in srgb,var(--jf-secondary) 55%,transparent);border-radius:4px 11px 11px 11px;background:color-mix(in srgb,var(--jf-glow) 38%,#101333);overflow-wrap:anywhere}
+.jf-chat-bubble{min-width:0;max-width:100%;padding:8px 11px;border:1px solid color-mix(in srgb,var(--jf-secondary) 45%,transparent);border-radius:4px 11px 11px 11px;background:color-mix(in srgb,var(--jf-glow) 38%,#101333);overflow-wrap:anywhere}
 .jf-chat-meta{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:3px}
 .jf-chat-meta strong{font-size:12px;color:var(--jf-secondary)}
 .jf-chat-meta time{font-size:10px;color:var(--muted)}
 .jf-chat-text{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
-.jf-chat-form{display:flex;gap:9px;margin-top:10px;align-items:stretch}
-.jf-chat-form input{flex:1 1 auto;min-width:0}
-.jf-chat-form button{flex:0 0 auto}
-@media(max-width:520px){.jf-chat-log{height:220px}.jf-chat-form{flex-direction:column}.jf-chat-form button{width:100%}}
+.jf-chat-form{display:flex;gap:8px;padding:11px;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 45%,transparent);align-items:center}
+.jf-chat-form input{flex:1 1 auto;min-width:0;width:0}
+.jf-chat-form button{flex:0 0 auto;padding:10px 12px}
+.jf-chat-status{padding:0 12px 9px;margin:0;color:var(--muted);font-size:10px}
+@media(max-width:520px){.jf-chat-launcher{right:16px;bottom:16px;width:52px;height:52px}.jf-chat-window{right:12px;bottom:78px;width:calc(100vw - 24px);height:min(470px,calc(100dvh - 96px));min-height:280px}.jf-chat-form button{width:auto}}
 .jf-person{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid #7678d8;border-radius:8px;background:#101333e8;max-width:100%;width:max-content;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;transform-origin:left center;z-index:1}
 .jf-person img,.jf-person .jf-avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover}
 .jf-person strong{font-size:12px;overflow-wrap:anywhere}
@@ -330,18 +343,24 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 </div>
 
   
-<section class="panel jf-chat-panel" aria-labelledby="jfChatHeading">
-    <h2 id="jfChatHeading" style="margin:0 0 6px">💬 Chat da sala</h2>
-    <p class="small" style="margin:0 0 12px">Converse ao vivo com quem estiver ouvindo com você. As mensagens ficam disponíveis enquanto a sala estiver ativa.</p>
-    <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
-    <form id="jfChatForm" class="jf-chat-form">
-      <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
-      <button class="btn" id="jfChatSend" type="submit" disabled>Enviar ↗</button>
-    </form>
-    <p class="small" id="jfChatStatus" aria-live="polite" style="margin:8px 0 0">Entre em uma sala para enviar mensagens.</p>
-  </section>
+<button type="button" id="jfChatLauncher" class="jf-chat-launcher" aria-label="Abrir chat da sala" aria-expanded="false" aria-controls="jfChatWindow" title="Abrir chat da sala">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8.3 8.3 0 0 1-3.3-.7L4 20l1.3-4.1a7.5 7.5 0 1 1 14.7-4.4Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
+  <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
+</button>
+<section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
+  <header class="jf-chat-header">
+    <div><h2 id="jfChatHeading" class="jf-chat-heading">Chat da sala</h2><div class="jf-chat-subheading">Converse com quem está ouvindo</div></div>
+    <button type="button" id="jfChatClose" class="jf-chat-close" aria-label="Fechar chat">×</button>
+  </header>
+  <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
+  <form id="jfChatForm" class="jf-chat-form">
+    <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
+    <button class="btn" id="jfChatSend" type="submit" disabled>Enviar</button>
+  </form>
+  <p class="jf-chat-status" id="jfChatStatus" aria-live="polite">Entre em uma sala para enviar mensagens.</p>
+</section>
 
-  <section class="panel">
+    <section class="panel">
     <h2 style="margin:0 0 14px">Comandos da sala</h2>
     <p style="margin-top:0">Esses botões enviam comandos para a outra pessoa. No protótipo, eles não controlam diretamente o Spotify — quem está transmitindo ainda precisa pausar ou trocar a música na aba do Spotify.</p>
     <div class="row">
@@ -921,6 +940,17 @@ const config = {
   socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
+  function jfSetChatOpen(open){
+    const windowEl=$("jfChatWindow"),launcher=$("jfChatLauncher");
+    windowEl.hidden=!open;launcher.setAttribute("aria-expanded",String(open));
+    launcher.setAttribute("aria-label",open?"Fechar chat da sala":"Abrir chat da sala");
+    launcher.title=open?"Fechar chat da sala":"Abrir chat da sala";
+    if(open){launcher.classList.remove("has-unread");$("jfChatUnread").removeAttribute("title");$("jfChatInput").focus();const log=$("jfChatLog");log.scrollTop=log.scrollHeight;}
+  }
+  $("jfChatLauncher").addEventListener("click",()=>jfSetChatOpen($("jfChatWindow").hidden));
+  $("jfChatClose").addEventListener("click",()=>jfSetChatOpen(false));
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("jfChatWindow").hidden)jfSetChatOpen(false);});
+
   function jfRenderChat(messages){
     const log=$("jfChatLog");log.replaceChildren();
     if(!messages.length){const empty=document.createElement("p");empty.className="jf-chat-empty";empty.textContent=joined?"Nenhuma mensagem ainda. Que tal dar oi? ✦":"Entre em uma sala para começar a conversar ✦";log.appendChild(empty);return;}
@@ -951,7 +981,7 @@ const config = {
     socket.emit("chat-send",{text});$("jfChatInput").value="";jfUpdateChatControls();$("jfChatInput").focus();
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
-  socket.on("chat-message",message=>{if(joined&&message&&message.room===room)jfAppendChatMessage(message);});
+  socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
   socket.on("joined-room",()=>jfUpdateChatControls());
 
   jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();
