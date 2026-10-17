@@ -316,13 +316,11 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
   <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
   <section class="panel">
-    <label for="room">Nome da sala (use o mesmo nos dois aparelhos)</label>
-    <div class="row">
-      <input id="room" maxlength="40" value="noite" autocomplete="off" placeholder="ex.: nossa-sala">
-      <button class="btn" id="join">Entrar na sala</button>
+    <input id="room" type="hidden" value="" autocomplete="off">
+    <div class="row jf-room-entry-actions">
+      <button class="btn" id="join" type="button">↗ Entrar na sala</button>
       <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
     </div>
-    <div class="jf-room-password-row"><input id="roomPassword" type="password" maxlength="100" autocomplete="current-password" placeholder="Senha da sala (se houver)" aria-label="Senha da sala, se houver"></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
   </section>
@@ -485,6 +483,22 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
       </div>
       <p class="jf-room-modal-error" id="jfCreateRoomError" role="status" aria-live="polite"></p>
       <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelCreateRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmCreateRoom" type="submit">✦ Criar sala</button></div>
+    </form>
+  </section>
+</div>
+
+<div class="jf-modal-backdrop" id="jfJoinRoomModal" hidden>
+  <section class="jf-room-modal" role="dialog" aria-modal="true" aria-labelledby="jfJoinRoomTitle">
+    <button class="jf-room-modal-close" id="jfCloseJoinRoom" type="button" aria-label="Fechar">×</button>
+    <div class="jf-room-modal-head">
+      <div class="jf-room-modal-icon" aria-hidden="true">✦</div>
+      <div><h2 id="jfJoinRoomTitle">Bora ouvir junto?</h2><p>Digite o nome da sala que já existe. Se ela tiver senha, informe também.</p></div>
+    </div>
+    <form id="jfJoinRoomForm">
+      <div class="jf-room-field"><label for="jfExistingRoomName">Nome da sala</label><input id="jfExistingRoomName" maxlength="40" autocomplete="off" placeholder="ex.: madrugada-com-voce" required></div>
+      <div class="jf-room-field"><label for="jfExistingRoomPassword">Senha <span style="font-weight:400;text-transform:none">(se a sala pedir)</span></label><input id="jfExistingRoomPassword" type="password" maxlength="100" autocomplete="current-password" placeholder="Digite a senha, se houver"></div>
+      <p class="jf-room-modal-error" id="jfJoinRoomError" role="status" aria-live="polite"></p>
+      <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelJoinRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmJoinRoom" type="submit">↗ Entrar na sala</button></div>
     </form>
   </section>
 </div>
@@ -777,10 +791,25 @@ const config = {
     room = cleaned;
     $("room").value = room;
     setStatus('Entrando na sala…');
-    const password = suppliedPassword === undefined ? $("roomPassword").value : suppliedPassword;
+    const password = suppliedPassword || "";
     socket.emit('join-room', { room, password });
   }
   const createModal = $("jfCreateRoomModal");
+  const joinModal = $("jfJoinRoomModal");
+  function openJoinRoomModal() {
+    $("jfExistingRoomName").value = "";
+    $("jfExistingRoomPassword").value = "";
+    $("jfJoinRoomError").textContent = "";
+    $("jfConfirmJoinRoom").disabled = false;
+    joinModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    $("jfExistingRoomName").focus();
+  }
+  function closeJoinRoomModal() {
+    joinModal.hidden = true;
+    if (document.querySelector(".jf-modal-backdrop:not([hidden])")) return;
+    document.body.style.overflow = "";
+  }
   function openCreateRoomModal() {
     const existing = cleanRoomName($("room").value);
     $("jfNewRoomName").value = existing && existing !== "noite" ? existing : `sala-${Math.random().toString(36).slice(2, 8)}`;
@@ -796,8 +825,21 @@ const config = {
     createModal.hidden = true;
     document.body.style.overflow = "";
   }
-  $("join").onclick = () => joinRoom($("room").value);
+  $("join").onclick = openJoinRoomModal;
   $("createRoom").onclick = openCreateRoomModal;
+  $("jfCloseJoinRoom").onclick = closeJoinRoomModal;
+  $("jfCancelJoinRoom").onclick = closeJoinRoomModal;
+  joinModal.addEventListener("click", event => { if (event.target === joinModal) closeJoinRoomModal(); });
+  $("jfJoinRoomForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const name = cleanRoomName($("jfExistingRoomName").value);
+    const password = $("jfExistingRoomPassword").value;
+    if (!name) { $("jfJoinRoomError").textContent = "Digite um nome válido (letras, números, hífen ou underline)."; return; }
+    if (!socket.connected) { $("jfJoinRoomError").textContent = "Sem conexão com o servidor. Tente novamente em instantes."; return; }
+    $("jfConfirmJoinRoom").disabled = true;
+    $("jfJoinRoomError").textContent = "Procurando a sala…";
+    joinRoom(name, password);
+  });
   $("jfCloseCreateRoom").onclick = closeCreateRoomModal;
   $("jfCancelCreateRoom").onclick = closeCreateRoomModal;
   createModal.addEventListener("click", event => { if (event.target === createModal) closeCreateRoomModal(); });
@@ -821,7 +863,6 @@ const config = {
   });
   socket.on("room-created", ({room: createdRoom}) => {
     $("jfConfirmCreateRoom").disabled = false;
-    $("roomPassword").value = pendingCreatePassword;
     closeCreateRoomModal();
     joinRoom(createdRoom, pendingCreatePassword);
     pendingCreatePassword = "";
@@ -832,16 +873,24 @@ const config = {
   });
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !createModal.hidden) closeCreateRoomModal();
+    if (event.key === "Escape" && !joinModal.hidden) closeJoinRoomModal();
   });
-  $("room").addEventListener('keydown', event => { if (event.key === 'Enter') joinRoom($("room").value); });
-  $("roomPassword").addEventListener('keydown', event => { if (event.key === 'Enter') joinRoom($("room").value); });
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
   socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
-  socket.on('join-error', ({message}) => { joined = false; setStatus(message || 'Não foi possível entrar na sala.'); enableControls(); });
+  socket.on('join-error', ({message}) => {
+    joined = false;
+    const errorMessage = message || 'Não foi possível entrar na sala.';
+    if (!joinModal.hidden) {
+      $("jfJoinRoomError").textContent = errorMessage;
+      $("jfConfirmJoinRoom").disabled = false;
+    }
+    setStatus(errorMessage);
+    enableControls();
+  });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
-    joined = true; room = joinedRoom; $("room").value = room; $("roomPassword").value = ""; socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
