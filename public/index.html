@@ -361,12 +361,6 @@ html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece
 html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"] .jf-dj-caption strong,html[data-jf-theme="mint"] .jf-dj-caption strong{color:var(--ink)}
 @media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:110px;height:110px;min-height:110px;flex:0 0 110px;margin:0}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.jf-glb-canvas{animation:none!important}}
-/* Mascote 3D GLB: mantÃ©m o DJ CSS como fallback atÃ© o modelo carregar. */
-.jf-dj-stage.jf-glb-ready{width:160px!important;height:164px!important;min-height:164px!important;perspective:none!important}
-.jf-glb-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:4;pointer-events:none}
-.jf-dj-stage.jf-glb-ready:before{opacity:.2}
-@media(max-width:600px){.jf-dj-stage.jf-glb-ready{width:100px!important;height:100px!important;min-height:100px!important;flex-basis:100px!important;transform:none!important;margin:0!important}}
-
 </style>
 </head>
 <body>
@@ -1383,7 +1377,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 </script>
 
 <script type="module">
-/* O modelo Ã© opcional: se o arquivo ainda nÃ£o estiver publicado, o mascote CSS continua funcionando. */
+/* Mascote exclusivamente GLB; nenhum personagem CSS alternativo. */
 (async()=>{
   const stage=document.querySelector("#jfMiniDj .jf-dj-stage");
   if(!stage)return;
@@ -1434,7 +1428,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       renderer.render(scene,camera);
     };
     animate();
-  }catch(error){console.warn("Junto.fm: nÃ£o foi possÃ­vel carregar o mascote 3D; mantendo o fallback.",error);}
+  }catch(error){console.error("Junto.fm: falha ao carregar o modelo 3D do DJ.",error);const mini=document.querySelector("#jfMiniDj");if(mini)mini.hidden=true;}
 })();
 </script>
 
