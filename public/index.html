@@ -387,7 +387,34 @@ html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0
 @media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:86px;height:76px;flex:0 0 86px;transform:scale(.78);transform-origin:center center;margin:-5px -4px}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.jf-dj-character,.jf-dj-arm-right{animation:none!important}}
 
-/* Novas paletas pastéis e mascote macaquinho de camiseta vermelha. */
+/* Tema rosa bebê e mascote macaquinho inspirado no desenho enviado. */
+html[data-jf-theme="baby-pink"]{color-scheme:light;--ink:#633d52;--muted:#936d83;--jf-secondary:#c875a0}
+html[data-jf-theme="baby-pink"] body{background:radial-gradient(ellipse at 50% -10%,#fff8fb 0,#ffe8f1 38%,#f9d4e4 72%,#f2c4db 100%) fixed}
+html[data-jf-theme="baby-pink"] .panel{background:linear-gradient(145deg,#fffafdF5,#fff0f6F5 60%,#ffe6f0F5);border-color:#eab5ce;box-shadow:0 8px 0 #eac8d8,0 13px 28px #b87b9922}
+html[data-jf-theme="baby-pink"] .track-card{background:linear-gradient(135deg,#fff3f8,#ffe0ed);color:#633d52}
+html[data-jf-theme="baby-pink"] .track-title,html[data-jf-theme="baby-pink"] .player h2,html[data-jf-theme="baby-pink"] .panel h2{color:#633d52;text-shadow:none}
+html[data-jf-theme="baby-pink"] .track-artist,html[data-jf-theme="baby-pink"] .track-album,html[data-jf-theme="baby-pink"] .small,html[data-jf-theme="baby-pink"] .player p{color:#936d83}
+/* Macaquinho: rosto marrom, orelhas grandes, focinho claro, camiseta vermelha, calça roxa e rabo curvado. */
+.jf-dj-character{width:78px!important;height:98px!important;left:50%!important;top:0!important}
+.jf-dj-body{left:17px!important;top:47px!important;width:44px!important;height:34px!important;background:linear-gradient(100deg,#ff3434 0%,#e50920 55%,#b90019 100%)!important;clip-path:polygon(18% 0,82% 0,100% 19%,88% 100%,12% 100%,0 19%)!important;border:1px solid #a40017!important;border-radius:5px!important;filter:drop-shadow(0 2px 1px #050817)!important}
+.jf-dj-body:after{content:"";position:absolute;left:17px;top:2px;width:7px;height:8px;border-radius:50%;background:#ffd0a0;box-shadow:5px 0 #ffd0a0}
+.jf-dj-neck{left:34px!important;top:39px!important;width:10px!important;height:10px!important;background:#8b5638!important;clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)!important}
+.jf-dj-head{left:21px!important;top:7px!important;width:38px!important;height:38px!important;border:2px solid #4c2b20!important;border-radius:46% 46% 43% 43%!important;clip-path:none!important;background:linear-gradient(125deg,#9d6745 0%,#74452f 58%,#4b2a1d 100%)!important;box-shadow:inset -5px -3px #4b2a1d!important;transform:rotate(-3deg)!important}
+.jf-dj-hair{display:none!important}
+.jf-dj-face{left:7px!important;right:auto!important;top:20px!important;width:24px!important;height:14px!important;border-radius:45% 45% 50% 50%!important;clip-path:none!important;background:linear-gradient(#ffe0c8,#ffc7a4)!important;box-shadow:inset 0 -2px #e7a47d!important}
+.jf-dj-eye{top:15px!important;width:4px!important;height:5px!important;background:#17121b!important;z-index:2!important}
+.jf-dj-eye-left{left:9px!important}.jf-dj-eye-right{left:26px!important}
+.jf-dj-smile{left:17px!important;top:29px!important;width:9px!important;border-bottom:2px solid #6f3929!important;z-index:3!important}
+.jf-dj-ear{top:16px!important;width:16px!important;height:17px!important;border:3px solid #4b2a1d!important;border-radius:50%!important;background:radial-gradient(circle at 50% 50%,#d69a75 0 35%,#74452f 40%)!important;z-index:-1!important}
+.jf-dj-ear-left{left:7px!important}.jf-dj-ear-right{right:6px!important}
+.jf-dj-leg{top:78px!important;width:13px!important;height:18px!important;background:linear-gradient(90deg,#6c55a8,#8c75ce 65%,#51407f)!important;clip-path:polygon(14% 0,100% 0,82% 100%,0 100%)!important;border-bottom:3px solid #403263!important}
+.jf-dj-leg-left{left:24px!important}.jf-dj-leg-right{right:20px!important}
+.jf-dj-arm{top:49px!important;width:13px!important;height:27px!important;background:linear-gradient(90deg,#9b6545,#71452f)!important;clip-path:polygon(20% 0,100% 10%,70% 100%,0 86%)!important}
+.jf-dj-arm-left{left:12px!important;transform:rotate(25deg)!important}
+.jf-dj-arm-right{right:7px!important;transform:rotate(-125deg)!important;animation:jfDjHand 1.1s ease-in-out infinite}
+.jf-dj-character:after{content:"";position:absolute;left:54px;top:61px;width:30px;height:28px;border:4px solid #71452f;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(30deg);z-index:-1}
+.jf-dj-shadow{left:21px!important;width:40px!important}
+@media(prefers-reduced-motion:reduce){.jf-dj-character:after{animation:none!important}}
 html[data-jf-theme="pastel"]{color-scheme:light;--ink:#40354d;--muted:#766781}
 html[data-jf-theme="pastel"] body{background:radial-gradient(ellipse at 50% -10%,#fff6fc 0,#f8e5f3 38%,#dff4f0 72%,#d2e6f8 100%) fixed}
 html[data-jf-theme="pastel"] .panel{background:linear-gradient(145deg,#fffafdF2,#f6eefaF5 60%,#e9f5f4F5);border-color:#d6c3e9;box-shadow:0 8px 0 #d9cce8,0 13px 28px #8c7a9e22}
@@ -575,7 +602,7 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
     <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-grid">
-      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="pastel">Pastel dream</option><option value="lavender">Lavender milk</option><option value="peach">Peach soda</option><option value="mint">Mint candy</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="pastel">Pastel dream</option><option value="lavender">Lavender milk</option><option value="peach">Peach soda</option><option value="mint">Mint candy</option><option value="baby-pink">Rosa bebê</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
       <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
     </div>
     <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">Disponível no Frutiger Aero. A preferência fica salva neste navegador.</p></div>
@@ -1236,7 +1263,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   socket.on('disconnect', () => knownPeers.clear());
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
-  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
+  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
   let jfProfile={name:"Ouvinte",avatar:"",motto:""};
   const jfPeerProfiles=new Map();
   try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);}catch(_){}
