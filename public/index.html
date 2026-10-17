@@ -334,6 +334,48 @@ html[data-jf-theme="classic"] .jf-chat-form{gap:5px;padding:8px;background:#ece9
 html[data-jf-theme="classic"] .jf-chat-form input{border:1px solid #7f9db9;border-radius:2px;background:#fff;color:#18345b;box-shadow:inset 1px 1px 2px #0001}
 html[data-jf-theme="classic"] .jf-chat-form .btn{padding:8px 10px}
 html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece9d8;color:#536d87}
+
+/* Mini DJ low-poly em CSS 3D: independente de modelos externos e leve no celular. */
+.track-card{grid-template-columns:164px minmax(0,1fr)}
+.jf-track-content{display:grid;grid-template-columns:minmax(0,1fr) 126px;gap:10px;align-items:center;min-width:0}
+.jf-track-info{min-width:0}
+.jf-mini-dj[hidden]{display:none!important}
+.jf-mini-dj{width:126px;min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:5px 2px 0;border-left:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent)}
+.jf-dj-stage{position:relative;width:116px;height:120px;perspective:420px;isolation:isolate}
+.jf-dj-stage:before{content:"";position:absolute;left:8px;right:8px;bottom:8px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--jf-glow) 55%,transparent);filter:blur(5px);transform:rotateX(62deg)}
+.jf-dj-light{position:absolute;z-index:0;width:36px;height:36px;border-radius:50%;filter:blur(12px);opacity:.5}
+.jf-dj-light-a{left:10px;top:17px;background:var(--jf-primary)}
+.jf-dj-light-b{right:8px;top:28px;background:var(--jf-secondary)}
+.jf-dj-booth{position:absolute;z-index:3;left:5px;right:5px;bottom:9px;height:30px;border:1px solid color-mix(in srgb,var(--jf-secondary) 70%,white);background:linear-gradient(155deg,color-mix(in srgb,var(--jf-secondary) 38%,#26355c),color-mix(in srgb,var(--jf-glow) 85%,#080d20) 65%);box-shadow:0 5px 0 color-mix(in srgb,var(--jf-glow) 80%,#05071b),inset 0 1px #fff8;transform:rotateX(12deg) skewX(-5deg);border-radius:3px}
+.jf-dj-deck{position:absolute;top:4px;width:23px;height:19px;border:1px solid #b6eaff;border-radius:50%;background:repeating-radial-gradient(circle,#10182f 0 2px,#a3b5d5 2.5px 3px,#28375a 4px 5px);box-shadow:0 0 5px var(--jf-secondary)}
+.jf-dj-deck-left{left:5px}.jf-dj-deck-right{right:5px}
+.jf-dj-mixer{position:absolute;left:40px;top:5px;width:26px;height:17px;border:1px solid #e5c9ff;border-radius:2px;background:repeating-linear-gradient(90deg,#25234c 0 4px,#ff78d2 4px 5px,#25234c 5px 8px)}
+.jf-dj-character{position:absolute;z-index:2;left:50%;top:3px;width:66px;height:92px;transform:translateX(-50%);animation:jfDjBounce 1.25s ease-in-out infinite;transform-style:preserve-3d}
+.jf-dj-shadow{position:absolute;left:17px;bottom:0;width:34px;height:8px;border-radius:50%;background:#05081788;filter:blur(3px)}
+.jf-dj-leg{position:absolute;top:68px;width:12px;height:23px;background:linear-gradient(90deg,#27305c,#5364a1 65%,#20264a);clip-path:polygon(14% 0,100% 0,82% 100%,0 100%);border-bottom:3px solid #151b37}
+.jf-dj-leg-left{left:18px;transform:rotate(5deg)}.jf-dj-leg-right{right:17px;transform:rotate(-7deg)}
+.jf-dj-body{position:absolute;left:13px;top:39px;width:41px;height:38px;background:linear-gradient(100deg,#ff78d2 0 22%,#a94fd0 23% 62%,#5b5ed0 63% 100%);clip-path:polygon(18% 0,82% 0,100% 19%,88% 100%,12% 100%,0 19%);border-radius:6px;filter:drop-shadow(0 3px 1px #050817)}
+.jf-dj-neck{position:absolute;left:28px;top:32px;width:12px;height:12px;background:#d88d65;clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)}
+.jf-dj-head{position:absolute;left:16px;top:6px;width:36px;height:35px;border:1px solid #6f3c3c;background:linear-gradient(115deg,#ffd0a0 0 18%,#efad7e 19% 66%,#b96e60 67%);clip-path:polygon(18% 0,82% 0,100% 26%,87% 83%,64% 100%,32% 96%,12% 78%,0 25%);box-shadow:inset -5px -2px #8e5967;transform:rotate(-3deg)}
+.jf-dj-hair{position:absolute;left:-1px;top:-2px;width:38px;height:15px;background:linear-gradient(120deg,#26233f,#4d3864);clip-path:polygon(0 50%,18% 0,43% 18%,66% 0,100% 20%,90% 100%,72% 57%,46% 68%,23% 52%,10% 100%)}
+.jf-dj-face{position:absolute;right:0;top:14px;width:9px;height:13px;background:#eaa078;clip-path:polygon(0 0,100% 28%,60% 100%,0 72%)}
+.jf-dj-eye{position:absolute;top:17px;width:3px;height:4px;background:#28213a;border-radius:50%}
+.jf-dj-eye-left{left:10px}.jf-dj-eye-right{left:23px}
+.jf-dj-smile{position:absolute;left:14px;top:25px;width:9px;height:4px;border-bottom:1.5px solid #873d55;border-radius:50%}
+.jf-dj-ear{position:absolute;top:18px;width:10px;height:14px;border:3px solid #302744;background:#f5b182;border-radius:4px}
+.jf-dj-ear-left{left:11px}.jf-dj-ear-right{right:10px}
+.jf-dj-arm{position:absolute;top:43px;width:12px;height:28px;background:linear-gradient(90deg,#efaa82,#d88370);clip-path:polygon(20% 0,100% 10%,70% 100%,0 86%);transform-origin:top center}
+.jf-dj-arm-left{left:8px;transform:rotate(25deg)}.jf-dj-arm-right{right:7px;transform:rotate(-35deg);animation:jfDjHand 1.1s ease-in-out infinite}
+.jf-dj-caption{max-width:100%;text-align:center;line-height:1.25;display:grid;gap:3px}
+.jf-dj-caption span{font-size:8px;letter-spacing:1.4px;font-weight:900;color:var(--jf-secondary)}
+.jf-dj-caption strong{max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--ink)}
+@keyframes jfDjBounce{0%,100%{translate:0 0;rotate:-1deg}50%{translate:0 -4px;rotate:2deg}}
+@keyframes jfDjHand{0%,100%{transform:rotate(-35deg)}50%{transform:rotate(-55deg)}}
+html[data-jf-theme="aero"] .jf-dj-booth{background:linear-gradient(155deg,#7feaff,#07517c 70%);border-color:#d9ffff}
+html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0c0c0,#000080 70%);border-color:#fff}
+@media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:86px;height:76px;flex:0 0 86px;transform:scale(.78);transform-origin:center center;margin:-5px -4px}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
+@media(prefers-reduced-motion:reduce){.jf-dj-character,.jf-dj-arm-right{animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -364,13 +406,27 @@ html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece
     <div class="track-card" aria-live="polite">
       <img class="track-art" id="trackArt" alt="Capa do álbum" src="" hidden>
       <div class="track-art" id="trackPlaceholder" aria-hidden="true">♫</div>
-      <div>
-        <div class="track-kicker" id="trackKicker">✦ NOW PLAYING</div>
-        <h3 class="track-title" id="trackTitle">A música aparece aqui</h3>
-        <p class="track-artist" id="trackArtist">Conecte o Spotify para mostrar os metadados</p>
-        <p class="track-album" id="trackAlbum">JUNTO.FM · Y2K RADIO</p>
-        <div class="progress-wrap" role="progressbar" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
-        <div class="track-times"><span id="trackElapsed">0:00</span><span id="trackDuration">0:00</span></div>
+      <div class="jf-track-content">
+        <div class="jf-track-info">
+          <div class="track-kicker" id="trackKicker">✦ NOW PLAYING</div>
+          <h3 class="track-title" id="trackTitle">A música aparece aqui</h3>
+          <p class="track-artist" id="trackArtist">Conecte o Spotify para mostrar os metadados</p>
+          <p class="track-album" id="trackAlbum">JUNTO.FM · Y2K RADIO</p>
+          <div class="progress-wrap" role="progressbar" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
+          <div class="track-times"><span id="trackElapsed">0:00</span><span id="trackDuration">0:00</span></div>
+        </div>
+        <div class="jf-mini-dj" id="jfMiniDj" hidden aria-label="Mini DJ de quem está transmitindo">
+          <div class="jf-dj-stage" aria-hidden="true">
+            <div class="jf-dj-light jf-dj-light-a"></div><div class="jf-dj-light jf-dj-light-b"></div>
+            <div class="jf-dj-booth"><span class="jf-dj-deck jf-dj-deck-left"></span><span class="jf-dj-mixer"></span><span class="jf-dj-deck jf-dj-deck-right"></span></div>
+            <div class="jf-dj-character">
+              <span class="jf-dj-shadow"></span><span class="jf-dj-leg jf-dj-leg-left"></span><span class="jf-dj-leg jf-dj-leg-right"></span>
+              <span class="jf-dj-body"></span><span class="jf-dj-neck"></span><span class="jf-dj-head"><i class="jf-dj-hair"></i><i class="jf-dj-face"></i><i class="jf-dj-eye jf-dj-eye-left"></i><i class="jf-dj-eye jf-dj-eye-right"></i><i class="jf-dj-smile"></i></span>
+              <span class="jf-dj-ear jf-dj-ear-left"></span><span class="jf-dj-ear jf-dj-ear-right"></span><span class="jf-dj-arm jf-dj-arm-left"></span><span class="jf-dj-arm jf-dj-arm-right"></span>
+            </div>
+          </div>
+          <div class="jf-dj-caption"><span>NO DECKS</span><strong id="jfTransmitterName">DJ ao vivo</strong></div>
+        </div>
       </div>
     </div>
     <div class="spotify-actions">
@@ -579,6 +635,14 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   function formatTime(ms) {
     const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+  }
+  function jfRenderMiniDj(transmitter) {
+    const active = Boolean(transmitter && transmitter.active !== false && transmitter.id);
+    $("jfMiniDj").hidden = !active;
+    if (active) {
+      $("jfTransmitterName").textContent = String(transmitter.name || "DJ ao vivo").slice(0, 24);
+      $("jfMiniDj").setAttribute("aria-label", "Transmitindo agora: " + String(transmitter.name || "DJ ao vivo").slice(0, 24));
+    }
   }
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
@@ -911,7 +975,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { joined = false; jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -921,15 +985,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     setStatus(errorMessage);
     enableControls();
   });
-  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
+  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null }) => {
     if (joined && room !== joinedRoom) resetSession();
     joined = true; room = joinedRoom; $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
     if (track) renderTrack(track, true); else renderTrack(null);
+    jfRenderMiniDj(transmitter);
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
+  socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
   socket.on('track-update', track => renderTrack(track, true));
   socket.on('track-clear', () => renderTrack(null));
   socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} · participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
@@ -980,7 +1046,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
-      localStream = captured; isSender = true; socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
+      localStream = captured; isSender = true; socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
       // serão conectados pelo evento peer-joined do servidor.
       const roomInfo = await new Promise(resolve => {
@@ -998,7 +1064,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   async function stopTransmission() {
     // Notifica cada ouvinte de forma direcionada.
     for (const id of [...peers.keys()]) sendSignal(id, { type: 'transmission-stopped' });
+    socket.emit('transmission-stopped', { room });
     socket.emit('clear-track', { room });
+    jfRenderMiniDj(null);
     resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('Transmissão encerrada.');
   }
   $("stop").onclick = stopTransmission;
