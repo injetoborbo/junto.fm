@@ -1318,9 +1318,38 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     for(const [id,p] of all){
       const card=document.createElement("div");card.className="jf-person";
       if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="☺";card.appendChild(av);}
-      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);card.tabIndex=0;list.appendChild(card);
+      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);
+      if(id!==socket.id){
+        const actions=document.createElement("div");actions.className="jf-person-actions";
+        const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.textContent="＋ Amigo";request.title="Enviar solicitação de amizade";request.setAttribute("aria-label","Enviar solicitação de amizade para "+(p.name||"Ouvinte"));
+        const already=jfFriends.some(f=>f.name.toLowerCase()===(p.name||"Ouvinte").toLowerCase()&&f.room.toLowerCase()===(room||"").toLowerCase());
+        if(already){request.textContent="✓ Amigo";request.disabled=true;}
+        request.addEventListener("click",()=>{if(!joined||!room){request.textContent="Entre em uma sala primeiro";return;}socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});request.disabled=true;request.textContent="Solicitada";});
+        actions.appendChild(request);card.appendChild(actions);
+      }
+      card.tabIndex=0;list.appendChild(card);
     }
   }
+  socket.on("friend-request-received",({fromId,profile={},room:friendRoom})=>{
+    const senderName=String(profile.name||"Ouvinte").slice(0,24);
+    if(!fromId||!friendRoom)return;
+    if(window.confirm(senderName+" quer adicionar você como amigo. Aceitar?")){
+      if(!jfFriends.some(f=>f.name.toLowerCase()===senderName.toLowerCase()&&f.room.toLowerCase()===String(friendRoom).toLowerCase())){
+        jfFriends.push({name:senderName,room:String(friendRoom).slice(0,40)});jfFriends=jfFriends.slice(-100);
+        try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}
+      }
+      socket.emit("friend-request-response",{targetId:fromId,accepted:true,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});
+      jfRenderFriends();setStatus("Amizade aceita com "+senderName+".",true);
+    }else socket.emit("friend-request-response",{targetId:fromId,accepted:false});
+  });
+  socket.on("friend-request-result",({accepted,profile={},room:friendRoom})=>{
+    const name=String(profile.name||"Amigo").slice(0,24);
+    if(accepted&&friendRoom&&!jfFriends.some(f=>f.name.toLowerCase()===name.toLowerCase()&&f.room.toLowerCase()===String(friendRoom).toLowerCase())){
+      jfFriends.push({name,room:String(friendRoom).slice(0,40)});jfFriends=jfFriends.slice(-100);
+      try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}
+      jfRenderFriends();setStatus(name+" aceitou sua solicitação de amizade.",true);
+    }else if(!accepted)setStatus(name+" recusou a solicitação de amizade.");
+  });
   const jfFriendsKey="junto_friends_v1";
   function jfLoadFriends(){try{const v=JSON.parse(localStorage.getItem(jfFriendsKey)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.name==="string"&&typeof x.room==="string").slice(0,100):[];}catch(_){return [];}}
   let jfFriends=jfLoadFriends();
