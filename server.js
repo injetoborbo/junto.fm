@@ -85,7 +85,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 // Mantém a API key específica da credencial TURN no servidor, nunca no HTML público.
-const METERED_DOMAIN = String(process.env.METERED_DOMAIN || "").trim().replace(/^https?:\\/\\//i, "").replace(/\\/$/, "");
+const METERED_DOMAIN = String(process.env.METERED_DOMAIN || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
 const METERED_TURN_API_KEY = String(process.env.METERED_TURN_API_KEY || "").trim();
 let cachedTurnIceServers = null;
 let cachedTurnIceServersAt = 0;
