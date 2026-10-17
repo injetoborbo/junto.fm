@@ -79,8 +79,31 @@ async function validSpotifyAccessToken(session) {
   return session.accessToken;
 }
 
+
+app.get("/api/ice-servers", (_req, res) => {
+  const urls = (process.env.TURN_URLS || "")
+    .split(",")
+    .map(url => url.trim())
+    .filter(Boolean);
+
+  const iceServers = [
+    { urls: "stun:stun.l.google.com:19302" }
+  ];
+
+  const username = process.env.TURN_USERNAME || "";
+  const credential = process.env.TURN_CREDENTIAL || "";
+
+  if (urls.length && username && credential) {
+    iceServers.push({ urls, username, credential });
+  }
+
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ iceServers });
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
 
 app.get("/api/spotify/status", (req, res) => {
   res.json({ configured: Boolean(SPOTIFY_CLIENT_ID), connected: Boolean(getSession(req, res)) });

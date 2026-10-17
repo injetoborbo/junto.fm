@@ -130,7 +130,23 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
   let trackBaseTime = Date.now();
   const peers = new Map(); // socketId -> RTCPeerConnection
   const pendingCandidates = new Map();
-  const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+ let config = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+};
+
+const iceConfigReady = fetch("/api/ice-servers")
+  .then(response => {
+    if (!response.ok) throw new Error("Falha ao carregar servidores ICE");
+    return response.json();
+  })
+  .then(data => {
+    if (Array.isArray(data.iceServers) && data.iceServers.length) {
+      config = data;
+    }
+  })
+  .catch(error => {
+    console.error("Erro ao carregar configuração ICE:", error);
+  });
 
   function setStatus(message, ok = false) {
     $("status").textContent = message;
@@ -304,6 +320,7 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
   async function createSenderOffer(id) {
     if (!isSender || !localStream || !joined) return;
     try {
+      await iceConfigReady;
       const peer = makePeer(id);
       localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
       await tuneAudioSender(peer);
@@ -364,6 +381,7 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
     if (!from || !data || !joined) return;
     try {
       if (data.type === 'offer' && !isSender) {
+        await iceConfigReady;
         const peer = makePeer(from);
         await peer.setRemoteDescription(data.sdp);
         await applyPendingCandidates(from, peer);
