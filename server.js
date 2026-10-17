@@ -219,6 +219,27 @@ io.on("connection", socket => {
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
   });
 
+  socket.on("suggestion-settings", payload => {
+    if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
+    socket.data.receiveMusicSuggestions = Boolean(payload.enabled);
+  });
+
+  socket.on("music-suggestion", payload => {
+    if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
+    const suggestion = String(payload.suggestion || "").trim().slice(0, 180);
+    if (!suggestion) return;
+    const peer = io.sockets.sockets.get(socket.id);
+    const fromName = String(payload.fromName || peer?.data.profile?.name || "Ouvinte").trim().slice(0, 24) || "Ouvinte";
+    const roomMembers = io.sockets.adapter.rooms.get(socket.data.room) || new Set();
+    for (const id of roomMembers) {
+      if (id === socket.id) continue;
+      const recipient = io.sockets.sockets.get(id);
+      if (recipient?.data.receiveMusicSuggestions) {
+        recipient.emit("music-suggestion", { suggestion, fromName });
+      }
+    }
+  });
+
   socket.on("room-command", payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
     socket.to(socket.data.room).emit("room-command", { command: payload.command });
