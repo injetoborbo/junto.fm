@@ -1058,6 +1058,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   $("jfCloseSuggestion").addEventListener("click",jfHideSuggestion);
   $("jfSuggestionDone").addEventListener("click",jfHideSuggestion);
   socket.on("music-suggestion",jfShowSuggestion);
+  socket.on("music-suggestion-error",({error}={})=>{$("jfSuggestionStatus").textContent=String(error||"Não foi possível enviar a sugestão.");});
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
