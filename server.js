@@ -188,6 +188,10 @@ io.on("connection", socket => {
       socket.emit("join-error", { message: "Digite um nome válido para a sala." });
       return;
     }
+    if (!roomAccess.has(room)) {
+      socket.emit("join-error", { message: "Essa sala não existe. Confira o nome ou crie uma sala nova." });
+      return;
+    }
     const access = roomAccess.get(room);
     if (access) {
       const attempted = crypto.scryptSync(password, access.salt, 64);
