@@ -207,6 +207,48 @@ html[data-jf-theme="aero"] .jf-person{background:#082f4be8;border-color:#55d9f4}
 #jfProfileStatus{line-height:1.6;overflow-wrap:anywhere}
 html[data-jf-theme="aero"] .jf-avatar-upload{color:#f4ffff;background:#064267;border-color:#7beaff}
 @media(max-width:520px){.jf-profile-editor{grid-template-columns:1fr}.jf-profile-editor .jf-avatar{width:108px;height:108px}.jf-modal{padding:20px}.jf-modal-head{align-items:center}}
+
+/* Windows clássico 95/98: área de trabalho teal, cinza e controles em relevo. */
+html[data-jf-theme="classic"]{color-scheme:light;--ink:#111;--muted:#333;--jf-primary:#000080;--jf-secondary:#c0c0c0;--jf-glow:#008080;background:#008080}
+html[data-jf-theme="classic"] body{font-family:Tahoma,Arial,sans-serif;color:#111;background:#008080!important}
+html[data-jf-theme="classic"] body:before{display:none}
+html[data-jf-theme="classic"] body:after{content:"";display:none}
+html[data-jf-theme="classic"] main>p,html[data-jf-theme="classic"] .small,html[data-jf-theme="classic"] footer{color:#fff;text-shadow:1px 1px #000}
+html[data-jf-theme="classic"] .brand,html[data-jf-theme="classic"] h1{color:#fff;text-shadow:2px 2px #333}
+html[data-jf-theme="classic"] .logo{border:2px outset #dfdfdf;border-radius:0;background:#c0c0c0;color:#000;box-shadow:none}
+html[data-jf-theme="classic"] .tag{border:2px outset #dfdfdf;border-radius:0;background:#c0c0c0;color:#000;box-shadow:none;animation:none}
+html[data-jf-theme="classic"] .panel,html[data-jf-theme="classic"] .jf-modal{color:#111;background:#c0c0c0;border:2px outset #dfdfdf;border-radius:0;box-shadow:inset 1px 1px #fff,inset -1px -1px #808080,3px 3px #003b3b}
+html[data-jf-theme="classic"] .panel:before{display:none}
+html[data-jf-theme="classic"] .panel h2,html[data-jf-theme="classic"] .player h2{color:#000080;text-shadow:none}
+html[data-jf-theme="classic"] label{color:#111;text-shadow:none}
+html[data-jf-theme="classic"] input,html[data-jf-theme="classic"] .jf-grid select{font-family:Tahoma,Arial,sans-serif;color:#111;background:#fff;border:2px inset #dfdfdf;border-radius:0;box-shadow:none}
+html[data-jf-theme="classic"] input:focus{border-color:#808080;box-shadow:none}
+html[data-jf-theme="classic"] .btn,html[data-jf-theme="classic"] .btn.secondary{font-family:Tahoma,Arial,sans-serif;color:#111;background:#c0c0c0;border:2px outset #dfdfdf;border-radius:0;box-shadow:inset 1px 1px #fff,inset -1px -1px #808080;text-shadow:none}
+html[data-jf-theme="classic"] .btn:hover:not(:disabled){filter:none;transform:none;box-shadow:inset 1px 1px #fff,inset -1px -1px #808080}
+html[data-jf-theme="classic"] .btn:active:not(:disabled){border-style:inset;transform:none;box-shadow:inset 1px 1px #808080}
+html[data-jf-theme="classic"] .status,html[data-jf-theme="classic"] .player p{color:#222}
+html[data-jf-theme="classic"] .dot{border-radius:0;box-shadow:none}
+html[data-jf-theme="classic"] .dot.ok{background:#008000;border-color:#004000;box-shadow:none}
+html[data-jf-theme="classic"] .cover,html[data-jf-theme="classic"] .track-art{border:2px outset #dfdfdf;border-radius:0;background:#000080;color:#fff;box-shadow:none}
+html[data-jf-theme="classic"] .track-card{background:#c0c0c0;border:2px inset #dfdfdf;border-radius:0;box-shadow:none}
+html[data-jf-theme="classic"] .track-kicker{color:#000080}
+html[data-jf-theme="classic"] .track-title{color:#111}
+html[data-jf-theme="classic"] .track-artist,html[data-jf-theme="classic"] .track-album,html[data-jf-theme="classic"] .track-times{color:#222}
+html[data-jf-theme="classic"] .progress-wrap{border:2px inset #dfdfdf;border-radius:0;background:#fff;box-shadow:none}
+html[data-jf-theme="classic"] .progress-fill{border-radius:0;background:#000080;box-shadow:none}
+html[data-jf-theme="classic"] .notice{color:#111;background:#dfdfdf;border:2px inset #dfdfdf;border-left:2px inset #dfdfdf;border-radius:0;box-shadow:none}
+html[data-jf-theme="classic"] .notice strong,html[data-jf-theme="classic"] code{color:#000080}
+html[data-jf-theme="classic"] code{background:#fff;border:1px inset #808080;border-radius:0}
+html[data-jf-theme="classic"] .num{color:#111;background:#c0c0c0;border:2px outset #dfdfdf;border-radius:0;box-shadow:none}
+html[data-jf-theme="classic"] .jf-person{color:#111;background:#dfdfdf;border:2px outset #dfdfdf;border-radius:0}
+html[data-jf-theme="classic"] .jf-person:hover,html[data-jf-theme="classic"] .jf-person:focus-within{border-color:#000080;box-shadow:2px 2px #808080}
+html[data-jf-theme="classic"] .jf-avatar,html[data-jf-theme="classic"] .jf-profile-trigger img,html[data-jf-theme="classic"] .jf-profile-trigger #jfTopAvatarPlaceholder{border:2px inset #dfdfdf;border-radius:0;background:#fff;color:#000080;box-shadow:none}
+html[data-jf-theme="classic"] .jf-avatar-upload{color:#111;background:#c0c0c0;border:2px outset #dfdfdf;border-radius:0}
+html[data-jf-theme="classic"] .jf-modal-backdrop{background:#0008;backdrop-filter:none}
+html[data-jf-theme="classic"] .jf-modal{animation:none}
+html[data-jf-theme="classic"] .jf-suggestion-settings,html[data-jf-theme="classic"] .jf-suggestion-popup{color:#111;background:#c0c0c0;border:2px outset #dfdfdf;border-radius:0;box-shadow:3px 3px #333}
+html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-popup-close{color:#000080}
+
 </style>
 </head>
 <body>
@@ -301,7 +343,7 @@ html[data-jf-theme="aero"] .jf-avatar-upload{color:#f4ffff;background:#064267;bo
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfProfileHeading">
     <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-profile jf-profile-editor">
-      <div class="jf-profile-photo"><img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden><div id="jfAvatarPlaceholder" class="jf-avatar">♫</div><label class="jf-avatar-upload" for="jfAvatarFile">Trocar foto</label></div>
+      <div class="jf-profile-photo"><img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden><div id="jfAvatarPlaceholder" class="jf-avatar" aria-label="Avatar padrão">☺</div><label class="jf-avatar-upload" for="jfAvatarFile">Trocar foto</label></div>
       <div class="jf-fields">
         <label for="jfName">Nome de exibição</label>
         <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
@@ -318,7 +360,7 @@ html[data-jf-theme="aero"] .jf-avatar-upload{color:#f4ffff;background:#064267;bo
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
     <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-grid">
-      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows clássico (95/98)</option><option value="custom">Minha cor</option></select></div>
       <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
     </div>
     <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">Disponível no Frutiger Aero. A preferência fica salva neste navegador.</p></div>
@@ -778,7 +820,7 @@ const config = {
   socket.on('disconnect', () => knownPeers.clear());
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
-  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"]};
+  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
   let jfProfile={name:"Ouvinte",avatar:"",motto:""};
   const jfPeerProfiles=new Map();
   try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);}catch(_){}
@@ -807,7 +849,7 @@ const config = {
     if(!all.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
     for(const [id,p] of all){
       const card=document.createElement("div");card.className="jf-person";
-      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="♫";card.appendChild(av);}
+      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="☺";card.appendChild(av);}
       const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);card.tabIndex=0;list.appendChild(card);
     }
   }
