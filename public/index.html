@@ -325,7 +325,7 @@ const iceConfigReady = fetch("/api/ice-servers")
       localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
       await tuneAudioSender(peer);
       const offer = await peer.createOffer();
-      offer.sdp = optimizeMusicSdp(offer.sdp);
+      // offer.sdp = optimizeMusicSdp(offer.sdp);
       if (peers.get(id) !== peer) return;
       await peer.setLocalDescription(offer);
       sendSignal(id, { type: 'offer', sdp: peer.localDescription });
