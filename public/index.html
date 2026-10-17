@@ -194,7 +194,7 @@ main{max-width:1080px}
 .jf-suggest-form .row{align-items:stretch}
 .jf-suggest-form input{flex:1 1 230px}
 .jf-suggestion-popup[hidden]{display:none!important}
-.jf-suggestion-popup{position:fixed;right:22px;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
+.jf-suggestion-popup{position:fixed;left:22px;right:auto;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
 .jf-popup-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--jf-secondary);font-size:10px;font-weight:900;letter-spacing:1.2px}
 .jf-popup-close{border:0;background:transparent;color:var(--ink);font-size:18px;cursor:pointer}
 .jf-suggestion-popup>strong{display:block;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
@@ -301,26 +301,217 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 .jf-room-lock-option small{display:block;margin-top:3px;color:#bfc4ed;font-size:11px;line-height:1.4}
 .jf-room-password-fields[hidden]{display:none}
 .jf-room-modal-error{min-height:18px;margin:10px 0;color:#ff9eb8;font-size:12px;line-height:1.5}
+.jf-room-entry-panel{width:min(100%,680px);margin:0 auto 24px}
+.jf-room-entry-actions[hidden],#jfLeaveRoom[hidden]{display:none!important}
+body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
+body:not(.jf-in-room) .jf-topbar{justify-content:center}
+body:not(.jf-in-room) .jf-top-actions,body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
+body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(.jf-modal-backdrop){display:none!important}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{justify-content:center;flex-wrap:wrap}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{flex:1 1 190px;min-height:52px}
+#jfLeaveRoom{min-width:140px}
+body.jf-in-room #jfRoomEntryPanel{width:100%;margin-bottom:24px}
+@media(max-width:520px){body:not(.jf-in-room) main{min-height:calc(100vh - 24px)}body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{width:100%}}
 .jf-room-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
 .jf-room-modal-actions .btn{min-width:112px}
 @keyframes jfModalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:520px){.jf-room-modal{padding:22px 18px;border-radius:18px}.jf-room-modal h2{font-size:21px}.jf-room-modal-actions{flex-direction:column-reverse}.jf-room-modal-actions .btn{width:100%}}
+
+/* Chat retrô: seletor de emojis e acabamento Windows XP Luna */
+.jf-chat-tools{display:flex;align-items:center;gap:7px;padding:8px 10px 0}
+.jf-chat-emoji-toggle{padding:6px 10px!important;font-size:12px!important}
+.jf-chat-emoji-tray{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;max-height:112px;overflow:auto;border-bottom:1px solid var(--jf-secondary);background:color-mix(in srgb,var(--jf-glow) 18%,#101333)}
+.jf-chat-emoji-tray[hidden]{display:none}
+.jf-chat-emoji{min-width:34px;min-height:32px;padding:3px 5px;border:1px solid transparent;border-radius:5px;background:transparent;font-size:20px;line-height:1;cursor:pointer}
+.jf-chat-emoji:hover,.jf-chat-emoji:focus-visible{border-color:var(--jf-secondary);background:color-mix(in srgb,var(--jf-primary) 25%,transparent);outline:none}
+.jf-chat-emoji-tray .jf-chat-kaomoji{font-family:Tahoma,"Segoe UI",sans-serif;font-size:12px;min-width:48px}
+html[data-jf-theme="classic"] .jf-chat-launcher{border:2px solid #fff;border-radius:9px;background:linear-gradient(#8bd2ff 0%,#3189e9 20%,#0755b8 100%);box-shadow:inset 0 1px #ffffffd9,0 2px 4px #164c8c88;color:#fff}
+html[data-jf-theme="classic"] .jf-chat-window{border:2px solid #0755b8;border-radius:8px 8px 5px 5px;background:#ece9d8;box-shadow:2px 4px 12px #123b6b88;backdrop-filter:none}
+html[data-jf-theme="classic"] .jf-chat-header{min-height:42px;padding:7px 8px 7px 12px;border-bottom:1px solid #174f9c;border-radius:5px 5px 0 0;background:linear-gradient(180deg,#3c8cf4 0%,#1765d5 48%,#0750b8 100%);box-shadow:inset 0 1px #8dc5ff}
+html[data-jf-theme="classic"] .jf-chat-heading{font-family:Tahoma,"Segoe UI",sans-serif;font-size:13px;color:#fff;text-shadow:0 1px 1px #123f88}
+html[data-jf-theme="classic"] .jf-chat-subheading{color:#e1efff;font-size:10px}
+html[data-jf-theme="classic"] .jf-chat-close{width:24px;height:23px;flex-basis:24px;border:1px solid #fff;border-radius:4px;background:linear-gradient(#ffb8a5,#f05b42 48%,#d92c16 52%,#ef6347);box-shadow:inset 0 1px #fff8;color:#fff;font-family:Tahoma,sans-serif;font-size:18px;font-weight:bold;line-height:1;text-shadow:0 1px #922}
+html[data-jf-theme="classic"] .jf-chat-log{background:linear-gradient(#f8fbff,#e8f3ff);gap:8px}
+html[data-jf-theme="classic"] .jf-chat-empty{color:#476b90}
+html[data-jf-theme="classic"] .jf-chat-avatar{border:1px solid #7f9db9;border-radius:4px;background:linear-gradient(#fff,#cde6ff);color:#0757ae}
+html[data-jf-theme="classic"] .jf-chat-bubble{border:1px solid #9ab9d6;border-radius:3px;background:#fff;box-shadow:0 1px 1px #174c8c12}
+html[data-jf-theme="classic"] .jf-chat-meta strong{color:#0757ae}
+html[data-jf-theme="classic"] .jf-chat-meta time{color:#65809b}
+html[data-jf-theme="classic"] .jf-chat-text{color:#18345b;font-family:Tahoma,"Segoe UI",sans-serif}
+html[data-jf-theme="classic"] .jf-chat-tools{background:#ece9d8;border-top:1px solid #fff}
+html[data-jf-theme="classic"] .jf-chat-emoji-tray{border-bottom:1px solid #b7cde2;background:#f4f8fc}
+html[data-jf-theme="classic"] .jf-chat-emoji:hover,html[data-jf-theme="classic"] .jf-chat-emoji:focus-visible{border-color:#7aa7d6;background:#d8eaff}
+html[data-jf-theme="classic"] .jf-chat-form{gap:5px;padding:8px;background:#ece9d8;border-top:1px solid #c4c1b8}
+html[data-jf-theme="classic"] .jf-chat-form input{border:1px solid #7f9db9;border-radius:2px;background:#fff;color:#18345b;box-shadow:inset 1px 1px 2px #0001}
+html[data-jf-theme="classic"] .jf-chat-form .btn{padding:8px 10px}
+html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece9d8;color:#536d87}
+
+/* Mini DJ low-poly em CSS 3D: independente de modelos externos e leve no celular. */
+.track-card{grid-template-columns:164px minmax(0,1fr)}
+.jf-track-content{display:grid;grid-template-columns:minmax(0,1fr) 126px;gap:10px;align-items:center;min-width:0}
+.jf-track-info{min-width:0}
+.jf-mini-dj[hidden]{display:none!important}
+.jf-mini-dj{width:126px;min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:5px 2px 0;border-left:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent)}
+.jf-dj-stage{position:relative;width:116px;height:120px;perspective:420px;isolation:isolate}
+.jf-dj-stage:before{content:"";position:absolute;left:8px;right:8px;bottom:8px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--jf-glow) 55%,transparent);filter:blur(5px);transform:rotateX(62deg)}
+.jf-dj-light{position:absolute;z-index:0;width:36px;height:36px;border-radius:50%;filter:blur(12px);opacity:.5}
+.jf-dj-light-a{left:10px;top:17px;background:var(--jf-primary)}
+.jf-dj-light-b{right:8px;top:28px;background:var(--jf-secondary)}
+.jf-dj-booth{position:absolute;z-index:3;left:5px;right:5px;bottom:9px;height:30px;border:1px solid color-mix(in srgb,var(--jf-secondary) 70%,white);background:linear-gradient(155deg,color-mix(in srgb,var(--jf-secondary) 38%,#26355c),color-mix(in srgb,var(--jf-glow) 85%,#080d20) 65%);box-shadow:0 5px 0 color-mix(in srgb,var(--jf-glow) 80%,#05071b),inset 0 1px #fff8;transform:rotateX(12deg) skewX(-5deg);border-radius:3px}
+.jf-dj-deck{position:absolute;top:4px;width:23px;height:19px;border:1px solid #b6eaff;border-radius:50%;background:repeating-radial-gradient(circle,#10182f 0 2px,#a3b5d5 2.5px 3px,#28375a 4px 5px);box-shadow:0 0 5px var(--jf-secondary)}
+.jf-dj-deck-left{left:5px}.jf-dj-deck-right{right:5px}
+.jf-dj-mixer{position:absolute;left:40px;top:5px;width:26px;height:17px;border:1px solid #e5c9ff;border-radius:2px;background:repeating-linear-gradient(90deg,#25234c 0 4px,#ff78d2 4px 5px,#25234c 5px 8px)}
+.jf-dj-character{position:absolute;z-index:2;left:50%;top:3px;width:66px;height:92px;transform:translateX(-50%);animation:jfDjBounce 1.25s ease-in-out infinite;transform-style:preserve-3d}
+.jf-dj-shadow{position:absolute;left:17px;bottom:0;width:34px;height:8px;border-radius:50%;background:#05081788;filter:blur(3px)}
+.jf-dj-leg{position:absolute;top:68px;width:12px;height:23px;background:linear-gradient(90deg,#27305c,#5364a1 65%,#20264a);clip-path:polygon(14% 0,100% 0,82% 100%,0 100%);border-bottom:3px solid #151b37}
+.jf-dj-leg-left{left:18px;transform:rotate(5deg)}.jf-dj-leg-right{right:17px;transform:rotate(-7deg)}
+.jf-dj-body{position:absolute;left:13px;top:39px;width:41px;height:38px;background:linear-gradient(100deg,#ff78d2 0 22%,#a94fd0 23% 62%,#5b5ed0 63% 100%);clip-path:polygon(18% 0,82% 0,100% 19%,88% 100%,12% 100%,0 19%);border-radius:6px;filter:drop-shadow(0 3px 1px #050817)}
+.jf-dj-neck{position:absolute;left:28px;top:32px;width:12px;height:12px;background:#d88d65;clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)}
+.jf-dj-head{position:absolute;left:16px;top:6px;width:36px;height:35px;border:1px solid #6f3c3c;background:linear-gradient(115deg,#ffd0a0 0 18%,#efad7e 19% 66%,#b96e60 67%);clip-path:polygon(18% 0,82% 0,100% 26%,87% 83%,64% 100%,32% 96%,12% 78%,0 25%);box-shadow:inset -5px -2px #8e5967;transform:rotate(-3deg)}
+.jf-dj-hair{position:absolute;left:-1px;top:-2px;width:38px;height:15px;background:linear-gradient(120deg,#26233f,#4d3864);clip-path:polygon(0 50%,18% 0,43% 18%,66% 0,100% 20%,90% 100%,72% 57%,46% 68%,23% 52%,10% 100%)}
+.jf-dj-face{position:absolute;right:0;top:14px;width:9px;height:13px;background:#eaa078;clip-path:polygon(0 0,100% 28%,60% 100%,0 72%)}
+.jf-dj-eye{position:absolute;top:17px;width:3px;height:4px;background:#28213a;border-radius:50%}
+.jf-dj-eye-left{left:10px}.jf-dj-eye-right{left:23px}
+.jf-dj-smile{position:absolute;left:14px;top:25px;width:9px;height:4px;border-bottom:1.5px solid #873d55;border-radius:50%}
+.jf-dj-ear{position:absolute;top:18px;width:10px;height:14px;border:3px solid #302744;background:#f5b182;border-radius:4px}
+.jf-dj-ear-left{left:11px}.jf-dj-ear-right{right:10px}
+.jf-dj-arm{position:absolute;top:43px;width:12px;height:28px;background:linear-gradient(90deg,#efaa82,#d88370);clip-path:polygon(20% 0,100% 10%,70% 100%,0 86%);transform-origin:top center}
+.jf-dj-arm-left{left:8px;transform:rotate(25deg)}.jf-dj-arm-right{right:7px;transform:rotate(-35deg);animation:jfDjHand 1.1s ease-in-out infinite}
+.jf-dj-caption{max-width:100%;text-align:center;line-height:1.25;display:grid;gap:3px}
+.jf-dj-caption span{font-size:8px;letter-spacing:1.4px;font-weight:900;color:var(--jf-secondary)}
+.jf-dj-caption strong{max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--ink)}
+@keyframes jfDjBounce{0%,100%{translate:0 0;rotate:-1deg}50%{translate:0 -4px;rotate:2deg}}
+@keyframes jfDjHand{0%,100%{transform:rotate(-35deg)}50%{transform:rotate(-55deg)}}
+html[data-jf-theme="aero"] .jf-dj-booth{background:linear-gradient(155deg,#7feaff,#07517c 70%);border-color:#d9ffff}
+html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0c0c0,#000080 70%);border-color:#fff}
+@media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:86px;height:76px;flex:0 0 86px;transform:scale(.78);transform-origin:center center;margin:-5px -4px}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
+@media(prefers-reduced-motion:reduce){.jf-dj-character,.jf-dj-arm-right{animation:none!important}}
+
+/* DJ macaquinho: personagem CSS 3D animado, sem sprite achatado. */
+.jf-dj-character{
+  left:50%!important;top:0!important;width:82px!important;height:104px!important;
+  transform:translateX(-50%)!important;transform-style:preserve-3d;
+  background:none!important;filter:drop-shadow(0 5px 2px #37204b44)!important;
+  animation:jfMonkeyGroove 1.65s ease-in-out infinite!important;
+}
+.jf-dj-character>span{display:block!important;position:absolute;transform-style:preserve-3d}
+.jf-dj-shadow{left:20px!important;bottom:0!important;width:43px!important;height:8px!important;background:#37234b44!important;filter:blur(3px)!important}
+.jf-dj-leg{top:72px!important;width:15px!important;height:25px!important;border:1px solid #4c347e!important;border-radius:4px 4px 7px 7px!important;clip-path:polygon(12% 0,100% 0,88% 100%,0 100%)!important;background:linear-gradient(90deg,#514080,#a18ade 48%,#5b438f)!important;box-shadow:inset -3px 0 #46316e}
+.jf-dj-leg-left{left:19px!important}.jf-dj-leg-right{right:17px!important}
+.jf-dj-body{left:15px!important;top:41px!important;width:51px!important;height:39px!important;clip-path:polygon(17% 0,82% 0,100% 17%,89% 100%,10% 100%,0 17%)!important;border:1px solid #b91328;border-radius:7px!important;background:linear-gradient(100deg,#ff6767 0%,#f51e35 36%,#d80d28 76%,#a80822 100%)!important;box-shadow:inset 5px 0 #ff8580,inset -5px 0 #b20b27,0 3px 2px #4d173e66!important}
+.jf-dj-body:after{content:"ϟ";position:absolute;left:17px;top:6px;color:#fff8f0;font:bold 27px/1 Arial,sans-serif;text-shadow:1px 2px #bc1831}
+.jf-dj-neck{left:34px!important;top:33px!important;width:15px!important;height:14px!important;background:linear-gradient(90deg,#71442f,#d89a68 45%,#8c5236)!important;border-radius:4px!important}
+.jf-dj-head{left:15px!important;top:6px!important;width:52px!important;height:43px!important;overflow:visible!important;clip-path:none!important;border:2px solid #59341f!important;border-radius:46% 46% 43% 43%!important;background:linear-gradient(125deg,#c18a5b 0%,#8a5737 38%,#633a2a 72%,#42271f 100%)!important;box-shadow:inset 5px 3px #d2a174,inset -5px -4px #42271f,2px 4px 2px #4b2a2855!important;transform:rotate(-3deg) translateZ(4px)!important}
+.jf-dj-hair{left:2px!important;top:-3px!important;width:45px!important;height:18px!important;clip-path:polygon(0 45%,12% 9%,31% 21%,45% 0,60% 16%,77% 4%,100% 27%,91% 70%,73% 53%,56% 74%,37% 57%,19% 78%,8% 100%)!important;background:linear-gradient(120deg,#75452c,#48291f 55%,#2d1b18)!important}
+.jf-dj-face{left:8px!important;top:20px!important;width:37px!important;height:20px!important;border-radius:42% 42% 48% 48%!important;clip-path:none!important;background:linear-gradient(140deg,#ffe5c2,#f4bd91 62%,#d9956d)!important;box-shadow:inset 0 -3px #d99a72!important}
+.jf-dj-face:before{content:"";position:absolute;left:4px;top:-8px;width:8px;height:8px;border-radius:50%;background:#f4a13b;box-shadow:15px 6px 0 -1px #f4a13b}
+.jf-dj-eye{top:19px!important;width:5px!important;height:11px!important;border-radius:70% 70% 55% 55%!important;background:linear-gradient(90deg,#17131b,#49302a)!important;box-shadow:1px 0 #fff3}
+.jf-dj-eye-left{left:12px!important}.jf-dj-eye-right{left:32px!important}
+.jf-dj-smile{left:23px!important;top:34px!important;width:10px!important;height:5px!important;border-bottom:2px solid #99583c!important;border-radius:50%!important}
+.jf-dj-ear{top:19px!important;width:17px!important;height:19px!important;border:3px solid #603a27!important;border-radius:50%!important;background:radial-gradient(circle at 42% 43%,#e9a67f 0 35%,#ad704a 38% 58%,#71442e 65%)!important;box-shadow:inset 2px 1px #f5c59b,2px 2px 2px #3f272c66!important}
+.jf-dj-ear-left{left:5px!important}.jf-dj-ear-right{right:4px!important}
+.jf-dj-arm{top:46px!important;width:13px!important;height:27px!important;clip-path:none!important;border-radius:8px 8px 6px 6px!important;transform-origin:50% 8%!important;background:linear-gradient(90deg,#4b2b20 0%,#a66c45 45%,#633a29 100%)!important;box-shadow:inset 2px 0 #d09a69,2px 2px 2px #43252866!important}
+.jf-dj-arm:after{content:"";position:absolute;left:-3px;bottom:-7px;width:17px;height:12px;border-radius:45% 55% 48% 52%;background:linear-gradient(130deg,#ffe1b9,#d99b6c 70%,#a76b47);box-shadow:inset -2px -2px #b77c54}
+.jf-dj-arm-left{left:13px!important;top:43px!important;height:21px!important;transform:rotate(-38deg) translateZ(5px)!important;transform-origin:50% 0!important}
+.jf-dj-arm-left:after{left:1px!important;bottom:12px!important;width:17px!important;height:12px!important;transform:rotate(-28deg)!important}
+.jf-dj-arm-right{right:7px!important;top:43px!important;height:29px!important;transform:rotate(38deg) translateZ(6px)!important;animation:jfMonkeyWave .72s ease-in-out infinite!important}
+.jf-dj-arm-right:after{bottom:-5px!important;left:-2px!important;transform:rotate(-15deg)!important}
+.jf-dj-stage{min-height:155px!important;overflow:visible!important}
+.jf-dj-booth{z-index:3!important;bottom:0!important}
+@keyframes jfMonkeyGroove{0%,100%{translate:0 0;rotate:-1deg}25%{translate:0 -2px;rotate:1.5deg}50%{translate:0 1px;rotate:0deg}75%{translate:0 -3px;rotate:-1.5deg}}
+@keyframes jfMonkeyWave{0%,100%{rotate:34deg}50%{rotate:61deg}}
+@media(max-width:520px){.jf-dj-character{width:78px!important;height:100px!important;top:0!important}.jf-dj-stage{min-height:140px!important}}
+@media(prefers-reduced-motion:reduce){.jf-dj-character,.jf-dj-arm-right{animation:none!important}}
+
+/* Tema rosa bebê e mascote macaquinho inspirado no desenho enviado. */
+html[data-jf-theme="baby-pink"]{color-scheme:light;--ink:#633d52;--muted:#936d83;--jf-secondary:#c875a0}
+html[data-jf-theme="baby-pink"] body{background:radial-gradient(ellipse at 50% -10%,#fff8fb 0,#ffe8f1 38%,#f9d4e4 72%,#f2c4db 100%) fixed}
+html[data-jf-theme="baby-pink"] .panel{background:linear-gradient(145deg,#fffafdF5,#fff0f6F5 60%,#ffe6f0F5);border-color:#eab5ce;box-shadow:0 8px 0 #eac8d8,0 13px 28px #b87b9922}
+html[data-jf-theme="baby-pink"] .track-card{background:linear-gradient(135deg,#fff3f8,#ffe0ed);color:#633d52}
+html[data-jf-theme="baby-pink"] .track-title,html[data-jf-theme="baby-pink"] .player h2,html[data-jf-theme="baby-pink"] .panel h2{color:#633d52;text-shadow:none}
+html[data-jf-theme="baby-pink"] .track-artist,html[data-jf-theme="baby-pink"] .track-album,html[data-jf-theme="baby-pink"] .small,html[data-jf-theme="baby-pink"] .player p{color:#936d83}
+/* Macaquinho: rosto marrom, orelhas grandes, focinho claro, camiseta vermelha, calça roxa e rabo curvado. */
+.jf-dj-character{width:78px!important;height:98px!important;left:50%!important;top:0!important}
+.jf-dj-body{left:17px!important;top:47px!important;width:44px!important;height:34px!important;background:linear-gradient(100deg,#ff3434 0%,#e50920 55%,#b90019 100%)!important;clip-path:polygon(18% 0,82% 0,100% 19%,88% 100%,12% 100%,0 19%)!important;border:1px solid #a40017!important;border-radius:5px!important;filter:drop-shadow(0 2px 1px #050817)!important}
+.jf-dj-body:after{content:"";position:absolute;left:17px;top:2px;width:7px;height:8px;border-radius:50%;background:#ffd0a0;box-shadow:5px 0 #ffd0a0}
+.jf-dj-neck{left:34px!important;top:39px!important;width:10px!important;height:10px!important;background:#8b5638!important;clip-path:polygon(15% 0,85% 0,100% 100%,0 100%)!important}
+.jf-dj-head{left:21px!important;top:7px!important;width:38px!important;height:38px!important;border:2px solid #4c2b20!important;border-radius:46% 46% 43% 43%!important;clip-path:none!important;background:linear-gradient(125deg,#9d6745 0%,#74452f 58%,#4b2a1d 100%)!important;box-shadow:inset -5px -3px #4b2a1d!important;transform:rotate(-3deg)!important}
+.jf-dj-hair{display:none!important}
+.jf-dj-face{left:7px!important;right:auto!important;top:20px!important;width:24px!important;height:14px!important;border-radius:45% 45% 50% 50%!important;clip-path:none!important;background:linear-gradient(#ffe0c8,#ffc7a4)!important;box-shadow:inset 0 -2px #e7a47d!important}
+.jf-dj-eye{top:15px!important;width:4px!important;height:5px!important;background:#17121b!important;z-index:2!important}
+.jf-dj-eye-left{left:9px!important}.jf-dj-eye-right{left:26px!important}
+.jf-dj-smile{left:17px!important;top:29px!important;width:9px!important;border-bottom:2px solid #6f3929!important;z-index:3!important}
+.jf-dj-ear{top:16px!important;width:16px!important;height:17px!important;border:3px solid #4b2a1d!important;border-radius:50%!important;background:radial-gradient(circle at 50% 50%,#d69a75 0 35%,#74452f 40%)!important;z-index:-1!important}
+.jf-dj-ear-left{left:7px!important}.jf-dj-ear-right{right:6px!important}
+.jf-dj-leg{top:78px!important;width:13px!important;height:18px!important;background:linear-gradient(90deg,#6c55a8,#8c75ce 65%,#51407f)!important;clip-path:polygon(14% 0,100% 0,82% 100%,0 100%)!important;border-bottom:3px solid #403263!important}
+.jf-dj-leg-left{left:24px!important}.jf-dj-leg-right{right:20px!important}
+.jf-dj-arm{top:49px!important;width:13px!important;height:27px!important;background:linear-gradient(90deg,#9b6545,#71452f)!important;clip-path:polygon(20% 0,100% 10%,70% 100%,0 86%)!important}
+.jf-dj-arm-left{left:12px!important;transform:rotate(25deg)!important}
+.jf-dj-arm-right{right:7px!important;transform:rotate(-125deg)!important;animation:jfDjHand 1.1s ease-in-out infinite}
+.jf-dj-character:after{content:"";position:absolute;left:54px;top:61px;width:30px;height:28px;border:4px solid #71452f;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(30deg);z-index:-1}
+.jf-dj-shadow{left:21px!important;width:40px!important}
+@media(prefers-reduced-motion:reduce){.jf-dj-character:after{animation:none!important}}
+html[data-jf-theme="pastel"]{color-scheme:light;--ink:#40354d;--muted:#766781}
+html[data-jf-theme="pastel"] body{background:radial-gradient(ellipse at 50% -10%,#fff6fc 0,#f8e5f3 38%,#dff4f0 72%,#d2e6f8 100%) fixed}
+html[data-jf-theme="pastel"] .panel{background:linear-gradient(145deg,#fffafdF2,#f6eefaF5 60%,#e9f5f4F5);border-color:#d6c3e9;box-shadow:0 8px 0 #d9cce8,0 13px 28px #8c7a9e22}
+html[data-jf-theme="pastel"] .track-card{background:linear-gradient(135deg,#fff0f8,#e4f6f1);color:#40354d}
+html[data-jf-theme="pastel"] .track-title,html[data-jf-theme="pastel"] .player h2,html[data-jf-theme="pastel"] .panel h2{color:#40354d;text-shadow:none}
+html[data-jf-theme="pastel"] .track-artist,html[data-jf-theme="pastel"] .track-album,html[data-jf-theme="pastel"] .small,html[data-jf-theme="pastel"] .player p{color:#766781}
+html[data-jf-theme="lavender"]{color-scheme:light;--ink:#302b49;--muted:#655d83}
+html[data-jf-theme="lavender"] body{background:radial-gradient(ellipse at 50% -10%,#f8f1ff 0,#e8dcff 38%,#d8e5ff 72%,#c4d7fa 100%) fixed}
+html[data-jf-theme="lavender"] .panel{background:linear-gradient(145deg,#fffaffef,#f1eafff5 60%,#e6eafff5);border-color:#b8a4e8;box-shadow:0 8px 0 #c9bde8,0 13px 28px #7d6ba322}
+html[data-jf-theme="lavender"] .track-card{background:linear-gradient(135deg,#f8f0ff,#e5e8ff);color:#302b49}
+html[data-jf-theme="lavender"] .track-title,html[data-jf-theme="lavender"] .player h2,html[data-jf-theme="lavender"] .panel h2{color:#342a53;text-shadow:none}
+html[data-jf-theme="lavender"] .track-artist,html[data-jf-theme="lavender"] .track-album,html[data-jf-theme="lavender"] .small,html[data-jf-theme="lavender"] .player p{color:#665b82}
+html[data-jf-theme="peach"]{color-scheme:light;--ink:#50333a;--muted:#7f5a5d}
+html[data-jf-theme="peach"] body{background:radial-gradient(ellipse at 50% -10%,#fff6ec 0,#ffe2d4 38%,#ffd6bd 72%,#f6c6c8 100%) fixed}
+html[data-jf-theme="peach"] .panel{background:linear-gradient(145deg,#fffaf5f2,#ffede5f5 60%,#ffe2ddf5);border-color:#e9b1a7;box-shadow:0 8px 0 #e7c0b6,0 13px 28px #a56c6c22}
+html[data-jf-theme="peach"] .track-card{background:linear-gradient(135deg,#fff0e4,#ffe0d7);color:#50333a}
+html[data-jf-theme="peach"] .track-title,html[data-jf-theme="peach"] .player h2,html[data-jf-theme="peach"] .panel h2{color:#50333a;text-shadow:none}
+html[data-jf-theme="peach"] .track-artist,html[data-jf-theme="peach"] .track-album,html[data-jf-theme="peach"] .small,html[data-jf-theme="peach"] .player p{color:#7f5a5d}
+html[data-jf-theme="mint"]{color-scheme:light;--ink:#23453c;--muted:#55786e}
+html[data-jf-theme="mint"] body{background:radial-gradient(ellipse at 50% -10%,#f2fff8 0,#d9f7e9 38%,#c4ebdb 72%,#b6e2d8 100%) fixed}
+html[data-jf-theme="mint"] .panel{background:linear-gradient(145deg,#f8fffbf2,#e7f9eff5 60%,#d8f1e8f5);border-color:#9bd2bd;box-shadow:0 8px 0 #b6ddcc,0 13px 28px #5c9e8322}
+html[data-jf-theme="mint"] .track-card{background:linear-gradient(135deg,#effff7,#d8f5e9);color:#23453c}
+html[data-jf-theme="mint"] .track-title,html[data-jf-theme="mint"] .player h2,html[data-jf-theme="mint"] .panel h2{color:#23453c;text-shadow:none}
+html[data-jf-theme="mint"] .track-artist,html[data-jf-theme="mint"] .track-album,html[data-jf-theme="mint"] .small,html[data-jf-theme="mint"] .player p{color:#55786e}
+.jf-dj-body{background:linear-gradient(120deg,#ff706b 0%,#e53943 48%,#b91c2c 100%)!important;clip-path:polygon(18% 0,82% 0,100% 19%,88% 100%,12% 100%,0 19%);border:1px solid #8f1726}
+.jf-dj-neck{display:none!important}
+.jf-dj-head{left:12px!important;top:5px!important;width:44px!important;height:42px!important;border:2px solid #4b2a1d!important;border-radius:46% 46% 43% 43%!important;clip-path:none!important;background:linear-gradient(125deg,#9b6545 0%,#71452f 58%,#4b2a1d 100%)!important;box-shadow:inset -5px -3px #4b2a1d!important}
+.jf-dj-hair{display:none!important}
+.jf-dj-face{left:10px!important;right:auto!important;top:21px!important;width:22px!important;height:15px!important;border-radius:50%!important;clip-path:none!important;background:linear-gradient(#f4d0a0,#d9a875)!important;box-shadow:inset 0 -2px #b47a56}
+.jf-dj-eye{top:14px!important;width:4px!important;height:5px!important;background:#17121b!important;z-index:2}
+.jf-dj-eye-left{left:10px!important}.jf-dj-eye-right{left:27px!important}
+.jf-dj-smile{left:18px!important;top:29px!important;width:8px!important;border-bottom:2px solid #6f3929!important;z-index:3}
+.jf-dj-ear{top:16px!important;width:14px!important;height:14px!important;border:2px solid #4b2a1d!important;border-radius:50%!important;background:radial-gradient(circle at 50% 50%,#d69a75 0 35%,#74452f 40%)!important;z-index:-1}
+.jf-dj-ear-left{left:3px!important}.jf-dj-ear-right{right:3px!important}
+.jf-dj-arm{background:linear-gradient(90deg,#9b6545,#71452f)!important}
+.jf-dj-character:after{content:"";position:absolute;left:0;top:49px;width:15px;height:19px;border:4px solid #71452f;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(28deg);z-index:-1}
+html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"] .jf-dj-caption strong,html[data-jf-theme="mint"] .jf-dj-caption strong{color:var(--ink)}
+@media(prefers-reduced-motion:reduce){.jf-dj-character:after{animation:none!important}}
+
+/* Mascote 3D GLB: mantém o DJ CSS como fallback até o modelo carregar. */
+.jf-dj-stage.jf-glb-ready{width:160px!important;height:164px!important;min-height:164px!important;perspective:none!important}
+.jf-glb-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:4;pointer-events:none}
+.jf-dj-stage.jf-glb-ready:before{opacity:.2}
+@media(max-width:600px){.jf-dj-stage.jf-glb-ready{width:100px!important;height:100px!important;min-height:100px!important;flex-basis:100px!important;transform:none!important;margin:0!important}}
 
 </style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
-  <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+  <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
-  <section class="panel">
+  <section class="panel jf-room-entry-panel" id="jfRoomEntryPanel">
     <input id="room" type="hidden" value="" autocomplete="off">
-    <div class="row jf-room-entry-actions">
+    <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
       <button class="btn" id="join" type="button">↗ Entrar na sala</button>
       <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
     </div>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
   </section>
@@ -336,21 +527,37 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
     <div class="track-card" aria-live="polite">
       <img class="track-art" id="trackArt" alt="Capa do álbum" src="" hidden>
       <div class="track-art" id="trackPlaceholder" aria-hidden="true">♫</div>
-      <div>
-        <div class="track-kicker" id="trackKicker">✦ NOW PLAYING</div>
-        <h3 class="track-title" id="trackTitle">A música aparece aqui</h3>
-        <p class="track-artist" id="trackArtist">Conecte o Spotify para mostrar os metadados</p>
-        <p class="track-album" id="trackAlbum">JUNTO.FM · Y2K RADIO</p>
-        <div class="progress-wrap" role="progressbar" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
-        <div class="track-times"><span id="trackElapsed">0:00</span><span id="trackDuration">0:00</span></div>
+      <div class="jf-track-content">
+        <div class="jf-track-info">
+          <div class="track-kicker" id="trackKicker">✦ NOW PLAYING</div>
+          <h3 class="track-title" id="trackTitle">A música aparece aqui</h3>
+          <p class="track-artist" id="trackArtist">Conecte o Spotify para mostrar os metadados</p>
+          <p class="track-album" id="trackAlbum">JUNTO.FM · Y2K RADIO</p>
+          <div class="progress-wrap" role="progressbar" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
+          <div class="track-times"><span id="trackElapsed">0:00</span><span id="trackDuration">0:00</span></div>
+        </div>
+        <div class="jf-mini-dj" id="jfMiniDj" hidden aria-label="Mini DJ de quem está transmitindo">
+          <div class="jf-dj-stage" aria-hidden="true">
+            <div class="jf-dj-light jf-dj-light-a"></div><div class="jf-dj-light jf-dj-light-b"></div>
+            <div class="jf-dj-booth"><span class="jf-dj-deck jf-dj-deck-left"></span><span class="jf-dj-mixer"></span><span class="jf-dj-deck jf-dj-deck-right"></span></div>
+            <div class="jf-dj-character">
+              <span class="jf-dj-shadow"></span><span class="jf-dj-leg jf-dj-leg-left"></span><span class="jf-dj-leg jf-dj-leg-right"></span>
+              <span class="jf-dj-body"></span><span class="jf-dj-neck"></span><span class="jf-dj-head"><i class="jf-dj-hair"></i><i class="jf-dj-face"></i><i class="jf-dj-eye jf-dj-eye-left"></i><i class="jf-dj-eye jf-dj-eye-right"></i><i class="jf-dj-smile"></i></span>
+              <span class="jf-dj-ear jf-dj-ear-left"></span><span class="jf-dj-ear jf-dj-ear-right"></span><span class="jf-dj-arm jf-dj-arm-left"></span><span class="jf-dj-arm jf-dj-arm-right"></span>
+            </div>
+          </div>
+          <div class="jf-dj-caption"><span>NO DECKS</span><strong id="jfTransmitterName">DJ ao vivo</strong></div>
+        </div>
       </div>
     </div>
     <div class="spotify-actions">
       <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Conectar Spotify</a>
       <button class="btn secondary" id="spotifyDisconnect" type="button" hidden>Desconectar Spotify</button>
+      <button class="btn" id="spotifyFavorite" type="button" hidden>♡ Favoritar música</button>
       <span class="small" id="spotifyStatus">Conecte o Spotify no dispositivo que está transmitindo.</span>
     </div>
-    <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte a conta no aparelho transmissor e deixe a música tocando no Spotify Web Player. Os ouvintes recebem os metadados pela sala.</p>
+    <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte sua conta para favoritar a faixa atual na sua biblioteca. Cada pessoa precisa conectar o próprio Spotify; os metadados da música são compartilhados pela sala.</p>
+    <p class="small" id="spotifyFavoriteStatus" aria-live="polite"></p>
     <div class="row" style="margin-top:18px">
       <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
@@ -380,6 +587,11 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
     <button type="button" id="jfChatClose" class="jf-chat-close" aria-label="Fechar chat">×</button>
   </header>
   <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
+  <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">☺ Emojis</button></div>
+  <div id="jfChatEmojiTray" class="jf-chat-emoji-tray" aria-label="Escolha um emoji" hidden>
+    <button type="button" class="jf-chat-emoji" data-emoji="☺">☺</button><button type="button" class="jf-chat-emoji" data-emoji="☻">☻</button><button type="button" class="jf-chat-emoji" data-emoji="ツ">ツ</button><button type="button" class="jf-chat-emoji" data-emoji="♥">♥</button><button type="button" class="jf-chat-emoji" data-emoji="♡">♡</button><button type="button" class="jf-chat-emoji" data-emoji="★">★</button><button type="button" class="jf-chat-emoji" data-emoji="☆">☆</button><button type="button" class="jf-chat-emoji" data-emoji="♪">♪</button><button type="button" class="jf-chat-emoji" data-emoji="♫">♫</button><button type="button" class="jf-chat-emoji" data-emoji="☮">☮</button><button type="button" class="jf-chat-emoji" data-emoji="✿">✿</button><button type="button" class="jf-chat-emoji" data-emoji="✧">✧</button>
+    <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":)">:)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=";)">;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":D">:D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="xD">xD</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":P">:P</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'(">:'(</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="^_^">^_^</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="-_-">-_-</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="o_O">o_O</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="<3">&lt;3</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'D">:'D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="¯\\_(ツ)_/¯">¯\\_(ツ)_/¯</button>
+  </div>
   <form id="jfChatForm" class="jf-chat-form">
     <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
     <button class="btn" id="jfChatSend" type="submit" disabled>Enviar</button>
@@ -429,11 +641,20 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
   </section>
 </div>
   
+<div class="jf-modal-backdrop" id="jfFriendsModal" hidden>
+  <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfFriendsHeading">
+    <div class="jf-modal-head"><h2 id="jfFriendsHeading">♧ Amigos</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfFriendsModal" aria-label="Fechar janela">✕</button></div>
+    <p class="small">Guarde o nome e a sala dos seus amigos para entrar rapidinho. Para salas com senha, a entrada sem senha depende de uma amizade confirmada no servidor.</p>
+    <form id="jfFriendForm"><div class="jf-room-field"><label for="jfFriendName">Nome do amigo</label><input id="jfFriendName" maxlength="24" placeholder="Nome de exibição" required></div><div class="jf-room-field"><label for="jfFriendRoom">Nome da sala do amigo</label><input id="jfFriendRoom" maxlength="40" placeholder="nome-da-sala" required></div><div class="jf-room-modal-actions"><button class="btn" type="submit">＋ Adicionar amigo</button></div></form>
+    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div>
+  </section>
+</div>
+
 <div class="jf-modal-backdrop" id="jfThemeModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
     <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-grid">
-      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="pastel">Pastel dream</option><option value="lavender">Lavender milk</option><option value="peach">Peach soda</option><option value="mint">Mint candy</option><option value="baby-pink">Rosa bebê</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
       <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
     </div>
     <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">Disponível no Frutiger Aero. A preferência fica salva neste navegador.</p></div>
@@ -520,33 +741,51 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
   const pendingCandidates = new Map();
   
 const config = {
-  iceServers: [
-    { urls: "stun:stun.relay.metered.ca:80" },
-    {
-      urls: [
-        "turn:standard.relay.metered.ca:80",
-        "turn:standard.relay.metered.ca:80?transport=tcp",
-        "turn:standard.relay.metered.ca:443",
-        "turns:standard.relay.metered.ca:443?transport=tcp"
-      ],
-      username: "bb7ecb4be75a9bcedd093efe",
-      credential: "Ab8amlhjUC7kGK3K"
-    }
-  ]
+  iceServers: [{ urls: "stun:stun.relay.metered.ca:80" }]
 };
+// Busca os ICE servers pelo backend; a API key da credencial não é enviada ao navegador.
+const turnConfigReady = fetch("/api/turn/ice-servers")
+  .then(response => {
+    if (!response.ok) throw new Error("TURN não configurado");
+    return response.json();
+  })
+  .then(iceServers => {
+    if (!Array.isArray(iceServers) || !iceServers.length) throw new Error("Resposta TURN inválida");
+    config.iceServers = iceServers;
+    return true;
+  })
+  .catch(() => {
+    console.warn("TURN indisponível; usando STUN como alternativa.");
+    return false;
+  });
 
 
   function setStatus(message, ok = false) {
     $("status").textContent = message;
     $("dot").className = ok ? "dot ok" : "dot";
   }
+  function jfUpdateRoomView() {
+    document.body.classList.toggle("jf-in-room", joined);
+    $("jfRoomEntryActions").hidden = joined;
+    $("jfLeaveRoom").hidden = !joined;
+  }
   function formatTime(ms) {
     const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
   }
+  function jfRenderMiniDj(transmitter) {
+    const active = Boolean(transmitter && transmitter.active !== false && transmitter.id);
+    $("jfMiniDj").hidden = !active;
+    if (active) {
+      $("jfTransmitterName").textContent = String(transmitter.name || "DJ ao vivo").slice(0, 24);
+      $("jfMiniDj").setAttribute("aria-label", "Transmitindo agora: " + String(transmitter.name || "DJ ao vivo").slice(0, 24));
+    }
+  }
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
       currentTrack = null;
+      $("spotifyFavorite").textContent = "♡ Favoritar música";
+      $("spotifyFavoriteStatus").textContent = "";
       $("trackTitle").textContent = "A música aparece aqui";
       $("trackArtist").textContent = "Conecte o Spotify para mostrar os metadados";
       $("trackAlbum").textContent = "JUNTO.FM · Y2K RADIO";
@@ -554,7 +793,13 @@ const config = {
       $("trackProgressFill").style.width = "0%"; $("trackElapsed").textContent = "0:00"; $("trackDuration").textContent = "0:00";
       $("trackKicker").textContent = "✦ NOW PLAYING";
       $("trackProgress").setAttribute("aria-valuenow", "0");
+      jfUpdateFavoriteButton();
       return;
+    }
+    const nextTrackUri = String(track.uri || "");
+    if (!currentTrack || String(currentTrack.uri || "") !== nextTrackUri) {
+      $("spotifyFavorite").textContent = "♡ Favoritar música";
+      $("spotifyFavoriteStatus").textContent = "";
     }
     currentTrack = { ...track };
     trackBaseTime = Date.now();
@@ -564,6 +809,7 @@ const config = {
     if (track.image) { $("trackArt").src = track.image; $("trackArt").hidden = false; $("trackPlaceholder").hidden = true; }
     else { $("trackArt").hidden = true; $("trackPlaceholder").hidden = false; }
     $("trackKicker").textContent = track.is_playing ? "✦ NOW PLAYING · LIVE" : "✦ PAUSED / NOT PLAYING";
+    jfUpdateFavoriteButton();
     updateTrackProgress();
   }
   function updateTrackProgress() {
@@ -576,6 +822,22 @@ const config = {
     $("trackDuration").textContent = formatTime(duration);
     $("trackProgress").setAttribute("aria-valuenow", String(Math.round(percent)));
   }
+  let jfSavingFavorite = false;
+  async function jfFavoriteCurrentTrack(){
+    if(jfSavingFavorite||!currentTrack||!currentTrack.uri)return;
+    if(!spotifyConnected){$("spotifyFavoriteStatus").textContent="Conecte sua conta do Spotify primeiro.";return;}
+    jfSavingFavorite=true;jfUpdateFavoriteButton();$("spotifyFavoriteStatus").textContent="Salvando na sua biblioteca do Spotify…";
+    try{
+      const response=await fetch("/api/spotify/save-track",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uri:currentTrack.uri})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(result.error||"Não foi possível favoritar a música.");
+      $("spotifyFavorite").textContent="♥ Salva no Spotify";
+      $("spotifyFavoriteStatus").textContent="Adicionada à sua biblioteca do Spotify!";
+    }catch(error){
+      $("spotifyFavoriteStatus").textContent=error.message||"Falha ao salvar. Tente reconectar o Spotify.";
+    }finally{jfSavingFavorite=false;jfUpdateFavoriteButton();}
+  }
+  $("spotifyFavorite").addEventListener("click",jfFavoriteCurrentTrack);
   async function refreshSpotifyStatus() {
     try {
       const response = await fetch('/api/spotify/status');
@@ -583,6 +845,7 @@ const config = {
       spotifyConnected = Boolean(status.connected);
       $("spotifyConnect").hidden = spotifyConnected;
       $("spotifyDisconnect").hidden = !spotifyConnected;
+      jfUpdateFavoriteButton();
       $("spotifyConnect").style.pointerEvents = status.configured ? 'auto' : 'none';
       $("spotifyConnect").style.opacity = status.configured ? '1' : '.45';
       if (!status.configured) $("spotifyStatus").textContent = 'O servidor precisa de um Spotify Client ID para ativar esta integração.';
@@ -590,6 +853,16 @@ const config = {
       if (new URLSearchParams(location.search).get('spotify') === 'connected') {
         history.replaceState({}, '', location.pathname);
         $("spotifyStatus").textContent = 'Spotify conectado! Deixe uma música tocando e inicie a transmissão.';
+        const restoreSpotifyRoom=()=>{
+          let returnRoom="",returnPassword="";
+          try{returnRoom=sessionStorage.getItem("jfSpotifyReturnRoom")||"";returnPassword=sessionStorage.getItem("jfSpotifyReturnPassword")||"";}catch(_){}
+          if(returnRoom&&!joined&&socket.connected){
+            try{sessionStorage.removeItem("jfSpotifyReturnRoom");sessionStorage.removeItem("jfSpotifyReturnPassword");}catch(_){}
+            joinRoom(returnRoom,returnPassword);
+          }
+        };
+        if(socket.connected) restoreSpotifyRoom();
+        else socket.once("connect",restoreSpotifyRoom);
       }
     } catch (_) { $("spotifyStatus").textContent = 'Não foi possível verificar a conexão com o Spotify.'; }
   }
@@ -604,6 +877,7 @@ const config = {
         return;
       }
       const track = {
+        id: data.item.id, uri: data.item.uri,
         name: data.item.name, artists: data.item.artists.join(', '), album: data.item.album,
         image: data.item.image, duration_ms: data.item.duration_ms, progress_ms: data.progress_ms,
         is_playing: data.is_playing
@@ -619,6 +893,7 @@ const config = {
     spotifyPollTimer = setInterval(() => { updateTrackProgress(); pollSpotifyTrack(); }, 5000);
   }
   function enableControls() {
+    jfUpdateRoomView();
     $("join").disabled = !socket.connected;
     $("createRoom").disabled = !socket.connected;
     $("start").disabled = !joined || isSender;
@@ -768,6 +1043,7 @@ const config = {
   async function createSenderOffer(id) {
     if (!isSender || !localStream || !joined) return;
     try {
+      await turnConfigReady;
       const peer = makePeer(id);
       localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
       await tuneAudioSender(peer);
@@ -786,13 +1062,10 @@ const config = {
     if (!cleaned) { setStatus('Digite um nome de sala válido.'); return; }
     if (!socket.connected) { setStatus('Sem conexão com o servidor. Aguarde e tente novamente.'); return; }
     if (joined && room === cleaned) { setStatus('Você já está nesta sala.', true); return; }
-    resetSession();
-    joined = false;
-    room = cleaned;
-    $("room").value = room;
     setStatus('Entrando na sala…');
     const password = suppliedPassword || "";
-    socket.emit('join-room', { room, password });
+    try { sessionStorage.setItem("jfSpotifyReturnRoom", cleaned); sessionStorage.setItem("jfSpotifyReturnPassword", password); } catch (_) {}
+    socket.emit('join-room', { room: cleaned, password });
   }
   const createModal = $("jfCreateRoomModal");
   const joinModal = $("jfJoinRoomModal");
@@ -877,10 +1150,9 @@ const config = {
   });
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
-  socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
+  socket.on('disconnect', () => { joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
-    joined = false;
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
       $("jfJoinRoomError").textContent = errorMessage;
@@ -889,14 +1161,17 @@ const config = {
     setStatus(errorMessage);
     enableControls();
   });
-  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
-    joined = true; room = joinedRoom; $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null }) => {
+    if (joined && room !== joinedRoom) resetSession();
+    joined = true; room = joinedRoom; try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
-    if (track) renderTrack(track, true);
+    if (track) renderTrack(track, true); else renderTrack(null);
+    jfRenderMiniDj(transmitter);
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
+  socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
   socket.on('track-update', track => renderTrack(track, true));
   socket.on('track-clear', () => renderTrack(null));
   socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} · participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
@@ -913,6 +1188,8 @@ const config = {
     if (!from || !data || !joined) return;
     try {
       if (data.type === 'offer' && !isSender) {
+        await turnConfigReady;
+        if (!joined) return;
         const peer = makePeer(from);
         await peer.setRemoteDescription(data.sdp);
         await applyPendingCandidates(from, peer);
@@ -945,7 +1222,7 @@ const config = {
       audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
-      localStream = captured; isSender = true; jfUpdateSuggestionControls();
+      localStream = captured; isSender = true; socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
       // serão conectados pelo evento peer-joined do servidor.
       const roomInfo = await new Promise(resolve => {
@@ -963,10 +1240,27 @@ const config = {
   async function stopTransmission() {
     // Notifica cada ouvinte de forma direcionada.
     for (const id of [...peers.keys()]) sendSignal(id, { type: 'transmission-stopped' });
+    socket.emit('transmission-stopped', { room });
     socket.emit('clear-track', { room });
+    jfRenderMiniDj(null);
     resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('Transmissão encerrada.');
   }
   $("stop").onclick = stopTransmission;
+  $("jfLeaveRoom").onclick = () => {
+    if (!joined) return;
+    const leavingRoom = room;
+    if (isSender) stopTransmission(); else resetSession();
+    socket.emit("leave-room", { room: leavingRoom });
+    joined = false; room = ""; $("room").value = "";
+    $("remoteAudio").pause(); $("remoteAudio").srcObject = null;
+    jfRenderMiniDj(null); renderTrack(null);
+    $("roomCount").textContent = "Ainda não entrou em uma sala.";
+    $("role").textContent = "Entre na sala para começar.";
+    $("jfChatWindow").hidden = true; $("jfChatLauncher").classList.remove("has-unread");
+    jfPeerProfiles.clear(); jfRenderPeople(); jfRenderChat([]);
+    jfUpdateRoomView(); enableControls(); jfUpdateChatControls(); jfUpdateSuggestionControls();
+    setStatus(socket.connected ? "Você saiu da sala. Crie ou entre em outra sala." : "Desconectado do servidor.");
+  };
   $("spotifyDisconnect").onclick = async () => {
     try { await fetch('/api/spotify/logout', { method: 'POST' }); } catch (_) {}
     spotifyConnected = false; $("spotifyConnect").hidden = false; $("spotifyDisconnect").hidden = true;
@@ -991,13 +1285,27 @@ const config = {
   });
   $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
   $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
-  $("jfSendSuggestion").addEventListener("click",()=>{
+  $("jfSendSuggestion").addEventListener("click",async()=>{
     const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
     if(!joined||!suggestion)return;
-    socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
-    $("jfSuggestionText").value="";
-    $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
-    jfUpdateSuggestionControls();
+    const sendButton=$("jfSendSuggestion");
+    sendButton.disabled=true;
+    $("jfSuggestionStatus").textContent="Conferindo se a música existe...";
+    try{
+      const response=await fetch("/api/music/validate-suggestion?title="+encodeURIComponent(suggestion));
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.valid){
+        $("jfSuggestionStatus").textContent=result.error||"Não encontrei essa música. Tente o título oficial e, se possível, o artista.";
+        return;
+      }
+      socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
+      $("jfSuggestionText").value="";
+      $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
+    }catch(_){
+      $("jfSuggestionStatus").textContent="Não foi possível verificar a música agora. Tente novamente.";
+    }finally{
+      jfUpdateSuggestionControls();
+    }
   });
   function jfShowSuggestion({suggestion,fromName}){
     if(!isSender||!jfSuggestionEnabled)return;
@@ -1009,6 +1317,7 @@ const config = {
   $("jfCloseSuggestion").addEventListener("click",jfHideSuggestion);
   $("jfSuggestionDone").addEventListener("click",jfHideSuggestion);
   socket.on("music-suggestion",jfShowSuggestion);
+  socket.on("music-suggestion-error",({error}={})=>{$("jfSuggestionStatus").textContent=String(error||"Não foi possível enviar a sugestão.");});
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
@@ -1017,10 +1326,16 @@ const config = {
   socket.on('disconnect', () => knownPeers.clear());
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
-  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
+  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
   let jfProfile={name:"Ouvinte",avatar:"",motto:""};
   const jfPeerProfiles=new Map();
   try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);}catch(_){}
+  function jfUpdateFavoriteButton(){
+    const button=$("spotifyFavorite");
+    if(!button)return;
+    button.hidden=!spotifyConnected||!currentTrack||!/^spotify:track:[A-Za-z0-9]{22}$/.test(String(currentTrack.uri||""));
+    button.disabled=Boolean(jfSavingFavorite);
+  }
   function jfApplyTheme(name,color){
     let t=jfThemes[name]||jfThemes.y2k;
     if(name==="custom"){
@@ -1047,14 +1362,58 @@ const config = {
     for(const [id,p] of all){
       const card=document.createElement("div");card.className="jf-person";
       if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="☺";card.appendChild(av);}
-      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);card.tabIndex=0;list.appendChild(card);
+      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);
+      if(id!==socket.id){
+        const actions=document.createElement("div");actions.className="jf-person-actions";
+        const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.textContent="＋ Amigo";request.title="Enviar solicitação de amizade";request.setAttribute("aria-label","Enviar solicitação de amizade para "+(p.name||"Ouvinte"));
+        const already=jfFriends.some(f=>f.name.toLowerCase()===(p.name||"Ouvinte").toLowerCase()&&f.room.toLowerCase()===(room||"").toLowerCase());
+        if(already){request.textContent="✓ Amigo";request.disabled=true;}
+        request.addEventListener("click",()=>{if(!joined||!room){request.textContent="Entre em uma sala primeiro";return;}socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});request.disabled=true;request.textContent="Solicitada";});
+        actions.appendChild(request);card.appendChild(actions);
+      }
+      card.tabIndex=0;list.appendChild(card);
     }
   }
+  socket.on("friend-request-received",({fromId,profile={},room:friendRoom})=>{
+    const senderName=String(profile.name||"Ouvinte").slice(0,24);
+    if(!fromId||!friendRoom)return;
+    if(window.confirm(senderName+" quer adicionar você como amigo. Aceitar?")){
+      if(!jfFriends.some(f=>f.name.toLowerCase()===senderName.toLowerCase()&&f.room.toLowerCase()===String(friendRoom).toLowerCase())){
+        jfFriends.push({name:senderName,room:String(friendRoom).slice(0,40)});jfFriends=jfFriends.slice(-100);
+        try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}
+      }
+      socket.emit("friend-request-response",{targetId:fromId,accepted:true,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});
+      jfRenderFriends();setStatus("Amizade aceita com "+senderName+".",true);
+    }else socket.emit("friend-request-response",{targetId:fromId,accepted:false});
+  });
+  socket.on("friend-request-result",({accepted,profile={},room:friendRoom})=>{
+    const name=String(profile.name||"Amigo").slice(0,24);
+    if(accepted&&friendRoom&&!jfFriends.some(f=>f.name.toLowerCase()===name.toLowerCase()&&f.room.toLowerCase()===String(friendRoom).toLowerCase())){
+      jfFriends.push({name,room:String(friendRoom).slice(0,40)});jfFriends=jfFriends.slice(-100);
+      try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}
+      jfRenderFriends();setStatus(name+" aceitou sua solicitação de amizade.",true);
+    }else if(!accepted)setStatus(name+" recusou a solicitação de amizade.");
+  });
+  const jfFriendsKey="junto_friends_v1";
+  function jfLoadFriends(){try{const v=JSON.parse(localStorage.getItem(jfFriendsKey)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.name==="string"&&typeof x.room==="string").slice(0,100):[];}catch(_){return [];}}
+  let jfFriends=jfLoadFriends();
+  function jfRenderFriends(){
+    const list=$("jfFriendsList");list.replaceChildren();
+    if(!jfFriends.length){const empty=document.createElement("p");empty.className="small";empty.textContent="Adicione seus amigos pelo nome e sala.";list.appendChild(empty);return;}
+    jfFriends.forEach((friend,index)=>{const row=document.createElement("div");row.className="jf-person";row.style.display="flex";row.style.alignItems="center";row.style.justifyContent="space-between";row.style.gap="10px";
+      const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const roomLabel=document.createElement("p");roomLabel.className="small";roomLabel.textContent="Sala: "+friend.room;info.append(name,roomLabel);
+      const actions=document.createElement("div");actions.style.display="flex";actions.style.gap="6px";const enter=document.createElement("button");enter.className="btn";enter.type="button";enter.textContent="Entrar";enter.addEventListener("click",()=>{closeFriendsModal();openJoinRoomModal();$("jfExistingRoomName").value=friend.room;$("jfExistingRoomPassword").value="";$("jfFriendsStatus").textContent="Para sala protegida, será necessária uma amizade reconhecida pelo servidor ou a senha.";});
+      const remove=document.createElement("button");remove.className="btn secondary";remove.type="button";remove.textContent="Remover";remove.addEventListener("click",()=>{jfFriends.splice(index,1);localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));jfRenderFriends();});actions.append(enter,remove);row.append(info,actions);list.appendChild(row);
+    });
+  }
+  function closeFriendsModal(){$("jfFriendsModal").hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";}
+  $("jfFriendForm").addEventListener("submit",event=>{event.preventDefault();const name=$("jfFriendName").value.trim().slice(0,24),friendRoom=cleanRoomName($("jfFriendRoom").value);if(!name||!friendRoom){$("jfFriendsStatus").textContent="Informe o nome e o nome válido da sala.";return;}if(jfFriends.some(x=>x.room.toLowerCase()===friendRoom.toLowerCase())){$("jfFriendsStatus").textContent="Essa sala já está na sua lista.";return;}jfFriends.push({name,room:friendRoom});localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));$("jfFriendName").value="";$("jfFriendRoom").value="";$("jfFriendsStatus").textContent="Amigo salvo neste navegador.";jfRenderFriends();});
   function jfInit(){
     $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";jfRenderAvatar();
     const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
     const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
     $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
+    $("jfOpenFriends").addEventListener("click",()=>{jfRenderFriends();openModal("jfFriendsModal");});
     $("jfOpenProfile").addEventListener("click",()=>openModal("jfProfileModal"));
     $("jfOpenOptions").addEventListener("click",()=>openModal("jfOptionsModal"));
     document.querySelectorAll("[data-close-modal]").forEach(button=>button.addEventListener("click",()=>closeModal(button.dataset.closeModal)));
@@ -1126,12 +1485,30 @@ const config = {
     $("jfChatInput").disabled=!joined;$("jfChatSend").disabled=!joined||!$("jfChatInput").value.trim();
     $("jfChatStatus").textContent=joined?"Mensagens visíveis para as pessoas nesta sala.":"Entre em uma sala para enviar mensagens.";
   }
+  const jfEmojiTray=$("jfChatEmojiTray"),jfEmojiToggle=$("jfChatEmojiToggle");
+  jfEmojiToggle.addEventListener("click",()=>{
+    const open=jfEmojiTray.hidden;
+    jfEmojiTray.hidden=!open;
+    jfEmojiToggle.setAttribute("aria-expanded",String(open));
+    if(open) $("jfChatInput").focus();
+  });
+  jfEmojiTray.querySelectorAll("[data-emoji]").forEach(button=>button.addEventListener("click",()=>{
+    const input=$("jfChatInput"),emoji=button.dataset.emoji;
+    if(input.disabled)return;
+    const start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;
+    const next=input.value.slice(0,start)+emoji+input.value.slice(end);
+    if(next.length>500)return;
+    input.value=next;input.focus();
+    const cursor=start+emoji.length;input.setSelectionRange(cursor,cursor);
+    jfUpdateChatControls();
+  }));
   $("jfChatInput").addEventListener("input",jfUpdateChatControls);
   $("jfChatForm").addEventListener("submit",event=>{
     event.preventDefault();const text=$("jfChatInput").value.trim().slice(0,500);if(!joined||!text)return;
     socket.emit("chat-send",{text});$("jfChatInput").value="";jfUpdateChatControls();$("jfChatInput").focus();
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
+  socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="Você está enviando mensagens rápido demais. Aguarde alguns segundos.";});
   socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
   socket.on("joined-room",()=>jfUpdateChatControls());
 
@@ -1141,5 +1518,62 @@ const config = {
   setInterval(updateTrackProgress, 1000);
 })();
 </script>
+
+<script type="module">
+/* O modelo é opcional: se o arquivo ainda não estiver publicado, o mascote CSS continua funcionando. */
+(async()=>{
+  const stage=document.querySelector("#jfMiniDj .jf-dj-stage");
+  if(!stage)return;
+  try{
+    const THREE=await import("https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js");
+    const {GLTFLoader}=await import("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
+    const scene=new THREE.Scene();
+    const camera=new THREE.PerspectiveCamera(32,1,.01,100);
+    camera.position.set(0,1.1,4.5);
+    const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+    renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.setClearColor(0x000000,0);
+    renderer.domElement.className="jf-glb-canvas";
+    renderer.domElement.setAttribute("aria-label","Modelo 3D do macaco DJ");
+    stage.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff,0x51406b,2.2));
+    const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);
+    const rim=new THREE.DirectionalLight(0x9deaff,1.1);rim.position.set(-4,2,-3);scene.add(rim);
+    const root=new THREE.Group();scene.add(root);
+    const gltf=await new GLTFLoader().loadAsync("/Meshypint.glb");
+    const model=gltf.scene;
+    root.add(model);
+    const box=new THREE.Box3().setFromObject(model);
+    const size=box.getSize(new THREE.Vector3());
+    const center=box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    const maxDim=Math.max(size.x,size.y,size.z)||1;
+    model.scale.setScalar(2.25/maxDim);
+    camera.position.set(0,.12,3.65);
+    camera.lookAt(0,0,0);
+    // Orientação leve de três quartos; movimentos suaves de groove sem rig embutido.
+    root.rotation.y=-.16;
+    stage.classList.add("jf-glb-ready");
+    stage.querySelectorAll(".jf-dj-light,.jf-dj-booth,.jf-dj-character").forEach(el=>el.style.display="none");
+    const resize=()=>{
+      const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
+      renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+    };
+    resize();
+    if("ResizeObserver" in window)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);
+    const clock=new THREE.Clock();
+    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const animate=()=>{
+      requestAnimationFrame(animate);
+      const t=clock.getElapsedTime();
+      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
+      renderer.render(scene,camera);
+    };
+    animate();
+  }catch(error){console.warn("Junto.fm: não foi possível carregar o mascote 3D; mantendo o fallback.",error);}
+})();
+</script>
+
 </body>
 </html>

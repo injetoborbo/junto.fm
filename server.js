@@ -28,9 +28,10 @@ const PORT = process.env.PORT || 3000;
 const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
+const roomTransmitters = new Map();
 const roomChatMessages = new Map();
 const roomAccess = new Map();
-const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
+const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state user-library-modify";
 
 function cookieValue(req, name) {
   const cookies = String(req.headers.cookie || "").split(";");
@@ -81,8 +82,37 @@ async function validSpotifyAccessToken(session) {
   return session.accessToken;
 }
 
+app.use(express.json({ limit: "10kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// Mantém a API key específica da credencial TURN no servidor, nunca no HTML público.
+const METERED_DOMAIN = String(process.env.METERED_DOMAIN || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+const METERED_TURN_API_KEY = String(process.env.METERED_TURN_API_KEY || "").trim();
+let cachedTurnIceServers = null;
+let cachedTurnIceServersAt = 0;
+app.get("/api/turn/ice-servers", async (_req, res) => {
+  if (!METERED_DOMAIN || !METERED_TURN_API_KEY) {
+    return res.status(503).json({ error: "TURN não configurado no servidor." });
+  }
+  if (cachedTurnIceServers && Date.now() - cachedTurnIceServersAt < 5 * 60 * 1000) {
+    return res.json(cachedTurnIceServers);
+  }
+  try {
+    const endpoint = new URL(`https://${METERED_DOMAIN}/api/v1/turn/credentials`);
+    endpoint.searchParams.set("apiKey", METERED_TURN_API_KEY);
+    const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !Array.isArray(data) || data.length === 0) {
+      return res.status(502).json({ error: "Não foi possível obter a configuração TURN." });
+    }
+    cachedTurnIceServers = data;
+    cachedTurnIceServersAt = Date.now();
+    return res.json(data);
+  } catch (_error) {
+    return res.status(502).json({ error: "Falha ao consultar o serviço TURN." });
+  }
+});
 
 app.get("/api/spotify/status", (req, res) => {
   res.json({ configured: Boolean(SPOTIFY_CLIENT_ID), connected: Boolean(getSession(req, res)) });
@@ -128,6 +158,26 @@ app.post("/api/spotify/logout", (req, res) => {
   res.setHeader("Set-Cookie", "junto_spotify_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
   res.json({ ok: true });
 });
+app.post("/api/spotify/save-track", async (req, res) => {
+  try {
+    if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
+    const uri = String(req.body && req.body.uri || "").trim();
+    if (!/^spotify:track:[A-Za-z0-9]{22}$/.test(uri)) return res.status(400).json({ error: "Não consegui identificar esta faixa do Spotify." });
+    const token = await validSpotifyAccessToken(getSession(req, res));
+    const endpoint = new URL("https://api.spotify.com/v1/me/library");
+    endpoint.searchParams.set("uris", uri);
+    const response = await fetch(endpoint, { method: "PUT", headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const message = data.error?.message || (response.status === 403 ? "O Spotify não autorizou salvar esta faixa. Reconecte sua conta e aceite a permissão de biblioteca." : "Não foi possível favoritar a música no Spotify.");
+      return res.status(response.status).json({ error: message });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(401).json({ error: err.message || "Conecte sua conta do Spotify primeiro." });
+  }
+});
+
 app.get("/api/spotify/now-playing", async (req, res) => {
   try {
     if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
@@ -140,9 +190,9 @@ app.get("/api/spotify/now-playing", async (req, res) => {
     if (!item) return res.json({ item: null, is_playing: Boolean(data.is_playing) });
     res.json({
       is_playing: Boolean(data.is_playing), progress_ms: data.progress_ms || 0,
-      item: { id: item.id, name: item.name, artists: (item.artists || []).map(a => a.name),
+      item: { id: item.id, uri: item.uri || (item.id ? `spotify:track:${item.id}` : ""), name: item.name, artists: (item.artists || []).map(a => a.name),
         album: item.album?.name || "", image: item.album?.images?.[0]?.url || "",
-        duration_ms: item.duration_ms || 0, uri: item.uri || "" },
+        duration_ms: item.duration_ms || 0 },
       fetched_at: Date.now()
     });
   } catch (err) {
@@ -150,16 +200,69 @@ app.get("/api/spotify/now-playing", async (req, res) => {
   }
 });
 
+function normalizeMusicText(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
+}
+async function findRealSong(input) {
+  const raw = String(input || "").trim().slice(0, 180);
+  if (!raw || raw.length < 2) return false;
+  const parts = raw.split(/\s+[—–-]\s+/);
+  const requestedTitle = normalizeMusicText(parts[0]);
+  const requestedArtist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
+  if (!requestedTitle) return false;
+  const endpoint = new URL("https://itunes.apple.com/search");
+  endpoint.search = new URLSearchParams({ term: raw, entity: "song", media: "music", country: "BR", limit: "25" }).toString();
+  const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error("Catálogo de músicas indisponível.");
+  const data = await response.json();
+  return (data.results || []).some(track => {
+    if (normalizeMusicText(track.trackName) !== requestedTitle) return false;
+    return !requestedArtist || normalizeMusicText(track.artistName) === requestedArtist;
+  });
+}
+
+app.get("/api/music/validate-suggestion", async (req, res) => {
+  const title = String(req.query.title || "").trim().slice(0, 180);
+  if (!title) return res.status(400).json({ valid: false, error: "Digite o nome de uma música." });
+  try {
+    const valid = await findRealSong(title);
+    return res.json({ valid, error: valid ? "" : "Não encontrei uma faixa com esse título exato. Confira o nome e o artista." });
+  } catch (_) {
+    return res.status(503).json({ valid: false, error: "Não foi possível consultar o catálogo de músicas agora. Tente novamente." });
+  }
+});
+
 function cleanRoom(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
 }
 
+function isRateLimited(socket, key, limit, windowMs) {
+  const now = Date.now();
+  const limits = socket.data.rateLimits || (socket.data.rateLimits = {});
+  const recent = (limits[key] || []).filter(timestamp => now - timestamp < windowMs);
+  if (recent.length >= limit) {
+    limits[key] = recent;
+    return true;
+  }
+  recent.push(now);
+  limits[key] = recent;
+  return false;
+}
+
 io.on("connection", socket => {
   socket.on("create-room", payload => {
+    if (isRateLimited(socket, "create-room", 5, 60_000)) {
+      socket.emit("create-room-error", { message: "Muitas tentativas de criação. Aguarde um minuto e tente novamente." });
+      return;
+    }
     const room = cleanRoom(payload && payload.room);
     const password = String(payload && payload.password || "");
     if (!room) {
       socket.emit("create-room-error", { message: "Escolha um nome válido para a sala." });
+      return;
+    }
+    if (password && password.length < 4) {
+      socket.emit("create-room-error", { message: "A senha deve ter pelo menos 4 caracteres." });
       return;
     }
     if (password.length > 100) {
@@ -181,7 +284,53 @@ io.on("connection", socket => {
     socket.emit("room-created", { room });
   });
 
+  socket.on("friend-request", payload => {
+    const room = cleanRoom(payload && payload.room);
+    const targetId = String(payload && payload.targetId || "");
+    const target = io.sockets.sockets.get(targetId);
+    if (!room || socket.data.room !== room || !target || target.data.room !== room || targetId === socket.id) {
+      socket.emit("friend-request-result", { accepted: false, error: "not-available" });
+      return;
+    }
+    const profile = socket.data.profile || { name: "Ouvinte" };
+    target.emit("friend-request-received", { fromId: socket.id, profile: { name: String(profile.name || "Ouvinte").slice(0, 24), avatar: String(profile.avatar || "").slice(0, 500), motto: String(profile.motto || "").slice(0, 90) }, room });
+  });
+
+  socket.on("friend-request-response", payload => {
+    const targetId = String(payload && payload.targetId || "");
+    const target = io.sockets.sockets.get(targetId);
+    if (!target || !socket.data.room || target.data.room !== socket.data.room || targetId === socket.id) return;
+    const accepted = !!(payload && payload.accepted);
+    if (!accepted) {
+      target.emit("friend-request-result", { accepted: false, profile: { name: String((socket.data.profile || {}).name || "Amigo").slice(0, 24) } });
+      return;
+    }
+    const profile = socket.data.profile || { name: "Ouvinte" };
+    target.emit("friend-request-result", { accepted: true, profile: { name: String(profile.name || "Amigo").slice(0, 24), avatar: String(profile.avatar || "").slice(0, 500), motto: String(profile.motto || "").slice(0, 90) }, room: socket.data.room });
+  });
+
+  socket.on("leave-room", payload => {
+    const room = socket.data.room;
+    if (!room || (payload && payload.room && payload.room !== room)) return;
+
+    if (roomTransmitters.get(room)?.id === socket.id) {
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update", { id: socket.id, active: false });
+    }
+    socket.data.isTransmitting = false;
+    socket.leave(room);
+    socket.data.room = null;
+    socket.to(room).emit("peer-left", { id: socket.id });
+    const roomSet = io.sockets.adapter.rooms.get(room);
+    io.to(room).emit("room-count", { count: roomSet ? roomSet.size : 0 });
+    socket.emit("left-room", { room });
+  });
+
   socket.on("join-room", payload => {
+    if (isRateLimited(socket, "join-room", 10, 60_000)) {
+      socket.emit("join-error", { message: "Muitas tentativas de entrada. Aguarde um minuto e tente novamente." });
+      return;
+    }
     const room = cleanRoom(payload && payload.room);
     const password = String(payload && payload.password || "");
     if (!room) {
@@ -203,6 +352,11 @@ io.on("connection", socket => {
 
     const previousRoom = socket.data.room;
     if (previousRoom) {
+      if (roomTransmitters.get(previousRoom)?.id === socket.id) {
+        roomTransmitters.delete(previousRoom);
+        io.to(previousRoom).emit("transmitter-update", { id: socket.id, active: false });
+      }
+      socket.data.isTransmitting = false;
       socket.leave(previousRoom);
       socket.to(previousRoom).emit("peer-left", { id: socket.id });
     }
@@ -214,7 +368,7 @@ io.on("connection", socket => {
       const peer = io.sockets.sockets.get(id);
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
     }));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles });
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, transmitter: roomTransmitters.get(room) || null });
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
@@ -225,6 +379,26 @@ io.on("connection", socket => {
     const target = io.sockets.sockets.get(payload.to);
     if (!target || target.data.room !== socket.data.room) return;
     target.emit("signal", { from: socket.id, data: payload.data });
+  });
+
+  socket.on("transmission-started", payload => {
+    const room = socket.data.room;
+    if (!room || !payload || payload.room !== room) return;
+    const profile = socket.data.profile || { name: "DJ ao vivo" };
+    const transmitter = { id: socket.id, name: String(profile.name || "DJ ao vivo").slice(0, 24) };
+    socket.data.isTransmitting = true;
+    roomTransmitters.set(room, transmitter);
+    io.to(room).emit("transmitter-update", { ...transmitter, active: true });
+  });
+
+  socket.on("transmission-stopped", payload => {
+    const room = socket.data.room;
+    if (!room || !payload || payload.room !== room) return;
+    socket.data.isTransmitting = false;
+    if (roomTransmitters.get(room)?.id === socket.id) {
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update", { id: socket.id, active: false });
+    }
   });
 
   socket.on("clear-track", payload => {
@@ -238,6 +412,8 @@ io.on("connection", socket => {
     const track = payload.track;
     if (typeof track.name !== "string" || typeof track.artists !== "string") return;
     const safeTrack = {
+      id: /^[A-Za-z0-9]{22}$/.test(String(track.id || "")) ? String(track.id) : "",
+      uri: /^spotify:track:[A-Za-z0-9]{22}$/.test(String(track.uri || "")) ? String(track.uri) : "",
       name: track.name.slice(0, 200), artists: track.artists.slice(0, 300),
       album: String(track.album || "").slice(0, 200), image: /^https:\/\//.test(track.image || "") ? track.image.slice(0, 2000) : "",
       duration_ms: Math.max(0, Math.min(Number(track.duration_ms) || 0, 24 * 60 * 60 * 1000)),
@@ -260,9 +436,18 @@ io.on("connection", socket => {
     const profile = { name, avatar: safeAvatar, motto };
     socket.data.profile = profile;
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
+    if (socket.data.isTransmitting) {
+      const transmitter = { id: socket.id, name: profile.name };
+      roomTransmitters.set(socket.data.room, transmitter);
+      io.to(socket.data.room).emit("transmitter-update", { ...transmitter, active: true });
+    }
   });
 
   socket.on("chat-send", payload => {
+    if (isRateLimited(socket, "chat-send", 8, 5_000)) {
+      socket.emit("chat-rate-limit");
+      return;
+    }
     const room = socket.data.room;
     if (!room || !payload || typeof payload.text !== "string") return;
     const text = payload.text.trim().slice(0, 500);
@@ -287,10 +472,19 @@ io.on("connection", socket => {
     socket.data.receiveMusicSuggestions = Boolean(payload.enabled);
   });
 
-  socket.on("music-suggestion", payload => {
+  socket.on("music-suggestion", async payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
     const suggestion = String(payload.suggestion || "").trim().slice(0, 180);
-    if (!suggestion) return;
+    if (!suggestion || isRateLimited(socket, "music-suggestion", 5, 60000)) return;
+    try {
+      if (!(await findRealSong(suggestion))) {
+        socket.emit("music-suggestion-error", { error: "Sugestão recusada: não encontrei uma música com esse título exato." });
+        return;
+      }
+    } catch (_) {
+      socket.emit("music-suggestion-error", { error: "Não foi possível verificar a música agora. Tente novamente." });
+      return;
+    }
     const peer = io.sockets.sockets.get(socket.id);
     const fromName = String(payload.fromName || peer?.data.profile?.name || "Ouvinte").trim().slice(0, 24) || "Ouvinte";
     const roomMembers = io.sockets.adapter.rooms.get(socket.data.room) || new Set();
@@ -311,6 +505,10 @@ io.on("connection", socket => {
   socket.on("disconnect", () => {
     const room = socket.data.room;
     if (!room) return;
+    if (roomTransmitters.get(room)?.id === socket.id) {
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update", { id: socket.id, active: false });
+    }
     socket.to(room).emit("peer-left", { id: socket.id });
     const roomSet = io.sockets.adapter.rooms.get(room);
     io.to(room).emit("room-count", { count: roomSet ? roomSet.size : 0 });

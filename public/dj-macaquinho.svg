@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 360" role="img" aria-label="Macaquinho DJ low-poly de camiseta vermelha, calça roxa e fones brancos">
+<defs>
+ <linearGradient id="fur" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c28a5e"/><stop offset=".45" stop-color="#895537"/><stop offset="1" stop-color="#4e2c24"/></linearGradient>
+ <linearGradient id="muzzle" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe6cf"/><stop offset="1" stop-color="#f2b990"/></linearGradient>
+ <linearGradient id="red" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff5555"/><stop offset=".55" stop-color="#ed182b"/><stop offset="1" stop-color="#b90922"/></linearGradient>
+ <linearGradient id="purple" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#514081"/><stop offset=".48" stop-color="#9b83d5"/><stop offset="1" stop-color="#63509b"/></linearGradient>
+ <linearGradient id="white" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" /><stop offset="1" stop-color="#c9c9e7"/></linearGradient>
+</defs>
+<!-- tail: a clear monkey silhouette -->
+<path d="M178 256 C221 282 257 267 262 230 C265 209 283 208 287 225 C295 254 267 291 236 300 C211 307 191 292 176 280" fill="none" stroke="#4b2b22" stroke-width="13" stroke-linecap="round"/>
+<path d="M178 256 C221 282 257 267 262 230 C265 209 283 208 287 225 C295 254 267 291 236 300 C211 307 191 292 176 280" fill="none" stroke="#a66e48" stroke-width="7" stroke-linecap="round"/>
+<!-- legs, loose purple trousers -->
+<path d="M108 255 L151 256 L147 311 L130 326 L97 322 L99 294Z" fill="#4a2b21"/>
+<path d="M153 256 L191 254 L207 301 L199 324 L169 324 L153 298Z" fill="#4a2b21"/>
+<path d="M105 270 L150 270 L145 310 L129 322 L98 317Z" fill="url(#purple)"/>
+<path d="M155 269 L189 267 L203 303 L197 319 L171 318 L155 297Z" fill="url(#purple)"/>
+<path d="M108 276 L123 279 L117 314 L101 315Z" fill="#b4a1e9" opacity=".7"/>
+<path d="M159 276 L174 273 L187 312 L172 316Z" fill="#b4a1e9" opacity=".55"/>
+<!-- feet -->
+<path d="M99 313 L127 316 L143 329 Q146 336 136 339 L91 338 Q78 335 85 326Z" fill="url(#fur)" stroke="#4b2b22" stroke-width="2"/>
+<path d="M171 313 L195 311 L215 326 Q219 334 208 338 L171 337 Q158 334 163 325Z" fill="url(#fur)" stroke="#4b2b22" stroke-width="2"/>
+<path d="M91 332 L137 333 M170 331 L209 332" stroke="#d0a17b" stroke-width="2" opacity=".65"/>
+<!-- arms: left down, right waving -->
+<path d="M103 178 L85 207 L65 246 Q62 255 72 260 Q81 263 88 250 L116 211 L128 192Z" fill="url(#fur)" stroke="#4b2b22" stroke-width="2"/>
+<path d="M64 247 Q54 249 51 261 L47 275 Q47 282 54 280 L60 270 L59 283 Q62 290 68 283 L72 270 L76 282 Q82 286 84 277 L81 257 Q76 246 64 247Z" fill="url(#muzzle)" stroke="#8d5639" stroke-width="2"/>
+<path d="M186 181 L209 164 L218 129 L230 99 Q234 89 242 93 Q249 96 245 106 L238 134 L234 169 L207 202 L189 210Z" fill="url(#fur)" stroke="#4b2b22" stroke-width="2"/>
+<!-- raised open hand -->
+<path d="M226 102 L224 78 Q224 69 231 69 Q238 69 239 78 L241 96 L250 76 Q254 68 260 73 Q266 77 262 85 L253 105 L242 117 L228 115Z" fill="url(#muzzle)" stroke="#8d5639" stroke-width="2"/>
+<!-- torso shirt -->
+<path d="M112 160 L134 151 L166 151 L188 165 L199 207 L187 258 L103 258 L92 210 L99 176Z" fill="url(#red)" stroke="#9f1020" stroke-width="2"/>
+<path d="M112 160 L134 153 L148 172 L128 199 L98 188 L99 176Z" fill="#ff7772" opacity=".65"/>
+<path d="M166 153 L188 165 L199 207 L187 258 L169 219 L174 180Z" fill="#bd1025" opacity=".55"/>
+<path d="M139 151 L162 151 L168 165 L133 165Z" fill="#6e3e2a"/>
+<!-- bold white lightning logo -->
+<path d="M145 184 L165 184 L154 204 L169 204 L139 234 L148 211 L135 211Z" fill="#fff8f2"/>
+<!-- ears behind head: large, round, unmistakably monkey -->
+<path d="M100 71 C77 55 60 72 65 97 C69 117 88 124 108 108Z" fill="#4b2b22" stroke="#3a211c" stroke-width="3"/>
+<path d="M84 76 C72 71 72 91 84 103 Q92 109 99 101Z" fill="#d99a73"/>
+<path d="M198 71 C221 55 238 72 233 97 C229 117 210 124 190 108Z" fill="#4b2b22" stroke="#3a211c" stroke-width="3"/>
+<path d="M214 76 C226 71 226 91 214 103 Q206 109 199 101Z" fill="#d99a73"/>
+<!-- headphones band and large earcups -->
+<path d="M82 95 C69 6 228 6 216 95" fill="none" stroke="#aaaacb" stroke-width="19" stroke-linecap="round"/>
+<path d="M82 95 C69 6 228 6 216 95" fill="none" stroke="url(#white)" stroke-width="12" stroke-linecap="round"/>
+<rect x="65" y="76" width="29" height="55" rx="11" fill="url(#white)" stroke="#aaaacb" stroke-width="3"/>
+<rect x="205" y="76" width="29" height="55" rx="11" fill="url(#white)" stroke="#aaaacb" stroke-width="3"/>
+<rect x="72" y="86" width="15" height="35" rx="7" fill="#aaaacb"/>
+<rect x="212" y="86" width="15" height="35" rx="7" fill="#aaaacb"/>
+<!-- big round head, warm faceted fur -->
+<path d="M91 49 L111 30 L148 22 L184 31 L207 51 L214 83 L207 112 L187 136 L151 147 L116 136 L94 114 L86 82Z" fill="url(#fur)" stroke="#4b2b22" stroke-width="3"/>
+<path d="M94 54 L115 34 L148 26 L148 71 L122 94 L88 86Z" fill="#bf8556" opacity=".8"/>
+<path d="M148 26 L181 34 L202 54 L210 84 L177 74 L148 71Z" fill="#6c402d" opacity=".75"/>
+<!-- signature orange marks from sketch -->
+<path d="M130 42 Q139 34 147 41 Q156 47 148 53 L132 53 Q125 49 130 42Z" fill="#d98a2f"/>
+<path d="M150 62 Q160 69 155 82 Q151 91 146 81 Q143 70 150 62Z" fill="#d98a2f"/>
+<!-- expressive eyes -->
+<path d="M104 79 Q120 65 139 78 L139 105 Q125 119 111 104Z" fill="#fff0d9"/>
+<path d="M158 78 Q177 65 195 79 L189 105 Q176 119 162 104Z" fill="#fff0d9"/>
+<path d="M120 79 L130 83 L130 101 L123 108 L118 96Z" fill="#17131a"/>
+<path d="M174 79 L184 83 L182 101 L175 108 L171 96Z" fill="#17131a"/>
+<path d="M104 76 L139 77 M159 77 L195 76" stroke="#3a211c" stroke-width="5" stroke-linecap="round"/>
+<!-- oversized pale muzzle split into two soft lobes -->
+<path d="M101 107 Q119 95 146 105 Q151 101 157 105 Q184 95 201 108 L196 128 Q181 147 151 145 Q120 147 106 129Z" fill="url(#muzzle)" stroke="#dba17b" stroke-width="1.5"/>
+<path d="M105 113 Q126 105 149 115 L149 137 Q124 139 110 126Z" fill="#fff0df" opacity=".85"/>
+<path d="M153 115 Q177 105 197 113 L190 127 Q176 139 153 137Z" fill="#f5c9a6"/>
+<path d="M139 113 Q151 106 163 113 Q160 125 151 125 Q142 125 139 113Z" fill="#75402d"/>
+<path d="M142 132 Q151 138 161 131" fill="none" stroke="#75402d" stroke-width="2.5" stroke-linecap="round"/>
+<!-- subtle angular highlights -->
+<path d="M112 35 L148 26 L148 71 L122 94 L90 83Z" fill="#e4ad77" opacity=".2"/>
+<path d="M134 168 L164 168 L173 198 L150 211 L127 198Z" fill="#ff8b80" opacity=".28"/>
+<!-- wrist cuffs -->
+<path d="M65 242 L79 248 L73 259 L61 254Z" fill="#dcd9ed" stroke="#aaaacb" stroke-width="2"/>
+</svg>
