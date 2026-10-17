@@ -980,7 +980,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
-      localStream = captured; isSender = true; jfUpdateSuggestionControls();
+      localStream = captured; isSender = true; socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
       // serão conectados pelo evento peer-joined do servidor.
       const roomInfo = await new Promise(resolve => {
