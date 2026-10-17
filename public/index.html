@@ -63,6 +63,19 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 #jfSaveProfile{min-width:160px}
 #jfProfileStatus{align-self:center}
 .jf-people{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+.jf-chat-log{height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--jf-secondary);border-radius:8px;background:color-mix(in srgb,var(--jf-glow) 20%,#080d2b);scroll-behavior:smooth}
+.jf-chat-empty{margin:auto;text-align:center;color:var(--muted);font-size:13px}
+.jf-chat-message{display:flex;gap:9px;align-items:flex-start;min-width:0}
+.jf-chat-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;object-fit:cover;border:1px solid var(--jf-secondary);background:var(--jf-glow);display:grid;place-items:center;color:white;font-size:16px}
+.jf-chat-bubble{min-width:0;max-width:100%;padding:8px 11px;border:1px solid color-mix(in srgb,var(--jf-secondary) 55%,transparent);border-radius:4px 11px 11px 11px;background:color-mix(in srgb,var(--jf-glow) 38%,#101333);overflow-wrap:anywhere}
+.jf-chat-meta{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:3px}
+.jf-chat-meta strong{font-size:12px;color:var(--jf-secondary)}
+.jf-chat-meta time{font-size:10px;color:var(--muted)}
+.jf-chat-text{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.jf-chat-form{display:flex;gap:9px;margin-top:10px;align-items:stretch}
+.jf-chat-form input{flex:1 1 auto;min-width:0}
+.jf-chat-form button{flex:0 0 auto}
+@media(max-width:520px){.jf-chat-log{height:220px}.jf-chat-form{flex-direction:column}.jf-chat-form button{width:100%}}
 .jf-person{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid #7678d8;border-radius:8px;background:#101333e8;max-width:100%;width:max-content;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;transform-origin:left center;z-index:1}
 .jf-person img,.jf-person .jf-avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover}
 .jf-person strong{font-size:12px;overflow-wrap:anywhere}
@@ -317,7 +330,18 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 </div>
 
   
-<section class="panel">
+<section class="panel jf-chat-panel" aria-labelledby="jfChatHeading">
+    <h2 id="jfChatHeading" style="margin:0 0 6px">💬 Chat da sala</h2>
+    <p class="small" style="margin:0 0 12px">Converse ao vivo com quem estiver ouvindo com você. As mensagens ficam disponíveis enquanto a sala estiver ativa.</p>
+    <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
+    <form id="jfChatForm" class="jf-chat-form">
+      <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
+      <button class="btn" id="jfChatSend" type="submit" disabled>Enviar ↗</button>
+    </form>
+    <p class="small" id="jfChatStatus" aria-live="polite" style="margin:8px 0 0">Entre em uma sala para enviar mensagens.</p>
+  </section>
+
+  <section class="panel">
     <h2 style="margin:0 0 14px">Comandos da sala</h2>
     <p style="margin-top:0">Esses botões enviam comandos para a outra pessoa. No protótipo, eles não controlam diretamente o Spotify — quem está transmitindo ainda precisa pausar ou trocar a música na aba do Spotify.</p>
     <div class="row">
@@ -894,9 +918,43 @@ const config = {
   socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();});
   socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();});
   socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();socket.emit("profile-update",{profile:jfProfile});});
-  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();});
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
-  jfInit();jfRenderPeople();jfUpdateSuggestionControls();
+  // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
+  function jfRenderChat(messages){
+    const log=$("jfChatLog");log.replaceChildren();
+    if(!messages.length){const empty=document.createElement("p");empty.className="jf-chat-empty";empty.textContent=joined?"Nenhuma mensagem ainda. Que tal dar oi? ✦":"Entre em uma sala para começar a conversar ✦";log.appendChild(empty);return;}
+    for(const message of messages) jfAppendChatMessage(message,false);
+    log.scrollTop=log.scrollHeight;
+  }
+  function jfAppendChatMessage(message,scroll=true){
+    const log=$("jfChatLog"),empty=log.querySelector(".jf-chat-empty");if(empty)empty.remove();
+    const item=document.createElement("div");item.className="jf-chat-message";
+    if(message.avatar){const avatar=document.createElement("img");avatar.className="jf-chat-avatar";avatar.src=message.avatar;avatar.alt="";item.appendChild(avatar);}
+    else{const avatar=document.createElement("div");avatar.className="jf-chat-avatar";avatar.textContent="☺";item.appendChild(avatar);}
+    const bubble=document.createElement("div");bubble.className="jf-chat-bubble";
+    const meta=document.createElement("div");meta.className="jf-chat-meta";
+    const name=document.createElement("strong");name.textContent=String(message.name||"Ouvinte").slice(0,24);meta.appendChild(name);
+    const time=document.createElement("time");const date=new Date(Number(message.time)||Date.now());time.dateTime=date.toISOString();time.textContent=date.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});meta.appendChild(time);
+    const body=document.createElement("p");body.className="jf-chat-text";body.textContent=String(message.text||"").slice(0,500);
+    bubble.append(meta,body);item.appendChild(bubble);log.appendChild(item);
+    while(log.children.length>50)log.firstElementChild.remove();
+    if(scroll)log.scrollTop=log.scrollHeight;
+  }
+  function jfUpdateChatControls(){
+    $("jfChatInput").disabled=!joined;$("jfChatSend").disabled=!joined||!$("jfChatInput").value.trim();
+    $("jfChatStatus").textContent=joined?"Mensagens visíveis para as pessoas nesta sala.":"Entre em uma sala para enviar mensagens.";
+  }
+  $("jfChatInput").addEventListener("input",jfUpdateChatControls);
+  $("jfChatForm").addEventListener("submit",event=>{
+    event.preventDefault();const text=$("jfChatInput").value.trim().slice(0,500);if(!joined||!text)return;
+    socket.emit("chat-send",{text});$("jfChatInput").value="";jfUpdateChatControls();$("jfChatInput").focus();
+  });
+  socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
+  socket.on("chat-message",message=>{if(joined&&message&&message.room===room)jfAppendChatMessage(message);});
+  socket.on("joined-room",()=>jfUpdateChatControls());
+
+  jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();
   enableControls();
   refreshSpotifyStatus();
   setInterval(updateTrackProgress, 1000);
