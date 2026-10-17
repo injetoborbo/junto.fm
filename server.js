@@ -28,6 +28,7 @@ const PORT = process.env.PORT || 3000;
 const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
+const roomChatMessages = new Map();
 const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
 
 function cookieValue(req, name) {
@@ -174,6 +175,7 @@ io.on("connection", socket => {
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
     }));
     socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles });
+    socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
   });
@@ -218,6 +220,26 @@ io.on("connection", socket => {
     const profile = { name, avatar: safeAvatar, motto };
     socket.data.profile = profile;
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
+  });
+
+  socket.on("chat-send", payload => {
+    const room = socket.data.room;
+    if (!room || !payload || typeof payload.text !== "string") return;
+    const text = payload.text.trim().slice(0, 500);
+    if (!text) return;
+    const profile = socket.data.profile || { name: "Ouvinte", avatar: "" };
+    const message = {
+      room,
+      name: String(profile.name || "Ouvinte").slice(0, 24),
+      avatar: typeof profile.avatar === "string" && profile.avatar.length <= 220000 ? profile.avatar : "",
+      text,
+      time: Date.now()
+    };
+    const history = roomChatMessages.get(room) || [];
+    history.push(message);
+    if (history.length > 50) history.splice(0, history.length - 50);
+    roomChatMessages.set(room, history);
+    io.to(room).emit("chat-message", message);
   });
 
   socket.on("suggestion-settings", payload => {
