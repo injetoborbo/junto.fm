@@ -727,7 +727,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   }
   function jfUpdateSyncedLyrics(){
     const content=$("jfLyricsContent");if(content.dataset.synced!=="true"||!jfLyricsData||!currentTrack)return;
-    const elapsed=Math.max(0,Number(currentTrack.progress_ms||0)/1000);const lines=JSON.parse(content.dataset.lines||"[]");let active=-1;
+    const elapsed=Math.max(0,(Number(currentTrack.progress_ms)||0)+(currentTrack.is_playing?Date.now()-trackBaseTime:0))/1000;const lines=JSON.parse(content.dataset.lines||"[]");let active=-1;
     for(let i=0;i<lines.length;i++){if(lines[i].time<=elapsed)active=i;else break;}
     content.querySelectorAll(".jf-lyrics-line").forEach((line,i)=>{line.classList.toggle("active",i===active);if(i===active&&line.dataset.scrolled!=="true"){line.dataset.scrolled="true";line.scrollIntoView({block:"nearest",behavior:"smooth"});}else if(i!==active)line.dataset.scrolled="false";});
   }
@@ -1444,10 +1444,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     });
     $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
   }
-  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();}});
-  socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();});
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();});
-  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();socket.emit("profile-update",{profile:jfProfile});});
+  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();jfRenderFriends();}});
+  socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();jfRenderFriends();});
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();jfRenderFriends();});
+  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});});
   socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
