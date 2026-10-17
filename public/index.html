@@ -8,7 +8,7 @@
 :root{color-scheme:dark;--ink:#f7f4ff;--muted:#c4c6ed;--pink:#ff78d2;--cyan:#70f4ff;--blue:#7997ff;--line:#7678d8;--panel:#171638}
 *{box-sizing:border-box}
 html{min-height:100%;background:#090b22}
-body{margin:0;min-height:100vh;color:var(--ink);font-family:"Trebuchet MS",Verdana,Arial,sans-serif;background:radial-gradient(ellipse at 50% -10%,#5656a8 0,#20245c 30%,#101333 63%,#080a1e 100%);background-attachment:fixed;position:relative;overflow-x:hidden}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--jf-font-family,"Trebuchet MS"),Verdana,Arial,sans-serif;background:radial-gradient(ellipse at 50% -10%,#5656a8 0,#20245c 30%,#101333 63%,#080a1e 100%);background-attachment:fixed;position:relative;overflow-x:hidden}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.26;background-image:linear-gradient(#9ca5ff24 1px,transparent 1px),linear-gradient(90deg,#9ca5ff24 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(to bottom,black,transparent 85%);z-index:0}
 body:after{content:"✦     ·       ✧          ·       ✦       ·       ✧";position:fixed;left:0;right:0;top:8px;text-align:center;color:#a3fbff;letter-spacing:1.7rem;font-size:12px;text-shadow:0 0 12px #70f4ff;opacity:.65;pointer-events:none;z-index:0}
 main{position:relative;z-index:1;max-width:820px;margin:auto;padding:30px 18px 52px}
@@ -31,8 +31,8 @@ input::placeholder{color:#858bbd}input:focus{border-color:var(--cyan);box-shadow
 .status{display:flex;align-items:center;gap:9px;color:#d1d4ff;font-size:13px;margin-top:15px}.dot{width:10px;height:10px;border-radius:50%;background:#7479a7;border:1px solid #b9bcff;box-shadow:inset 0 1px 2px #0008}.dot.ok{background:#70ffbf;border-color:#d4ffec;box-shadow:0 0 8px #70ffbf,0 0 16px #70ffbf77}
 .player{display:flex;align-items:center;gap:15px}.cover{width:76px;height:76px;flex-shrink:0;border-radius:12px;border:2px solid #fff;background:linear-gradient(135deg,#fff,#c8c8ff 22%,#9c6bff 48%,#ff7bd5 73%,#73f5ff);display:grid;place-items:center;font-size:32px;color:#211b60;text-shadow:0 1px #fff;box-shadow:inset 0 2px 4px #fff,0 0 0 3px #3b3c7a,0 0 22px #c77dff44}
 .player h2{margin:0 0 4px;font-size:19px;color:#fff;text-shadow:0 2px 0 #35326d}.player p{margin:0;font-size:13px;color:#c6c9ff}
-.track-card{display:grid;grid-template-columns:116px minmax(0,1fr);gap:17px;align-items:center;margin-top:18px;padding:14px;border:1px solid #9c9cff;border-radius:9px;background:linear-gradient(135deg,#292452,#10152f 72%);box-shadow:inset 0 1px 0 #ffffff25,0 0 20px #8b7bff1c}
-.track-art[hidden]{display:none}.track-art{width:116px;aspect-ratio:1;object-fit:cover;border-radius:6px;border:2px solid #fff;box-shadow:0 0 0 3px #4b448a,0 0 22px #ff78d266;background:linear-gradient(135deg,#fff,#a6a7ff 35%,#ff78d2 70%,#70f4ff);display:grid;place-items:center;color:#19153e;font-size:42px}
+.track-card{display:grid;grid-template-columns:164px minmax(0,1fr);gap:17px;align-items:center;margin-top:18px;padding:14px;border:1px solid #9c9cff;border-radius:9px;background:linear-gradient(135deg,#292452,#10152f 72%);box-shadow:inset 0 1px 0 #ffffff25,0 0 20px #8b7bff1c}
+.track-art[hidden]{display:none}.track-art{width:164px;aspect-ratio:1;object-fit:cover;border-radius:6px;border:2px solid #fff;box-shadow:0 0 0 3px #4b448a,0 0 22px #ff78d266;background:linear-gradient(135deg,#fff,#a6a7ff 35%,#ff78d2 70%,#70f4ff);display:grid;place-items:center;color:#19153e;font-size:42px}
 .track-kicker{font-size:10px;font-weight:900;letter-spacing:1.4px;color:var(--cyan);text-transform:uppercase;margin-bottom:8px}.track-title{font-size:20px;font-weight:900;line-height:1.2;margin:0 0 6px;overflow-wrap:anywhere}.track-artist{font-size:13px;color:#d5d5ff;margin:0 0 5px}.track-album{font-size:11px;color:#a8aedb;margin:0 0 14px}.progress-wrap{height:7px;border:1px solid #7478c6;background:#080b24;border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 3px #000}.progress-fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#70f4ff,#9b86ff,#ff78d2);box-shadow:0 0 12px #70f4ff;transition:width .4s linear}.track-times{display:flex;justify-content:space-between;color:#bfc5f5;font-size:10px;margin-top:6px;font-variant-numeric:tabular-nums}.track-empty{color:#c5c9f2;font-size:12px;line-height:1.6}.spotify-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}.spotify-actions .btn{flex:0 1 auto}.spotify-note{font-size:11px;color:#aeb5e6;line-height:1.6;margin:10px 0 0}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 audio{width:100%;margin-top:18px;filter:hue-rotate(220deg) saturate(1.25)}.small{font-size:12px;color:#b9bee9;line-height:1.6}.notice{border:1px solid #6869b5;border-left:4px solid var(--pink);padding:11px 13px;background:linear-gradient(100deg,#2e2453,#171a3a);border-radius:4px;color:#e8e4ff;font-size:13px;line-height:1.6;margin-top:15px;box-shadow:inset 0 1px 0 #ffffff12}.notice strong{color:#ffb9e9}
@@ -41,13 +41,249 @@ audio{width:100%;margin-top:18px;filter:hue-rotate(220deg) saturate(1.25)}.small
 footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin-top:30px;text-shadow:0 0 8px #787cff55}
 @keyframes glowPulse{0%,100%{text-shadow:0 0 8px #70f4ff66}50%{text-shadow:0 0 16px #ff78d2aa}}
 .tag{animation:glowPulse 3s ease-in-out infinite}
-@media(max-width:520px){main{padding:22px 13px 42px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:9px;letter-spacing:.6px;padding:6px}.brand{font-size:22px}body:after{letter-spacing:.7rem}.row>*{flex-basis:100%}.track-card{grid-template-columns:84px minmax(0,1fr);gap:13px;padding:11px}.track-art{width:84px}.track-title{font-size:16px}.track-album{margin-bottom:10px}}
+@media(max-width:520px){main{padding:22px 13px 42px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:9px;letter-spacing:.6px;padding:6px}.brand{font-size:22px}body:after{letter-spacing:.7rem}.row>*{flex-basis:100%}.track-card{grid-template-columns:112px minmax(0,1fr);gap:13px;padding:11px}.track-art{width:112px}.track-title{font-size:16px}.track-album{margin-bottom:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* Personalização Junto.fm */
+:root{--jf-primary:#ff78d2;--jf-secondary:#70f4ff;--jf-glow:#5656a8}
+.track-kicker{color:var(--jf-secondary)}
+.track-card{border-color:var(--jf-secondary);box-shadow:inset 0 1px 0 #ffffff25,0 0 20px color-mix(in srgb,var(--jf-primary) 18%,transparent)}
+.progress-fill{background:linear-gradient(90deg,var(--jf-secondary),var(--jf-primary))}
+.jf-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,.7fr);gap:12px;align-items:end}
+.jf-grid select,.jf-fields input[type=text]{width:100%;min-width:0;background:#080d2b;border:2px solid #7376ce;border-radius:5px;color:#fff;padding:10px}
+.jf-color{display:flex;gap:10px;align-items:center}
+.jf-color input{width:48px;height:40px;padding:2px}
+.jf-profile{display:grid;grid-template-columns:82px minmax(0,1fr);gap:18px;align-items:start}
+.jf-avatar{width:82px;height:82px;border-radius:50%;object-fit:cover;border:3px solid var(--jf-secondary);background:color-mix(in srgb,var(--jf-glow) 45%,#101333);display:grid;place-items:center;font-size:28px;color:white;box-shadow:0 0 0 4px color-mix(in srgb,var(--jf-primary) 18%,transparent),0 0 20px color-mix(in srgb,var(--jf-secondary) 25%,transparent)}
+.jf-fields{display:grid;gap:9px;min-width:0}
+.jf-fields label{margin:3px 0 0}
+.jf-fields input[type=text]{padding:14px 13px;font-size:16px}
+.jf-fields input[type=file]{width:100%;min-width:0;font-size:12px;line-height:1.5;padding:9px;background:color-mix(in srgb,var(--jf-glow) 22%,#080d2b);border:1px dashed var(--jf-secondary);box-shadow:none}
+.jf-fields input[type=file]::file-selector-button{margin-right:10px;padding:8px 11px;border:1px solid var(--jf-secondary);border-radius:5px;background:color-mix(in srgb,var(--jf-primary) 24%,#101333);color:var(--ink);font-weight:800;cursor:pointer}
+#jfSaveProfile{min-width:160px}
+#jfProfileStatus{align-self:center}
+.jf-people{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
+/* Chat flutuante, discreto e recolhível */
+.jf-chat-launcher{position:fixed;right:24px;bottom:24px;z-index:10020;width:56px;height:56px;padding:0;border:1px solid var(--jf-secondary);border-radius:50%;display:grid;place-items:center;background:var(--jf-primary);color:white;box-shadow:0 8px 28px #0008;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.jf-chat-launcher:hover{transform:translateY(-2px);box-shadow:0 11px 32px #0009}
+.jf-chat-launcher svg{width:25px;height:25px;display:block}
+.jf-chat-unread{position:absolute;right:1px;top:1px;width:12px;height:12px;border:2px solid #fff;border-radius:50%;background:#ff304f;box-shadow:0 0 0 2px #ff304f;display:none}
+.jf-chat-launcher.has-unread .jf-chat-unread{display:block}
+.jf-chat-window{position:fixed;right:24px;bottom:92px;z-index:10019;width:min(360px,calc(100vw - 28px));height:min(480px,calc(100dvh - 120px));min-height:300px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--jf-secondary);border-radius:15px;background:color-mix(in srgb,var(--jf-glow) 20%,#080d2b);box-shadow:0 16px 48px #0009;backdrop-filter:blur(18px)}
+.jf-chat-window[hidden]{display:none}
+.jf-chat-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border-bottom:1px solid color-mix(in srgb,var(--jf-secondary) 55%,transparent);background:color-mix(in srgb,var(--jf-primary) 35%,#101333)}
+.jf-chat-heading{margin:0;font-size:15px;font-weight:800}
+.jf-chat-subheading{font-size:11px;color:var(--muted);margin-top:3px}
+.jf-chat-close{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--jf-secondary) 60%,transparent);border-radius:50%;background:transparent;color:var(--ink);font-size:21px;cursor:pointer}
+.jf-chat-log{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:13px;scroll-behavior:smooth}
+.jf-chat-empty{margin:auto;text-align:center;color:var(--muted);font-size:13px}
+.jf-chat-message{display:flex;gap:9px;align-items:flex-start;min-width:0}
+.jf-chat-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;object-fit:cover;border:1px solid var(--jf-secondary);background:var(--jf-glow);display:grid;place-items:center;color:white;font-size:16px}
+.jf-chat-bubble{min-width:0;max-width:100%;padding:8px 11px;border:1px solid color-mix(in srgb,var(--jf-secondary) 45%,transparent);border-radius:4px 11px 11px 11px;background:color-mix(in srgb,var(--jf-glow) 38%,#101333);overflow-wrap:anywhere}
+.jf-chat-meta{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;margin-bottom:3px}
+.jf-chat-meta strong{font-size:12px;color:var(--jf-secondary)}
+.jf-chat-meta time{font-size:10px;color:var(--muted)}
+.jf-chat-text{font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.jf-chat-form{display:flex;gap:8px;padding:11px;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 45%,transparent);align-items:center}
+.jf-chat-form input{flex:1 1 auto;min-width:0;width:0}
+.jf-chat-form button{flex:0 0 auto;padding:10px 12px}
+.jf-chat-status{padding:0 12px 9px;margin:0;color:var(--muted);font-size:10px}
+@media(max-width:520px){.jf-chat-launcher{right:16px;bottom:16px;width:52px;height:52px}.jf-chat-window{right:12px;bottom:78px;width:calc(100vw - 24px);height:min(470px,calc(100dvh - 96px));min-height:280px}.jf-chat-form button{width:auto}}
+.jf-person{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid #7678d8;border-radius:8px;background:#101333e8;max-width:100%;width:max-content;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;transform-origin:left center;z-index:1}
+.jf-person img,.jf-person .jf-avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover}
+.jf-person strong{font-size:12px;overflow-wrap:anywhere}
+.jf-person .jf-motto{display:none;flex-basis:100%;font-size:12px;line-height:1.4;overflow-wrap:anywhere;color:var(--muted);padding-top:3px}
+.jf-person:hover,.jf-person:focus-within{z-index:20;transform:scale(1.22);width:min(330px,calc(100vw - 60px));min-height:100px;border-color:var(--jf-secondary);box-shadow:0 14px 36px #000b,0 0 0 2px color-mix(in srgb,var(--jf-secondary) 55%,transparent)}
+.jf-person:hover img,.jf-person:focus-within img,.jf-person:hover .jf-avatar,.jf-person:focus-within .jf-avatar{width:76px;height:76px;flex-basis:76px;border-radius:14px;box-shadow:0 0 0 2px #fff5,0 5px 18px #0008}
+.jf-person:hover .jf-person-details,.jf-person:focus-within .jf-person-details{flex:1;min-width:110px}
+.jf-person:hover .jf-person-details strong,.jf-person:focus-within .jf-person-details strong{font-size:14px}
+.jf-person:hover .jf-motto,.jf-person:focus-within .jf-motto{display:block}
+.jf-person .jf-person-details{display:flex;flex-direction:column;min-width:0}
+.jf-person .jf-person-details strong{display:block}
+@media(prefers-reduced-motion:reduce){.jf-person{transition:none}}
+@media(max-width:520px){.jf-grid{grid-template-columns:1fr}.jf-profile{grid-template-columns:62px minmax(0,1fr);gap:12px}.jf-avatar{width:62px;height:62px}.jf-fields input[type=text]{font-size:16px;padding:13px 10px}.jf-fields input[type=file]{font-size:11px;padding:7px}#jfSaveProfile{width:100%;flex-basis:100%}#jfProfileStatus{flex-basis:100%}}
+
+
+/* Temas globais: a paleta escolhida colore a página inteira, não só os detalhes. */
+html{background:color-mix(in srgb,var(--jf-glow) 34%,#080a1e)}
+body{background:radial-gradient(ellipse at 50% -10%,color-mix(in srgb,var(--jf-glow) 88%,#20245c) 0,color-mix(in srgb,var(--jf-glow) 58%,#20245c) 30%,color-mix(in srgb,var(--jf-glow) 30%,#101333) 63%,color-mix(in srgb,var(--jf-glow) 18%,#080a1e) 100%) fixed}
+body:before{background-image:linear-gradient(color-mix(in srgb,var(--jf-secondary) 16%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--jf-secondary) 16%,transparent) 1px,transparent 1px)}
+body:after{color:var(--jf-secondary);text-shadow:0 0 12px var(--jf-secondary)}
+.brand{text-shadow:0 2px 0 color-mix(in srgb,var(--jf-glow) 80%,#111),0 0 15px color-mix(in srgb,var(--jf-secondary) 45%,transparent)}
+.logo{border-color:var(--jf-secondary);background:linear-gradient(145deg,#fff 0%,color-mix(in srgb,var(--jf-secondary) 55%,white) 18%,var(--jf-glow) 48%,var(--jf-primary) 78%,#fff 100%);box-shadow:inset 0 2px 2px #fff,inset 0 -4px 8px color-mix(in srgb,var(--jf-glow) 60%,transparent),0 0 0 3px color-mix(in srgb,var(--jf-glow) 80%,#24225d),0 0 20px color-mix(in srgb,var(--jf-primary) 45%,transparent)}
+.tag{border-color:var(--jf-secondary);background:linear-gradient(color-mix(in srgb,var(--jf-secondary) 40%,white),var(--jf-secondary) 48%,color-mix(in srgb,var(--jf-primary) 45%,var(--jf-secondary)));box-shadow:inset 0 1px 0 #fff,0 0 14px color-mix(in srgb,var(--jf-secondary) 35%,transparent)}
+h1{ text-shadow:0 3px 0 color-mix(in srgb,var(--jf-glow) 85%,#5748b7),0 0 22px color-mix(in srgb,var(--jf-primary) 48%,transparent)}
+main>p{color:color-mix(in srgb,var(--jf-secondary) 20%,#d6d6ff)}
+.panel{background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 58%,#29295bEE),color-mix(in srgb,var(--jf-glow) 26%,#141633F5) 55%,color-mix(in srgb,var(--jf-primary) 12%,#201642F5));border-color:color-mix(in srgb,var(--jf-secondary) 68%,var(--jf-glow));box-shadow:inset 0 1px 0 #ffffff3d,inset 0 -2px 0 #080a26,0 0 0 3px color-mix(in srgb,var(--jf-glow) 38%,#17183d),0 8px 0 #080a24,0 13px 28px #0005}
+label{color:color-mix(in srgb,var(--jf-secondary) 72%,white)}
+input,.jf-grid select{border-color:color-mix(in srgb,var(--jf-secondary) 48%,var(--jf-glow));background:color-mix(in srgb,var(--jf-glow) 24%,#080d2b)}
+input:focus{border-color:var(--jf-secondary);box-shadow:0 0 0 2px color-mix(in srgb,var(--jf-secondary) 22%,transparent),inset 0 3px 7px #0008}
+.btn{border-color:color-mix(in srgb,var(--jf-secondary) 75%,white);background:linear-gradient(#fff 0%,color-mix(in srgb,var(--jf-secondary) 35%,white) 12%,color-mix(in srgb,var(--jf-secondary) 55%,var(--jf-primary)) 45%,color-mix(in srgb,var(--jf-primary) 60%,var(--jf-glow)) 48%,color-mix(in srgb,var(--jf-glow) 80%,#6b65d8) 100%);box-shadow:inset 0 1px 0 #fff,inset 0 -2px 0 color-mix(in srgb,var(--jf-glow) 85%,#3b388f),0 3px 0 #080a26,0 0 12px color-mix(in srgb,var(--jf-primary) 20%,transparent)}
+.btn.secondary{border-color:color-mix(in srgb,var(--jf-secondary) 55%,#c1c2ff);background:linear-gradient(color-mix(in srgb,var(--jf-glow) 75%,#51538b),color-mix(in srgb,var(--jf-glow) 62%,#343568) 48%,color-mix(in srgb,var(--jf-glow) 50%,#26264f) 50%,color-mix(in srgb,var(--jf-glow) 42%,#1b1d40))}
+.status .dot.ok{background:var(--jf-secondary);border-color:white;box-shadow:0 0 8px var(--jf-secondary),0 0 16px color-mix(in srgb,var(--jf-secondary) 50%,transparent)}
+.cover{border-color:var(--jf-secondary);background:linear-gradient(135deg,#fff,color-mix(in srgb,var(--jf-secondary) 45%,#c8c8ff) 22%,var(--jf-glow) 48%,var(--jf-primary) 73%,var(--jf-secondary));box-shadow:inset 0 2px 4px #fff,0 0 0 3px color-mix(in srgb,var(--jf-glow) 80%,#3b3c7a),0 0 22px color-mix(in srgb,var(--jf-primary) 28%,transparent)}
+.player h2,.panel h2{ text-shadow:0 2px 0 color-mix(in srgb,var(--jf-glow) 80%,#35326d)}
+.track-card{background:linear-gradient(135deg,color-mix(in srgb,var(--jf-glow) 62%,#292452),color-mix(in srgb,var(--jf-glow) 25%,#10152f) 72%);border-color:color-mix(in srgb,var(--jf-secondary) 70%,var(--jf-primary))}
+.track-art{border-color:var(--jf-secondary);box-shadow:0 0 0 3px color-mix(in srgb,var(--jf-glow) 80%,#4b448a),0 0 22px color-mix(in srgb,var(--jf-primary) 45%,transparent);background:linear-gradient(135deg,#fff,var(--jf-secondary) 35%,var(--jf-primary) 70%,var(--jf-glow))}
+.progress-wrap{border-color:color-mix(in srgb,var(--jf-secondary) 55%,var(--jf-glow))}
+.progress-fill{box-shadow:0 0 12px var(--jf-secondary)}
+.notice{border-color:color-mix(in srgb,var(--jf-secondary) 42%,var(--jf-glow));border-left-color:var(--jf-primary);background:linear-gradient(100deg,color-mix(in srgb,var(--jf-primary) 18%,#2e2453),color-mix(in srgb,var(--jf-glow) 38%,#171a3a))}
+.notice strong{color:color-mix(in srgb,var(--jf-primary) 65%,white)}
+.num{border-color:var(--jf-secondary);background:linear-gradient(color-mix(in srgb,var(--jf-secondary) 65%,white),var(--jf-secondary) 50%,var(--jf-glow));}
+code{color:var(--jf-secondary);border-color:color-mix(in srgb,var(--jf-secondary) 35%,var(--jf-glow))}
+footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
+
+
+/* Janelas de Perfil e Tema */
+.jf-topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative;z-index:2}
+.jf-top-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
+.jf-top-actions .btn{padding:8px 10px;white-space:nowrap;width:112px;min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:7px;box-sizing:border-box}
+.jf-modal-backdrop[hidden]{display:none!important}
+.jf-modal-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(3,6,22,.76);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);animation:jfFadeIn .18s ease-out}
+.jf-modal{width:min(100%,640px);max-height:min(90vh,820px);overflow:auto;margin:0;padding:28px;border-radius:20px;border-color:color-mix(in srgb,var(--jf-secondary) 75%,white);box-shadow:inset 0 1px 0 #ffffff70,0 18px 65px #0009,0 0 35px color-mix(in srgb,var(--jf-primary) 22%,transparent);animation:jfModalIn .2s ease-out}
+.jf-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.jf-modal-head h2{margin:0!important;font-size:23px}
+.jf-modal-close{flex:0 0 auto;padding:8px 12px;font-size:17px}
+@keyframes jfFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes jfModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* Frutiger Aero: vidro translúcido, céu azul e brilho aquático. */
+html[data-jf-theme="aero"]{color-scheme:light;--ink:#f5ffff;--muted:#d5f7ff}
+html[data-jf-theme="aero"] body{background:linear-gradient(180deg,#2a95c4 0%,#0d638b 100%) fixed}
+#jfAeroBackground{position:fixed;inset:-18px;z-index:0;pointer-events:none;opacity:0;background-image:url("/images/bliss.jpg"),radial-gradient(ellipse 34% 18% at 22% 73%,#6aa83b 0%,#6aa83b 99%,transparent 100%),radial-gradient(ellipse 48% 28% at 75% 82%,#4b8f2c 0%,#4b8f2c 99%,transparent 100%),linear-gradient(180deg,#65b9f5 0%,#b8e5ff 55%,#d9f4ff 100%);background-size:cover,cover,cover,cover;background-position:center 56%,center,center,center;filter:blur(var(--jf-aero-blur,0px));transform:scale(1.02);transition:opacity .25s ease,filter .2s ease}
+html[data-jf-theme="aero"] #jfAeroBackground{opacity:1}
+/* O Windows XP reutiliza a mesma foto de fundo do Frutiger Aero. */
+html[data-jf-theme="classic"] #jfAeroBackground{opacity:1}
+html[data-jf-theme="classic"] body:after{content:none!important;display:none!important}
+body>main{position:relative;z-index:1}
+html[data-jf-theme="aero"] body:before{opacity:.12;background-image:linear-gradient(#e5ffff20 1px,transparent 1px),linear-gradient(90deg,#e5ffff20 1px,transparent 1px);background-size:38px 38px,38px 38px}
+html[data-jf-theme="aero"] body:after{z-index:0}
+html[data-jf-theme="aero"] body:before{opacity:.3;background-image:radial-gradient(ellipse at 20% 30%,#ffffff90 0 1px,transparent 2px),radial-gradient(ellipse at 70% 60%,#ffffff70 0 2px,transparent 3px),linear-gradient(#e5ffff20 1px,transparent 1px),linear-gradient(90deg,#e5ffff20 1px,transparent 1px);background-size:95px 85px,130px 120px,38px 38px,38px 38px}
+html[data-jf-theme="aero"] body:after{content:"❋     ◦       ✧       ◦      ❋";letter-spacing:1.8rem;color:#e5ffff;text-shadow:0 0 14px #b9ffff;opacity:.55}
+html[data-jf-theme="aero"] .panel,html[data-jf-theme="aero"] .jf-modal{background:linear-gradient(145deg,#eaffff65,#c6f7ff28 48%,#eaffff18);border:1px solid #e9ffffb8;box-shadow:inset 0 2px 0 #ffffffbb,inset 0 -2px 0 #04588a44,0 10px 28px #003d6c44,0 2px 8px #ffffff26;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+html[data-jf-theme="aero"] .panel:before{background:linear-gradient(90deg,transparent,#ffffffc9,transparent)}
+html[data-jf-theme="aero"] h1,html[data-jf-theme="aero"] .player h2,html[data-jf-theme="aero"] .panel h2{color:#fff;text-shadow:0 2px 4px #00588780,0 0 18px #baffff66}
+html[data-jf-theme="aero"] main>p,html[data-jf-theme="aero"] .small,html[data-jf-theme="aero"] .player p,html[data-jf-theme="aero"] footer{color:#e2fbff}
+html[data-jf-theme="aero"] input,html[data-jf-theme="aero"] .jf-grid select{color:#06476b;background:#e8fcffb8;border:1px solid #f4ffff;box-shadow:inset 0 2px 5px #4a9cbd35}
+html[data-jf-theme="aero"] input::placeholder{color:#54849a}
+html[data-jf-theme="aero"] label{color:#f2ffff;text-shadow:0 1px 3px #00547c80}
+html[data-jf-theme="aero"] .btn{color:#075079;border:1px solid #ffffff;background:linear-gradient(#ffffff 0%,#d9ffff 22%,#8ce9f2 52%,#43bcd9 54%,#1686bc 100%);box-shadow:inset 0 2px 0 #fff, inset 0 -2px 0 #0876a4,0 3px 0 #03476c,0 5px 12px #003e5c44;text-shadow:0 1px #ffffffa8}
+html[data-jf-theme="aero"] .btn.secondary{color:#f4ffff;background:linear-gradient(#75d8e9,#218dbb 52%,#086a9d);border-color:#c7ffff;text-shadow:0 1px 2px #00415f}
+html[data-jf-theme="aero"] .track-card{background:linear-gradient(135deg,#d9fbff70,#e7ffff20);border-color:#d9ffff;box-shadow:inset 0 1px 0 #ffffffb8,0 5px 18px #005b8c33}
+html[data-jf-theme="aero"] .track-art,html[data-jf-theme="aero"] .cover{background:linear-gradient(135deg,#faffff,#92f4f0 35%,#44c3e3 62%,#168bc1);color:#075079;border-color:#efffff}
+html[data-jf-theme="aero"] .progress-wrap{background:#00598555;border-color:#d9ffff}
+html[data-jf-theme="aero"] .progress-fill{background:linear-gradient(90deg,#a9fff0,#51d8ee,#ffffff);box-shadow:0 0 12px #aaffff}
+html[data-jf-theme="aero"] .notice{background:#eaffff30;border-color:#c7ffff;border-left-color:#aaffed;color:#f4ffff}
+html[data-jf-theme="aero"] .notice strong{color:#c7fff0}
+html[data-jf-theme="aero"] .jf-person{background:#e7ffff35;border-color:#d7ffff}
+html[data-jf-theme="aero"] .jf-avatar{border-color:#e6ffff;background:#70cde3;color:#fff}
+html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c9ffff 48%,#65d8ec)}
+@media(max-width:520px){.jf-topbar{align-items:flex-start}.jf-top-actions{width:100%;justify-content:flex-end}.jf-modal-backdrop{padding:12px}.jf-modal{padding:17px;max-height:90vh}.jf-modal-head h2{font-size:20px}}
+
+/* Layout lateral de participantes e relógio digital Frutiger Aero */
+main{max-width:1080px}
+.jf-player-layout{display:grid;grid-template-columns:minmax(0,1fr) 245px;gap:18px;align-items:stretch;margin-top:19px}
+.jf-player-panel{min-width:0;margin-top:0}
+.jf-room-people{margin-top:0;min-width:0}
+.jf-room-people .jf-people{display:grid;align-content:start}
+.jf-room-people .jf-person{width:100%;background:color-mix(in srgb,var(--jf-glow) 30%,#101333aa)}
+.jf-check-label{display:flex;align-items:flex-start;gap:10px;text-transform:none;letter-spacing:0;font-size:13px;line-height:1.5}
+.jf-check-label input{width:18px;height:18px;flex:0 0 18px;margin:0;accent-color:var(--jf-secondary)}
+.jf-suggestion-settings{margin-top:17px;padding:14px;border:1px solid color-mix(in srgb,var(--jf-secondary) 50%,var(--jf-glow));border-radius:10px;background:color-mix(in srgb,var(--jf-glow) 20%,transparent)}
+.jf-suggestion-settings p{margin:8px 0 0}
+.jf-suggest-form{margin-top:15px}
+.jf-suggest-form .row{align-items:stretch}
+.jf-suggest-form input{flex:1 1 230px}
+.jf-suggestion-popup[hidden]{display:none!important}
+.jf-suggestion-popup{position:fixed;right:22px;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
+.jf-popup-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--jf-secondary);font-size:10px;font-weight:900;letter-spacing:1.2px}
+.jf-popup-close{border:0;background:transparent;color:var(--ink);font-size:18px;cursor:pointer}
+.jf-suggestion-popup>strong{display:block;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
+.jf-suggestion-popup>span{display:block;margin-top:7px}
+.jf-popup-actions{display:flex;justify-content:flex-end;margin-top:14px}
+html[data-jf-theme="aero"] .panel,html[data-jf-theme="aero"] .jf-modal{background:linear-gradient(145deg,#073e60f2,#052f4df0 48%,#062945f5);border-color:#8beaff;box-shadow:inset 0 2px 0 #b9f7ff70,0 10px 28px #00263f88,0 0 0 1px #40c8e455;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+html[data-jf-theme="aero"] .panel:before{background:linear-gradient(90deg,transparent,#d8ffff80,transparent)}
+html[data-jf-theme="aero"] h1,html[data-jf-theme="aero"] .player h2,html[data-jf-theme="aero"] .panel h2,html[data-jf-theme="aero"] .panel h3{color:#f4ffff;text-shadow:0 2px 4px #001d35}
+html[data-jf-theme="aero"] main>p,html[data-jf-theme="aero"] .small,html[data-jf-theme="aero"] .player p,html[data-jf-theme="aero"] footer{color:#d9f7ff}
+html[data-jf-theme="aero"] label{color:#d8fbff;text-shadow:none}
+html[data-jf-theme="aero"] .track-card{background:linear-gradient(135deg,#063a59f5,#082d49f5);border-color:#56d9f4;box-shadow:inset 0 1px 0 #b7f7ff44,0 5px 18px #001b3088}
+html[data-jf-theme="aero"] .track-title{color:#f6ffff;text-shadow:0 1px 3px #001a2b}
+html[data-jf-theme="aero"] .track-artist{color:#c9f1ff}
+html[data-jf-theme="aero"] .track-album{color:#9bd9ed}
+html[data-jf-theme="aero"] .track-times{display:flex;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 12px;border:1px solid #36c6e9;border-radius:7px;background:linear-gradient(#021c2c,#07334b);box-shadow:inset 0 3px 8px #0009,0 0 12px #00bde522;color:#aaffef;font-family:"Courier New",monospace;font-size:clamp(21px,3vw,30px);font-weight:900;letter-spacing:2px;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 0 5px #4dffd2,0 0 12px #00d8c0}
+html[data-jf-theme="aero"] .track-times span{min-width:0}
+html[data-jf-theme="aero"] .track-times span:last-child{color:#6eeaff;text-align:right;text-shadow:0 0 5px #40dfff,0 0 12px #00aee8}
+html[data-jf-theme="aero"] .track-kicker{color:#5de8ff}
+html[data-jf-theme="aero"] .jf-suggestion-popup{background:linear-gradient(145deg,#073e60f8,#05273ff8);border-color:#64eaff;color:#f5ffff}
+html[data-jf-theme="aero"] .jf-person{background:#082f4be8;border-color:#55d9f4}
+@media(max-width:760px){.jf-player-layout{grid-template-columns:minmax(0,1fr)}.jf-room-people{order:2}.jf-player-panel{order:1}}
+@media(max-width:520px){main{max-width:100%}.jf-suggestion-popup{right:14px;bottom:14px}}
+/* Perfil com mais respiro, foto centralizada no topo e avatar junto ao botão superior. */
+.jf-profile-trigger{display:inline-flex;align-items:center;gap:9px}
+.jf-profile-trigger img,.jf-profile-trigger #jfTopAvatarPlaceholder{width:28px;height:28px;flex:0 0 28px;border-radius:50%;object-fit:cover;border:2px solid var(--jf-secondary);display:grid;place-items:center;font-size:16px;line-height:1}
+.jf-profile-trigger img[hidden]{display:none!important}
+.jf-profile-trigger #jfTopAvatarPlaceholder[hidden]{display:none!important}
+.jf-profile-editor{grid-template-columns:1fr;gap:20px;align-items:start}
+.jf-profile-photo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:8px 0 4px}
+.jf-profile-editor .jf-avatar{width:124px;height:124px;font-size:42px;border-radius:50%;object-fit:cover}
+.jf-profile-editor .jf-fields{width:100%;gap:12px}
+.jf-profile-editor .jf-fields label{margin:8px 0 0;line-height:1.5;white-space:normal;overflow-wrap:anywhere}
+.jf-profile-editor .jf-fields input[type=text]{padding:15px 16px;min-height:52px}
+.jf-profile-editor .jf-avatar-file{margin-top:0}
+.jf-avatar-upload{display:inline-flex;align-items:center;justify-content:center;margin:0!important;padding:9px 15px;border:1px solid var(--jf-secondary);border-radius:8px;background:color-mix(in srgb,var(--jf-glow) 38%,#101333);cursor:pointer}
+.jf-profile-editor #jfAvatarFile{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+#jfProfileModal .jf-modal-head{margin-bottom:8px}
+#jfProfileModal .jf-modal-head h2{flex:1}
+#jfProfileStatus{line-height:1.6;overflow-wrap:anywhere}
+html[data-jf-theme="aero"] .jf-avatar-upload{color:#f4ffff;background:#064267;border-color:#7beaff}
+@media(max-width:520px){.jf-profile-editor{grid-template-columns:1fr}.jf-profile-editor .jf-avatar{width:108px;height:108px}.jf-modal{padding:20px}.jf-modal-head{align-items:center}}
+
+/* Windows XP Luna: azul royal, verde Bliss e janelas arredondadas. */
+html[data-jf-theme="classic"]{color-scheme:light;--ink:#18345b;--muted:#385b81;--jf-primary:#1768d2;--jf-secondary:#73b8ff;--jf-glow:#a5d7ff;background:#75b9ef}
+html[data-jf-theme="classic"] body{font-family:Tahoma,"Segoe UI",Arial,sans-serif;color:#18345b;background:linear-gradient(180deg,#147bd1 0%,#83c7f4 53%,#b8e6ff 100%) fixed!important}
+html[data-jf-theme="classic"] body:before{opacity:.45;background-image:radial-gradient(ellipse at 18% 20%,#fff9 0 1px,transparent 2px),radial-gradient(ellipse at 73% 28%,#fff8 0 2px,transparent 3px);background-size:170px 130px,230px 180px}
+html[data-jf-theme="classic"] body:after{content:"";position:fixed;z-index:0;inset:45% -10% -20%;pointer-events:none;background:radial-gradient(ellipse at 24% 100%,#64ad36 0 34%,transparent 34.5%),radial-gradient(ellipse at 76% 110%,#398c28 0 47%,transparent 47.5%);opacity:.95}
+html[data-jf-theme="classic"] main{position:relative;z-index:1}
+html[data-jf-theme="classic"] main>p,html[data-jf-theme="classic"] .small,html[data-jf-theme="classic"] footer{color:#fff;text-shadow:0 1px 2px #17466c}
+html[data-jf-theme="classic"] .brand,html[data-jf-theme="classic"] h1{color:#fff;text-shadow:0 2px 3px #18518c}
+html[data-jf-theme="classic"] .logo{border:1px solid #b8dcff;border-radius:9px;background:linear-gradient(#5cb7ff,#1260c9 48%,#0745a3 52%,#398bfa);color:#fff;box-shadow:inset 0 1px 0 #ffffffb8,0 2px 3px #164c8c66}
+html[data-jf-theme="classic"] .tag{border:1px solid #c3e5ff;border-radius:5px;background:linear-gradient(#f7fcff,#c6e7ff);color:#174c87;box-shadow:0 1px 2px #174c8c44;animation:none}
+html[data-jf-theme="classic"] .panel,html[data-jf-theme="classic"] .jf-modal{color:#18345b;background:linear-gradient(145deg,#fffefdf7,#e8f4fffa);border:1px solid #4d91d8;border-radius:10px;box-shadow:inset 0 1px 0 #fff,0 2px 0 #c1ddf5,0 7px 18px #154e8b44}
+html[data-jf-theme="classic"] .panel:before{height:3px;background:linear-gradient(90deg,#fff,#78baff,#fff)}
+html[data-jf-theme="classic"] .panel h2,html[data-jf-theme="classic"] .player h2{color:#0757ae;text-shadow:0 1px #fff}
+html[data-jf-theme="classic"] label{color:#234b75;text-shadow:none}
+html[data-jf-theme="classic"] input,html[data-jf-theme="classic"] .jf-grid select{font-family:Tahoma,"Segoe UI",Arial,sans-serif;color:#18345b;background:#fff;border:1px solid #7f9db9;border-radius:4px;box-shadow:inset 0 1px 2px #00000012}
+html[data-jf-theme="classic"] input:focus{border-color:#2675d7;box-shadow:0 0 0 2px #75baff55}
+html[data-jf-theme="classic"] .btn,html[data-jf-theme="classic"] .btn.secondary{font-family:Tahoma,"Segoe UI",Arial,sans-serif;color:#fff;background:linear-gradient(#8bd2ff 0%,#3e9df5 18%,#1670d7 48%,#0755b8 51%,#3188eb 100%);border:1px solid #0754ad;border-radius:5px;box-shadow:inset 0 1px 0 #ffffffd9,0 1px 2px #144f8b55;text-shadow:0 1px 1px #06468e}
+html[data-jf-theme="classic"] .btn:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);box-shadow:inset 0 1px 0 #fff,0 2px 4px #144f8b55}
+html[data-jf-theme="classic"] .btn:active:not(:disabled){filter:brightness(.94);transform:translateY(1px)}
+html[data-jf-theme="classic"] .status,html[data-jf-theme="classic"] .player p{color:#294c70}
+html[data-jf-theme="classic"] .dot{border-radius:50%;box-shadow:0 0 0 2px #fff}
+html[data-jf-theme="classic"] .dot.ok{background:#35b84b;border-color:#188a2d;box-shadow:0 0 0 2px #fff}
+html[data-jf-theme="classic"] .cover,html[data-jf-theme="classic"] .track-art{border:1px solid #9dc9f3;border-radius:8px;background:linear-gradient(135deg,#dff5ff,#4c9fe9 50%,#0757b5);color:#fff;box-shadow:0 2px 5px #174c8c33}
+html[data-jf-theme="classic"] .track-card{background:linear-gradient(135deg,#fafdff,#d9ecff);border:1px solid #8bbce9;border-radius:9px;box-shadow:inset 0 1px 0 #fff,0 2px 4px #174c8c22}
+html[data-jf-theme="classic"] .track-kicker{color:#0871c8}
+html[data-jf-theme="classic"] .track-title{color:#18345b}
+html[data-jf-theme="classic"] .track-artist,html[data-jf-theme="classic"] .track-album,html[data-jf-theme="classic"] .track-times{color:#385b81}
+html[data-jf-theme="classic"] .progress-wrap{border:1px solid #7f9db9;border-radius:5px;background:#fff;box-shadow:inset 0 1px 2px #0002}
+html[data-jf-theme="classic"] .progress-fill{border-radius:4px;background:linear-gradient(#72c4ff,#0872dc);box-shadow:0 0 4px #5aaeff}
+html[data-jf-theme="classic"] .notice{color:#18345b;background:linear-gradient(#fafdff,#d8ecff);border:1px solid #8bbce9;border-left:4px solid #1681e7;border-radius:6px;box-shadow:0 1px 2px #174c8c22}
+html[data-jf-theme="classic"] .notice strong,html[data-jf-theme="classic"] code{color:#0757ae}
+html[data-jf-theme="classic"] code{background:#e8f4ff;border:1px solid #a6c8e8;border-radius:3px}
+html[data-jf-theme="classic"] .num{color:#fff;background:linear-gradient(#7dc7ff,#0871d4);border:1px solid #0754ad;border-radius:5px;box-shadow:inset 0 1px #ffffffb8}
+html[data-jf-theme="classic"] .jf-person{color:#18345b;background:linear-gradient(#fff,#e1f1ff);border:1px solid #9dc9f3;border-radius:8px}
+html[data-jf-theme="classic"] .jf-person:hover,html[data-jf-theme="classic"] .jf-person:focus-within{border-color:#2675d7;box-shadow:0 0 0 2px #75baff55}
+html[data-jf-theme="classic"] .jf-avatar,html[data-jf-theme="classic"] .jf-profile-trigger img,html[data-jf-theme="classic"] .jf-profile-trigger #jfTopAvatarPlaceholder{border:2px solid #fff;border-radius:50%;background:linear-gradient(#c7eaff,#4b9ce7);color:#0757ae;box-shadow:0 0 0 1px #6ba5d8}
+html[data-jf-theme="classic"] .jf-avatar-upload{color:#fff;background:linear-gradient(#8bd2ff,#1670d7 52%,#0755b8);border:1px solid #0754ad;border-radius:5px;box-shadow:inset 0 1px #ffffffc9;text-shadow:0 1px #06468e}
+html[data-jf-theme="classic"] .jf-modal-backdrop{background:#123c68a8;backdrop-filter:blur(4px)}
+html[data-jf-theme="classic"] .jf-modal{animation:jfModalIn .2s ease-out}
+html[data-jf-theme="classic"] .jf-suggestion-settings,html[data-jf-theme="classic"] .jf-suggestion-popup{color:#18345b;background:linear-gradient(#fff,#e1f1ff);border:1px solid #8bbce9;border-radius:8px;box-shadow:0 5px 18px #154e8b44}
+html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-popup-close{color:#0757ae}
 </style>
 </head>
 <body>
+<div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -62,7 +298,10 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
   </section>
 
-  <section class="panel">
+
+  
+<div class="jf-player-layout">
+<section class="panel jf-player-panel">
     <div class="player">
       <div class="cover">♫</div>
       <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
@@ -89,15 +328,39 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
       <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
     </div>
-    <audio id="remoteAudio" controls autoplay playsinline></audio>
+    <audio id="remoteAudio" autoplay playsinline></audio>
     <p id="audioDiagnostics" class="small">
   Diagnóstico do áudio: aguardando conexão...
 </p>
-    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
+    
     <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
   </section>
+  <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
+    <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
+    <p class="small" style="margin-top:0">Participantes conectados agora.</p>
+    <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
+  </aside>
+</div>
 
-  <section class="panel">
+  
+<button type="button" id="jfChatLauncher" class="jf-chat-launcher" aria-label="Abrir chat da sala" aria-expanded="false" aria-controls="jfChatWindow" title="Abrir chat da sala">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8.3 8.3 0 0 1-3.3-.7L4 20l1.3-4.1a7.5 7.5 0 1 1 14.7-4.4Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
+  <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
+</button>
+<section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
+  <header class="jf-chat-header">
+    <div><h2 id="jfChatHeading" class="jf-chat-heading">Chat da sala</h2><div class="jf-chat-subheading">Converse com quem está ouvindo</div></div>
+    <button type="button" id="jfChatClose" class="jf-chat-close" aria-label="Fechar chat">×</button>
+  </header>
+  <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
+  <form id="jfChatForm" class="jf-chat-form">
+    <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
+    <button class="btn" id="jfChatSend" type="submit" disabled>Enviar</button>
+  </form>
+  <p class="jf-chat-status" id="jfChatStatus" aria-live="polite">Entre em uma sala para enviar mensagens.</p>
+</section>
+
+    <section class="panel">
     <h2 style="margin:0 0 14px">Comandos da sala</h2>
     <p style="margin-top:0">Esses botões enviam comandos para a outra pessoa. No protótipo, eles não controlam diretamente o Spotify — quem está transmitindo ainda precisa pausar ou trocar a música na aba do Spotify.</p>
     <div class="row">
@@ -105,15 +368,71 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
       <button class="btn secondary" id="nextCmd" disabled>⏭ Avisar: próxima</button>
     </div>
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
+    <div class="jf-suggestion-settings">
+      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Receber sugestões de música nesta transmissão</label>
+      <p class="small">Ative no aparelho que está transmitindo para receber sugestões em um popup no canto inferior direito.</p>
+    </div>
+    <div class="jf-suggest-form">
+      <label for="jfSuggestionText">Sugerir uma música</label>
+      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Enviar sugestão</button></div>
+      <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma música.</p>
+    </div>
   </section>
+  <div id="jfSuggestionPopup" class="jf-suggestion-popup" role="status" aria-live="polite" hidden>
+    <div class="jf-popup-top"><span>♫ SUGESTÃO DE MÚSICA</span><button type="button" class="jf-popup-close" id="jfCloseSuggestion" aria-label="Fechar sugestão">✕</button></div>
+    <strong id="jfPopupSong"></strong><span id="jfPopupFrom" class="small"></span>
+    <div class="jf-popup-actions"><button type="button" class="btn" id="jfSuggestionDone">Entendi</button></div>
+  </div>
 
-  <section class="panel">
+  
+<div class="jf-modal-backdrop" id="jfProfileModal" hidden>
+  <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfProfileHeading">
+    <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-profile jf-profile-editor">
+      <div class="jf-profile-photo"><img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden><div id="jfAvatarPlaceholder" class="jf-avatar" aria-label="Avatar padrão">☺</div><label class="jf-avatar-upload" for="jfAvatarFile">Trocar foto</label></div>
+      <div class="jf-fields">
+        <label for="jfName">Nome de exibição</label>
+        <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
+        <label for="jfMotto">Lema do perfil (opcional)</label>
+        <input id="jfMotto" type="text" maxlength="90" placeholder="Uma frase que te representa">
+        <input id="jfAvatarFile" type="file" accept="image/*" aria-label="Escolher foto ou avatar" class="jf-avatar-file">
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="jfSaveProfile" type="button">Salvar perfil</button><span class="small" id="jfProfileStatus" aria-live="polite">Salvo neste navegador.</span></div>
+  </section>
+</div>
+  
+<div class="jf-modal-backdrop" id="jfThemeModal" hidden>
+  <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
+    <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-grid">
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
+    </div>
+    <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">Disponível no Frutiger Aero. A preferência fica salva neste navegador.</p></div>
+    <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
+  </section>
+</div>
+
+<div class="jf-modal-backdrop" id="jfOptionsModal" hidden>
+  <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfOptionsHeading">
+    <div class="jf-modal-head"><h2 id="jfOptionsHeading">Opções</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfOptionsModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-grid">
+      <div><label for="jfVolume">Volume do áudio recebido <span id="jfVolumeValue">100%</span></label><input id="jfVolume" type="range" min="0" max="100" step="1" value="100" aria-describedby="jfVolumeHelp"><p class="small" id="jfVolumeHelp">Controla o volume do áudio que você escuta neste aparelho.</p></div>
+      <div><label for="jfFont">Fonte da página</label><select id="jfFont"><option value="Trebuchet MS">Trebuchet MS (padrão)</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Georgia">Georgia</option><option value="Courier New">Courier New</option><option value="Tahoma">Tahoma</option><option value="system-ui">Sistema</option></select><p class="small">A fonte escolhida fica salva neste navegador.</p></div>
+    </div>
+  </section>
+</div>
+
+  
+<section class="panel">
     <h2 style="margin:0 0 14px">Como usar</h2>
     <div class="steps">
       <div class="step"><div class="num">1</div><div><strong>Abra esta página nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versão hospedada do site.</span></div></div>
       <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, “noite”. Escolham um nome difícil de adivinhar se quiserem privacidade básica.</span></div></div>
       <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissão</strong><span>Compartilhe a aba do Spotify Web Player com áudio. No Android, aceite tocar o áudio quando solicitado.</span></div></div>
     </div>
+    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
     <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
   </section>
   <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
@@ -267,6 +586,7 @@ const config = {
     closeAllPeers();
     if (stopLocal) stopLocalStream();
     isSender = false;
+    if(typeof jfUpdateSuggestionControls==="function")jfUpdateSuggestionControls();
     $("remoteAudio").pause();
     $("remoteAudio").srcObject = null;
     enableControls();
@@ -419,7 +739,7 @@ const config = {
   socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => { joined = false; setStatus(message || 'Não foi possível entrar na sala.'); enableControls(); });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
-    joined = true; room = joinedRoom; $("room").value = room;
+    joined = true; room = joinedRoom; $("room").value = room; socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -474,7 +794,7 @@ const config = {
       audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
-      localStream = captured; isSender = true;
+      localStream = captured; isSender = true; jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
       // serão conectados pelo evento peer-joined do servidor.
       const roomInfo = await new Promise(resolve => {
@@ -508,12 +828,163 @@ const config = {
     $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a música.' : 'O transmissor pediu para passar à próxima música.';
     setStatus('Comando recebido. O controle da música ainda é manual neste protótipo.', true);
   });
+  let jfSuggestionEnabled = false;
+  function jfUpdateSuggestionControls(){
+    $("jfSendSuggestion").disabled = !joined || !$("jfSuggestionText").value.trim();
+    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative a opção acima para receber sugestões." : "Sugestões serão enviadas a quem estiver transmitindo.");
+  }
+  $("jfReceiveSuggestions").addEventListener("change",()=>{
+    jfSuggestionEnabled=$("jfReceiveSuggestions").checked;
+    socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled});
+    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Recebimento de sugestões ativado neste aparelho.":"Recebimento de sugestões desativado.";
+  });
+  $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
+  $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
+  $("jfSendSuggestion").addEventListener("click",()=>{
+    const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
+    if(!joined||!suggestion)return;
+    socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
+    $("jfSuggestionText").value="";
+    $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
+    jfUpdateSuggestionControls();
+  });
+  function jfShowSuggestion({suggestion,fromName}){
+    if(!isSender||!jfSuggestionEnabled)return;
+    $("jfPopupSong").textContent=String(suggestion||"Sugestão de música").slice(0,180);
+    $("jfPopupFrom").textContent="Sugerida por "+String(fromName||"Ouvinte").slice(0,24);
+    $("jfSuggestionPopup").hidden=false;
+  }
+  function jfHideSuggestion(){$("jfSuggestionPopup").hidden=true;}
+  $("jfCloseSuggestion").addEventListener("click",jfHideSuggestion);
+  $("jfSuggestionDone").addEventListener("click",jfHideSuggestion);
+  socket.on("music-suggestion",jfShowSuggestion);
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
   socket.on('peer-joined', ({id}) => knownPeers.add(id));
   socket.on('peer-left', ({id}) => knownPeers.delete(id));
   socket.on('disconnect', () => knownPeers.clear());
+
+  // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
+  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
+  let jfProfile={name:"Ouvinte",avatar:"",motto:""};
+  const jfPeerProfiles=new Map();
+  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);}catch(_){}
+  function jfApplyTheme(name,color){
+    let t=jfThemes[name]||jfThemes.y2k;
+    if(name==="custom"){
+      const hex=/^#[0-9a-f]{6}$/i.test(color||"")?color:"#ff78d2";
+      t=[hex,hex,"#252447"];
+    }
+    document.documentElement.dataset.jfTheme=name;document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
+    document.documentElement.style.setProperty("--pink",t[0]);document.documentElement.style.setProperty("--cyan",t[1]);document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur")?.checked?"5px":"0px");
+  }
+  function jfSaveTheme(){
+    const name=$("jfTheme").value,color=$("jfColor").value;jfApplyTheme(name,color);
+    try{localStorage.setItem("junto_theme",JSON.stringify({name,color,blur:$("jfAeroBlur")?.checked||false}));}catch(_){}
+  }
+  function jfRenderAvatar(){
+    $("jfAvatarPreview").hidden=!jfProfile.avatar;$("jfAvatarPlaceholder").hidden=!!jfProfile.avatar;
+    if(jfProfile.avatar)$("jfAvatarPreview").src=jfProfile.avatar;
+    const topAvatar=$("jfTopAvatar"),topPlaceholder=$("jfTopAvatarPlaceholder");topAvatar.hidden=!jfProfile.avatar;topPlaceholder.hidden=!!jfProfile.avatar;if(jfProfile.avatar)topAvatar.src=jfProfile.avatar;
+  }
+  function jfRenderPeople(){
+    const list=$("jfPeople");list.replaceChildren();
+    if(!joined){const p=document.createElement("p");p.className="small";p.textContent="Entre em uma sala para ver os participantes.";list.appendChild(p);return;}
+    const all=[...(socket.id?[[socket.id,jfProfile]]:[]),...jfPeerProfiles.entries()];
+    if(!all.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
+    for(const [id,p] of all){
+      const card=document.createElement("div");card.className="jf-person";
+      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="☺";card.appendChild(av);}
+      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);card.tabIndex=0;list.appendChild(card);
+    }
+  }
+  function jfInit(){
+    $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";jfRenderAvatar();
+    const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
+    const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
+    $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
+    $("jfOpenProfile").addEventListener("click",()=>openModal("jfProfileModal"));
+    $("jfOpenOptions").addEventListener("click",()=>openModal("jfOptionsModal"));
+    document.querySelectorAll("[data-close-modal]").forEach(button=>button.addEventListener("click",()=>closeModal(button.dataset.closeModal)));
+    document.querySelectorAll(".jf-modal-backdrop").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal)closeModal(modal.id);}));
+    document.addEventListener("keydown",event=>{if(event.key==="Escape"){document.querySelectorAll(".jf-modal-backdrop:not([hidden])").forEach(modal=>closeModal(modal.id));}});
+    let t={};try{t=JSON.parse(localStorage.getItem("junto_theme")||"{}");}catch(_){}
+    $("jfTheme").value=(jfThemes[t.name]||t.name==="custom")?t.name:"y2k";
+    if(jfThemes[t.name])$("jfTheme").value=t.name;
+    if(t.name==="custom")$("jfTheme").value="custom";
+    if(/^#[0-9a-f]{6}$/i.test(t.color||""))$("jfColor").value=t.color;
+    $("jfAeroBlur").checked=Boolean(t.blur);document.documentElement.style.setProperty("--jf-aero-blur",t.blur?"5px":"0px");
+    jfApplyTheme($("jfTheme").value,$("jfColor").value);
+    let options={};try{options=JSON.parse(localStorage.getItem("junto_options")||"{}");}catch(_){}
+    const savedVolume=Number.isFinite(Number(options.volume))?Math.max(0,Math.min(100,Number(options.volume))):100;
+    $("jfVolume").value=String(savedVolume);$("jfVolumeValue").textContent=`${savedVolume}%`;$("remoteAudio").volume=savedVolume/100;
+    const allowedFonts=["Trebuchet MS","Arial","Verdana","Georgia","Courier New","Tahoma","system-ui"];
+    const savedFont=allowedFonts.includes(options.font)?options.font:"Trebuchet MS";$("jfFont").value=savedFont;document.documentElement.style.setProperty("--jf-font-family",`"${savedFont}"`);
+    $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero";
+    $("jfTheme").addEventListener("change",()=>{ $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero"; jfSaveTheme(); });$("jfColor").addEventListener("input",()=>{$("jfTheme").value="custom";$("jfAeroBlurOption").hidden=true;jfSaveTheme();});
+    $("jfAeroBlur").addEventListener("change",()=>{document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur").checked?"5px":"0px");try{localStorage.setItem("junto_theme",JSON.stringify({name:$("jfTheme").value,color:$("jfColor").value,blur:$("jfAeroBlur").checked}));}catch(_){} });
+    $("jfVolume").addEventListener("input",()=>{const volume=Math.max(0,Math.min(100,Number($("jfVolume").value)||0));$("remoteAudio").volume=volume/100;$("jfVolumeValue").textContent=`${volume}%`;try{localStorage.setItem("junto_options",JSON.stringify({volume,font:$("jfFont").value}));}catch(_){} });
+    $("jfFont").addEventListener("change",()=>{const font=$("jfFont").value;document.documentElement.style.setProperty("--jf-font-family",`"${font}"`);try{localStorage.setItem("junto_options",JSON.stringify({volume:Number($("jfVolume").value),font}));}catch(_){} });
+    $("jfAvatarFile").addEventListener("change",()=>{
+      const file=$("jfAvatarFile").files&&$("jfAvatarFile").files[0];if(!file)return;
+      if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
+      const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
+    });
+    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
+  }
+  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();}});
+  socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();});
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();});
+  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();socket.emit("profile-update",{profile:jfProfile});});
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
+
+  // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
+  function jfSetChatOpen(open){
+    const windowEl=$("jfChatWindow"),launcher=$("jfChatLauncher");
+    windowEl.hidden=!open;launcher.setAttribute("aria-expanded",String(open));
+    launcher.setAttribute("aria-label",open?"Fechar chat da sala":"Abrir chat da sala");
+    launcher.title=open?"Fechar chat da sala":"Abrir chat da sala";
+    if(open){launcher.classList.remove("has-unread");$("jfChatUnread").removeAttribute("title");$("jfChatInput").focus();const log=$("jfChatLog");log.scrollTop=log.scrollHeight;}
+  }
+  $("jfChatLauncher").addEventListener("click",()=>jfSetChatOpen($("jfChatWindow").hidden));
+  $("jfChatClose").addEventListener("click",()=>jfSetChatOpen(false));
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("jfChatWindow").hidden)jfSetChatOpen(false);});
+
+  function jfRenderChat(messages){
+    const log=$("jfChatLog");log.replaceChildren();
+    if(!messages.length){const empty=document.createElement("p");empty.className="jf-chat-empty";empty.textContent=joined?"Nenhuma mensagem ainda. Que tal dar oi? ✦":"Entre em uma sala para começar a conversar ✦";log.appendChild(empty);return;}
+    for(const message of messages) jfAppendChatMessage(message,false);
+    log.scrollTop=log.scrollHeight;
+  }
+  function jfAppendChatMessage(message,scroll=true){
+    const log=$("jfChatLog"),empty=log.querySelector(".jf-chat-empty");if(empty)empty.remove();
+    const item=document.createElement("div");item.className="jf-chat-message";
+    if(message.avatar){const avatar=document.createElement("img");avatar.className="jf-chat-avatar";avatar.src=message.avatar;avatar.alt="";item.appendChild(avatar);}
+    else{const avatar=document.createElement("div");avatar.className="jf-chat-avatar";avatar.textContent="☺";item.appendChild(avatar);}
+    const bubble=document.createElement("div");bubble.className="jf-chat-bubble";
+    const meta=document.createElement("div");meta.className="jf-chat-meta";
+    const name=document.createElement("strong");name.textContent=String(message.name||"Ouvinte").slice(0,24);meta.appendChild(name);
+    const time=document.createElement("time");const date=new Date(Number(message.time)||Date.now());time.dateTime=date.toISOString();time.textContent=date.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});meta.appendChild(time);
+    const body=document.createElement("p");body.className="jf-chat-text";body.textContent=String(message.text||"").slice(0,500);
+    bubble.append(meta,body);item.appendChild(bubble);log.appendChild(item);
+    while(log.children.length>50)log.firstElementChild.remove();
+    if(scroll)log.scrollTop=log.scrollHeight;
+  }
+  function jfUpdateChatControls(){
+    $("jfChatInput").disabled=!joined;$("jfChatSend").disabled=!joined||!$("jfChatInput").value.trim();
+    $("jfChatStatus").textContent=joined?"Mensagens visíveis para as pessoas nesta sala.":"Entre em uma sala para enviar mensagens.";
+  }
+  $("jfChatInput").addEventListener("input",jfUpdateChatControls);
+  $("jfChatForm").addEventListener("submit",event=>{
+    event.preventDefault();const text=$("jfChatInput").value.trim().slice(0,500);if(!joined||!text)return;
+    socket.emit("chat-send",{text});$("jfChatInput").value="";jfUpdateChatControls();$("jfChatInput").focus();
+  });
+  socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
+  socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
+  socket.on("joined-room",()=>jfUpdateChatControls());
+
+  jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();
   enableControls();
   refreshSpotifyStatus();
   setInterval(updateTrackProgress, 1000);

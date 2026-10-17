@@ -28,6 +28,7 @@ const PORT = process.env.PORT || 3000;
 const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
+const roomChatMessages = new Map();
 const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
 
 function cookieValue(req, name) {
@@ -169,7 +170,12 @@ io.on("connection", socket => {
     const peers = [...(io.sockets.adapter.rooms.get(room) || [])].filter(id => id !== socket.id);
     socket.join(room);
     socket.data.room = room;
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null });
+    const profiles = Object.fromEntries(peers.map(id => {
+      const peer = io.sockets.sockets.get(id);
+      return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
+    }));
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles });
+    socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
   });
@@ -200,6 +206,61 @@ io.on("connection", socket => {
     };
     roomTracks.set(socket.data.room, safeTrack);
     socket.to(socket.data.room).emit("track-update", safeTrack);
+  });
+
+  socket.on("profile-update", payload => {
+    if (!socket.data.room || !payload || !payload.profile) return;
+    const name = String(payload.profile.name || "Ouvinte").trim().split(" ").filter(Boolean).join(" ").slice(0, 24) || "Ouvinte";
+    const avatar = String(payload.profile.avatar || "");
+    const comma = avatar.indexOf(",");
+    const prefix = comma >= 0 ? avatar.slice(0, comma + 1) : "";
+    const allowedImage = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,", "data:image/gif;base64,"].includes(prefix);
+    const safeAvatar = avatar.length <= 220000 && allowedImage && comma < avatar.length - 1 ? avatar : "";
+    const motto = String(payload.profile.motto || "").trim().replace(/\s+/g, " ").slice(0, 90);
+    const profile = { name, avatar: safeAvatar, motto };
+    socket.data.profile = profile;
+    socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
+  });
+
+  socket.on("chat-send", payload => {
+    const room = socket.data.room;
+    if (!room || !payload || typeof payload.text !== "string") return;
+    const text = payload.text.trim().slice(0, 500);
+    if (!text) return;
+    const profile = socket.data.profile || { name: "Ouvinte", avatar: "" };
+    const message = {
+      room,
+      name: String(profile.name || "Ouvinte").slice(0, 24),
+      avatar: typeof profile.avatar === "string" && profile.avatar.length <= 220000 ? profile.avatar : "",
+      text,
+      time: Date.now()
+    };
+    const history = roomChatMessages.get(room) || [];
+    history.push(message);
+    if (history.length > 50) history.splice(0, history.length - 50);
+    roomChatMessages.set(room, history);
+    io.to(room).emit("chat-message", message);
+  });
+
+  socket.on("suggestion-settings", payload => {
+    if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
+    socket.data.receiveMusicSuggestions = Boolean(payload.enabled);
+  });
+
+  socket.on("music-suggestion", payload => {
+    if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
+    const suggestion = String(payload.suggestion || "").trim().slice(0, 180);
+    if (!suggestion) return;
+    const peer = io.sockets.sockets.get(socket.id);
+    const fromName = String(payload.fromName || peer?.data.profile?.name || "Ouvinte").trim().slice(0, 24) || "Ouvinte";
+    const roomMembers = io.sockets.adapter.rooms.get(socket.data.room) || new Set();
+    for (const id of roomMembers) {
+      if (id === socket.id) continue;
+      const recipient = io.sockets.sockets.get(id);
+      if (recipient?.data.receiveMusicSuggestions) {
+        recipient.emit("music-suggestion", { suggestion, fromName });
+      }
+    }
   });
 
   socket.on("room-command", payload => {
