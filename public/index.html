@@ -387,6 +387,13 @@ html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0
 @media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:86px;height:76px;flex:0 0 86px;transform:scale(.78);transform-origin:center center;margin:-5px -4px}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.jf-dj-character,.jf-dj-arm-right{animation:none!important}}
 
+/* Mascote oficial do Junto.fm: ilustração low-poly do macaquinho aprovada. */
+.jf-dj-character{left:50%!important;top:-5px!important;width:104px!important;height:145px!important;transform:translateX(-50%)!important;animation:jfDjBounce 1.25s ease-in-out infinite;background:url("/dj-macaquinho.svg") center top/contain no-repeat!important;filter:drop-shadow(0 4px 2px #21142b45)!important}
+.jf-dj-character>span,.jf-dj-character:before,.jf-dj-character:after{display:none!important;content:none!important}
+.jf-dj-stage{min-height:155px!important;overflow:visible!important}
+.jf-dj-booth{z-index:1!important;bottom:0!important}
+.jf-dj-caption{position:relative;z-index:3}
+@media(max-width:520px){.jf-dj-character{width:88px!important;height:125px!important;top:0!important}.jf-dj-stage{min-height:140px!important}}
 /* Tema rosa bebê e mascote macaquinho inspirado no desenho enviado. */
 html[data-jf-theme="baby-pink"]{color-scheme:light;--ink:#633d52;--muted:#936d83;--jf-secondary:#c875a0}
 html[data-jf-theme="baby-pink"] body{background:radial-gradient(ellipse at 50% -10%,#fff8fb 0,#ffe8f1 38%,#f9d4e4 72%,#f2c4db 100%) fixed}
