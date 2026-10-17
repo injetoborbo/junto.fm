@@ -489,6 +489,13 @@ html[data-jf-theme="mint"] .track-artist,html[data-jf-theme="mint"] .track-album
 .jf-dj-character:after{content:"";position:absolute;left:0;top:49px;width:15px;height:19px;border:4px solid #71452f;border-left-color:transparent;border-bottom-color:transparent;border-radius:50%;transform:rotate(28deg);z-index:-1}
 html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"] .jf-dj-caption strong,html[data-jf-theme="mint"] .jf-dj-caption strong{color:var(--ink)}
 @media(prefers-reduced-motion:reduce){.jf-dj-character:after{animation:none!important}}
+
+/* Mascote 3D GLB: mantém o DJ CSS como fallback até o modelo carregar. */
+.jf-dj-stage.jf-glb-ready{width:160px!important;height:164px!important;min-height:164px!important;perspective:none!important}
+.jf-glb-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:4;pointer-events:none}
+.jf-dj-stage.jf-glb-ready:before{opacity:.2}
+@media(max-width:600px){.jf-dj-stage.jf-glb-ready{width:100px!important;height:100px!important;min-height:100px!important;flex-basis:100px!important;transform:none!important;margin:0!important}}
+
 </style>
 </head>
 <body>
@@ -1511,5 +1518,62 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   setInterval(updateTrackProgress, 1000);
 })();
 </script>
+
+<script type="module">
+/* O modelo é opcional: se o arquivo ainda não estiver publicado, o mascote CSS continua funcionando. */
+(async()=>{
+  const stage=document.querySelector("#jfMiniDj .jf-dj-stage");
+  if(!stage)return;
+  try{
+    const THREE=await import("https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js");
+    const {GLTFLoader}=await import("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
+    const scene=new THREE.Scene();
+    const camera=new THREE.PerspectiveCamera(32,1,.01,100);
+    camera.position.set(0,1.1,4.5);
+    const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+    renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.setClearColor(0x000000,0);
+    renderer.domElement.className="jf-glb-canvas";
+    renderer.domElement.setAttribute("aria-label","Modelo 3D do macaco DJ");
+    stage.appendChild(renderer.domElement);
+    scene.add(new THREE.HemisphereLight(0xffffff,0x51406b,2.2));
+    const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);
+    const rim=new THREE.DirectionalLight(0x9deaff,1.1);rim.position.set(-4,2,-3);scene.add(rim);
+    const root=new THREE.Group();scene.add(root);
+    const gltf=await new GLTFLoader().loadAsync("/Meshypint.glb");
+    const model=gltf.scene;
+    root.add(model);
+    const box=new THREE.Box3().setFromObject(model);
+    const size=box.getSize(new THREE.Vector3());
+    const center=box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    const maxDim=Math.max(size.x,size.y,size.z)||1;
+    model.scale.setScalar(2.25/maxDim);
+    camera.position.set(0,.12,3.65);
+    camera.lookAt(0,0,0);
+    // Orientação leve de três quartos; movimentos suaves de groove sem rig embutido.
+    root.rotation.y=-.16;
+    stage.classList.add("jf-glb-ready");
+    stage.querySelectorAll(".jf-dj-light,.jf-dj-booth,.jf-dj-character").forEach(el=>el.style.display="none");
+    const resize=()=>{
+      const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
+      renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+    };
+    resize();
+    if("ResizeObserver" in window)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);
+    const clock=new THREE.Clock();
+    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const animate=()=>{
+      requestAnimationFrame(animate);
+      const t=clock.getElapsedTime();
+      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
+      renderer.render(scene,camera);
+    };
+    animate();
+  }catch(error){console.warn("Junto.fm: não foi possível carregar o mascote 3D; mantendo o fallback.",error);}
+})();
+</script>
+
 </body>
 </html>
