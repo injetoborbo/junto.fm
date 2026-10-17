@@ -63,7 +63,7 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 #jfSaveProfile{min-width:160px}
 #jfProfileStatus{align-self:center}
 .jf-people{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
-.jf-person{position:relative;display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #7678d8;border-radius:8px;background:#101333e8;max-width:100%;width:max-content;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;transform-origin:left center;z-index:1}
+.jf-person{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border:1px solid #7678d8;border-radius:8px;background:#101333e8;max-width:100%;width:max-content;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;transform-origin:left center;z-index:1}
 .jf-person img,.jf-person .jf-avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover}
 .jf-person strong{font-size:12px;overflow-wrap:anywhere}
 .jf-person .jf-motto{display:none;flex-basis:100%;font-size:12px;line-height:1.4;overflow-wrap:anywhere;color:var(--muted);padding-top:3px}
@@ -763,7 +763,7 @@ const config = {
   }
   function jfSaveTheme(){
     const name=$("jfTheme").value,color=$("jfColor").value;jfApplyTheme(name,color);
-    try{localStorage.setItem("junto_theme",JSON.stringify({name,color}));}catch(_){}
+    try{localStorage.setItem("junto_theme",JSON.stringify({name,color,blur:$("jfAeroBlur")?.checked||false}));}catch(_){}
   }
   function jfRenderAvatar(){
     $("jfAvatarPreview").hidden=!jfProfile.avatar;$("jfAvatarPlaceholder").hidden=!!jfProfile.avatar;
