@@ -301,6 +301,17 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 .jf-room-lock-option small{display:block;margin-top:3px;color:#bfc4ed;font-size:11px;line-height:1.4}
 .jf-room-password-fields[hidden]{display:none}
 .jf-room-modal-error{min-height:18px;margin:10px 0;color:#ff9eb8;font-size:12px;line-height:1.5}
+.jf-room-entry-panel{width:min(100%,680px);margin:0 auto 24px}
+.jf-room-entry-actions[hidden],#jfLeaveRoom[hidden]{display:none!important}
+body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
+body:not(.jf-in-room) .jf-topbar{justify-content:center}
+body:not(.jf-in-room) .jf-top-actions,body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
+body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(.jf-modal-backdrop){display:none!important}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{justify-content:center;flex-wrap:wrap}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{flex:1 1 190px;min-height:52px}
+#jfLeaveRoom{min-width:140px}
+body.jf-in-room #jfRoomEntryPanel{width:100%;margin-bottom:24px}
+@media(max-width:520px){body:not(.jf-in-room) main{min-height:calc(100vh - 24px)}body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{width:100%}}
 .jf-room-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
 .jf-room-modal-actions .btn{min-width:112px}
 @keyframes jfModalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -383,14 +394,15 @@ html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0
 <main>
   <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
-  <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+  <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
-  <section class="panel">
+  <section class="panel jf-room-entry-panel" id="jfRoomEntryPanel">
     <input id="room" type="hidden" value="" autocomplete="off">
-    <div class="row jf-room-entry-actions">
+    <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
       <button class="btn" id="join" type="button">↗ Entrar na sala</button>
       <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
     </div>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
   </section>
@@ -632,6 +644,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     $("status").textContent = message;
     $("dot").className = ok ? "dot ok" : "dot";
   }
+  function jfUpdateRoomView() {
+    document.body.classList.toggle("jf-in-room", joined);
+    $("jfRoomEntryActions").hidden = joined;
+    $("jfLeaveRoom").hidden = !joined;
+  }
   function formatTime(ms) {
     const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
@@ -719,6 +736,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     spotifyPollTimer = setInterval(() => { updateTrackProgress(); pollSpotifyTrack(); }, 5000);
   }
   function enableControls() {
+    jfUpdateRoomView();
     $("join").disabled = !socket.connected;
     $("createRoom").disabled = !socket.connected;
     $("start").disabled = !joined || isSender;
@@ -974,8 +992,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
-  socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { joined = false; jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
+  socket.on('disconnect', () => { joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -987,7 +1005,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -1070,6 +1088,21 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('Transmissão encerrada.');
   }
   $("stop").onclick = stopTransmission;
+  $("jfLeaveRoom").onclick = () => {
+    if (!joined) return;
+    const leavingRoom = room;
+    if (isSender) stopTransmission(); else resetSession();
+    socket.emit("leave-room", { room: leavingRoom });
+    joined = false; room = ""; $("room").value = "";
+    $("remoteAudio").pause(); $("remoteAudio").srcObject = null;
+    jfRenderMiniDj(null); renderTrack(null);
+    $("roomCount").textContent = "Ainda não entrou em uma sala.";
+    $("role").textContent = "Entre na sala para começar.";
+    $("jfChatWindow").hidden = true; $("jfChatLauncher").classList.remove("has-unread");
+    jfPeerProfiles.clear(); jfRenderPeople(); jfRenderChat([]);
+    jfUpdateRoomView(); enableControls(); jfUpdateChatControls(); jfUpdateSuggestionControls();
+    setStatus(socket.connected ? "Você saiu da sala. Crie ou entre em outra sala." : "Desconectado do servidor.");
+  };
   $("spotifyDisconnect").onclick = async () => {
     try { await fetch('/api/spotify/logout', { method: 'POST' }); } catch (_) {}
     spotifyConnected = false; $("spotifyConnect").hidden = false; $("spotifyDisconnect").hidden = true;
