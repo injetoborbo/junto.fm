@@ -179,12 +179,12 @@ app.get("/api/spotify/now-playing", async (req, res) => {
 });
 
 function normalizeMusicText(value) {
-  return String(value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\\s+/g, " ");
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().replace(/\s+/g, " ");
 }
 async function findRealSong(input) {
   const raw = String(input || "").trim().slice(0, 180);
   if (!raw || raw.length < 2) return false;
-  const parts = raw.split(/\\s+[—–-]\\s+/);
+  const parts = raw.split(/\s+[—–-]\s+/);
   const requestedTitle = normalizeMusicText(parts[0]);
   const requestedArtist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
   if (!requestedTitle) return false;
