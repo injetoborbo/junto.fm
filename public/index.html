@@ -98,11 +98,48 @@ input:focus{border-color:var(--jf-secondary);box-shadow:0 0 0 2px color-mix(in s
 code{color:var(--jf-secondary);border-color:color-mix(in srgb,var(--jf-secondary) 35%,var(--jf-glow))}
 footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
 
+
+/* Janelas de Perfil e Tema */
+.jf-topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative;z-index:2}
+.jf-top-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
+.jf-top-actions .btn{padding:10px 13px;white-space:nowrap}
+.jf-modal-backdrop[hidden]{display:none!important}
+.jf-modal-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(3,6,22,.76);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);animation:jfFadeIn .18s ease-out}
+.jf-modal{width:min(100%,570px);max-height:min(86vh,760px);overflow:auto;margin:0;padding:23px;border-radius:20px;border-color:color-mix(in srgb,var(--jf-secondary) 75%,white);box-shadow:inset 0 1px 0 #ffffff70,0 18px 65px #0009,0 0 35px color-mix(in srgb,var(--jf-primary) 22%,transparent);animation:jfModalIn .2s ease-out}
+.jf-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.jf-modal-head h2{margin:0!important;font-size:23px}
+.jf-modal-close{flex:0 0 auto;padding:8px 12px;font-size:17px}
+@keyframes jfFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes jfModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* Frutiger Aero: vidro translúcido, céu azul e brilho aquático. */
+html[data-jf-theme="aero"]{color-scheme:light;--ink:#f5ffff;--muted:#d5f7ff}
+html[data-jf-theme="aero"] body{background:radial-gradient(ellipse at 18% 0%,#a7f4ff 0%,transparent 38%),radial-gradient(ellipse at 90% 15%,#76e9c5 0%,transparent 33%),linear-gradient(155deg,#087fc0 0%,#19b6d5 42%,#087caa 72%,#064f88 100%) fixed}
+html[data-jf-theme="aero"] body:before{opacity:.3;background-image:radial-gradient(ellipse at 20% 30%,#ffffff90 0 1px,transparent 2px),radial-gradient(ellipse at 70% 60%,#ffffff70 0 2px,transparent 3px),linear-gradient(#e5ffff20 1px,transparent 1px),linear-gradient(90deg,#e5ffff20 1px,transparent 1px);background-size:95px 85px,130px 120px,38px 38px,38px 38px}
+html[data-jf-theme="aero"] body:after{content:"❋     ◦       ✧       ◦      ❋";letter-spacing:1.8rem;color:#e5ffff;text-shadow:0 0 14px #b9ffff;opacity:.55}
+html[data-jf-theme="aero"] .panel,html[data-jf-theme="aero"] .jf-modal{background:linear-gradient(145deg,#eaffff65,#c6f7ff28 48%,#eaffff18);border:1px solid #e9ffffb8;box-shadow:inset 0 2px 0 #ffffffbb,inset 0 -2px 0 #04588a44,0 10px 28px #003d6c44,0 2px 8px #ffffff26;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+html[data-jf-theme="aero"] .panel:before{background:linear-gradient(90deg,transparent,#ffffffc9,transparent)}
+html[data-jf-theme="aero"] h1,html[data-jf-theme="aero"] .player h2,html[data-jf-theme="aero"] .panel h2{color:#fff;text-shadow:0 2px 4px #00588780,0 0 18px #baffff66}
+html[data-jf-theme="aero"] main>p,html[data-jf-theme="aero"] .small,html[data-jf-theme="aero"] .player p,html[data-jf-theme="aero"] footer{color:#e2fbff}
+html[data-jf-theme="aero"] input,html[data-jf-theme="aero"] .jf-grid select{color:#06476b;background:#e8fcffb8;border:1px solid #f4ffff;box-shadow:inset 0 2px 5px #4a9cbd35}
+html[data-jf-theme="aero"] input::placeholder{color:#54849a}
+html[data-jf-theme="aero"] label{color:#f2ffff;text-shadow:0 1px 3px #00547c80}
+html[data-jf-theme="aero"] .btn{color:#075079;border:1px solid #ffffff;background:linear-gradient(#ffffff 0%,#d9ffff 22%,#8ce9f2 52%,#43bcd9 54%,#1686bc 100%);box-shadow:inset 0 2px 0 #fff, inset 0 -2px 0 #0876a4,0 3px 0 #03476c,0 5px 12px #003e5c44;text-shadow:0 1px #ffffffa8}
+html[data-jf-theme="aero"] .btn.secondary{color:#f4ffff;background:linear-gradient(#75d8e9,#218dbb 52%,#086a9d);border-color:#c7ffff;text-shadow:0 1px 2px #00415f}
+html[data-jf-theme="aero"] .track-card{background:linear-gradient(135deg,#d9fbff70,#e7ffff20);border-color:#d9ffff;box-shadow:inset 0 1px 0 #ffffffb8,0 5px 18px #005b8c33}
+html[data-jf-theme="aero"] .track-art,html[data-jf-theme="aero"] .cover{background:linear-gradient(135deg,#faffff,#92f4f0 35%,#44c3e3 62%,#168bc1);color:#075079;border-color:#efffff}
+html[data-jf-theme="aero"] .progress-wrap{background:#00598555;border-color:#d9ffff}
+html[data-jf-theme="aero"] .progress-fill{background:linear-gradient(90deg,#a9fff0,#51d8ee,#ffffff);box-shadow:0 0 12px #aaffff}
+html[data-jf-theme="aero"] .notice{background:#eaffff30;border-color:#c7ffff;border-left-color:#aaffed;color:#f4ffff}
+html[data-jf-theme="aero"] .notice strong{color:#c7fff0}
+html[data-jf-theme="aero"] .jf-person{background:#e7ffff35;border-color:#d7ffff}
+html[data-jf-theme="aero"] .jf-avatar{border-color:#e6ffff;background:#70cde3;color:#fff}
+html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c9ffff 48%,#65d8ec)}
+@media(max-width:520px){.jf-topbar{align-items:flex-start}.jf-top-actions{width:100%;justify-content:flex-end}.jf-modal-backdrop{padding:12px}.jf-modal{padding:17px;max-height:90vh}.jf-modal-head h2{font-size:20px}}
 </style>
 </head>
 <body>
 <main>
-  <div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenProfile" type="button">☺ Perfil</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -166,8 +203,9 @@ footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
   </section>
 
   
-<section class="panel" aria-labelledby="jfProfileHeading">
-    <h2 id="jfProfileHeading" style="margin:0 0 13px">Seu perfil</h2>
+<div class="jf-modal-backdrop" id="jfProfileModal" hidden>
+  <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfProfileHeading">
+    <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-profile">
       <img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden>
       <div id="jfAvatarPlaceholder" class="jf-avatar">♫</div>
@@ -182,15 +220,18 @@ footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
     <h3 style="font-size:14px;margin:17px 0 7px">Quem está na sala</h3>
     <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
   </section>
+</div>
   
-<section class="panel" aria-labelledby="jfThemeHeading">
-    <h2 id="jfThemeHeading" style="margin:0 0 13px">Aparência</h2>
+<div class="jf-modal-backdrop" id="jfThemeModal" hidden>
+  <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
+    <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-grid">
-      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="custom">Minha cor</option></select></div>
       <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
     </div>
     <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
   </section>
+</div>
 
   
 <section class="panel">
@@ -603,7 +644,7 @@ const config = {
   socket.on('disconnect', () => knownPeers.clear());
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
-  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"]};
+  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"]};
   let jfProfile={name:"Ouvinte",avatar:""};
   const jfPeerProfiles=new Map();
   try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";}catch(_){}
@@ -613,7 +654,7 @@ const config = {
       const hex=/^#[0-9a-f]{6}$/i.test(color||"")?color:"#ff78d2";
       t=[hex,hex,"#252447"];
     }
-    document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
+    document.documentElement.dataset.jfTheme=name;document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
     document.documentElement.style.setProperty("--pink",t[0]);document.documentElement.style.setProperty("--cyan",t[1]);
   }
   function jfSaveTheme(){
@@ -637,6 +678,13 @@ const config = {
   }
   function jfInit(){
     $("jfName").value=jfProfile.name;jfRenderAvatar();
+    const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
+    const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
+    $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
+    $("jfOpenProfile").addEventListener("click",()=>openModal("jfProfileModal"));
+    document.querySelectorAll("[data-close-modal]").forEach(button=>button.addEventListener("click",()=>closeModal(button.dataset.closeModal)));
+    document.querySelectorAll(".jf-modal-backdrop").forEach(modal=>modal.addEventListener("click",event=>{if(event.target===modal)closeModal(modal.id);}));
+    document.addEventListener("keydown",event=>{if(event.key==="Escape"){document.querySelectorAll(".jf-modal-backdrop:not([hidden])").forEach(modal=>closeModal(modal.id));}});
     let t={};try{t=JSON.parse(localStorage.getItem("junto_theme")||"{}");}catch(_){}
     $("jfTheme").value=(jfThemes[t.name]||t.name==="custom")?t.name:"y2k";
     if(jfThemes[t.name])$("jfTheme").value=t.name;
