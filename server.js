@@ -284,6 +284,31 @@ io.on("connection", socket => {
     socket.emit("room-created", { room });
   });
 
+  socket.on("friend-request", payload => {
+    const room = cleanRoom(payload && payload.room);
+    const targetId = String(payload && payload.targetId || "");
+    const target = io.sockets.sockets.get(targetId);
+    if (!room || socket.data.room !== room || !target || target.data.room !== room || targetId === socket.id) {
+      socket.emit("friend-request-result", { accepted: false, error: "not-available" });
+      return;
+    }
+    const profile = socket.data.profile || { name: "Ouvinte" };
+    target.emit("friend-request-received", { fromId: socket.id, profile: { name: String(profile.name || "Ouvinte").slice(0, 24), avatar: String(profile.avatar || "").slice(0, 500), motto: String(profile.motto || "").slice(0, 90) }, room });
+  });
+
+  socket.on("friend-request-response", payload => {
+    const targetId = String(payload && payload.targetId || "");
+    const target = io.sockets.sockets.get(targetId);
+    if (!target || !socket.data.room || target.data.room !== socket.data.room || targetId === socket.id) return;
+    const accepted = !!(payload && payload.accepted);
+    if (!accepted) {
+      target.emit("friend-request-result", { accepted: false, profile: { name: String((socket.data.profile || {}).name || "Amigo").slice(0, 24) } });
+      return;
+    }
+    const profile = socket.data.profile || { name: "Ouvinte" };
+    target.emit("friend-request-result", { accepted: true, profile: { name: String(profile.name || "Amigo").slice(0, 24), avatar: String(profile.avatar || "").slice(0, 500), motto: String(profile.motto || "").slice(0, 90) }, room: socket.data.room });
+  });
+
   socket.on("leave-room", payload => {
     const room = socket.data.room;
     if (!room || (payload && payload.room && payload.room !== room)) return;
