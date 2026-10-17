@@ -709,9 +709,32 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       ? "Mascote ao lado do player. Ao vivo: " + transmitterName
       : "Mascote 3D do Junto.fm ao lado do player");
   }
+  let jfLyricsTrackKey="",jfLyricsData=null,jfLyricsFetchId=0;
+  function jfRenderLyrics(data){
+    const content=$("jfLyricsContent"),mode=$("jfLyricsMode");content.replaceChildren();content.dataset.synced="false";content.dataset.lines="[]";
+    if(!data||!data.found||!data.lyrics){const p=document.createElement("p");p.className="small";p.textContent=data&&data.error?data.error:"Não encontrei letras disponíveis para esta faixa.";content.appendChild(p);mode.textContent="Letra indisponível";return;}
+    mode.textContent=data.synced?"Letra sincronizada":"Letra sem sincronização";
+    if(data.synced){const lines=data.lyrics.split("\n").map(line=>{const m=line.match(/^\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]\s*(.*)$/);return m?{time:Number(m[1])*60+Number(m[2])+Number("0."+(m[3]||"0")),text:m[4]}:null;}).filter(Boolean);
+      if(lines.length){content.dataset.synced="true";content.dataset.lines=JSON.stringify(lines);lines.forEach((line,i)=>{const p=document.createElement("p");p.className="jf-lyrics-line";p.dataset.index=String(i);p.textContent=line.text||"♪";content.appendChild(p);});return;}}
+    const p=document.createElement("p");p.className="jf-lyrics-line";p.textContent=data.lyrics;content.appendChild(p);
+  }
+  async function jfLoadLyrics(track){
+    const title=String(track&&track.name||"").trim(),artist=String(track&&track.artists||"").trim();
+    if(!title){jfLyricsTrackKey="";jfLyricsData=null;jfRenderLyrics(null);return;}
+    const key=(title+"|"+artist).toLocaleLowerCase();if(key===jfLyricsTrackKey)return;
+    jfLyricsTrackKey=key;jfLyricsData=null;const id=++jfLyricsFetchId;$("jfLyricsContent").textContent="Buscando letra…";$("jfLyricsMode").textContent="Consultando catálogo";
+    try{const response=await fetch("/api/lyrics?track="+encodeURIComponent(title)+"&artist="+encodeURIComponent(artist),{cache:"no-store"});const data=await response.json();if(id!==jfLyricsFetchId)return;jfLyricsData=data;jfRenderLyrics(data);}catch(_){if(id===jfLyricsFetchId)jfRenderLyrics({error:"Não foi possível carregar a letra agora."});}
+  }
+  function jfUpdateSyncedLyrics(){
+    const content=$("jfLyricsContent");if(content.dataset.synced!=="true"||!jfLyricsData||!currentTrack)return;
+    const elapsed=Math.max(0,Number(currentTrack.progress_ms||0)/1000);const lines=JSON.parse(content.dataset.lines||"[]");let active=-1;
+    for(let i=0;i<lines.length;i++){if(lines[i].time<=elapsed)active=i;else break;}
+    content.querySelectorAll(".jf-lyrics-line").forEach((line,i)=>{line.classList.toggle("active",i===active);if(i===active&&line.dataset.scrolled!=="true"){line.dataset.scrolled="true";line.scrollIntoView({block:"nearest",behavior:"smooth"});}else if(i!==active)line.dataset.scrolled="false";});
+  }
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
       currentTrack = null;
+      jfLoadLyrics(null);
       $("spotifyFavorite").textContent = "♡ Favoritar música";
       $("spotifyFavoriteStatus").textContent = "";
       $("trackTitle").textContent = "A música aparece aqui";
@@ -730,6 +753,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       $("spotifyFavoriteStatus").textContent = "";
     }
     currentTrack = { ...track };
+    jfLoadLyrics(track);
     trackBaseTime = Date.now();
     $("trackTitle").textContent = track.name;
     $("trackArtist").textContent = track.artists || "Artista desconhecido";
@@ -741,6 +765,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     updateTrackProgress();
   }
   function updateTrackProgress() {
+    jfUpdateSyncedLyrics();
     if (!currentTrack) return;
     const elapsed = Math.min(currentTrack.duration_ms || 0, Math.max(0, (Number(currentTrack.progress_ms) || 0) + (currentTrack.is_playing ? Date.now() - trackBaseTime : 0)));
     const duration = Number(currentTrack.duration_ms) || 0;
@@ -1354,12 +1379,25 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   let jfFriends=jfLoadFriends();
   function jfRenderFriends(){
     const list=$("jfFriendsList");list.replaceChildren();
-    if(!jfFriends.length){const empty=document.createElement("p");empty.className="small";empty.textContent="Adicione seus amigos pelo nome e sala.";list.appendChild(empty);return;}
+    if(!jfFriends.length){const empty=document.createElement("p");empty.className="small";empty.textContent="Adicione amigos pelo nome e sala ou envie uma solicitação a alguém da sala.";list.appendChild(empty);jfRenderDrawerFriends();return;}
     jfFriends.forEach((friend,index)=>{const row=document.createElement("div");row.className="jf-person";row.style.display="flex";row.style.alignItems="center";row.style.justifyContent="space-between";row.style.gap="10px";
-      const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const roomLabel=document.createElement("p");roomLabel.className="small";roomLabel.textContent="Sala: "+friend.room;info.append(name,roomLabel);
+      const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const roomLabel=document.createElement("p");roomLabel.className="small";roomLabel.textContent="Sala: "+friend.room;const status=document.createElement("span");const online=jfIsFriendOnline(friend);status.className="jf-friend-status"+(online?" online":"");status.innerHTML="<i></i> "+(online?"Online":"Offline");info.append(name,roomLabel,status);
       const actions=document.createElement("div");actions.style.display="flex";actions.style.gap="6px";const enter=document.createElement("button");enter.className="btn";enter.type="button";enter.textContent="Entrar";enter.addEventListener("click",()=>{closeFriendsModal();openJoinRoomModal();$("jfExistingRoomName").value=friend.room;$("jfExistingRoomPassword").value="";$("jfFriendsStatus").textContent="Para sala protegida, será necessária uma amizade reconhecida pelo servidor ou a senha.";});
-      const remove=document.createElement("button");remove.className="btn secondary";remove.type="button";remove.textContent="Remover";remove.addEventListener("click",()=>{jfFriends.splice(index,1);localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));jfRenderFriends();});actions.append(enter,remove);row.append(info,actions);list.appendChild(row);
-    });
+      const remove=document.createElement("button");remove.className="btn secondary";remove.type="button";remove.textContent="Remover";remove.addEventListener("click",()=>{jfFriends.splice(index,1);try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}jfRenderFriends();});actions.append(enter,remove);row.append(info,actions);list.appendChild(row);
+    });jfRenderDrawerFriends();
+  }
+  function jfRenderDrawerFriends(){
+    const list=$("jfDrawerFriendsList");if(!list)return;list.replaceChildren();
+    if(!jfFriends.length){const p=document.createElement("p");p.className="small";p.textContent="Sua lista de amigos está vazia.";list.appendChild(p);return;}
+    jfFriends.forEach(friend=>{const row=document.createElement("div");row.className="jf-person";const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const status=document.createElement("span"),online=jfIsFriendOnline(friend);status.className="jf-friend-status"+(online?" online":"");status.innerHTML="<i></i> "+(online?"Online":"Offline");const roomText=document.createElement("p");roomText.className="small";roomText.textContent=friend.room;info.append(name,status,roomText);row.appendChild(info);list.appendChild(row);});
+  }
+  function jfSetFriendsTab(requests,drawer=false){
+    const ids=drawer?["jfDrawerFriendsTab","jfDrawerRequestsTab"]:["jfFriendsTabList","jfRequestsTab"];
+    const panes=drawer?["jfDrawerFriendsList","jfDrawerRequestsList"]:["jfFriendsPane","jfRequestsPane"];
+    $(ids[0]).classList.toggle("active",!requests);$(ids[0]).setAttribute("aria-selected",String(!requests));
+    $(ids[1]).classList.toggle("active",requests);$(ids[1]).setAttribute("aria-selected",String(requests));
+    $(panes[0]).hidden=requests;$(panes[1]).hidden=!requests;
+    if(requests)jfRenderIncomingRequests();else jfRenderDrawerFriends();
   }
   function closeFriendsModal(){$("jfFriendsModal").hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";}
   $("jfFriendForm").addEventListener("submit",event=>{event.preventDefault();const name=$("jfFriendName").value.trim().slice(0,24),friendRoom=cleanRoomName($("jfFriendRoom").value);if(!name||!friendRoom){$("jfFriendsStatus").textContent="Informe o nome e o nome válido da sala.";return;}if(jfFriends.some(x=>x.room.toLowerCase()===friendRoom.toLowerCase())){$("jfFriendsStatus").textContent="Essa sala já está na sua lista.";return;}jfFriends.push({name,room:friendRoom});localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));$("jfFriendName").value="";$("jfFriendRoom").value="";$("jfFriendsStatus").textContent="Amigo salvo neste navegador.";jfRenderFriends();});
@@ -1369,6 +1407,14 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
     $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
     $("jfOpenFriends").addEventListener("click",()=>{jfRenderFriends();openModal("jfFriendsModal");});
+    $("jfFriendsTabList").addEventListener("click",()=>jfSetFriendsTab(false));
+    $("jfRequestsTab").addEventListener("click",()=>jfSetFriendsTab(true));
+    $("jfFriendsLauncher").addEventListener("click",()=>{const open=$("jfFriendsDrawer").hidden;$("jfFriendsDrawer").hidden=!open;$("jfFriendsLauncher").setAttribute("aria-expanded",String(open));if(open){$("jfChatWindow").hidden=true;$("jfChatLauncher").setAttribute("aria-expanded","false");jfRenderDrawerFriends();}});
+    $("jfFriendsDrawerClose").addEventListener("click",()=>{$("jfFriendsDrawer").hidden=true;$("jfFriendsLauncher").setAttribute("aria-expanded","false");});
+    $("jfDrawerFriendsTab").addEventListener("click",()=>jfSetFriendsTab(false,true));
+    $("jfDrawerRequestsTab").addEventListener("click",()=>jfSetFriendsTab(true,true));
+    $("jfManageFriends").addEventListener("click",()=>{ $("jfFriendsDrawer").hidden=true; $("jfFriendsLauncher").setAttribute("aria-expanded","false");jfRenderFriends();openModal("jfFriendsModal");});
+
     $("jfOpenProfile").addEventListener("click",()=>openModal("jfProfileModal"));
     $("jfOpenOptions").addEventListener("click",()=>openModal("jfOptionsModal"));
     document.querySelectorAll("[data-close-modal]").forEach(button=>button.addEventListener("click",()=>closeModal(button.dataset.closeModal)));
@@ -1407,7 +1453,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
   function jfSetChatOpen(open){
     const windowEl=$("jfChatWindow"),launcher=$("jfChatLauncher");
-    windowEl.hidden=!open;launcher.setAttribute("aria-expanded",String(open));
+    windowEl.hidden=!open;launcher.setAttribute("aria-expanded",String(open));if(open){$("jfFriendsDrawer").hidden=true;$("jfFriendsLauncher").setAttribute("aria-expanded","false");}
     launcher.setAttribute("aria-label",open?"Fechar chat da sala":"Abrir chat da sala");
     launcher.title=open?"Fechar chat da sala":"Abrir chat da sala";
     if(open){launcher.classList.remove("has-unread");$("jfChatUnread").removeAttribute("title");$("jfChatInput").focus();const log=$("jfChatLog");log.scrollTop=log.scrollHeight;}
