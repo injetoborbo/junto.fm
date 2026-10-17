@@ -84,6 +84,34 @@ async function validSpotifyAccessToken(session) {
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
+// Mantém a API key específica da credencial TURN no servidor, nunca no HTML público.
+const METERED_DOMAIN = String(process.env.METERED_DOMAIN || "").trim().replace(/^https?:\\/\\//i, "").replace(/\\/$/, "");
+const METERED_TURN_API_KEY = String(process.env.METERED_TURN_API_KEY || "").trim();
+let cachedTurnIceServers = null;
+let cachedTurnIceServersAt = 0;
+app.get("/api/turn/ice-servers", async (_req, res) => {
+  if (!METERED_DOMAIN || !METERED_TURN_API_KEY) {
+    return res.status(503).json({ error: "TURN não configurado no servidor." });
+  }
+  if (cachedTurnIceServers && Date.now() - cachedTurnIceServersAt < 5 * 60 * 1000) {
+    return res.json(cachedTurnIceServers);
+  }
+  try {
+    const endpoint = new URL(`https://${METERED_DOMAIN}/api/v1/turn/credentials`);
+    endpoint.searchParams.set("apiKey", METERED_TURN_API_KEY);
+    const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !Array.isArray(data) || data.length === 0) {
+      return res.status(502).json({ error: "Não foi possível obter a configuração TURN." });
+    }
+    cachedTurnIceServers = data;
+    cachedTurnIceServersAt = Date.now();
+    return res.json(data);
+  } catch (_error) {
+    return res.status(502).json({ error: "Falha ao consultar o serviço TURN." });
+  }
+});
+
 app.get("/api/spotify/status", (req, res) => {
   res.json({ configured: Boolean(SPOTIFY_CLIENT_ID), connected: Boolean(getSession(req, res)) });
 });
