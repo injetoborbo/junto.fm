@@ -29,6 +29,7 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomChatMessages = new Map();
+const roomAccess = new Map();
 const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
 
 function cookieValue(req, name) {
@@ -154,11 +155,46 @@ function cleanRoom(value) {
 }
 
 io.on("connection", socket => {
+  socket.on("create-room", payload => {
+    const room = cleanRoom(payload && payload.room);
+    const password = String(payload && payload.password || "");
+    if (!room) {
+      socket.emit("create-room-error", { message: "Escolha um nome válido para a sala." });
+      return;
+    }
+    if (password.length > 100) {
+      socket.emit("create-room-error", { message: "A senha deve ter no máximo 100 caracteres." });
+      return;
+    }
+    const activeRoom = io.sockets.adapter.rooms.get(room);
+    if (roomAccess.has(room) || (activeRoom && activeRoom.size > 0)) {
+      socket.emit("create-room-error", { message: "Já existe uma sala com esse nome. Escolha outro nome." });
+      return;
+    }
+    if (password) {
+      const salt = crypto.randomBytes(16);
+      const hash = crypto.scryptSync(password, salt, 64);
+      roomAccess.set(room, { salt, hash });
+    } else {
+      roomAccess.set(room, null);
+    }
+    socket.emit("room-created", { room });
+  });
+
   socket.on("join-room", payload => {
     const room = cleanRoom(payload && payload.room);
+    const password = String(payload && payload.password || "");
     if (!room) {
       socket.emit("join-error", { message: "Digite um nome válido para a sala." });
       return;
+    }
+    const access = roomAccess.get(room);
+    if (access) {
+      const attempted = crypto.scryptSync(password, access.salt, 64);
+      if (attempted.length !== access.hash.length || !crypto.timingSafeEqual(attempted, access.hash)) {
+        socket.emit("join-error", { message: "Senha incorreta. Confira a senha da sala e tente de novo." });
+        return;
+      }
     }
 
     const previousRoom = socket.data.room;
