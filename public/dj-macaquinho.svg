@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 460" role="img" aria-label="DJ macaquinho low-poly com fones brancos, camiseta vermelha e calça roxa">
+<defs>
+ <linearGradient id="fur" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a66d4b"/><stop offset=".55" stop-color="#74452f"/><stop offset="1" stop-color="#43251e"/></linearGradient>
+ <linearGradient id="skin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe1bf"/><stop offset="1" stop-color="#e9a979"/></linearGradient>
+ <linearGradient id="shirt" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff4545"/><stop offset=".55" stop-color="#ed1728"/><stop offset="1" stop-color="#b9001c"/></linearGradient>
+ <linearGradient id="pants" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#6650a5"/><stop offset=".5" stop-color="#9575d6"/><stop offset="1" stop-color="#4d387e"/></linearGradient>
+</defs>
+<!-- curled tail -->
+<path d="M178 326 C238 367 280 344 284 295 C287 275 300 274 306 289 C315 314 293 357 265 374 C235 393 205 379 184 361" fill="none" stroke="#49291f" stroke-width="15" stroke-linecap="round"/>
+<path d="M178 326 C238 367 280 344 284 295 C287 275 300 274 306 289 C315 314 293 357 265 374 C235 393 205 379 184 361" fill="none" stroke="#85553a" stroke-width="8" stroke-linecap="round"/>
+<!-- legs and feet -->
+<path d="M112 326 L159 328 L155 397 L130 417 L95 412 L99 382Z" fill="#4a2b21"/>
+<path d="M163 327 L205 326 L220 391 L205 416 L173 412 L160 385Z" fill="#4a2b21"/>
+<path d="M102 350 L151 350 L148 403 L126 416 L95 405Z" fill="url(#pants)"/>
+<path d="M162 350 L205 347 L219 399 L203 414 L173 409 L160 384Z" fill="url(#pants)"/>
+<path d="M102 350 L122 355 L116 409 L96 404Z" fill="#a18ae5" opacity=".65"/>
+<path d="M163 350 L181 352 L190 406 L173 409 L160 384Z" fill="#b39bed" opacity=".5"/>
+<path d="M97 400 L130 404 L147 417 L144 429 L90 431 L76 424 L81 414Z" fill="url(#skin)"/>
+<path d="M176 403 L204 401 L226 414 L224 425 L176 431 L162 422Z" fill="url(#skin)"/>
+<path d="M83 423 L143 423 M166 423 L223 421" stroke="#b87c58" stroke-width="3" opacity=".8"/>
+<!-- left arm hanging -->
+<path d="M106 225 L85 265 L64 306 L78 316 L98 285 L126 248Z" fill="url(#fur)"/>
+<path d="M62 301 L77 305 L88 319 L82 340 L72 345 L67 332 L60 342 L53 336 L53 320Z" fill="url(#skin)"/>
+<!-- raised arm and hand -->
+<path d="M199 236 L228 213 L238 171 L247 130 L264 131 L264 178 L253 226 L218 263Z" fill="url(#fur)"/>
+<path d="M247 135 L244 101 Q244 92 252 91 Q261 91 263 101 L266 133 L277 119 Q283 113 289 119 Q294 125 288 132 L275 151 L257 156Z" fill="url(#skin)"/>
+<path d="M250 100 L253 135 L262 134 L260 100Z" fill="#ffedd9" opacity=".55"/>
+<!-- body -->
+<path d="M119 190 L145 181 L179 184 L203 199 L215 244 L200 285 L194 337 L106 337 L101 286 L91 241 L101 207Z" fill="url(#shirt)"/>
+<path d="M119 190 L145 181 L151 208 L129 239 L106 226 L91 241 L101 207Z" fill="#ff5b55"/>
+<path d="M179 184 L203 199 L215 244 L200 285 L183 249 L187 216Z" fill="#c80b24"/>
+<path d="M141 183 L171 185 L165 202 L149 203Z" fill="#f0b58b"/>
+<!-- lightning bolt -->
+<path d="M149 224 L171 224 L159 245 L174 245 L142 277 L151 252 L137 252Z" fill="#fff6ed"/>
+<!-- neck -->
+<path d="M139 164 L174 164 L179 193 L143 196Z" fill="url(#fur)"/>
+<!-- ears behind head -->
+<path d="M111 105 C89 90 78 107 84 132 C88 150 104 154 120 141Z" fill="#49291f"/>
+<path d="M95 111 C83 111 91 137 105 139 L112 132Z" fill="#d99a72"/>
+<path d="M202 105 C224 91 237 107 231 132 C227 150 211 154 196 141Z" fill="#49291f"/>
+<path d="M216 111 C229 111 220 137 207 139 L200 132Z" fill="#d99a72"/>
+<!-- headphones band and earcups -->
+<path d="M92 126 C81 34 222 31 225 125" fill="none" stroke="#b5b6ca" stroke-width="19" stroke-linecap="round"/>
+<path d="M92 126 C81 34 222 31 225 125" fill="none" stroke="#f5f1ff" stroke-width="12" stroke-linecap="round"/>
+<path d="M85 98 L79 146 L97 157 L109 147 L105 103Z" fill="#e5e1f2" stroke="#aaa8be" stroke-width="3"/>
+<path d="M210 103 L207 147 L222 157 L236 145 L230 98Z" fill="#e5e1f2" stroke="#aaa8be" stroke-width="3"/>
+<path d="M89 110 L87 142 L97 146 L100 111Z M216 111 L214 144 L224 146 L226 110Z" fill="#bfc0d4"/>
+<!-- head -->
+<path d="M101 77 L118 57 L151 48 L183 57 L204 80 L210 112 L201 151 L178 174 L145 176 L119 163 L102 140 L95 109Z" fill="url(#fur)" stroke="#49291f" stroke-width="3"/>
+<path d="M105 86 L126 65 L151 59 L151 93 L130 113 L101 115Z" fill="#9c6545"/>
+<path d="M151 59 L180 66 L199 88 L202 116 L177 110 L151 93Z" fill="#603a2a"/>
+<!-- brow markings -->
+<path d="M119 95 L144 108 L151 101 L159 108 L184 94" fill="none" stroke="#30201b" stroke-width="5" stroke-linecap="round"/>
+<path d="M142 76 L153 67 L164 76 L159 88 L146 88Z" fill="#ff982e"/>
+<path d="M150 99 L158 109 L153 125 L145 114Z" fill="#ff982e"/>
+<!-- big cream eyes -->
+<path d="M113 111 Q130 98 146 114 L145 143 Q133 157 119 142Z" fill="#ffe0bd"/>
+<path d="M159 114 Q176 98 193 111 L188 143 Q175 157 162 143Z" fill="#ffe0bd"/>
+<path d="M130 119 L137 124 L137 142 L131 146 L127 136Z" fill="#16131a"/>
+<path d="M174 119 L180 124 L179 141 L173 146 L170 135Z" fill="#16131a"/>
+<!-- broad muzzle -->
+<path d="M113 145 L133 137 L151 143 L170 137 L193 147 L186 168 L165 182 L142 180 L120 167Z" fill="url(#skin)"/>
+<path d="M116 150 L151 145 L151 174 L132 172Z" fill="#ffebd6" opacity=".8"/>
+<path d="M151 145 L188 150 L181 169 L164 179 L151 174Z" fill="#f7c79c"/>
+<path d="M142 160 Q151 154 159 160 Q157 170 151 170 Q145 170 142 160Z" fill="#8b4e37"/>
+<path d="M145 174 Q151 179 158 173" fill="none" stroke="#713b2b" stroke-width="2.5" stroke-linecap="round"/>
+<!-- cuff details -->
+<path d="M69 300 L83 304 L77 315 L64 311Z" fill="#dcd9ed" stroke="#aaa8be" stroke-width="2"/>
+<path d="M229 211 L241 218 L235 229 L223 222Z" fill="#dcd9ed" stroke="#aaa8be" stroke-width="2"/>
+<!-- faceted highlights -->
+<path d="M118 77 L151 59 L151 93 L130 113 L103 111Z" fill="#b77d57" opacity=".22"/>
+<path d="M151 203 L181 190 L200 213 L184 246 L165 244Z" fill="#ff7b76" opacity=".23"/>
+</svg>
