@@ -169,7 +169,11 @@ io.on("connection", socket => {
     const peers = [...(io.sockets.adapter.rooms.get(room) || [])].filter(id => id !== socket.id);
     socket.join(room);
     socket.data.room = room;
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null });
+    const profiles = Object.fromEntries(peers.map(id => {
+      const peer = io.sockets.sockets.get(id);
+      return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
+    }));
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
   });
@@ -200,6 +204,16 @@ io.on("connection", socket => {
     };
     roomTracks.set(socket.data.room, safeTrack);
     socket.to(socket.data.room).emit("track-update", safeTrack);
+  });
+
+  socket.on("profile-update", payload => {
+    if (!socket.data.room || !payload || !payload.profile) return;
+    const name = String(payload.profile.name || "Ouvinte").trim().replace(/\\s+/g, " ").slice(0, 24) || "Ouvinte";
+    const avatar = String(payload.profile.avatar || "");
+    const safeAvatar = avatar.length <= 220000 && /^data:image\\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(avatar) ? avatar : "";
+    const profile = { name, avatar: safeAvatar };
+    socket.data.profile = profile;
+    socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
   });
 
   socket.on("room-command", payload => {
