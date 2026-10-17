@@ -249,6 +249,24 @@ function isRateLimited(socket, key, limit, windowMs) {
   return false;
 }
 
+app.get("/api/lyrics", async (req, res) => {
+  const track = String(req.query.track || "").trim().slice(0, 180);
+  const artist = String(req.query.artist || "").trim().slice(0, 180);
+  if (!track) return res.status(400).json({ error: "Informe o título da música." });
+  try {
+    const url = new URL("https://lrclib.net/api/search");
+    url.searchParams.set("track_name", track);
+    if (artist) url.searchParams.set("artist_name", artist);
+    const response = await fetch(url, { headers: { "User-Agent": "Junto.fm/1.0" }, signal: AbortSignal.timeout(7000) });
+    if (!response.ok) return res.status(502).json({ error: "A fonte de letras está indisponível no momento." });
+    const results = await response.json();
+    const list = Array.isArray(results) ? results : [];
+    const best = list.find(item => item.syncedLyrics) || list.find(item => item.plainLyrics) || null;
+    if (!best) return res.json({ found: false, lyrics: "", synced: false });
+    return res.json({ found: true, lyrics: best.syncedLyrics || best.plainLyrics || "", synced: Boolean(best.syncedLyrics), instrumental: Boolean(best.instrumental), trackName: best.trackName || track, artistName: best.artistName || artist });
+  } catch (_) { return res.status(502).json({ error: "Não foi possível buscar as letras agora." }); }
+});
+
 io.on("connection", socket => {
   socket.on("create-room", payload => {
     if (isRateLimited(socket, "create-room", 5, 60_000)) {
@@ -288,7 +306,9 @@ io.on("connection", socket => {
     const room = cleanRoom(payload && payload.room);
     const targetId = String(payload && payload.targetId || "");
     const target = io.sockets.sockets.get(targetId);
-    if (!room || socket.data.room !== room || !target || target.data.room !== room || targetId === socket.id) {
+    const senderName = String((socket.data.profile || {}).name || "").trim().toLocaleLowerCase();
+    const targetName = String((target && target.data.profile || {}).name || "").trim().toLocaleLowerCase();
+    if (!room || socket.data.room !== room || !target || target.data.room !== room || targetId === socket.id || (senderName && targetName && senderName === targetName)) {
       socket.emit("friend-request-result", { accepted: false, error: "not-available" });
       return;
     }
