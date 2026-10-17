@@ -362,6 +362,19 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 @media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:110px;height:110px;min-height:110px;flex:0 0 110px;margin:0}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.jf-glb-canvas{animation:none!important}}
 
+/* Friends drawer + lyrics */
+.jf-friends-launcher{right:90px}.jf-friends-drawer{right:90px}
+.jf-friends-drawer-content{padding:12px;overflow:auto;min-height:0;flex:1}
+.jf-friends-tabs{display:flex;gap:8px;margin:8px 0 12px;flex-wrap:wrap}
+.jf-friends-tab{padding:8px 12px!important;font-size:12px}.jf-friends-tab.active{outline:2px solid var(--jf-secondary);outline-offset:1px}
+.jf-request-count{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:#e53935;color:#fff;font-size:10px}
+.jf-friend-status{display:flex;align-items:center;gap:5px;font-size:10px;margin-top:3px;color:var(--muted)}.jf-friend-status i{width:7px;height:7px;border-radius:50%;background:#8b98a7;display:inline-block}.jf-friend-status.online i{background:#28b463;box-shadow:0 0 0 2px #28b46325}
+.jf-lyrics{margin-top:14px;padding:14px;border:1px solid #7f9fbe;border-radius:8px;background:linear-gradient(180deg,#f7fbff,#dce9f6 15%,#edf5fc 45%,#d4e4f4);box-shadow:inset 0 1px 0 #fff,0 2px 4px #214c7a20;color:#18345b}
+.jf-lyrics-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid #a9c1da;padding-bottom:8px}.jf-lyrics-head h3{margin:0;color:#0757ae;font-size:15px}
+.jf-lyrics-content{max-height:320px;overflow:auto;text-align:center;white-space:pre-line;line-height:1.9;padding:12px 8px 4px;font-size:14px}.jf-lyrics-line{margin:4px 0;color:#47698c}.jf-lyrics-line.active{color:#0757ae;font-weight:900;text-shadow:0 1px #fff}
+.jf-lyrics-content .small{color:#55718d}.jf-manage-friends{width:100%;margin-top:12px}
+@media(max-width:520px){.jf-friends-launcher{right:78px;bottom:16px;width:52px;height:52px}.jf-friends-drawer{right:12px;bottom:78px;width:calc(100vw - 24px)}}
+
 /* Botão compacto de solicitação de amizade: avatar + */
 .jf-friend-request{width:34px!important;height:34px!important;min-width:34px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;border-radius:7px!important}
 .jf-friend-request svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -463,6 +476,7 @@ html[data-jf-theme="classic"] .track-times{
     </div>
     <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte sua conta para favoritar a faixa atual na sua biblioteca. Cada pessoa precisa conectar o próprio Spotify; os metadados da música são compartilhados pela sala.</p>
     <p class="small" id="spotifyFavoriteStatus" aria-live="polite"></p>
+    <section class="jf-lyrics" aria-labelledby="jfLyricsHeading"><div class="jf-lyrics-head"><h3 id="jfLyricsHeading">♫ Letra da música</h3><span id="jfLyricsMode" class="small">Sincronizada quando disponível</span></div><div id="jfLyricsContent" class="jf-lyrics-content" aria-live="polite"><p class="small">A letra aparecerá aqui quando disponível.</p></div></section>
     <div class="row" style="margin-top:18px">
       <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
@@ -486,6 +500,8 @@ html[data-jf-theme="classic"] .track-times{
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8.3 8.3 0 0 1-3.3-.7L4 20l1.3-4.1a7.5 7.5 0 1 1 14.7-4.4Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
   <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
 </button>
+<button type="button" id="jfFriendsLauncher" class="jf-chat-launcher jf-friends-launcher" aria-label="Abrir amigos" aria-expanded="false" aria-controls="jfFriendsDrawer" title="Amigos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg><span id="jfFriendsUnread" class="jf-chat-unread" aria-label="Solicitações pendentes"></span></button>
+<section id="jfFriendsDrawer" class="jf-chat-window jf-friends-drawer" aria-labelledby="jfFriendsDrawerHeading" hidden><header class="jf-chat-header"><div><h2 id="jfFriendsDrawerHeading" class="jf-chat-heading">Amigos</h2><div class="jf-chat-subheading">Online e solicitações</div></div><button type="button" id="jfFriendsDrawerClose" class="jf-chat-close" aria-label="Fechar amigos">×</button></header><div class="jf-friends-drawer-content"><div class="jf-friends-tabs"><button class="btn secondary jf-friends-tab active" id="jfDrawerFriendsTab" type="button">Amigos</button><button class="btn secondary jf-friends-tab" id="jfDrawerRequestsTab" type="button">Pedidos <span id="jfDrawerRequestCount" class="jf-request-count" hidden>0</span></button></div><div id="jfDrawerFriendsList" class="jf-people"></div><div id="jfDrawerRequestsList" class="jf-people" hidden></div><button type="button" id="jfManageFriends" class="btn secondary jf-manage-friends">Gerenciar amigos</button></div></section>
 <section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
   <header class="jf-chat-header">
     <div><h2 id="jfChatHeading" class="jf-chat-heading">Chat da sala</h2><div class="jf-chat-subheading">Converse com quem está ouvindo</div></div>
@@ -549,9 +565,9 @@ html[data-jf-theme="classic"] .track-times{
 <div class="jf-modal-backdrop" id="jfFriendsModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfFriendsHeading">
     <div class="jf-modal-head"><h2 id="jfFriendsHeading">♧ Amigos</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfFriendsModal" aria-label="Fechar janela">✕</button></div>
-    <p class="small">Guarde o nome e a sala dos seus amigos para entrar rapidinho. Para salas com senha, a entrada sem senha depende de uma amizade confirmada no servidor.</p>
+    <div class="jf-friends-tabs" role="tablist" aria-label="Seções de amigos"><button class="btn secondary jf-friends-tab active" id="jfFriendsTabList" type="button" role="tab" aria-selected="true">Meus amigos</button><button class="btn secondary jf-friends-tab" id="jfRequestsTab" type="button" role="tab" aria-selected="false">Solicitações <span id="jfRequestCount" class="jf-request-count" hidden>0</span></button></div><div id="jfFriendsPane"><p class="small">Seus amigos salvos. Online indica presença na mesma sala.</p>
     <form id="jfFriendForm"><div class="jf-room-field"><label for="jfFriendName">Nome do amigo</label><input id="jfFriendName" maxlength="24" placeholder="Nome de exibição" required></div><div class="jf-room-field"><label for="jfFriendRoom">Nome da sala do amigo</label><input id="jfFriendRoom" maxlength="40" placeholder="nome-da-sala" required></div><div class="jf-room-modal-actions"><button class="btn" type="submit">＋ Adicionar amigo</button></div></form>
-    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div>
+    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div></div><div id="jfRequestsPane" hidden><p class="small">Aceite ou recuse pedidos recebidos nesta sessão.</p><div id="jfIncomingRequests" class="jf-people"><p class="small">Nenhuma solicitação pendente.</p></div></div>
   </section>
 </div>
 
