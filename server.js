@@ -154,12 +154,33 @@ function cleanRoom(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
 }
 
+function isRateLimited(socket, key, limit, windowMs) {
+  const now = Date.now();
+  const limits = socket.data.rateLimits || (socket.data.rateLimits = {});
+  const recent = (limits[key] || []).filter(timestamp => now - timestamp < windowMs);
+  if (recent.length >= limit) {
+    limits[key] = recent;
+    return true;
+  }
+  recent.push(now);
+  limits[key] = recent;
+  return false;
+}
+
 io.on("connection", socket => {
   socket.on("create-room", payload => {
+    if (isRateLimited(socket, "create-room", 5, 60_000)) {
+      socket.emit("create-room-error", { message: "Muitas tentativas de criação. Aguarde um minuto e tente novamente." });
+      return;
+    }
     const room = cleanRoom(payload && payload.room);
     const password = String(payload && payload.password || "");
     if (!room) {
       socket.emit("create-room-error", { message: "Escolha um nome válido para a sala." });
+      return;
+    }
+    if (password && password.length < 4) {
+      socket.emit("create-room-error", { message: "A senha deve ter pelo menos 4 caracteres." });
       return;
     }
     if (password.length > 100) {
@@ -182,6 +203,10 @@ io.on("connection", socket => {
   });
 
   socket.on("join-room", payload => {
+    if (isRateLimited(socket, "join-room", 10, 60_000)) {
+      socket.emit("join-error", { message: "Muitas tentativas de entrada. Aguarde um minuto e tente novamente." });
+      return;
+    }
     const room = cleanRoom(payload && payload.room);
     const password = String(payload && payload.password || "");
     if (!room) {
@@ -263,6 +288,10 @@ io.on("connection", socket => {
   });
 
   socket.on("chat-send", payload => {
+    if (isRateLimited(socket, "chat-send", 8, 5_000)) {
+      socket.emit("chat-rate-limit");
+      return;
+    }
     const room = socket.data.room;
     if (!room || !payload || typeof payload.text !== "string") return;
     const text = payload.text.trim().slice(0, 500);
