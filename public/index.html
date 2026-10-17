@@ -361,6 +361,11 @@ html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece
 html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"] .jf-dj-caption strong,html[data-jf-theme="mint"] .jf-dj-caption strong{color:var(--ink)}
 @media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:110px;height:110px;min-height:110px;flex:0 0 110px;margin:0}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.jf-glb-canvas{animation:none!important}}
+
+/* Botão compacto de solicitação de amizade: avatar + */
+.jf-friend-request{width:34px!important;height:34px!important;min-width:34px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;border-radius:7px!important}
+.jf-friend-request svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.jf-friend-request:disabled{opacity:.65}
 </style>
 </head>
 <body>
@@ -1229,7 +1234,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);
       if(id!==socket.id){
         const actions=document.createElement("div");actions.className="jf-person-actions";
-        const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.textContent="＋ Amigo";request.title="Enviar solicitação de amizade";request.setAttribute("aria-label","Enviar solicitação de amizade para "+(p.name||"Ouvinte"));
+        const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg>';request.title="Enviar solicitação de amizade";request.setAttribute("aria-label","Enviar solicitação de amizade para "+(p.name||"Ouvinte"));
         const already=jfFriends.some(f=>f.name.toLowerCase()===(p.name||"Ouvinte").toLowerCase()&&f.room.toLowerCase()===(room||"").toLowerCase());
         if(already){request.textContent="✓ Amigo";request.disabled=true;}
         request.addEventListener("click",()=>{if(!joined||!room){request.textContent="Entre em uma sala primeiro";return;}socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});request.disabled=true;request.textContent="Solicitada";});
