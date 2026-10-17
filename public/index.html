@@ -194,7 +194,7 @@ main{max-width:1080px}
 .jf-suggest-form .row{align-items:stretch}
 .jf-suggest-form input{flex:1 1 230px}
 .jf-suggestion-popup[hidden]{display:none!important}
-.jf-suggestion-popup{position:fixed;right:22px;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
+.jf-suggestion-popup{position:fixed;left:22px;right:auto;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
 .jf-popup-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--jf-secondary);font-size:10px;font-weight:900;letter-spacing:1.2px}
 .jf-popup-close{border:0;background:transparent;color:var(--ink);font-size:18px;cursor:pointer}
 .jf-suggestion-popup>strong{display:block;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
@@ -1026,13 +1026,27 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
   $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
-  $("jfSendSuggestion").addEventListener("click",()=>{
+  $("jfSendSuggestion").addEventListener("click",async()=>{
     const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
     if(!joined||!suggestion)return;
-    socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
-    $("jfSuggestionText").value="";
-    $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
-    jfUpdateSuggestionControls();
+    const sendButton=$("jfSendSuggestion");
+    sendButton.disabled=true;
+    $("jfSuggestionStatus").textContent="Conferindo se a música existe...";
+    try{
+      const response=await fetch("/api/music/validate-suggestion?title="+encodeURIComponent(suggestion));
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.valid){
+        $("jfSuggestionStatus").textContent=result.error||"Não encontrei essa música. Tente o título oficial e, se possível, o artista.";
+        return;
+      }
+      socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
+      $("jfSuggestionText").value="";
+      $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
+    }catch(_){
+      $("jfSuggestionStatus").textContent="Não foi possível verificar a música agora. Tente novamente.";
+    }finally{
+      jfUpdateSuggestionControls();
+    }
   });
   function jfShowSuggestion({suggestion,fromName}){
     if(!isSender||!jfSuggestionEnabled)return;
