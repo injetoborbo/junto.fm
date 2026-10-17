@@ -918,7 +918,6 @@ const config = {
     enableControls();
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
-    pendingJoinRoom = "";
     if (joined && room !== joinedRoom) resetSession();
     joined = true; room = joinedRoom; $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
