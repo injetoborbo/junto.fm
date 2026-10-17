@@ -118,32 +118,8 @@ footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
   </section>
 
 
-  <section class="panel" aria-labelledby="jfProfileHeading">
-    <h2 id="jfProfileHeading" style="margin:0 0 13px">Seu perfil</h2>
-    <div class="jf-profile">
-      <img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden>
-      <div id="jfAvatarPlaceholder" class="jf-avatar">♫</div>
-      <div class="jf-fields">
-        <label for="jfName">Nome de exibição</label>
-        <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
-        <label for="jfAvatarFile">Foto ou avatar (opcional)</label>
-        <input id="jfAvatarFile" type="file" accept="image/*">
-      </div>
-    </div>
-    <div class="row" style="margin-top:12px"><button class="btn" id="jfSaveProfile" type="button">Salvar perfil</button><span class="small" id="jfProfileStatus" aria-live="polite">Salvo neste navegador.</span></div>
-    <h3 style="font-size:14px;margin:17px 0 7px">Quem está na sala</h3>
-    <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
-  </section>
-  <section class="panel" aria-labelledby="jfThemeHeading">
-    <h2 id="jfThemeHeading" style="margin:0 0 13px">Aparência</h2>
-    <div class="jf-grid">
-      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="custom">Minha cor</option></select></div>
-      <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
-    </div>
-    <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
-  </section>
-
-  <section class="panel">
+  
+<section class="panel">
     <div class="player">
       <div class="cover">♫</div>
       <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
@@ -174,11 +150,12 @@ footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
     <p id="audioDiagnostics" class="small">
   Diagnóstico do áudio: aguardando conexão...
 </p>
-    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
+    
     <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
   </section>
 
-  <section class="panel">
+  
+<section class="panel">
     <h2 style="margin:0 0 14px">Comandos da sala</h2>
     <p style="margin-top:0">Esses botões enviam comandos para a outra pessoa. No protótipo, eles não controlam diretamente o Spotify — quem está transmitindo ainda precisa pausar ou trocar a música na aba do Spotify.</p>
     <div class="row">
@@ -188,13 +165,42 @@ footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
   </section>
 
-  <section class="panel">
+  
+<section class="panel" aria-labelledby="jfProfileHeading">
+    <h2 id="jfProfileHeading" style="margin:0 0 13px">Seu perfil</h2>
+    <div class="jf-profile">
+      <img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden>
+      <div id="jfAvatarPlaceholder" class="jf-avatar">♫</div>
+      <div class="jf-fields">
+        <label for="jfName">Nome de exibição</label>
+        <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
+        <label for="jfAvatarFile">Foto ou avatar (opcional)</label>
+        <input id="jfAvatarFile" type="file" accept="image/*">
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="btn" id="jfSaveProfile" type="button">Salvar perfil</button><span class="small" id="jfProfileStatus" aria-live="polite">Salvo neste navegador.</span></div>
+    <h3 style="font-size:14px;margin:17px 0 7px">Quem está na sala</h3>
+    <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
+  </section>
+  
+<section class="panel" aria-labelledby="jfThemeHeading">
+    <h2 id="jfThemeHeading" style="margin:0 0 13px">Aparência</h2>
+    <div class="jf-grid">
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
+    </div>
+    <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
+  </section>
+
+  
+<section class="panel">
     <h2 style="margin:0 0 14px">Como usar</h2>
     <div class="steps">
       <div class="step"><div class="num">1</div><div><strong>Abra esta página nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versão hospedada do site.</span></div></div>
       <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, “noite”. Escolham um nome difícil de adivinhar se quiserem privacidade básica.</span></div></div>
       <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissão</strong><span>Compartilhe a aba do Spotify Web Player com áudio. No Android, aceite tocar o áudio quando solicitado.</span></div></div>
     </div>
+    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
     <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
   </section>
   <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
