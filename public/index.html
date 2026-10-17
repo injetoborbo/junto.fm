@@ -804,6 +804,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   async function createSenderOffer(id) {
     if (!isSender || !localStream || !joined) return;
     try {
+      await turnConfigReady;
       const peer = makePeer(id);
       localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
       await tuneAudioSender(peer);
@@ -945,6 +946,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if (!from || !data || !joined) return;
     try {
       if (data.type === 'offer' && !isSender) {
+        await turnConfigReady;
+        if (!joined) return;
         const peer = makePeer(from);
         await peer.setRemoteDescription(data.sdp);
         await applyPendingCandidates(from, peer);
