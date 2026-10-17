@@ -846,8 +846,16 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if (new URLSearchParams(location.search).get('spotify') === 'connected') {
         history.replaceState({}, '', location.pathname);
         $("spotifyStatus").textContent = 'Spotify conectado! Deixe uma música tocando e inicie a transmissão.';
-        let returnRoom="",returnPassword="";try{returnRoom=sessionStorage.getItem("jfSpotifyReturnRoom")||"";returnPassword=sessionStorage.getItem("jfSpotifyReturnPassword")||"";}catch(_){}
-        if(returnRoom&&!joined&&socket.connected){sessionStorage.removeItem("jfSpotifyReturnRoom");sessionStorage.removeItem("jfSpotifyReturnPassword");joinRoom(returnRoom,returnPassword);}
+        const restoreSpotifyRoom=()=>{
+          let returnRoom="",returnPassword="";
+          try{returnRoom=sessionStorage.getItem("jfSpotifyReturnRoom")||"";returnPassword=sessionStorage.getItem("jfSpotifyReturnPassword")||"";}catch(_){}
+          if(returnRoom&&!joined&&socket.connected){
+            try{sessionStorage.removeItem("jfSpotifyReturnRoom");sessionStorage.removeItem("jfSpotifyReturnPassword");}catch(_){}
+            joinRoom(returnRoom,returnPassword);
+          }
+        };
+        if(socket.connected) restoreSpotifyRoom();
+        else socket.once("connect",restoreSpotifyRoom);
       }
     } catch (_) { $("spotifyStatus").textContent = 'Não foi possível verificar a conexão com o Spotify.'; }
   }
