@@ -135,6 +135,45 @@ html[data-jf-theme="aero"] .jf-person{background:#e7ffff35;border-color:#d7ffff}
 html[data-jf-theme="aero"] .jf-avatar{border-color:#e6ffff;background:#70cde3;color:#fff}
 html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c9ffff 48%,#65d8ec)}
 @media(max-width:520px){.jf-topbar{align-items:flex-start}.jf-top-actions{width:100%;justify-content:flex-end}.jf-modal-backdrop{padding:12px}.jf-modal{padding:17px;max-height:90vh}.jf-modal-head h2{font-size:20px}}
+
+/* Layout lateral de participantes e relógio digital Frutiger Aero */
+main{max-width:1080px}
+.jf-player-layout{display:grid;grid-template-columns:minmax(0,1fr) 245px;gap:18px;align-items:stretch;margin-top:19px}
+.jf-player-panel{min-width:0;margin-top:0}
+.jf-room-people{margin-top:0;min-width:0}
+.jf-room-people .jf-people{display:grid;align-content:start}
+.jf-room-people .jf-person{width:100%;background:color-mix(in srgb,var(--jf-glow) 30%,#101333aa)}
+.jf-check-label{display:flex;align-items:flex-start;gap:10px;text-transform:none;letter-spacing:0;font-size:13px;line-height:1.5}
+.jf-check-label input{width:18px;height:18px;flex:0 0 18px;margin:0;accent-color:var(--jf-secondary)}
+.jf-suggestion-settings{margin-top:17px;padding:14px;border:1px solid color-mix(in srgb,var(--jf-secondary) 50%,var(--jf-glow));border-radius:10px;background:color-mix(in srgb,var(--jf-glow) 20%,transparent)}
+.jf-suggestion-settings p{margin:8px 0 0}
+.jf-suggest-form{margin-top:15px}
+.jf-suggest-form .row{align-items:stretch}
+.jf-suggest-form input{flex:1 1 230px}
+.jf-suggestion-popup[hidden]{display:none!important}
+.jf-suggestion-popup{position:fixed;right:22px;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
+.jf-popup-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--jf-secondary);font-size:10px;font-weight:900;letter-spacing:1.2px}
+.jf-popup-close{border:0;background:transparent;color:var(--ink);font-size:18px;cursor:pointer}
+.jf-suggestion-popup>strong{display:block;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
+.jf-suggestion-popup>span{display:block;margin-top:7px}
+.jf-popup-actions{display:flex;justify-content:flex-end;margin-top:14px}
+html[data-jf-theme="aero"] .panel,html[data-jf-theme="aero"] .jf-modal{background:linear-gradient(145deg,#073e60f2,#052f4df0 48%,#062945f5);border-color:#8beaff;box-shadow:inset 0 2px 0 #b9f7ff70,0 10px 28px #00263f88,0 0 0 1px #40c8e455;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+html[data-jf-theme="aero"] .panel:before{background:linear-gradient(90deg,transparent,#d8ffff80,transparent)}
+html[data-jf-theme="aero"] h1,html[data-jf-theme="aero"] .player h2,html[data-jf-theme="aero"] .panel h2,html[data-jf-theme="aero"] .panel h3{color:#f4ffff;text-shadow:0 2px 4px #001d35}
+html[data-jf-theme="aero"] main>p,html[data-jf-theme="aero"] .small,html[data-jf-theme="aero"] .player p,html[data-jf-theme="aero"] footer{color:#d9f7ff}
+html[data-jf-theme="aero"] label{color:#d8fbff;text-shadow:none}
+html[data-jf-theme="aero"] .track-card{background:linear-gradient(135deg,#063a59f5,#082d49f5);border-color:#56d9f4;box-shadow:inset 0 1px 0 #b7f7ff44,0 5px 18px #001b3088}
+html[data-jf-theme="aero"] .track-title{color:#f6ffff;text-shadow:0 1px 3px #001a2b}
+html[data-jf-theme="aero"] .track-artist{color:#c9f1ff}
+html[data-jf-theme="aero"] .track-album{color:#9bd9ed}
+html[data-jf-theme="aero"] .track-times{display:flex;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 12px;border:1px solid #36c6e9;border-radius:7px;background:linear-gradient(#021c2c,#07334b);box-shadow:inset 0 3px 8px #0009,0 0 12px #00bde522;color:#aaffef;font-family:"Courier New",monospace;font-size:clamp(21px,3vw,30px);font-weight:900;letter-spacing:2px;line-height:1;font-variant-numeric:tabular-nums;text-shadow:0 0 5px #4dffd2,0 0 12px #00d8c0}
+html[data-jf-theme="aero"] .track-times span{min-width:0}
+html[data-jf-theme="aero"] .track-times span:last-child{color:#6eeaff;text-align:right;text-shadow:0 0 5px #40dfff,0 0 12px #00aee8}
+html[data-jf-theme="aero"] .track-kicker{color:#5de8ff}
+html[data-jf-theme="aero"] .jf-suggestion-popup{background:linear-gradient(145deg,#073e60f8,#05273ff8);border-color:#64eaff;color:#f5ffff}
+html[data-jf-theme="aero"] .jf-person{background:#082f4be8;border-color:#55d9f4}
+@media(max-width:760px){.jf-player-layout{grid-template-columns:minmax(0,1fr)}.jf-room-people{order:2}.jf-player-panel{order:1}}
+@media(max-width:520px){main{max-width:100%}.jf-suggestion-popup{right:14px;bottom:14px}}
 </style>
 </head>
 <body>
@@ -156,7 +195,8 @@ html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c
 
 
   
-<section class="panel">
+<div class="jf-player-layout">
+<section class="panel jf-player-panel">
     <div class="player">
       <div class="cover">♫</div>
       <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
@@ -190,6 +230,12 @@ html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c
     
     <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
   </section>
+  <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
+    <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
+    <p class="small" style="margin-top:0">Participantes conectados agora.</p>
+    <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
+  </aside>
+</div>
 
   
 <section class="panel">
@@ -200,7 +246,21 @@ html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c
       <button class="btn secondary" id="nextCmd" disabled>⏭ Avisar: próxima</button>
     </div>
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
+    <div class="jf-suggestion-settings">
+      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Receber sugestões de música nesta transmissão</label>
+      <p class="small">Ative no aparelho que está transmitindo para receber sugestões em um popup no canto inferior direito.</p>
+    </div>
+    <div class="jf-suggest-form">
+      <label for="jfSuggestionText">Sugerir uma música</label>
+      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Enviar sugestão</button></div>
+      <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma música.</p>
+    </div>
   </section>
+  <div id="jfSuggestionPopup" class="jf-suggestion-popup" role="status" aria-live="polite" hidden>
+    <div class="jf-popup-top"><span>♫ SUGESTÃO DE MÚSICA</span><button type="button" class="jf-popup-close" id="jfCloseSuggestion" aria-label="Fechar sugestão">✕</button></div>
+    <strong id="jfPopupSong"></strong><span id="jfPopupFrom" class="small"></span>
+    <div class="jf-popup-actions"><button type="button" class="btn" id="jfSuggestionDone">Entendi</button></div>
+  </div>
 
   
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
@@ -217,8 +277,6 @@ html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c
       </div>
     </div>
     <div class="row" style="margin-top:12px"><button class="btn" id="jfSaveProfile" type="button">Salvar perfil</button><span class="small" id="jfProfileStatus" aria-live="polite">Salvo neste navegador.</span></div>
-    <h3 style="font-size:14px;margin:17px 0 7px">Quem está na sala</h3>
-    <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
   </section>
 </div>
   
@@ -395,6 +453,7 @@ const config = {
     closeAllPeers();
     if (stopLocal) stopLocalStream();
     isSender = false;
+    if(typeof jfUpdateSuggestionControls==="function")jfUpdateSuggestionControls();
     $("remoteAudio").pause();
     $("remoteAudio").srcObject = null;
     enableControls();
@@ -547,7 +606,7 @@ const config = {
   socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => { joined = false; setStatus(message || 'Não foi possível entrar na sala.'); enableControls(); });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
-    joined = true; room = joinedRoom; $("room").value = room;
+    joined = true; room = joinedRoom; $("room").value = room; jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -602,7 +661,7 @@ const config = {
       audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
-      localStream = captured; isSender = true;
+      localStream = captured; isSender = true; jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
       // serão conectados pelo evento peer-joined do servidor.
       const roomInfo = await new Promise(resolve => {
@@ -636,6 +695,36 @@ const config = {
     $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a música.' : 'O transmissor pediu para passar à próxima música.';
     setStatus('Comando recebido. O controle da música ainda é manual neste protótipo.', true);
   });
+  let jfSuggestionEnabled = false;
+  function jfUpdateSuggestionControls(){
+    $("jfSendSuggestion").disabled = !joined || !$("jfSuggestionText").value.trim();
+    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative a opção acima para receber sugestões." : "Sugestões serão enviadas a quem estiver transmitindo.");
+  }
+  $("jfReceiveSuggestions").addEventListener("change",()=>{
+    jfSuggestionEnabled=$("jfReceiveSuggestions").checked;
+    socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled});
+    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Recebimento de sugestões ativado neste aparelho.":"Recebimento de sugestões desativado.";
+  });
+  $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
+  $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
+  $("jfSendSuggestion").addEventListener("click",()=>{
+    const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
+    if(!joined||!suggestion)return;
+    socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
+    $("jfSuggestionText").value="";
+    $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
+    jfUpdateSuggestionControls();
+  });
+  function jfShowSuggestion({suggestion,fromName}){
+    if(!isSender||!jfSuggestionEnabled)return;
+    $("jfPopupSong").textContent=String(suggestion||"Sugestão de música").slice(0,180);
+    $("jfPopupFrom").textContent="Sugerida por "+String(fromName||"Ouvinte").slice(0,24);
+    $("jfSuggestionPopup").hidden=false;
+  }
+  function jfHideSuggestion(){$("jfSuggestionPopup").hidden=true;}
+  $("jfCloseSuggestion").addEventListener("click",jfHideSuggestion);
+  $("jfSuggestionDone").addEventListener("click",jfHideSuggestion);
+  socket.on("music-suggestion",jfShowSuggestion);
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
@@ -705,7 +794,7 @@ const config = {
   socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();socket.emit("profile-update",{profile:jfProfile});});
   socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();});
 
-  jfInit();jfRenderPeople();
+  jfInit();jfRenderPeople();jfUpdateSuggestionControls();
   enableControls();
   refreshSpotifyStatus();
   setInterval(updateTrackProgress, 1000);
