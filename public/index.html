@@ -1,16 +1,16 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Junto.fm — ouvir junto</title>
+<title>Junto.fm â€” ouvir junto</title>
 <style>
 :root{color-scheme:dark;--ink:#f7f4ff;--muted:#c4c6ed;--pink:#ff78d2;--cyan:#70f4ff;--blue:#7997ff;--line:#7678d8;--panel:#171638}
 *{box-sizing:border-box}
 html{min-height:100%;background:#090b22}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:"Trebuchet MS",Verdana,Arial,sans-serif;background:radial-gradient(ellipse at 50% -10%,#5656a8 0,#20245c 30%,#101333 63%,#080a1e 100%);background-attachment:fixed;position:relative;overflow-x:hidden}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.26;background-image:linear-gradient(#9ca5ff24 1px,transparent 1px),linear-gradient(90deg,#9ca5ff24 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(to bottom,black,transparent 85%);z-index:0}
-body:after{content:"✦     ·       ✧          ·       ✦       ·       ✧";position:fixed;left:0;right:0;top:8px;text-align:center;color:#a3fbff;letter-spacing:1.7rem;font-size:12px;text-shadow:0 0 12px #70f4ff;opacity:.65;pointer-events:none;z-index:0}
+body:after{content:"âœ¦     Â·       âœ§          Â·       âœ¦       Â·       âœ§";position:fixed;left:0;right:0;top:8px;text-align:center;color:#a3fbff;letter-spacing:1.7rem;font-size:12px;text-shadow:0 0 12px #70f4ff;opacity:.65;pointer-events:none;z-index:0}
 main{position:relative;z-index:1;max-width:820px;margin:auto;padding:30px 18px 52px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:25px;letter-spacing:.3px;text-shadow:0 2px 0 #38336e,0 0 15px #8caaff77}
 .logo{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;border:2px solid #f5d7ff;background:linear-gradient(145deg,#fff 0%,#c9d9ff 18%,#7a85ff 48%,#f57fd6 78%,#fff 100%);color:#25164f;font-size:27px;box-shadow:inset 0 2px 2px #fff, inset 0 -4px 8px #2b287c88,0 0 0 3px #24225d,0 0 20px #7c88ff77}
@@ -47,9 +47,9 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 </head>
 <body>
 <main>
-  <div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div>
-  <h1>Música boa é<br>melhor junto. ✦</h1>
-  <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+  <div class="brand"><div class="logo">â™«</div> Junto.fm <span class="tag">âœ¦ Y2K RADIO Â· BETA</span></div>
+  <h1>MÃºsica boa Ã©<br>melhor junto. âœ¦</h1>
+  <p>Crie uma sala privada e escute o Ã¡udio do navegador com outra pessoa, mesmo Ã  distÃ¢ncia.</p>
 
   <section class="panel">
     <label for="room">Nome da sala (use o mesmo nos dois aparelhos)</label>
@@ -58,48 +58,51 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
       <button class="btn" id="join">Entrar na sala</button>
       <button class="btn secondary" id="createRoom" type="button">Criar sala</button>
     </div>
-    <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
-    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidorâ€¦</span></div>
+    <p class="small" id="roomCount">Ainda nÃ£o entrou em uma sala.</p><p class="small" id="help">Se este texto nÃ£o mudar para â€œConectado ao servidorâ€, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. NÃ£o abra o arquivo HTML diretamente.</p>
   </section>
 
   <section class="panel">
     <div class="player">
-      <div class="cover">♫</div>
-      <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
+      <div class="cover">â™«</div>
+      <div><h2>TransmissÃ£o ao vivo</h2><p id="role">Entre na sala para comeÃ§ar.</p></div>
     </div>
     <div class="track-card" aria-live="polite">
-      <img class="track-art" id="trackArt" alt="Capa do álbum" src="" hidden>
-      <div class="track-art" id="trackPlaceholder" aria-hidden="true">♫</div>
+      <img class="track-art" id="trackArt" alt="Capa do Ã¡lbum" src="" hidden>
+      <div class="track-art" id="trackPlaceholder" aria-hidden="true">â™«</div>
       <div>
-        <div class="track-kicker" id="trackKicker">✦ NOW PLAYING</div>
-        <h3 class="track-title" id="trackTitle">A música aparece aqui</h3>
+        <div class="track-kicker" id="trackKicker">âœ¦ NOW PLAYING</div>
+        <h3 class="track-title" id="trackTitle">A mÃºsica aparece aqui</h3>
         <p class="track-artist" id="trackArtist">Conecte o Spotify para mostrar os metadados</p>
-        <p class="track-album" id="trackAlbum">JUNTO.FM · Y2K RADIO</p>
-        <div class="progress-wrap" role="progressbar" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
+        <p class="track-album" id="trackAlbum">JUNTO.FM Â· Y2K RADIO</p>
+        <div class="progress-wrap" role="progressbar" aria-label="Progresso da mÃºsica" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
         <div class="track-times"><span id="trackElapsed">0:00</span><span id="trackDuration">0:00</span></div>
       </div>
     </div>
     <div class="spotify-actions">
-      <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Conectar Spotify</a>
+      <a class="btn" id="spotifyConnect" href="/spotify/login">â™« Conectar Spotify</a>
       <button class="btn secondary" id="spotifyDisconnect" type="button" hidden>Desconectar Spotify</button>
-      <span class="small" id="spotifyStatus">Conecte o Spotify no dispositivo que está transmitindo.</span>
+      <span class="small" id="spotifyStatus">Conecte o Spotify no dispositivo que estÃ¡ transmitindo.</span>
     </div>
-    <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte a conta no aparelho transmissor e deixe a música tocando no Spotify Web Player. Os ouvintes recebem os metadados pela sala.</p>
+    <p class="spotify-note">A capa e o progresso sÃ£o lidos da sua conta Spotify. Conecte a conta no aparelho transmissor e deixe a mÃºsica tocando no Spotify Web Player. Os ouvintes recebem os metadados pela sala.</p>
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
-      <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
+      <button class="btn" id="start" disabled>Transmitir Ã¡udio da aba</button>
+      <button class="btn secondary" id="stop" disabled>Parar transmissÃ£o</button>
     </div>
     <audio id="remoteAudio" controls autoplay playsinline></audio>
-    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
-    <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
+    <p id="audioDiagnostics" class="small">
+  DiagnÃ³stico do Ã¡udio: aguardando conexÃ£o...
+</p>
+    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em â€œTransmitir Ã¡udioâ€ e escolha a aba do Spotify. Marque â€œCompartilhar Ã¡udio da abaâ€.</div>
+    <p class="small">A transmissÃ£o depende do navegador e da opÃ§Ã£o de compartilhar Ã¡udio. Use o player do Spotify Web, nÃ£o o aplicativo desktop, para tentar capturar somente o som da aba.</p>
   </section>
 
   <section class="panel">
     <h2 style="margin:0 0 14px">Comandos da sala</h2>
-    <p style="margin-top:0">Esses botões enviam comandos para a outra pessoa. No protótipo, eles não controlam diretamente o Spotify — quem está transmitindo ainda precisa pausar ou trocar a música na aba do Spotify.</p>
+    <p style="margin-top:0">Esses botÃµes enviam comandos para a outra pessoa. No protÃ³tipo, eles nÃ£o controlam diretamente o Spotify â€” quem estÃ¡ transmitindo ainda precisa pausar ou trocar a mÃºsica na aba do Spotify.</p>
     <div class="row">
-      <button class="btn secondary" id="pauseCmd" disabled>⏸ Avisar: pausar</button>
-      <button class="btn secondary" id="nextCmd" disabled>⏭ Avisar: próxima</button>
+      <button class="btn secondary" id="pauseCmd" disabled>â¸ Avisar: pausar</button>
+      <button class="btn secondary" id="nextCmd" disabled>â­ Avisar: prÃ³xima</button>
     </div>
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
   </section>
@@ -107,13 +110,13 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
   <section class="panel">
     <h2 style="margin:0 0 14px">Como usar</h2>
     <div class="steps">
-      <div class="step"><div class="num">1</div><div><strong>Abra esta página nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versão hospedada do site.</span></div></div>
-      <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, “noite”. Escolham um nome difícil de adivinhar se quiserem privacidade básica.</span></div></div>
-      <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissão</strong><span>Compartilhe a aba do Spotify Web Player com áudio. No Android, aceite tocar o áudio quando solicitado.</span></div></div>
+      <div class="step"><div class="num">1</div><div><strong>Abra esta pÃ¡gina nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versÃ£o hospedada do site.</span></div></div>
+      <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, â€œnoiteâ€. Escolham um nome difÃ­cil de adivinhar se quiserem privacidade bÃ¡sica.</span></div></div>
+      <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissÃ£o</strong><span>Compartilhe a aba do Spotify Web Player com Ã¡udio. No Android, aceite tocar o Ã¡udio quando solicitado.</span></div></div>
     </div>
-    <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
+    <div class="notice">Importante: este Ã© um protÃ³tipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, serÃ¡ necessÃ¡rio configurar um servidor TURN para a conexÃ£o de Ã¡udio.</div>
   </section>
-  <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
+  <footer>Junto.fm Â· Projeto experimental de escuta compartilhada</footer>
 </main>
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -145,7 +148,7 @@ const iceConfigReady = fetch("/api/ice-servers")
     }
   })
   .catch(error => {
-    console.error("Erro ao carregar configuração ICE:", error);
+    console.error("Erro ao carregar configuraÃ§Ã£o ICE:", error);
   });
 
   function setStatus(message, ok = false) {
@@ -159,12 +162,12 @@ const iceConfigReady = fetch("/api/ice-servers")
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
       currentTrack = null;
-      $("trackTitle").textContent = "A música aparece aqui";
+      $("trackTitle").textContent = "A mÃºsica aparece aqui";
       $("trackArtist").textContent = "Conecte o Spotify para mostrar os metadados";
-      $("trackAlbum").textContent = "JUNTO.FM · Y2K RADIO";
+      $("trackAlbum").textContent = "JUNTO.FM Â· Y2K RADIO";
       $("trackArt").hidden = true; $("trackArt").removeAttribute("src"); $("trackPlaceholder").hidden = false;
       $("trackProgressFill").style.width = "0%"; $("trackElapsed").textContent = "0:00"; $("trackDuration").textContent = "0:00";
-      $("trackKicker").textContent = "✦ NOW PLAYING";
+      $("trackKicker").textContent = "âœ¦ NOW PLAYING";
       $("trackProgress").setAttribute("aria-valuenow", "0");
       return;
     }
@@ -172,10 +175,10 @@ const iceConfigReady = fetch("/api/ice-servers")
     trackBaseTime = Date.now();
     $("trackTitle").textContent = track.name;
     $("trackArtist").textContent = track.artists || "Artista desconhecido";
-    $("trackAlbum").textContent = track.album || "Spotify · Junto.fm";
+    $("trackAlbum").textContent = track.album || "Spotify Â· Junto.fm";
     if (track.image) { $("trackArt").src = track.image; $("trackArt").hidden = false; $("trackPlaceholder").hidden = true; }
     else { $("trackArt").hidden = true; $("trackPlaceholder").hidden = false; }
-    $("trackKicker").textContent = track.is_playing ? "✦ NOW PLAYING · LIVE" : "✦ PAUSED / NOT PLAYING";
+    $("trackKicker").textContent = track.is_playing ? "âœ¦ NOW PLAYING Â· LIVE" : "âœ¦ PAUSED / NOT PLAYING";
     updateTrackProgress();
   }
   function updateTrackProgress() {
@@ -197,13 +200,13 @@ const iceConfigReady = fetch("/api/ice-servers")
       $("spotifyDisconnect").hidden = !spotifyConnected;
       $("spotifyConnect").style.pointerEvents = status.configured ? 'auto' : 'none';
       $("spotifyConnect").style.opacity = status.configured ? '1' : '.45';
-      if (!status.configured) $("spotifyStatus").textContent = 'O servidor precisa de um Spotify Client ID para ativar esta integração.';
-      else $("spotifyStatus").textContent = spotifyConnected ? 'Spotify conectado nesta sessão.' : 'Spotify ainda não conectado neste aparelho.';
+      if (!status.configured) $("spotifyStatus").textContent = 'O servidor precisa de um Spotify Client ID para ativar esta integraÃ§Ã£o.';
+      else $("spotifyStatus").textContent = spotifyConnected ? 'Spotify conectado nesta sessÃ£o.' : 'Spotify ainda nÃ£o conectado neste aparelho.';
       if (new URLSearchParams(location.search).get('spotify') === 'connected') {
         history.replaceState({}, '', location.pathname);
-        $("spotifyStatus").textContent = 'Spotify conectado! Deixe uma música tocando e inicie a transmissão.';
+        $("spotifyStatus").textContent = 'Spotify conectado! Deixe uma mÃºsica tocando e inicie a transmissÃ£o.';
       }
-    } catch (_) { $("spotifyStatus").textContent = 'Não foi possível verificar a conexão com o Spotify.'; }
+    } catch (_) { $("spotifyStatus").textContent = 'NÃ£o foi possÃ­vel verificar a conexÃ£o com o Spotify.'; }
   }
   async function pollSpotifyTrack() {
     if (!joined || !isSender || !spotifyConnected) return;
@@ -212,7 +215,7 @@ const iceConfigReady = fetch("/api/ice-servers")
       const data = await response.json();
       if (!response.ok) { $("spotifyStatus").textContent = data.error || 'Erro ao consultar Spotify.'; return; }
       if (!data.item) {
-        $("spotifyStatus").textContent = 'Spotify conectado; nenhuma música ativa detectada.';
+        $("spotifyStatus").textContent = 'Spotify conectado; nenhuma mÃºsica ativa detectada.';
         return;
       }
       const track = {
@@ -223,7 +226,7 @@ const iceConfigReady = fetch("/api/ice-servers")
       renderTrack(track);
       socket.emit('track-update', { room, track });
       $("spotifyStatus").textContent = 'Metadados sincronizados para a sala.';
-    } catch (_) { $("spotifyStatus").textContent = 'Falha ao atualizar a música atual.'; }
+    } catch (_) { $("spotifyStatus").textContent = 'Falha ao atualizar a mÃºsica atual.'; }
   }
   function startSpotifyPolling() {
     if (spotifyPollTimer) clearInterval(spotifyPollTimer);
@@ -276,17 +279,79 @@ const iceConfigReady = fetch("/api/ice-servers")
     peer.onicecandidate = event => {
       if (event.candidate && peers.get(id) === peer) sendSignal(id, { type: "candidate", candidate: event.candidate });
     };
-    peer.ontrack = event => {
-      if (peers.get(id) !== peer || isSender) return;
-      const stream = event.streams && event.streams[0];
-      if (stream) $("remoteAudio").srcObject = stream;
-      $("remoteAudio").play().then(() => setStatus("Áudio recebido e reproduzindo.", true)).catch(() => setStatus("Conexão pronta. Toque em Play no player para liberar o áudio.", true));
-    };
+
+peer.ontrack = event => {
+  if (peers.get(id) !== peer || isSender) return;
+
+  const stream = event.streams && event.streams[0];
+  if (stream) $("remoteAudio").srcObject = stream;
+
+  let previousStats = null;
+
+  const timer = setInterval(async () => {
+    if (peers.get(id) !== peer) {
+      clearInterval(timer);
+      return;
+    }
+
+    try {
+      const report = await peer.getStats();
+      let audio = null;
+
+      report.forEach(stat => {
+        if (
+          stat.type === "inbound-rtp" &&
+          (stat.kind === "audio" || stat.mediaType === "audio") &&
+          !stat.isRemote
+        ) {
+          audio = stat;
+        }
+      });
+
+      const panel = $("audioDiagnostics");
+      if (!panel || !audio) return;
+
+      let bitrate = "calculando...";
+
+      if (previousStats && audio.timestamp > previousStats.timestamp) {
+        const bits = (audio.bytesReceived - previousStats.bytes) * 8;
+        bitrate = Math.round(
+          bits / (audio.timestamp - previousStats.timestamp)
+        ) + " kbps";
+      }
+
+      const lost = audio.packetsLost || 0;
+      const received = audio.packetsReceived || 0;
+      const loss = received + lost > 0
+        ? (lost / (received + lost) * 100).toFixed(2)
+        : "0.00";
+
+      const jitter = audio.jitter != null
+        ? (audio.jitter * 1000).toFixed(1) + " ms"
+        : "indisponÃ­vel";
+
+      panel.textContent =
+        `Bitrate: ${bitrate} | Jitter: ${jitter} | Pacotes perdidos: ${lost} (${loss}%)`;
+
+      previousStats = {
+        bytes: audio.bytesReceived,
+        timestamp: audio.timestamp
+      };
+    } catch (error) {
+      console.warn("Erro ao medir Ã¡udio:", error);
+    }
+  }, 2000);
+
+  $("remoteAudio").play()
+    .then(() => setStatus("Ãudio recebido e reproduzindo.", true))
+    .catch(() => setStatus("ConexÃ£o pronta. Toque em Play no player para liberar o Ã¡udio.", true));
+};
+
     peer.onconnectionstatechange = () => {
       if (peers.get(id) !== peer) return;
-      if (peer.connectionState === "connected") setStatus(isSender ? "Transmissão conectada a um ouvinte." : "Áudio conectado.", true);
-      else if (peer.connectionState === "disconnected") setStatus("Conexão instável; tentando recuperar o áudio.");
-      else if (peer.connectionState === "failed") setStatus("A conexão falhou. Algumas redes precisam de um servidor TURN.");
+      if (peer.connectionState === "connected") setStatus(isSender ? "TransmissÃ£o conectada a um ouvinte." : "Ãudio conectado.", true);
+      else if (peer.connectionState === "disconnected") setStatus("ConexÃ£o instÃ¡vel; tentando recuperar o Ã¡udio.");
+      else if (peer.connectionState === "failed") setStatus("A conexÃ£o falhou. Algumas redes precisam de um servidor TURN.");
     };
     return peer;
   }
@@ -314,7 +379,7 @@ const iceConfigReady = fetch("/api/ice-servers")
       if (!sender.track || sender.track.kind !== 'audio') continue;
       try { sender.track.contentHint = 'music'; } catch (_) {}
       try { const params = sender.getParameters(); params.encodings = params.encodings?.length ? params.encodings : [{}]; params.encodings[0].maxBitrate = 256000; await sender.setParameters(params); }
-      catch (error) { console.warn('Bitrate personalizado indisponível:', error); }
+      catch (error) { console.warn('Bitrate personalizado indisponÃ­vel:', error); }
     }
   }
   async function createSenderOffer(id) {
@@ -329,20 +394,20 @@ const iceConfigReady = fetch("/api/ice-servers")
       if (peers.get(id) !== peer) return;
       await peer.setLocalDescription(offer);
       sendSignal(id, { type: 'offer', sdp: peer.localDescription });
-      setStatus(`Transmitindo áudio; conexões ativas: ${peers.size}.`, true);
-    } catch (error) { console.error('Falha ao criar oferta:', error); setStatus('Não foi possível conectar um ouvinte. Tente novamente.'); }
+      setStatus(`Transmitindo Ã¡udio; conexÃµes ativas: ${peers.size}.`, true);
+    } catch (error) { console.error('Falha ao criar oferta:', error); setStatus('NÃ£o foi possÃ­vel conectar um ouvinte. Tente novamente.'); }
   }
   function cleanRoomName(value) { return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40); }
   function joinRoom(name) {
     const cleaned = cleanRoomName(name);
-    if (!cleaned) { setStatus('Digite um nome de sala válido.'); return; }
-    if (!socket.connected) { setStatus('Sem conexão com o servidor. Aguarde e tente novamente.'); return; }
-    if (joined && room === cleaned) { setStatus('Você já está nesta sala.', true); return; }
+    if (!cleaned) { setStatus('Digite um nome de sala vÃ¡lido.'); return; }
+    if (!socket.connected) { setStatus('Sem conexÃ£o com o servidor. Aguarde e tente novamente.'); return; }
+    if (joined && room === cleaned) { setStatus('VocÃª jÃ¡ estÃ¡ nesta sala.', true); return; }
     resetSession();
     joined = false;
     room = cleaned;
     $("room").value = room;
-    setStatus('Entrando na sala…');
+    setStatus('Entrando na salaâ€¦');
     socket.emit('join-room', { room });
   }
   $("join").onclick = () => joinRoom($("room").value);
@@ -353,21 +418,21 @@ const iceConfigReady = fetch("/api/ice-servers")
   };
   $("room").addEventListener('keydown', event => { if (event.key === 'Enter') joinRoom($("room").value); });
 
-  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
-  socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
-  socket.on('join-error', ({message}) => { joined = false; setStatus(message || 'Não foi possível entrar na sala.'); enableControls(); });
+  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use â€œCriar salaâ€ e compartilhe o nome.'; enableControls(); });
+  socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('NÃ£o foi possÃ­vel conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicaÃ§Ã£o por HTTP/HTTPS, nÃ£o pelo arquivo HTML. ' + (error?.message || ''); });
+  socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('ConexÃ£o perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('join-error', ({message}) => { joined = false; setStatus(message || 'NÃ£o foi possÃ­vel entrar na sala.'); enableControls(); });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
     joined = true; room = joinedRoom; $("room").value = room;
-    setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
-    $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
+    setStatus(`VocÃª entrou na sala â€œ${room}â€. Compartilhe o nome com os ouvintes.`, true);
+    $("roomCount").textContent = `Sala: ${room} Â· participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
     if (track) renderTrack(track, true);
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
   socket.on('track-update', track => renderTrack(track, true));
   socket.on('track-clear', () => renderTrack(null));
-  socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} · participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
+  socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} Â· participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
   socket.on('peer-joined', async ({id}) => {
     setStatus('Uma pessoa entrou na sala.', true);
     if (isSender && localStream) await createSenderOffer(id);
@@ -375,7 +440,7 @@ const iceConfigReady = fetch("/api/ice-servers")
   socket.on('peer-left', ({id}) => {
     closePeer(id);
     if (!isSender && peers.size === 0) { $("remoteAudio").pause(); $("remoteAudio").srcObject = null; }
-    setStatus(isSender ? `Um participante saiu. A transmissão continua; ouvintes conectados: ${peers.size}.` : 'Um participante saiu da sala.');
+    setStatus(isSender ? `Um participante saiu. A transmissÃ£o continua; ouvintes conectados: ${peers.size}.` : 'Um participante saiu da sala.');
   });
   socket.on('signal', async ({from, data}) => {
     if (!from || !data || !joined) return;
@@ -399,9 +464,9 @@ const iceConfigReady = fetch("/api/ice-servers")
       } else if (data.type === 'transmission-stopped' && !isSender) {
         closePeer(from);
         if (peers.size === 0) { $("remoteAudio").pause(); $("remoteAudio").srcObject = null; }
-        setStatus('O transmissor encerrou o áudio.');
+        setStatus('O transmissor encerrou o Ã¡udio.');
       }
-    } catch (error) { console.error('Falha na sinalização WebRTC:', error); setStatus('Falha ao conectar o áudio. Tente entrar novamente na sala.'); }
+    } catch (error) { console.error('Falha na sinalizaÃ§Ã£o WebRTC:', error); setStatus('Falha ao conectar o Ã¡udio. Tente entrar novamente na sala.'); }
   });
 
   $("start").onclick = async () => {
@@ -410,30 +475,30 @@ const iceConfigReady = fetch("/api/ice-servers")
       if (!navigator.mediaDevices?.getDisplayMedia) { setStatus('A captura exige Chrome/Edge em localhost ou HTTPS.'); return; }
       const captured = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
       const audioTracks = captured.getAudioTracks();
-      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus('A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
+      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus('A captura nÃ£o incluiu Ã¡udio. Escolha a aba de mÃºsica e marque â€œCompartilhar Ã¡udioâ€.'); return; }
       audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
       localStream = captured; isSender = true;
-      // Os participantes presentes recebem uma conexão individual. Novos participantes
-      // serão conectados pelo evento peer-joined do servidor.
+      // Os participantes presentes recebem uma conexÃ£o individual. Novos participantes
+      // serÃ£o conectados pelo evento peer-joined do servidor.
       const roomInfo = await new Promise(resolve => {
         // O servidor informa participantes ao entrar; guardamos os IDs atuais localmente.
         resolve([]);
       });
       enableControls();
-      // Se ouvintes já estavam na sala, IDs são guardados no conjunto abaixo.
+      // Se ouvintes jÃ¡ estavam na sala, IDs sÃ£o guardados no conjunto abaixo.
       for (const id of knownPeers) await createSenderOffer(id);
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
-      setStatus('Captura de áudio ativa. Aguardando/conectando ouvintes…', true);
+      setStatus('Captura de Ã¡udio ativa. Aguardando/conectando ouvintesâ€¦', true);
       if (spotifyConnected) startSpotifyPolling();
-    } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('Transmissão cancelada ou não permitida pelo navegador.'); }
+    } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('TransmissÃ£o cancelada ou nÃ£o permitida pelo navegador.'); }
   };
   async function stopTransmission() {
     // Notifica cada ouvinte de forma direcionada.
     for (const id of [...peers.keys()]) sendSignal(id, { type: 'transmission-stopped' });
     socket.emit('clear-track', { room });
-    resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('Transmissão encerrada.');
+    resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('TransmissÃ£o encerrada.');
   }
   $("stop").onclick = stopTransmission;
   $("spotifyDisconnect").onclick = async () => {
@@ -445,10 +510,10 @@ const iceConfigReady = fetch("/api/ice-servers")
   $("pauseCmd").onclick = () => socket.emit('room-command', { room, command: 'pause' });
   $("nextCmd").onclick = () => socket.emit('room-command', { room, command: 'next' });
   socket.on('room-command', ({command}) => {
-    $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a música.' : 'O transmissor pediu para passar à próxima música.';
-    setStatus('Comando recebido. O controle da música ainda é manual neste protótipo.', true);
+    $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a mÃºsica.' : 'O transmissor pediu para passar Ã  prÃ³xima mÃºsica.';
+    setStatus('Comando recebido. O controle da mÃºsica ainda Ã© manual neste protÃ³tipo.', true);
   });
-  // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
+  // IDs dos participantes da sala sÃ£o mantidos mesmo antes de comeÃ§ar a transmissÃ£o.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
   socket.on('peer-joined', ({id}) => knownPeers.add(id));
