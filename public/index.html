@@ -278,6 +278,62 @@ html[data-jf-theme="classic"] .jf-modal-backdrop{background:#123c68a8;backdrop-f
 html[data-jf-theme="classic"] .jf-modal{animation:jfModalIn .2s ease-out}
 html[data-jf-theme="classic"] .jf-suggestion-settings,html[data-jf-theme="classic"] .jf-suggestion-popup{color:#18345b;background:linear-gradient(#fff,#e1f1ff);border:1px solid #8bbce9;border-radius:8px;box-shadow:0 5px 18px #154e8b44}
 html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-popup-close{color:#0757ae}
+
+/* Criar sala: modal de configuração */
+.jf-room-password-row{margin-top:10px;max-width:360px}
+.jf-room-password-row input{width:100%;min-width:0;padding:11px 13px;border:1px solid #7376ce;border-radius:8px;background:#080d2b;color:#fff}
+.jf-modal-backdrop{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:18px;background:#050616bb;backdrop-filter:blur(9px)}
+.jf-modal-backdrop[hidden]{display:none}
+.jf-room-modal{position:relative;width:min(460px,100%);padding:26px;border:1px solid color-mix(in srgb,var(--jf-secondary) 70%,#fff);border-radius:22px;background:radial-gradient(ellipse at top right,color-mix(in srgb,var(--jf-primary) 23%,transparent),transparent 60%),linear-gradient(145deg,#1c1d4a,#0c102c 78%);box-shadow:0 24px 90px #000b,inset 0 1px #ffffff20;animation:jfModalIn .2s ease-out}
+.jf-room-modal:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,#ffffff10,transparent 35%)}
+.jf-room-modal-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px}
+.jf-room-modal-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border:1px solid var(--jf-secondary);border-radius:15px;background:color-mix(in srgb,var(--jf-primary) 22%,#121638);font-size:24px;box-shadow:0 0 24px color-mix(in srgb,var(--jf-primary) 20%,transparent)}
+.jf-room-modal h2{font-size:23px;line-height:1.2;margin:1px 0 7px;color:#fff}
+.jf-room-modal p{font-size:13px;line-height:1.6;color:#c4c6ed;margin:0}
+.jf-room-modal-close{position:absolute;right:14px;top:14px;width:34px;height:34px;border:1px solid #7376ce;border-radius:50%;background:#111535;color:#fff;font-size:20px;cursor:pointer}
+.jf-room-field{display:grid;gap:8px;margin:16px 0}
+.jf-room-field label{font-size:12px;font-weight:800;color:#e9eaff}
+.jf-room-field input{width:100%;padding:13px 14px;border:1px solid #656cc1;border-radius:10px;outline:none;background:#080d2b;color:#fff;font-size:15px}
+.jf-room-field input:focus{border-color:var(--jf-secondary);box-shadow:0 0 0 3px color-mix(in srgb,var(--jf-secondary) 15%,transparent)}
+.jf-room-lock-option{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #565c9c;border-radius:12px;background:#ffffff06;cursor:pointer}
+.jf-room-lock-option input{width:18px;height:18px;accent-color:var(--jf-primary);flex:0 0 auto}
+.jf-room-lock-option strong{display:block;font-size:13px;color:#fff}
+.jf-room-lock-option small{display:block;margin-top:3px;color:#bfc4ed;font-size:11px;line-height:1.4}
+.jf-room-password-fields[hidden]{display:none}
+.jf-room-modal-error{min-height:18px;margin:10px 0;color:#ff9eb8;font-size:12px;line-height:1.5}
+.jf-room-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.jf-room-modal-actions .btn{min-width:112px}
+@keyframes jfModalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){.jf-room-modal{padding:22px 18px;border-radius:18px}.jf-room-modal h2{font-size:21px}.jf-room-modal-actions{flex-direction:column-reverse}.jf-room-modal-actions .btn{width:100%}}
+
+/* Chat retrô: seletor de emojis e acabamento Windows XP Luna */
+.jf-chat-tools{display:flex;align-items:center;gap:7px;padding:8px 10px 0}
+.jf-chat-emoji-toggle{padding:6px 10px!important;font-size:12px!important}
+.jf-chat-emoji-tray{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;max-height:112px;overflow:auto;border-bottom:1px solid var(--jf-secondary);background:color-mix(in srgb,var(--jf-glow) 18%,#101333)}
+.jf-chat-emoji-tray[hidden]{display:none}
+.jf-chat-emoji{min-width:34px;min-height:32px;padding:3px 5px;border:1px solid transparent;border-radius:5px;background:transparent;font-size:20px;line-height:1;cursor:pointer}
+.jf-chat-emoji:hover,.jf-chat-emoji:focus-visible{border-color:var(--jf-secondary);background:color-mix(in srgb,var(--jf-primary) 25%,transparent);outline:none}
+.jf-chat-emoji-tray .jf-chat-kaomoji{font-family:Tahoma,"Segoe UI",sans-serif;font-size:12px;min-width:48px}
+html[data-jf-theme="classic"] .jf-chat-launcher{border:2px solid #fff;border-radius:9px;background:linear-gradient(#8bd2ff 0%,#3189e9 20%,#0755b8 100%);box-shadow:inset 0 1px #ffffffd9,0 2px 4px #164c8c88;color:#fff}
+html[data-jf-theme="classic"] .jf-chat-window{border:2px solid #0755b8;border-radius:8px 8px 5px 5px;background:#ece9d8;box-shadow:2px 4px 12px #123b6b88;backdrop-filter:none}
+html[data-jf-theme="classic"] .jf-chat-header{min-height:42px;padding:7px 8px 7px 12px;border-bottom:1px solid #174f9c;border-radius:5px 5px 0 0;background:linear-gradient(180deg,#3c8cf4 0%,#1765d5 48%,#0750b8 100%);box-shadow:inset 0 1px #8dc5ff}
+html[data-jf-theme="classic"] .jf-chat-heading{font-family:Tahoma,"Segoe UI",sans-serif;font-size:13px;color:#fff;text-shadow:0 1px 1px #123f88}
+html[data-jf-theme="classic"] .jf-chat-subheading{color:#e1efff;font-size:10px}
+html[data-jf-theme="classic"] .jf-chat-close{width:24px;height:23px;flex-basis:24px;border:1px solid #fff;border-radius:4px;background:linear-gradient(#ffb8a5,#f05b42 48%,#d92c16 52%,#ef6347);box-shadow:inset 0 1px #fff8;color:#fff;font-family:Tahoma,sans-serif;font-size:18px;font-weight:bold;line-height:1;text-shadow:0 1px #922}
+html[data-jf-theme="classic"] .jf-chat-log{background:linear-gradient(#f8fbff,#e8f3ff);gap:8px}
+html[data-jf-theme="classic"] .jf-chat-empty{color:#476b90}
+html[data-jf-theme="classic"] .jf-chat-avatar{border:1px solid #7f9db9;border-radius:4px;background:linear-gradient(#fff,#cde6ff);color:#0757ae}
+html[data-jf-theme="classic"] .jf-chat-bubble{border:1px solid #9ab9d6;border-radius:3px;background:#fff;box-shadow:0 1px 1px #174c8c12}
+html[data-jf-theme="classic"] .jf-chat-meta strong{color:#0757ae}
+html[data-jf-theme="classic"] .jf-chat-meta time{color:#65809b}
+html[data-jf-theme="classic"] .jf-chat-text{color:#18345b;font-family:Tahoma,"Segoe UI",sans-serif}
+html[data-jf-theme="classic"] .jf-chat-tools{background:#ece9d8;border-top:1px solid #fff}
+html[data-jf-theme="classic"] .jf-chat-emoji-tray{border-bottom:1px solid #b7cde2;background:#f4f8fc}
+html[data-jf-theme="classic"] .jf-chat-emoji:hover,html[data-jf-theme="classic"] .jf-chat-emoji:focus-visible{border-color:#7aa7d6;background:#d8eaff}
+html[data-jf-theme="classic"] .jf-chat-form{gap:5px;padding:8px;background:#ece9d8;border-top:1px solid #c4c1b8}
+html[data-jf-theme="classic"] .jf-chat-form input{border:1px solid #7f9db9;border-radius:2px;background:#fff;color:#18345b;box-shadow:inset 1px 1px 2px #0001}
+html[data-jf-theme="classic"] .jf-chat-form .btn{padding:8px 10px}
+html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece9d8;color:#536d87}
 </style>
 </head>
 <body>
@@ -288,11 +344,10 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
   <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
   <section class="panel">
-    <label for="room">Nome da sala (use o mesmo nos dois aparelhos)</label>
-    <div class="row">
-      <input id="room" maxlength="40" value="noite" autocomplete="off" placeholder="ex.: nossa-sala">
-      <button class="btn" id="join">Entrar na sala</button>
-      <button class="btn secondary" id="createRoom" type="button">Criar sala</button>
+    <input id="room" type="hidden" value="" autocomplete="off">
+    <div class="row jf-room-entry-actions">
+      <button class="btn" id="join" type="button">↗ Entrar na sala</button>
+      <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
     </div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
@@ -353,6 +408,11 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
     <button type="button" id="jfChatClose" class="jf-chat-close" aria-label="Fechar chat">×</button>
   </header>
   <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
+  <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">☺ Emojis antigos</button><span style="font-size:10px;color:var(--muted)">kaomoji &amp; clássicos</span></div>
+  <div id="jfChatEmojiTray" class="jf-chat-emoji-tray" aria-label="Escolha um emoji" hidden>
+    <button type="button" class="jf-chat-emoji" data-emoji="☺">☺</button><button type="button" class="jf-chat-emoji" data-emoji="☻">☻</button><button type="button" class="jf-chat-emoji" data-emoji="ツ">ツ</button><button type="button" class="jf-chat-emoji" data-emoji="♥">♥</button><button type="button" class="jf-chat-emoji" data-emoji="♡">♡</button><button type="button" class="jf-chat-emoji" data-emoji="★">★</button><button type="button" class="jf-chat-emoji" data-emoji="☆">☆</button><button type="button" class="jf-chat-emoji" data-emoji="♪">♪</button><button type="button" class="jf-chat-emoji" data-emoji="♫">♫</button><button type="button" class="jf-chat-emoji" data-emoji="☮">☮</button><button type="button" class="jf-chat-emoji" data-emoji="✿">✿</button><button type="button" class="jf-chat-emoji" data-emoji="✧">✧</button>
+    <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":)">:)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=";)">;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":D">:D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="xD">xD</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":P">:P</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'(">:'(</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="^_^">^_^</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="-_-">-_-</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="o_O">o_O</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="<3">&lt;3</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'D">:'D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="¯\\_(ツ)_/¯">¯\\_(ツ)_/¯</button>
+  </div>
   <form id="jfChatForm" class="jf-chat-form">
     <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
     <button class="btn" id="jfChatSend" type="submit" disabled>Enviar</button>
@@ -437,6 +497,45 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
   </section>
   <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
 </main>
+
+<div class="jf-modal-backdrop" id="jfCreateRoomModal" hidden>
+  <section class="jf-room-modal" role="dialog" aria-modal="true" aria-labelledby="jfCreateRoomTitle">
+    <button class="jf-room-modal-close" id="jfCloseCreateRoom" type="button" aria-label="Fechar">×</button>
+    <div class="jf-room-modal-head">
+      <div class="jf-room-modal-icon" aria-hidden="true">♫</div>
+      <div><h2 id="jfCreateRoomTitle">Sua sala, suas músicas.</h2><p>Crie um cantinho pra ouvir junto. Se quiser, proteja com uma senha.</p></div>
+    </div>
+    <form id="jfCreateRoomForm">
+      <div class="jf-room-field"><label for="jfNewRoomName">Nome da sala</label><input id="jfNewRoomName" maxlength="40" autocomplete="off" placeholder="ex.: madrugada-com-você" required></div>
+      <label class="jf-room-lock-option" for="jfRoomPasswordEnabled">
+        <input id="jfRoomPasswordEnabled" type="checkbox">
+        <span><strong>🔒 Quero colocar uma senha</strong><small>Só entra quem souber o nome e a senha da sala.</small></span>
+      </label>
+      <div class="jf-room-password-fields" id="jfRoomPasswordFields" hidden>
+        <div class="jf-room-field"><label for="jfNewRoomPassword">Senha da sala</label><input id="jfNewRoomPassword" type="password" maxlength="100" autocomplete="new-password" placeholder="Crie uma senha (mínimo 4 caracteres)"></div>
+      </div>
+      <p class="jf-room-modal-error" id="jfCreateRoomError" role="status" aria-live="polite"></p>
+      <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelCreateRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmCreateRoom" type="submit">✦ Criar sala</button></div>
+    </form>
+  </section>
+</div>
+
+<div class="jf-modal-backdrop" id="jfJoinRoomModal" hidden>
+  <section class="jf-room-modal" role="dialog" aria-modal="true" aria-labelledby="jfJoinRoomTitle">
+    <button class="jf-room-modal-close" id="jfCloseJoinRoom" type="button" aria-label="Fechar">×</button>
+    <div class="jf-room-modal-head">
+      <div class="jf-room-modal-icon" aria-hidden="true">✦</div>
+      <div><h2 id="jfJoinRoomTitle">Bora ouvir junto?</h2><p>Digite o nome da sala que já existe. Se ela tiver senha, informe também.</p></div>
+    </div>
+    <form id="jfJoinRoomForm">
+      <div class="jf-room-field"><label for="jfExistingRoomName">Nome da sala</label><input id="jfExistingRoomName" maxlength="40" autocomplete="off" placeholder="ex.: madrugada-com-voce" required></div>
+      <div class="jf-room-field"><label for="jfExistingRoomPassword">Senha <span style="font-weight:400;text-transform:none">(se a sala pedir)</span></label><input id="jfExistingRoomPassword" type="password" maxlength="100" autocomplete="current-password" placeholder="Digite a senha, se houver"></div>
+      <p class="jf-room-modal-error" id="jfJoinRoomError" role="status" aria-live="polite"></p>
+      <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelJoinRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmJoinRoom" type="submit">↗ Entrar na sala</button></div>
+    </form>
+  </section>
+</div>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
 (() => {
@@ -454,20 +553,23 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
   const pendingCandidates = new Map();
   
 const config = {
-  iceServers: [
-    { urls: "stun:stun.relay.metered.ca:80" },
-    {
-      urls: [
-        "turn:standard.relay.metered.ca:80",
-        "turn:standard.relay.metered.ca:80?transport=tcp",
-        "turn:standard.relay.metered.ca:443",
-        "turns:standard.relay.metered.ca:443?transport=tcp"
-      ],
-      username: "bb7ecb4be75a9bcedd093efe",
-      credential: "Ab8amlhjUC7kGK3K"
-    }
-  ]
+  iceServers: [{ urls: "stun:stun.relay.metered.ca:80" }]
 };
+// Busca os ICE servers pelo backend; a API key da credencial não é enviada ao navegador.
+const turnConfigReady = fetch("/api/turn/ice-servers")
+  .then(response => {
+    if (!response.ok) throw new Error("TURN não configurado");
+    return response.json();
+  })
+  .then(iceServers => {
+    if (!Array.isArray(iceServers) || !iceServers.length) throw new Error("Resposta TURN inválida");
+    config.iceServers = iceServers;
+    return true;
+  })
+  .catch(() => {
+    console.warn("TURN indisponível; usando STUN como alternativa.");
+    return false;
+  });
 
 
   function setStatus(message, ok = false) {
@@ -702,6 +804,7 @@ const config = {
   async function createSenderOffer(id) {
     if (!isSender || !localStream || !joined) return;
     try {
+      await turnConfigReady;
       const peer = makePeer(id);
       localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
       await tuneAudioSender(peer);
@@ -714,36 +817,117 @@ const config = {
     } catch (error) { console.error('Falha ao criar oferta:', error); setStatus('Não foi possível conectar um ouvinte. Tente novamente.'); }
   }
   function cleanRoomName(value) { return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40); }
-  function joinRoom(name) {
+  let pendingCreatePassword = "";
+  function joinRoom(name, suppliedPassword) {
     const cleaned = cleanRoomName(name);
     if (!cleaned) { setStatus('Digite um nome de sala válido.'); return; }
     if (!socket.connected) { setStatus('Sem conexão com o servidor. Aguarde e tente novamente.'); return; }
     if (joined && room === cleaned) { setStatus('Você já está nesta sala.', true); return; }
-    resetSession();
-    joined = false;
-    room = cleaned;
-    $("room").value = room;
     setStatus('Entrando na sala…');
-    socket.emit('join-room', { room });
+    const password = suppliedPassword || "";
+    socket.emit('join-room', { room: cleaned, password });
   }
-  $("join").onclick = () => joinRoom($("room").value);
-  $("createRoom").onclick = () => {
+  const createModal = $("jfCreateRoomModal");
+  const joinModal = $("jfJoinRoomModal");
+  function openJoinRoomModal() {
+    $("jfExistingRoomName").value = "";
+    $("jfExistingRoomPassword").value = "";
+    $("jfJoinRoomError").textContent = "";
+    $("jfConfirmJoinRoom").disabled = false;
+    joinModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    $("jfExistingRoomName").focus();
+  }
+  function closeJoinRoomModal() {
+    joinModal.hidden = true;
+    if (document.querySelector(".jf-modal-backdrop:not([hidden])")) return;
+    document.body.style.overflow = "";
+  }
+  function openCreateRoomModal() {
     const existing = cleanRoomName($("room").value);
-    const generated = existing && existing !== 'noite' ? existing : `sala-${Math.random().toString(36).slice(2, 8)}`;
-    joinRoom(generated);
-  };
-  $("room").addEventListener('keydown', event => { if (event.key === 'Enter') joinRoom($("room").value); });
+    $("jfNewRoomName").value = existing && existing !== "noite" ? existing : `sala-${Math.random().toString(36).slice(2, 8)}`;
+    $("jfRoomPasswordEnabled").checked = false;
+    $("jfNewRoomPassword").value = "";
+    $("jfRoomPasswordFields").hidden = true;
+    $("jfCreateRoomError").textContent = "";
+    createModal.hidden = false;
+    document.body.style.overflow = "hidden";
+    $("jfNewRoomName").focus();
+  }
+  function closeCreateRoomModal() {
+    createModal.hidden = true;
+    document.body.style.overflow = "";
+  }
+  $("join").onclick = openJoinRoomModal;
+  $("createRoom").onclick = openCreateRoomModal;
+  $("jfCloseJoinRoom").onclick = closeJoinRoomModal;
+  $("jfCancelJoinRoom").onclick = closeJoinRoomModal;
+  joinModal.addEventListener("click", event => { if (event.target === joinModal) closeJoinRoomModal(); });
+  $("jfJoinRoomForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const name = cleanRoomName($("jfExistingRoomName").value);
+    const password = $("jfExistingRoomPassword").value;
+    if (!name) { $("jfJoinRoomError").textContent = "Digite um nome válido (letras, números, hífen ou underline)."; return; }
+    if (!socket.connected) { $("jfJoinRoomError").textContent = "Sem conexão com o servidor. Tente novamente em instantes."; return; }
+    $("jfConfirmJoinRoom").disabled = true;
+    $("jfJoinRoomError").textContent = "Procurando a sala…";
+    joinRoom(name, password);
+  });
+  $("jfCloseCreateRoom").onclick = closeCreateRoomModal;
+  $("jfCancelCreateRoom").onclick = closeCreateRoomModal;
+  createModal.addEventListener("click", event => { if (event.target === createModal) closeCreateRoomModal(); });
+  $("jfRoomPasswordEnabled").addEventListener("change", () => {
+    const enabled = $("jfRoomPasswordEnabled").checked;
+    $("jfRoomPasswordFields").hidden = !enabled;
+    if (enabled) $("jfNewRoomPassword").focus();
+  });
+  $("jfCreateRoomForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const name = cleanRoomName($("jfNewRoomName").value);
+    const wantsPassword = $("jfRoomPasswordEnabled").checked;
+    const password = wantsPassword ? $("jfNewRoomPassword").value : "";
+    if (!name) { $("jfCreateRoomError").textContent = "Digite um nome de sala válido (letras, números, hífen ou underline)."; return; }
+    if (wantsPassword && password.length < 4) { $("jfCreateRoomError").textContent = "Use uma senha com pelo menos 4 caracteres."; $("jfNewRoomPassword").focus(); return; }
+    if (!socket.connected) { $("jfCreateRoomError").textContent = "Sem conexão com o servidor. Tente novamente em instantes."; return; }
+    pendingCreatePassword = password;
+    $("jfConfirmCreateRoom").disabled = true;
+    $("jfCreateRoomError").textContent = "Criando sua sala…";
+    socket.emit("create-room", { room: name, password });
+  });
+  socket.on("room-created", ({room: createdRoom}) => {
+    $("jfConfirmCreateRoom").disabled = false;
+    closeCreateRoomModal();
+    joinRoom(createdRoom, pendingCreatePassword);
+    pendingCreatePassword = "";
+  });
+  socket.on("create-room-error", ({message}) => {
+    $("jfConfirmCreateRoom").disabled = false;
+    $("jfCreateRoomError").textContent = message || "Não foi possível criar a sala.";
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !createModal.hidden) closeCreateRoomModal();
+    if (event.key === "Escape" && !joinModal.hidden) closeJoinRoomModal();
+  });
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
   socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
-  socket.on('join-error', ({message}) => { joined = false; setStatus(message || 'Não foi possível entrar na sala.'); enableControls(); });
+  socket.on('join-error', ({message}) => {
+    const errorMessage = message || 'Não foi possível entrar na sala.';
+    if (!joinModal.hidden) {
+      $("jfJoinRoomError").textContent = errorMessage;
+      $("jfConfirmJoinRoom").disabled = false;
+    }
+    setStatus(errorMessage);
+    enableControls();
+  });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
-    joined = true; room = joinedRoom; $("room").value = room; socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    if (joined && room !== joinedRoom) resetSession();
+    joined = true; room = joinedRoom; $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
-    if (track) renderTrack(track, true);
+    if (track) renderTrack(track, true); else renderTrack(null);
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
   socket.on('track-update', track => renderTrack(track, true));
@@ -762,6 +946,8 @@ const config = {
     if (!from || !data || !joined) return;
     try {
       if (data.type === 'offer' && !isSender) {
+        await turnConfigReady;
+        if (!joined) return;
         const peer = makePeer(from);
         await peer.setRemoteDescription(data.sdp);
         await applyPendingCandidates(from, peer);
@@ -975,12 +1161,30 @@ const config = {
     $("jfChatInput").disabled=!joined;$("jfChatSend").disabled=!joined||!$("jfChatInput").value.trim();
     $("jfChatStatus").textContent=joined?"Mensagens visíveis para as pessoas nesta sala.":"Entre em uma sala para enviar mensagens.";
   }
+  const jfEmojiTray=$("jfChatEmojiTray"),jfEmojiToggle=$("jfChatEmojiToggle");
+  jfEmojiToggle.addEventListener("click",()=>{
+    const open=jfEmojiTray.hidden;
+    jfEmojiTray.hidden=!open;
+    jfEmojiToggle.setAttribute("aria-expanded",String(open));
+    if(open) $("jfChatInput").focus();
+  });
+  jfEmojiTray.querySelectorAll("[data-emoji]").forEach(button=>button.addEventListener("click",()=>{
+    const input=$("jfChatInput"),emoji=button.dataset.emoji;
+    if(input.disabled)return;
+    const start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;
+    const next=input.value.slice(0,start)+emoji+input.value.slice(end);
+    if(next.length>500)return;
+    input.value=next;input.focus();
+    const cursor=start+emoji.length;input.setSelectionRange(cursor,cursor);
+    jfUpdateChatControls();
+  }));
   $("jfChatInput").addEventListener("input",jfUpdateChatControls);
   $("jfChatForm").addEventListener("submit",event=>{
     event.preventDefault();const text=$("jfChatInput").value.trim().slice(0,500);if(!joined||!text)return;
     socket.emit("chat-send",{text});$("jfChatInput").value="";jfUpdateChatControls();$("jfChatInput").focus();
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
+  socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="Você está enviando mensagens rápido demais. Aguarde alguns segundos.";});
   socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
   socket.on("joined-room",()=>jfUpdateChatControls());
 

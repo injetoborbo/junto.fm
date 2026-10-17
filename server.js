@@ -29,6 +29,7 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomChatMessages = new Map();
+const roomAccess = new Map();
 const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
 
 function cookieValue(req, name) {
@@ -82,6 +83,34 @@ async function validSpotifyAccessToken(session) {
 
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// Mantém a API key específica da credencial TURN no servidor, nunca no HTML público.
+const METERED_DOMAIN = String(process.env.METERED_DOMAIN || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+const METERED_TURN_API_KEY = String(process.env.METERED_TURN_API_KEY || "").trim();
+let cachedTurnIceServers = null;
+let cachedTurnIceServersAt = 0;
+app.get("/api/turn/ice-servers", async (_req, res) => {
+  if (!METERED_DOMAIN || !METERED_TURN_API_KEY) {
+    return res.status(503).json({ error: "TURN não configurado no servidor." });
+  }
+  if (cachedTurnIceServers && Date.now() - cachedTurnIceServersAt < 5 * 60 * 1000) {
+    return res.json(cachedTurnIceServers);
+  }
+  try {
+    const endpoint = new URL(`https://${METERED_DOMAIN}/api/v1/turn/credentials`);
+    endpoint.searchParams.set("apiKey", METERED_TURN_API_KEY);
+    const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !Array.isArray(data) || data.length === 0) {
+      return res.status(502).json({ error: "Não foi possível obter a configuração TURN." });
+    }
+    cachedTurnIceServers = data;
+    cachedTurnIceServersAt = Date.now();
+    return res.json(data);
+  } catch (_error) {
+    return res.status(502).json({ error: "Falha ao consultar o serviço TURN." });
+  }
+});
 
 app.get("/api/spotify/status", (req, res) => {
   res.json({ configured: Boolean(SPOTIFY_CLIENT_ID), connected: Boolean(getSession(req, res)) });
@@ -153,12 +182,76 @@ function cleanRoom(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
 }
 
+function isRateLimited(socket, key, limit, windowMs) {
+  const now = Date.now();
+  const limits = socket.data.rateLimits || (socket.data.rateLimits = {});
+  const recent = (limits[key] || []).filter(timestamp => now - timestamp < windowMs);
+  if (recent.length >= limit) {
+    limits[key] = recent;
+    return true;
+  }
+  recent.push(now);
+  limits[key] = recent;
+  return false;
+}
+
 io.on("connection", socket => {
-  socket.on("join-room", payload => {
+  socket.on("create-room", payload => {
+    if (isRateLimited(socket, "create-room", 5, 60_000)) {
+      socket.emit("create-room-error", { message: "Muitas tentativas de criação. Aguarde um minuto e tente novamente." });
+      return;
+    }
     const room = cleanRoom(payload && payload.room);
+    const password = String(payload && payload.password || "");
+    if (!room) {
+      socket.emit("create-room-error", { message: "Escolha um nome válido para a sala." });
+      return;
+    }
+    if (password && password.length < 4) {
+      socket.emit("create-room-error", { message: "A senha deve ter pelo menos 4 caracteres." });
+      return;
+    }
+    if (password.length > 100) {
+      socket.emit("create-room-error", { message: "A senha deve ter no máximo 100 caracteres." });
+      return;
+    }
+    const activeRoom = io.sockets.adapter.rooms.get(room);
+    if (roomAccess.has(room) || (activeRoom && activeRoom.size > 0)) {
+      socket.emit("create-room-error", { message: "Já existe uma sala com esse nome. Escolha outro nome." });
+      return;
+    }
+    if (password) {
+      const salt = crypto.randomBytes(16);
+      const hash = crypto.scryptSync(password, salt, 64);
+      roomAccess.set(room, { salt, hash });
+    } else {
+      roomAccess.set(room, null);
+    }
+    socket.emit("room-created", { room });
+  });
+
+  socket.on("join-room", payload => {
+    if (isRateLimited(socket, "join-room", 10, 60_000)) {
+      socket.emit("join-error", { message: "Muitas tentativas de entrada. Aguarde um minuto e tente novamente." });
+      return;
+    }
+    const room = cleanRoom(payload && payload.room);
+    const password = String(payload && payload.password || "");
     if (!room) {
       socket.emit("join-error", { message: "Digite um nome válido para a sala." });
       return;
+    }
+    if (!roomAccess.has(room)) {
+      socket.emit("join-error", { message: "Essa sala não existe. Confira o nome ou crie uma sala nova." });
+      return;
+    }
+    const access = roomAccess.get(room);
+    if (access) {
+      const attempted = crypto.scryptSync(password, access.salt, 64);
+      if (attempted.length !== access.hash.length || !crypto.timingSafeEqual(attempted, access.hash)) {
+        socket.emit("join-error", { message: "Senha incorreta. Confira a senha da sala e tente de novo." });
+        return;
+      }
     }
 
     const previousRoom = socket.data.room;
@@ -223,6 +316,10 @@ io.on("connection", socket => {
   });
 
   socket.on("chat-send", payload => {
+    if (isRateLimited(socket, "chat-send", 8, 5_000)) {
+      socket.emit("chat-rate-limit");
+      return;
+    }
     const room = socket.data.room;
     if (!room || !payload || typeof payload.text !== "string") return;
     const text = payload.text.trim().slice(0, 500);
