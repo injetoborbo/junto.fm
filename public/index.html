@@ -362,6 +362,20 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 @media(max-width:600px){.track-card{grid-template-columns:112px minmax(0,1fr)}.jf-track-content{grid-template-columns:minmax(0,1fr)}.jf-mini-dj{grid-column:1/-1;width:100%;flex-direction:row;justify-content:flex-end;gap:8px;border-left:0;border-top:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent);padding-top:6px}.jf-dj-stage{width:110px;height:110px;min-height:110px;flex:0 0 110px;margin:0}.jf-dj-caption{flex:1;text-align:right}.jf-dj-caption strong{max-width:100%}.track-title{font-size:17px}}
 @media(prefers-reduced-motion:reduce){.jf-glb-canvas{animation:none!important}}
 
+/* Friends drawer: clean white list, requests anchored at the bottom */
+.jf-friends-drawer{background:#fff!important;color:#24364b!important;border:1px solid #b9c8d8!important;box-shadow:0 8px 28px #142b4430!important}
+.jf-friends-drawer .jf-chat-header{background:linear-gradient(180deg,#fafdff,#e4edf6)!important;border-bottom:1px solid #d3deea!important;color:#24364b!important}
+.jf-friends-drawer .jf-chat-heading,.jf-friends-drawer .jf-chat-subheading{color:#24364b!important}
+.jf-friends-drawer-content{background:#fff!important;display:flex;flex-direction:column;gap:10px;padding:12px;overflow:hidden;min-height:0;flex:1}
+.jf-friends-drawer #jfDrawerFriendsList,.jf-friends-drawer #jfDrawerRequestsList{background:#fff!important;color:#24364b!important;overflow:auto;flex:1;min-height:0}
+.jf-friends-drawer .jf-person{background:#fff!important;color:#24364b!important;border:1px solid #e0e6ed!important;box-shadow:none!important}
+.jf-friends-drawer .jf-person strong{color:#24364b!important}
+.jf-friends-drawer .jf-friend-status{color:#667789!important}
+.jf-friends-drawer-footer{flex:0 0 auto;display:flex;justify-content:flex-start;padding-top:8px;border-top:1px solid #e2e8f0;background:#fff}
+.jf-friends-drawer-footer .jf-friends-tab{background:linear-gradient(#fff,#edf2f7)!important;color:#30465c!important;border:1px solid #c8d3df!important}
+.jf-friends-drawer-footer .jf-friends-tab.active{outline:2px solid #91b8e3;outline-offset:1px}
+.jf-friends-drawer .jf-friend-status{font-size:11px}
+
 /* Friends drawer + lyrics */
 .jf-friends-launcher{right:90px}.jf-friends-drawer{right:90px}
 .jf-friends-drawer-content{padding:12px;overflow:auto;min-height:0;flex:1}
@@ -501,7 +515,7 @@ html[data-jf-theme="classic"] .track-times{
   <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
 </button>
 <button type="button" id="jfFriendsLauncher" class="jf-chat-launcher jf-friends-launcher" aria-label="Abrir amigos" aria-expanded="false" aria-controls="jfFriendsDrawer" title="Amigos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg><span id="jfFriendsUnread" class="jf-chat-unread" aria-label="Solicitações pendentes"></span></button>
-<section id="jfFriendsDrawer" class="jf-chat-window jf-friends-drawer" aria-labelledby="jfFriendsDrawerHeading" hidden><header class="jf-chat-header"><div><h2 id="jfFriendsDrawerHeading" class="jf-chat-heading">Amigos</h2><div class="jf-chat-subheading">Online e solicitações</div></div><button type="button" id="jfFriendsDrawerClose" class="jf-chat-close" aria-label="Fechar amigos">×</button></header><div class="jf-friends-drawer-content"><div class="jf-friends-tabs"><button class="btn secondary jf-friends-tab active" id="jfDrawerFriendsTab" type="button">Amigos</button><button class="btn secondary jf-friends-tab" id="jfDrawerRequestsTab" type="button">Pedidos <span id="jfDrawerRequestCount" class="jf-request-count" hidden>0</span></button></div><div id="jfDrawerFriendsList" class="jf-people"></div><div id="jfDrawerRequestsList" class="jf-people" hidden></div><button type="button" id="jfManageFriends" class="btn secondary jf-manage-friends">Gerenciar amigos</button></div></section>
+<section id="jfFriendsDrawer" class="jf-chat-window jf-friends-drawer" aria-labelledby="jfFriendsDrawerHeading" hidden><header class="jf-chat-header"><div><h2 id="jfFriendsDrawerHeading" class="jf-chat-heading">Amigos</h2><div class="jf-chat-subheading">Online e solicitações</div></div><button type="button" id="jfFriendsDrawerClose" class="jf-chat-close" aria-label="Fechar amigos">×</button></header><div class="jf-friends-drawer-content"><div id="jfDrawerFriendsList" class="jf-people"></div><div id="jfDrawerRequestsList" class="jf-people" hidden></div><div class="jf-friends-drawer-footer"><button class="btn secondary jf-friends-tab" id="jfDrawerRequestsTab" type="button">Pedidos <span id="jfDrawerRequestCount" class="jf-request-count" hidden>0</span></button></div></div></section>
 <section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
   <header class="jf-chat-header">
     <div><h2 id="jfChatHeading" class="jf-chat-heading">Chat da sala</h2><div class="jf-chat-subheading">Converse com quem está ouvindo</div></div>
@@ -1389,7 +1403,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   function jfRenderDrawerFriends(){
     const list=$("jfDrawerFriendsList");if(!list)return;list.replaceChildren();
     if(!jfFriends.length){const p=document.createElement("p");p.className="small";p.textContent="Sua lista de amigos está vazia.";list.appendChild(p);return;}
-    jfFriends.forEach(friend=>{const row=document.createElement("div");row.className="jf-person";const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const status=document.createElement("span"),online=jfIsFriendOnline(friend);status.className="jf-friend-status"+(online?" online":"");status.innerHTML="<i></i> "+(online?"Online":"Offline");const roomText=document.createElement("p");roomText.className="small";roomText.textContent=friend.room;info.append(name,status,roomText);row.appendChild(info);list.appendChild(row);});
+    jfFriends.forEach(friend=>{const row=document.createElement("div");row.className="jf-person";const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const status=document.createElement("span"),online=jfIsFriendOnline(friend);status.className="jf-friend-status"+(online?" online":"");status.innerHTML="<i></i> "+(online?"Online":"Offline");info.append(name,status);row.appendChild(info);list.appendChild(row);});
   }
   function jfSetFriendsTab(requests,drawer=false){
     const ids=drawer?["jfDrawerFriendsTab","jfDrawerRequestsTab"]:["jfFriendsTabList","jfRequestsTab"];
