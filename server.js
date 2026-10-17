@@ -28,6 +28,7 @@ const PORT = process.env.PORT || 3000;
 const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
+const roomTransmitters = new Map();
 const roomChatMessages = new Map();
 const roomAccess = new Map();
 const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state";
@@ -288,6 +289,11 @@ io.on("connection", socket => {
 
     const previousRoom = socket.data.room;
     if (previousRoom) {
+      if (roomTransmitters.get(previousRoom)?.id === socket.id) {
+        roomTransmitters.delete(previousRoom);
+        io.to(previousRoom).emit("transmitter-update", { id: socket.id, active: false });
+      }
+      socket.data.isTransmitting = false;
       socket.leave(previousRoom);
       socket.to(previousRoom).emit("peer-left", { id: socket.id });
     }
@@ -299,7 +305,7 @@ io.on("connection", socket => {
       const peer = io.sockets.sockets.get(id);
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
     }));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles });
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, transmitter: roomTransmitters.get(room) || null });
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
@@ -310,6 +316,26 @@ io.on("connection", socket => {
     const target = io.sockets.sockets.get(payload.to);
     if (!target || target.data.room !== socket.data.room) return;
     target.emit("signal", { from: socket.id, data: payload.data });
+  });
+
+  socket.on("transmission-started", payload => {
+    const room = socket.data.room;
+    if (!room || !payload || payload.room !== room) return;
+    const profile = socket.data.profile || { name: "DJ ao vivo" };
+    const transmitter = { id: socket.id, name: String(profile.name || "DJ ao vivo").slice(0, 24) };
+    socket.data.isTransmitting = true;
+    roomTransmitters.set(room, transmitter);
+    io.to(room).emit("transmitter-update", { ...transmitter, active: true });
+  });
+
+  socket.on("transmission-stopped", payload => {
+    const room = socket.data.room;
+    if (!room || !payload || payload.room !== room) return;
+    socket.data.isTransmitting = false;
+    if (roomTransmitters.get(room)?.id === socket.id) {
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update", { id: socket.id, active: false });
+    }
   });
 
   socket.on("clear-track", payload => {
@@ -345,6 +371,11 @@ io.on("connection", socket => {
     const profile = { name, avatar: safeAvatar, motto };
     socket.data.profile = profile;
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
+    if (socket.data.isTransmitting) {
+      const transmitter = { id: socket.id, name: profile.name };
+      roomTransmitters.set(socket.data.room, transmitter);
+      io.to(socket.data.room).emit("transmitter-update", { ...transmitter, active: true });
+    }
   });
 
   socket.on("chat-send", payload => {
@@ -409,6 +440,10 @@ io.on("connection", socket => {
   socket.on("disconnect", () => {
     const room = socket.data.room;
     if (!room) return;
+    if (roomTransmitters.get(room)?.id === socket.id) {
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update", { id: socket.id, active: false });
+    }
     socket.to(room).emit("peer-left", { id: socket.id });
     const roomSet = io.sockets.adapter.rooms.get(room);
     io.to(room).emit("room-count", { count: roomSet ? roomSet.size : 0 });
