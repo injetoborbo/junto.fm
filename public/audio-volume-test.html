@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Junto.fm — Diagnóstico de áudio</title>
+<style>
+:root{color-scheme:dark;--bg:#101116;--panel:#191b24;--line:#303342;--text:#f4f4f7;--muted:#a6a8b8;--accent:#9d8cff;--good:#72e6b1;--warn:#ffd479}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#242039 0,transparent 55%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;display:grid;place-items:center;padding:24px}
+main{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:clamp(20px,5vw,36px);box-shadow:0 24px 80px #0005}
+.kicker{color:var(--accent);font-weight:750;text-transform:uppercase;letter-spacing:.12em;font-size:.76rem}h1{font-size:clamp(1.8rem,5vw,2.5rem);line-height:1.1;margin:.5rem 0 1rem}p{color:var(--muted)}.steps{padding-left:1.3rem;color:var(--muted)}.steps li{margin:.45rem 0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:24px 0}button{border:0;border-radius:12px;padding:12px 18px;font-weight:750;font-size:.95rem;cursor:pointer;background:var(--accent);color:#171326}button.secondary{background:#2b2e3b;color:var(--text)}button:disabled{opacity:.45;cursor:not-allowed}
+.panel{background:#111219;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}.label{font-size:.83rem;color:var(--muted)}.readings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.reading{background:#1b1d27;border-radius:12px;padding:14px}.value{font-size:1.8rem;font-weight:800;font-variant-numeric:tabular-nums}.meter{height:18px;background:#292b38;border-radius:999px;overflow:hidden;margin:14px 0 8px}.bar{height:100%;width:0;background:linear-gradient(90deg,#72e6b1,#d9e87a,#ffd479,#ff8585);transition:width .08s linear}.status{padding:12px 14px;border-radius:12px;background:#242633;color:var(--muted);margin-top:16px}.note{font-size:.88rem;border-left:3px solid var(--accent);padding-left:12px}.hidden{display:none}@media(max-width:480px){body{padding:12px}.readings{grid-template-columns:1fr}.value{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">Junto.fm · protótipo</div>
+  <h1>Diagnóstico do áudio capturado</h1>
+  <p>Este teste mede o sinal que o navegador entrega ao Junto.fm. Ele não transmite áudio para ouvintes nem altera o site principal.</p>
+  <ol class="steps">
+    <li>Clique em <strong>Capturar áudio</strong> e escolha a aba do Spotify.</li>
+    <li>Na janela de compartilhamento, marque <strong>Compartilhar áudio da guia</strong>.</li>
+    <li>Volte para esta página sem encerrar o compartilhamento e altere o volume no player do Spotify.</li>
+    <li>Compare os valores de nível médio e pico antes e depois da alteração.</li>
+  </ol>
+  <div class="actions">
+    <button id="start">Capturar áudio</button>
+    <button id="stop" class="secondary" disabled>Parar teste</button>
+  </div>
+  <section class="panel" aria-live="polite">
+    <div class="label">Nível do áudio capturado</div>
+    <div class="meter"><div id="bar" class="bar"></div></div>
+    <div class="readings">
+      <div class="reading"><div class="label">Nível médio (RMS)</div><div id="rms" class="value">— dBFS</div></div>
+      <div class="reading"><div class="label">Pico</div><div id="peak" class="value">— dBFS</div></div>
+    </div>
+    <div id="status" class="status">Aguardando início do teste.</div>
+  </section>
+  <p class="note">Dica: compare trechos da mesma música em volume alto e baixo. A música muda de intensidade naturalmente, então observe vários segundos, não apenas um pico.</p>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let stream = null, context = null, analyser = null, source = null, frame = 0;
+  const data = new Float32Array(2048);
+  const db = value => value > 0 ? (20 * Math.log10(value)).toFixed(1) : '−∞';
+  function cleanup() {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+    if (source) { try { source.disconnect(); } catch (_) {} source = null; }
+    if (analyser) { try { analyser.disconnect(); } catch (_) {} analyser = null; }
+    if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+    if (context) { context.close().catch(() => {}); context = null; }
+    $('bar').style.width = '0%';
+    $('rms').textContent = '— dBFS';
+    $('peak').textContent = '— dBFS';
+    $('start').disabled = false;
+    $('stop').disabled = true;
+  }
+  function measure() {
+    if (!analyser) return;
+    analyser.getFloatTimeDomainData(data);
+    let sum = 0, peak = 0;
+    for (const sample of data) { sum += sample * sample; peak = Math.max(peak, Math.abs(sample)); }
+    const rms = Math.sqrt(sum / data.length);
+    const rmsDb = rms > 0 ? 20 * Math.log10(rms) : -100;
+    $('rms').textContent = rms > 0 ? db(rms) + ' dBFS' : '−∞ dBFS';
+    $('peak').textContent = peak > 0 ? db(peak) + ' dBFS' : '−∞ dBFS';
+    $('bar').style.width = Math.max(0, Math.min(100, (rmsDb + 60) / 60 * 100)) + '%';
+    frame = requestAnimationFrame(measure);
+  }
+  $('start').addEventListener('click', async () => {
+    cleanup();
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) throw new Error('Use Chrome ou Edge em HTTPS ou localhost.');
+      stream = await navigator.mediaDevices.getDisplayMedia({video:true,audio:true});
+      const tracks = stream.getAudioTracks();
+      if (!tracks.length) throw new Error('Nenhum áudio capturado. Selecione a aba do Spotify e marque “Compartilhar áudio da guia”.');
+      stream.getVideoTracks().forEach(track => track.stop());
+      context = new AudioContext();
+      await context.resume();
+      analyser = context.createAnalyser();
+      analyser.fftSize = 2048;
+      source = context.createMediaStreamSource(new MediaStream(tracks));
+      source.connect(analyser);
+      tracks[0].addEventListener('ended', () => { cleanup(); $('status').textContent = 'O compartilhamento foi encerrado.'; });
+      $('start').disabled = true;
+      $('stop').disabled = false;
+      $('status').textContent = 'Captura ativa. Agora altere o volume do Spotify e observe RMS e pico.';
+      measure();
+    } catch (error) {
+      cleanup();
+      $('status').textContent = error?.message || 'Não foi possível iniciar a captura.';
+    }
+  });
+  $('stop').addEventListener('click', () => { cleanup(); $('status').textContent = 'Teste parado.'; });
+  window.addEventListener('pagehide', cleanup);
+})();
+</script>
+</body>
+</html>
