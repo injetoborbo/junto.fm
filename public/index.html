@@ -814,13 +814,11 @@ const config = {
   }
   function cleanRoomName(value) { return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40); }
   let pendingCreatePassword = "";
-  let pendingJoinRoom = "";
   function joinRoom(name, suppliedPassword) {
     const cleaned = cleanRoomName(name);
     if (!cleaned) { setStatus('Digite um nome de sala válido.'); return; }
     if (!socket.connected) { setStatus('Sem conexão com o servidor. Aguarde e tente novamente.'); return; }
     if (joined && room === cleaned) { setStatus('Você já está nesta sala.', true); return; }
-    pendingJoinRoom = cleaned;
     setStatus('Entrando na sala…');
     const password = suppliedPassword || "";
     socket.emit('join-room', { room: cleaned, password });
@@ -911,7 +909,6 @@ const config = {
   socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
   socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
-    pendingJoinRoom = "";
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
       $("jfJoinRoomError").textContent = errorMessage;
