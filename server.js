@@ -208,9 +208,12 @@ io.on("connection", socket => {
 
   socket.on("profile-update", payload => {
     if (!socket.data.room || !payload || !payload.profile) return;
-    const name = String(payload.profile.name || "Ouvinte").trim().replace(/\\s+/g, " ").slice(0, 24) || "Ouvinte";
+    const name = String(payload.profile.name || "Ouvinte").trim().split(" ").filter(Boolean).join(" ").slice(0, 24) || "Ouvinte";
     const avatar = String(payload.profile.avatar || "");
-    const safeAvatar = avatar.length <= 220000 && /^data:image\\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(avatar) ? avatar : "";
+    const comma = avatar.indexOf(",");
+    const prefix = comma >= 0 ? avatar.slice(0, comma + 1) : "";
+    const allowedImage = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,", "data:image/gif;base64,"].includes(prefix);
+    const safeAvatar = avatar.length <= 220000 && allowedImage && comma < avatar.length - 1 ? avatar : "";
     const profile = { name, avatar: safeAvatar };
     socket.data.profile = profile;
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
