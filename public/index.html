@@ -814,18 +814,16 @@ const config = {
   }
   function cleanRoomName(value) { return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40); }
   let pendingCreatePassword = "";
+  let pendingJoinRoom = "";
   function joinRoom(name, suppliedPassword) {
     const cleaned = cleanRoomName(name);
     if (!cleaned) { setStatus('Digite um nome de sala válido.'); return; }
     if (!socket.connected) { setStatus('Sem conexão com o servidor. Aguarde e tente novamente.'); return; }
     if (joined && room === cleaned) { setStatus('Você já está nesta sala.', true); return; }
-    resetSession();
-    joined = false;
-    room = cleaned;
-    $("room").value = room;
+    pendingJoinRoom = cleaned;
     setStatus('Entrando na sala…');
     const password = suppliedPassword || "";
-    socket.emit('join-room', { room, password });
+    socket.emit('join-room', { room: cleaned, password });
   }
   const createModal = $("jfCreateRoomModal");
   const joinModal = $("jfJoinRoomModal");
@@ -913,7 +911,7 @@ const config = {
   socket.on('connect_error', error => { joined = false; resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
   socket.on('disconnect', () => { joined = false; resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
-    joined = false;
+    pendingJoinRoom = "";
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
       $("jfJoinRoomError").textContent = errorMessage;
@@ -923,11 +921,13 @@ const config = {
     enableControls();
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null }) => {
+    pendingJoinRoom = "";
+    if (joined && room !== joinedRoom) resetSession();
     joined = true; room = joinedRoom; $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
-    if (track) renderTrack(track, true);
+    if (track) renderTrack(track, true); else renderTrack(null);
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
   socket.on('track-update', track => renderTrack(track, true));
@@ -1182,6 +1182,7 @@ const config = {
     socket.emit("chat-send",{text});$("jfChatInput").value="";jfUpdateChatControls();$("jfChatInput").focus();
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
+  socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="Você está enviando mensagens rápido demais. Aguarde alguns segundos.";});
   socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
   socket.on("joined-room",()=>jfUpdateChatControls());
 
