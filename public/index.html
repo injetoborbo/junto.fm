@@ -382,7 +382,6 @@ const config = {
   async function createSenderOffer(id) {
     if (!isSender || !localStream || !joined) return;
     try {
-      await iceConfigReady;
       const peer = makePeer(id);
       localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
       await tuneAudioSender(peer);
@@ -443,7 +442,6 @@ const config = {
     if (!from || !data || !joined) return;
     try {
       if (data.type === 'offer' && !isSender) {
-        await iceConfigReady;
         const peer = makePeer(from);
         await peer.setRemoteDescription(data.sdp);
         await applyPendingCandidates(from, peer);
