@@ -3,10 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+// Aplica escala visual de 75% somente em navegadores Android.
+if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('jf-android-scale');
+</script>
 <title>Junto.fm — ouvir junto</title>
 <style>
 :root{color-scheme:dark;--ink:#f7f4ff;--muted:#c4c6ed;--pink:#ff78d2;--cyan:#70f4ff;--blue:#7997ff;--line:#7678d8;--panel:#171638}
 *{box-sizing:border-box}
+/* Zoom visual no Android; largura compensada para preservar o viewport. */
+html.jf-android-scale body{zoom:.75;width:133.333333%;}
+
 html{min-height:100%;background:#090b22}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--jf-font-family,"Trebuchet MS"),Verdana,Arial,sans-serif;background:radial-gradient(ellipse at 50% -10%,#5656a8 0,#20245c 30%,#101333 63%,#080a1e 100%);background-attachment:fixed;position:relative;overflow-x:hidden}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.26;background-image:linear-gradient(#9ca5ff24 1px,transparent 1px),linear-gradient(90deg,#9ca5ff24 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(to bottom,black,transparent 85%);z-index:0}
