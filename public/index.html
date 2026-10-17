@@ -1,16 +1,16 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Junto.fm — ouvir junto</title>
+<title>Junto.fm â€” ouvir junto</title>
 <style>
 :root{color-scheme:dark;--ink:#f7f4ff;--muted:#c4c6ed;--pink:#ff78d2;--cyan:#70f4ff;--blue:#7997ff;--line:#7678d8;--panel:#171638}
 *{box-sizing:border-box}
 html{min-height:100%;background:#090b22}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--jf-font-family,"Trebuchet MS"),Verdana,Arial,sans-serif;background:radial-gradient(ellipse at 50% -10%,#5656a8 0,#20245c 30%,#101333 63%,#080a1e 100%);background-attachment:fixed;position:relative;overflow-x:hidden}
 body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.26;background-image:linear-gradient(#9ca5ff24 1px,transparent 1px),linear-gradient(90deg,#9ca5ff24 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(to bottom,black,transparent 85%);z-index:0}
-body:after{content:"✦     ·       ✧          ·       ✦       ·       ✧";position:fixed;left:0;right:0;top:8px;text-align:center;color:#a3fbff;letter-spacing:1.7rem;font-size:12px;text-shadow:0 0 12px #70f4ff;opacity:.65;pointer-events:none;z-index:0}
+body:after{content:"âœ¦     Â·       âœ§          Â·       âœ¦       Â·       âœ§";position:fixed;left:0;right:0;top:8px;text-align:center;color:#a3fbff;letter-spacing:1.7rem;font-size:12px;text-shadow:0 0 12px #70f4ff;opacity:.65;pointer-events:none;z-index:0}
 main{position:relative;z-index:1;max-width:820px;margin:auto;padding:30px 18px 52px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:900;font-size:25px;letter-spacing:.3px;text-shadow:0 2px 0 #38336e,0 0 15px #8caaff77}
 .logo{display:grid;place-items:center;width:48px;height:48px;border-radius:14px;border:2px solid #f5d7ff;background:linear-gradient(145deg,#fff 0%,#c9d9ff 18%,#7a85ff 48%,#f57fd6 78%,#fff 100%);color:#25164f;font-size:27px;box-shadow:inset 0 2px 2px #fff, inset 0 -4px 8px #2b287c88,0 0 0 3px #24225d,0 0 20px #7c88ff77}
@@ -44,7 +44,7 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 @media(max-width:520px){main{padding:22px 13px 42px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:9px;letter-spacing:.6px;padding:6px}.brand{font-size:22px}body:after{letter-spacing:.7rem}.row>*{flex-basis:100%}.track-card{grid-template-columns:112px minmax(0,1fr);gap:13px;padding:11px}.track-art{width:112px}.track-title{font-size:16px}.track-album{margin-bottom:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 
-/* Personalização Junto.fm */
+/* PersonalizaÃ§Ã£o Junto.fm */
 :root{--jf-primary:#ff78d2;--jf-secondary:#70f4ff;--jf-glow:#5656a8}
 .track-kicker{color:var(--jf-secondary)}
 .track-card{border-color:var(--jf-secondary);box-shadow:inset 0 1px 0 #ffffff25,0 0 20px color-mix(in srgb,var(--jf-primary) 18%,transparent)}
@@ -63,7 +63,7 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 #jfSaveProfile{min-width:160px}
 #jfProfileStatus{align-self:center}
 .jf-people{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}
-/* Chat flutuante, discreto e recolhível */
+/* Chat flutuante, discreto e recolhÃ­vel */
 .jf-chat-launcher{position:fixed;right:24px;bottom:24px;z-index:10020;width:56px;height:56px;padding:0;border:1px solid var(--jf-secondary);border-radius:50%;display:grid;place-items:center;background:var(--jf-primary);color:white;box-shadow:0 8px 28px #0008;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
 .jf-chat-launcher:hover{transform:translateY(-2px);box-shadow:0 11px 32px #0009}
 .jf-chat-launcher svg{width:25px;height:25px;display:block}
@@ -104,7 +104,7 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 @media(max-width:520px){.jf-grid{grid-template-columns:1fr}.jf-profile{grid-template-columns:62px minmax(0,1fr);gap:12px}.jf-avatar{width:62px;height:62px}.jf-fields input[type=text]{font-size:16px;padding:13px 10px}.jf-fields input[type=file]{font-size:11px;padding:7px}#jfSaveProfile{width:100%;flex-basis:100%}#jfProfileStatus{flex-basis:100%}}
 
 
-/* Temas globais: a paleta escolhida colore a página inteira, não só os detalhes. */
+/* Temas globais: a paleta escolhida colore a pÃ¡gina inteira, nÃ£o sÃ³ os detalhes. */
 html{background:color-mix(in srgb,var(--jf-glow) 34%,#080a1e)}
 body{background:radial-gradient(ellipse at 50% -10%,color-mix(in srgb,var(--jf-glow) 88%,#20245c) 0,color-mix(in srgb,var(--jf-glow) 58%,#20245c) 30%,color-mix(in srgb,var(--jf-glow) 30%,#101333) 63%,color-mix(in srgb,var(--jf-glow) 18%,#080a1e) 100%) fixed}
 body:before{background-image:linear-gradient(color-mix(in srgb,var(--jf-secondary) 16%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--jf-secondary) 16%,transparent) 1px,transparent 1px)}
@@ -146,7 +146,7 @@ footer{text-shadow:0 0 8px color-mix(in srgb,var(--jf-primary) 30%,transparent)}
 .jf-modal-close{flex:0 0 auto;padding:8px 12px;font-size:17px}
 @keyframes jfFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes jfModalIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-/* Frutiger Aero: vidro translúcido, céu azul e brilho aquático. */
+/* Frutiger Aero: vidro translÃºcido, cÃ©u azul e brilho aquÃ¡tico. */
 html[data-jf-theme="aero"]{color-scheme:light;--ink:#f5ffff;--muted:#d5f7ff}
 html[data-jf-theme="aero"] body{background:linear-gradient(180deg,#2a95c4 0%,#0d638b 100%) fixed}
 #jfAeroBackground{position:fixed;inset:-18px;z-index:0;pointer-events:none;opacity:0;background-image:url("/images/bliss.jpg"),radial-gradient(ellipse 34% 18% at 22% 73%,#6aa83b 0%,#6aa83b 99%,transparent 100%),radial-gradient(ellipse 48% 28% at 75% 82%,#4b8f2c 0%,#4b8f2c 99%,transparent 100%),linear-gradient(180deg,#65b9f5 0%,#b8e5ff 55%,#d9f4ff 100%);background-size:cover,cover,cover,cover;background-position:center 56%,center,center,center;filter:blur(var(--jf-aero-blur,0px));transform:scale(1.02);transition:opacity .25s ease,filter .2s ease}
@@ -158,7 +158,7 @@ body>main{position:relative;z-index:1}
 html[data-jf-theme="aero"] body:before{opacity:.12;background-image:linear-gradient(#e5ffff20 1px,transparent 1px),linear-gradient(90deg,#e5ffff20 1px,transparent 1px);background-size:38px 38px,38px 38px}
 html[data-jf-theme="aero"] body:after{z-index:0}
 html[data-jf-theme="aero"] body:before{opacity:.3;background-image:radial-gradient(ellipse at 20% 30%,#ffffff90 0 1px,transparent 2px),radial-gradient(ellipse at 70% 60%,#ffffff70 0 2px,transparent 3px),linear-gradient(#e5ffff20 1px,transparent 1px),linear-gradient(90deg,#e5ffff20 1px,transparent 1px);background-size:95px 85px,130px 120px,38px 38px,38px 38px}
-html[data-jf-theme="aero"] body:after{content:"❋     ◦       ✧       ◦      ❋";letter-spacing:1.8rem;color:#e5ffff;text-shadow:0 0 14px #b9ffff;opacity:.55}
+html[data-jf-theme="aero"] body:after{content:"â‹     â—¦       âœ§       â—¦      â‹";letter-spacing:1.8rem;color:#e5ffff;text-shadow:0 0 14px #b9ffff;opacity:.55}
 html[data-jf-theme="aero"] .panel,html[data-jf-theme="aero"] .jf-modal{background:linear-gradient(145deg,#eaffff65,#c6f7ff28 48%,#eaffff18);border:1px solid #e9ffffb8;box-shadow:inset 0 2px 0 #ffffffbb,inset 0 -2px 0 #04588a44,0 10px 28px #003d6c44,0 2px 8px #ffffff26;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 html[data-jf-theme="aero"] .panel:before{background:linear-gradient(90deg,transparent,#ffffffc9,transparent)}
 html[data-jf-theme="aero"] h1,html[data-jf-theme="aero"] .player h2,html[data-jf-theme="aero"] .panel h2{color:#fff;text-shadow:0 2px 4px #00588780,0 0 18px #baffff66}
@@ -179,7 +179,7 @@ html[data-jf-theme="aero"] .jf-avatar{border-color:#e6ffff;background:#70cde3;co
 html[data-jf-theme="aero"] .tag{color:#075079;background:linear-gradient(#fff,#c9ffff 48%,#65d8ec)}
 @media(max-width:520px){.jf-topbar{align-items:flex-start}.jf-top-actions{width:100%;justify-content:flex-end}.jf-modal-backdrop{padding:12px}.jf-modal{padding:17px;max-height:90vh}.jf-modal-head h2{font-size:20px}}
 
-/* Layout lateral de participantes e relógio digital Frutiger Aero */
+/* Layout lateral de participantes e relÃ³gio digital Frutiger Aero */
 main{max-width:1080px}
 .jf-player-layout{display:grid;grid-template-columns:minmax(0,1fr) 245px;gap:18px;align-items:stretch;margin-top:19px}
 .jf-player-panel{min-width:0;margin-top:0}
@@ -217,7 +217,7 @@ html[data-jf-theme="aero"] .jf-suggestion-popup{background:linear-gradient(145de
 html[data-jf-theme="aero"] .jf-person{background:#082f4be8;border-color:#55d9f4}
 @media(max-width:760px){.jf-player-layout{grid-template-columns:minmax(0,1fr)}.jf-room-people{order:2}.jf-player-panel{order:1}}
 @media(max-width:520px){main{max-width:100%}.jf-suggestion-popup{right:14px;bottom:14px}}
-/* Perfil com mais respiro, foto centralizada no topo e avatar junto ao botão superior. */
+/* Perfil com mais respiro, foto centralizada no topo e avatar junto ao botÃ£o superior. */
 .jf-profile-trigger{display:inline-flex;align-items:center;gap:9px}
 .jf-profile-trigger img,.jf-profile-trigger #jfTopAvatarPlaceholder{width:28px;height:28px;flex:0 0 28px;border-radius:50%;object-fit:cover;border:2px solid var(--jf-secondary);display:grid;place-items:center;font-size:16px;line-height:1}
 .jf-profile-trigger img[hidden]{display:none!important}
@@ -279,7 +279,7 @@ html[data-jf-theme="classic"] .jf-modal{animation:jfModalIn .2s ease-out}
 html[data-jf-theme="classic"] .jf-suggestion-settings,html[data-jf-theme="classic"] .jf-suggestion-popup{color:#18345b;background:linear-gradient(#fff,#e1f1ff);border:1px solid #8bbce9;border-radius:8px;box-shadow:0 5px 18px #154e8b44}
 html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-popup-close{color:#0757ae}
 
-/* Criar sala: modal de configuração */
+/* Criar sala: modal de configuraÃ§Ã£o */
 .jf-room-password-row{margin-top:10px;max-width:360px}
 .jf-room-password-row input{width:100%;min-width:0;padding:11px 13px;border:1px solid #7376ce;border-radius:8px;background:#080d2b;color:#fff}
 .jf-modal-backdrop{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:18px;background:#050616bb;backdrop-filter:blur(9px)}
@@ -317,7 +317,7 @@ body.jf-in-room #jfRoomEntryPanel{width:100%;margin-bottom:24px}
 @keyframes jfModalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:520px){.jf-room-modal{padding:22px 18px;border-radius:18px}.jf-room-modal h2{font-size:21px}.jf-room-modal-actions{flex-direction:column-reverse}.jf-room-modal-actions .btn{width:100%}}
 
-/* Chat retrô: seletor de emojis e acabamento Windows XP Luna */
+/* Chat retrÃ´: seletor de emojis e acabamento Windows XP Luna */
 .jf-chat-tools{display:flex;align-items:center;gap:7px;padding:8px 10px 0}
 .jf-chat-emoji-toggle{padding:6px 10px!important;font-size:12px!important}
 .jf-chat-emoji-tray{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;max-height:112px;overflow:auto;border-bottom:1px solid var(--jf-secondary);background:color-mix(in srgb,var(--jf-glow) 18%,#101333)}
@@ -399,7 +399,7 @@ html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0
 .jf-dj-leg{top:72px!important;width:15px!important;height:25px!important;border:1px solid #4c347e!important;border-radius:4px 4px 7px 7px!important;clip-path:polygon(12% 0,100% 0,88% 100%,0 100%)!important;background:linear-gradient(90deg,#514080,#a18ade 48%,#5b438f)!important;box-shadow:inset -3px 0 #46316e}
 .jf-dj-leg-left{left:19px!important}.jf-dj-leg-right{right:17px!important}
 .jf-dj-body{left:15px!important;top:41px!important;width:51px!important;height:39px!important;clip-path:polygon(17% 0,82% 0,100% 17%,89% 100%,10% 100%,0 17%)!important;border:1px solid #b91328;border-radius:7px!important;background:linear-gradient(100deg,#ff6767 0%,#f51e35 36%,#d80d28 76%,#a80822 100%)!important;box-shadow:inset 5px 0 #ff8580,inset -5px 0 #b20b27,0 3px 2px #4d173e66!important}
-.jf-dj-body:after{content:"ϟ";position:absolute;left:17px;top:6px;color:#fff8f0;font:bold 27px/1 Arial,sans-serif;text-shadow:1px 2px #bc1831}
+.jf-dj-body:after{content:"ÏŸ";position:absolute;left:17px;top:6px;color:#fff8f0;font:bold 27px/1 Arial,sans-serif;text-shadow:1px 2px #bc1831}
 .jf-dj-neck{left:34px!important;top:33px!important;width:15px!important;height:14px!important;background:linear-gradient(90deg,#71442f,#d89a68 45%,#8c5236)!important;border-radius:4px!important}
 .jf-dj-head{left:15px!important;top:6px!important;width:52px!important;height:43px!important;overflow:visible!important;clip-path:none!important;border:2px solid #59341f!important;border-radius:46% 46% 43% 43%!important;background:linear-gradient(125deg,#c18a5b 0%,#8a5737 38%,#633a2a 72%,#42271f 100%)!important;box-shadow:inset 5px 3px #d2a174,inset -5px -4px #42271f,2px 4px 2px #4b2a2855!important;transform:rotate(-3deg) translateZ(4px)!important}
 .jf-dj-hair{left:2px!important;top:-3px!important;width:45px!important;height:18px!important;clip-path:polygon(0 45%,12% 9%,31% 21%,45% 0,60% 16%,77% 4%,100% 27%,91% 70%,73% 53%,56% 74%,37% 57%,19% 78%,8% 100%)!important;background:linear-gradient(120deg,#75452c,#48291f 55%,#2d1b18)!important}
@@ -423,14 +423,14 @@ html[data-jf-theme="classic"] .jf-dj-booth{background:linear-gradient(155deg,#c0
 @media(max-width:520px){.jf-dj-character{width:78px!important;height:100px!important;top:0!important}.jf-dj-stage{min-height:140px!important}}
 @media(prefers-reduced-motion:reduce){.jf-dj-character,.jf-dj-arm-right{animation:none!important}}
 
-/* Tema rosa bebê e mascote macaquinho inspirado no desenho enviado. */
+/* Tema rosa bebÃª e mascote macaquinho inspirado no desenho enviado. */
 html[data-jf-theme="baby-pink"]{color-scheme:light;--ink:#633d52;--muted:#936d83;--jf-secondary:#c875a0}
 html[data-jf-theme="baby-pink"] body{background:radial-gradient(ellipse at 50% -10%,#fff8fb 0,#ffe8f1 38%,#f9d4e4 72%,#f2c4db 100%) fixed}
 html[data-jf-theme="baby-pink"] .panel{background:linear-gradient(145deg,#fffafdF5,#fff0f6F5 60%,#ffe6f0F5);border-color:#eab5ce;box-shadow:0 8px 0 #eac8d8,0 13px 28px #b87b9922}
 html[data-jf-theme="baby-pink"] .track-card{background:linear-gradient(135deg,#fff3f8,#ffe0ed);color:#633d52}
 html[data-jf-theme="baby-pink"] .track-title,html[data-jf-theme="baby-pink"] .player h2,html[data-jf-theme="baby-pink"] .panel h2{color:#633d52;text-shadow:none}
 html[data-jf-theme="baby-pink"] .track-artist,html[data-jf-theme="baby-pink"] .track-album,html[data-jf-theme="baby-pink"] .small,html[data-jf-theme="baby-pink"] .player p{color:#936d83}
-/* Macaquinho: rosto marrom, orelhas grandes, focinho claro, camiseta vermelha, calça roxa e rabo curvado. */
+/* Macaquinho: rosto marrom, orelhas grandes, focinho claro, camiseta vermelha, calÃ§a roxa e rabo curvado. */
 .jf-dj-character{width:78px!important;height:98px!important;left:50%!important;top:0!important}
 .jf-dj-body{left:17px!important;top:47px!important;width:44px!important;height:34px!important;background:linear-gradient(100deg,#ff3434 0%,#e50920 55%,#b90019 100%)!important;clip-path:polygon(18% 0,82% 0,100% 19%,88% 100%,12% 100%,0 19%)!important;border:1px solid #a40017!important;border-radius:5px!important;filter:drop-shadow(0 2px 1px #050817)!important}
 .jf-dj-body:after{content:"";position:absolute;left:17px;top:2px;width:7px;height:8px;border-radius:50%;background:#ffd0a0;box-shadow:5px 0 #ffd0a0}
@@ -490,7 +490,7 @@ html[data-jf-theme="mint"] .track-artist,html[data-jf-theme="mint"] .track-album
 html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"] .jf-dj-caption strong,html[data-jf-theme="mint"] .jf-dj-caption strong{color:var(--ink)}
 @media(prefers-reduced-motion:reduce){.jf-dj-character:after{animation:none!important}}
 
-/* Mascote 3D GLB: mantém o DJ CSS como fallback até o modelo carregar. */
+/* Mascote 3D GLB: mantÃ©m o DJ CSS como fallback atÃ© o modelo carregar. */
 .jf-dj-stage.jf-glb-ready{width:160px!important;height:164px!important;min-height:164px!important;perspective:none!important}
 .jf-glb-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:4;pointer-events:none}
 .jf-dj-stage.jf-glb-ready:before{opacity:.2}
@@ -501,19 +501,19 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
-  <h1>Música boa é<br>melhor junto. ✦</h1>
-  <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+  <div class="jf-topbar"><div class="brand"><div class="logo">â™«</div> Junto.fm <span class="tag">âœ¦ Y2K RADIO Â· BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">â™§ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">âœ§ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">â˜º</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">âš™ OpÃ§Ãµes</button></div></div>
+  <h1>MÃºsica boa Ã©<br>melhor junto. âœ¦</h1>
+  <p class="jf-hero-description">Crie uma sala privada e escute o Ã¡udio do navegador com outra pessoa, mesmo Ã  distÃ¢ncia.</p>
 
   <section class="panel jf-room-entry-panel" id="jfRoomEntryPanel">
     <input id="room" type="hidden" value="" autocomplete="off">
     <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
-      <button class="btn" id="join" type="button">↗ Entrar na sala</button>
-      <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
+      <button class="btn" id="join" type="button">â†— Entrar na sala</button>
+      <button class="btn secondary" id="createRoom" type="button">ï¼‹ Criar sala</button>
     </div>
-    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
-    <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
-    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+    <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>â† Sair da sala</button></div>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidorâ€¦</span></div>
+    <p class="small" id="roomCount">Ainda nÃ£o entrou em uma sala.</p><p class="small" id="help">Se este texto nÃ£o mudar para â€œConectado ao servidorâ€, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. NÃ£o abra o arquivo HTML diretamente.</p>
   </section>
 
 
@@ -521,22 +521,22 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 <div class="jf-player-layout">
 <section class="panel jf-player-panel">
     <div class="player">
-      <div class="cover">♫</div>
-      <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
+      <div class="cover">â™«</div>
+      <div><h2>TransmissÃ£o ao vivo</h2><p id="role">Entre na sala para comeÃ§ar.</p></div>
     </div>
     <div class="track-card" aria-live="polite">
-      <img class="track-art" id="trackArt" alt="Capa do álbum" src="" hidden>
-      <div class="track-art" id="trackPlaceholder" aria-hidden="true">♫</div>
+      <img class="track-art" id="trackArt" alt="Capa do Ã¡lbum" src="" hidden>
+      <div class="track-art" id="trackPlaceholder" aria-hidden="true">â™«</div>
       <div class="jf-track-content">
         <div class="jf-track-info">
-          <div class="track-kicker" id="trackKicker">✦ NOW PLAYING</div>
-          <h3 class="track-title" id="trackTitle">A música aparece aqui</h3>
+          <div class="track-kicker" id="trackKicker">âœ¦ NOW PLAYING</div>
+          <h3 class="track-title" id="trackTitle">A mÃºsica aparece aqui</h3>
           <p class="track-artist" id="trackArtist">Conecte o Spotify para mostrar os metadados</p>
-          <p class="track-album" id="trackAlbum">JUNTO.FM · Y2K RADIO</p>
-          <div class="progress-wrap" role="progressbar" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
+          <p class="track-album" id="trackAlbum">JUNTO.FM Â· Y2K RADIO</p>
+          <div class="progress-wrap" role="progressbar" aria-label="Progresso da mÃºsica" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
           <div class="track-times"><span id="trackElapsed">0:00</span><span id="trackDuration">0:00</span></div>
         </div>
-        <div class="jf-mini-dj" id="jfMiniDj" hidden aria-label="Mini DJ de quem está transmitindo">
+        <div class="jf-mini-dj" id="jfMiniDj" hidden aria-label="Mini DJ de quem estÃ¡ transmitindo">
           <div class="jf-dj-stage" aria-hidden="true">
             <div class="jf-dj-light jf-dj-light-a"></div><div class="jf-dj-light jf-dj-light-b"></div>
             <div class="jf-dj-booth"><span class="jf-dj-deck jf-dj-deck-left"></span><span class="jf-dj-mixer"></span><span class="jf-dj-deck jf-dj-deck-right"></span></div>
@@ -551,26 +551,26 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
       </div>
     </div>
     <div class="spotify-actions">
-      <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Conectar Spotify</a>
+      <a class="btn" id="spotifyConnect" href="/spotify/login">â™« Conectar Spotify</a>
       <button class="btn secondary" id="spotifyDisconnect" type="button" hidden>Desconectar Spotify</button>
-      <button class="btn" id="spotifyFavorite" type="button" hidden>♡ Favoritar música</button>
-      <span class="small" id="spotifyStatus">Conecte o Spotify no dispositivo que está transmitindo.</span>
+      <button class="btn" id="spotifyFavorite" type="button" hidden>â™¡ Favoritar mÃºsica</button>
+      <span class="small" id="spotifyStatus">Conecte o Spotify no dispositivo que estÃ¡ transmitindo.</span>
     </div>
-    <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte sua conta para favoritar a faixa atual na sua biblioteca. Cada pessoa precisa conectar o próprio Spotify; os metadados da música são compartilhados pela sala.</p>
+    <p class="spotify-note">A capa e o progresso sÃ£o lidos da sua conta Spotify. Conecte sua conta para favoritar a faixa atual na sua biblioteca. Cada pessoa precisa conectar o prÃ³prio Spotify; os metadados da mÃºsica sÃ£o compartilhados pela sala.</p>
     <p class="small" id="spotifyFavoriteStatus" aria-live="polite"></p>
     <div class="row" style="margin-top:18px">
-      <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
-      <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
+      <button class="btn" id="start" disabled>Transmitir Ã¡udio da aba</button>
+      <button class="btn secondary" id="stop" disabled>Parar transmissÃ£o</button>
     </div>
     <audio id="remoteAudio" autoplay playsinline></audio>
     <p id="audioDiagnostics" class="small">
-  Diagnóstico do áudio: aguardando conexão...
+  DiagnÃ³stico do Ã¡udio: aguardando conexÃ£o...
 </p>
     
-    <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
+    <p class="small">A transmissÃ£o depende do navegador e da opÃ§Ã£o de compartilhar Ã¡udio. Use o player do Spotify Web, nÃ£o o aplicativo desktop, para tentar capturar somente o som da aba.</p>
   </section>
   <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
-    <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
+    <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem estÃ¡ na sala</h2>
     <p class="small" style="margin-top:0">Participantes conectados agora.</p>
     <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
   </aside>
@@ -583,14 +583,14 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 </button>
 <section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
   <header class="jf-chat-header">
-    <div><h2 id="jfChatHeading" class="jf-chat-heading">Chat da sala</h2><div class="jf-chat-subheading">Converse com quem está ouvindo</div></div>
-    <button type="button" id="jfChatClose" class="jf-chat-close" aria-label="Fechar chat">×</button>
+    <div><h2 id="jfChatHeading" class="jf-chat-heading">Chat da sala</h2><div class="jf-chat-subheading">Converse com quem estÃ¡ ouvindo</div></div>
+    <button type="button" id="jfChatClose" class="jf-chat-close" aria-label="Fechar chat">Ã—</button>
   </header>
-  <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
-  <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">☺ Emojis</button></div>
+  <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para comeÃ§ar a conversar âœ¦</p></div>
+  <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">â˜º Emojis</button></div>
   <div id="jfChatEmojiTray" class="jf-chat-emoji-tray" aria-label="Escolha um emoji" hidden>
-    <button type="button" class="jf-chat-emoji" data-emoji="☺">☺</button><button type="button" class="jf-chat-emoji" data-emoji="☻">☻</button><button type="button" class="jf-chat-emoji" data-emoji="ツ">ツ</button><button type="button" class="jf-chat-emoji" data-emoji="♥">♥</button><button type="button" class="jf-chat-emoji" data-emoji="♡">♡</button><button type="button" class="jf-chat-emoji" data-emoji="★">★</button><button type="button" class="jf-chat-emoji" data-emoji="☆">☆</button><button type="button" class="jf-chat-emoji" data-emoji="♪">♪</button><button type="button" class="jf-chat-emoji" data-emoji="♫">♫</button><button type="button" class="jf-chat-emoji" data-emoji="☮">☮</button><button type="button" class="jf-chat-emoji" data-emoji="✿">✿</button><button type="button" class="jf-chat-emoji" data-emoji="✧">✧</button>
-    <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":)">:)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=";)">;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":D">:D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="xD">xD</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":P">:P</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'(">:'(</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="^_^">^_^</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="-_-">-_-</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="o_O">o_O</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="<3">&lt;3</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'D">:'D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="¯\\_(ツ)_/¯">¯\\_(ツ)_/¯</button>
+    <button type="button" class="jf-chat-emoji" data-emoji="â˜º">â˜º</button><button type="button" class="jf-chat-emoji" data-emoji="â˜»">â˜»</button><button type="button" class="jf-chat-emoji" data-emoji="ãƒ„">ãƒ„</button><button type="button" class="jf-chat-emoji" data-emoji="â™¥">â™¥</button><button type="button" class="jf-chat-emoji" data-emoji="â™¡">â™¡</button><button type="button" class="jf-chat-emoji" data-emoji="â˜…">â˜…</button><button type="button" class="jf-chat-emoji" data-emoji="â˜†">â˜†</button><button type="button" class="jf-chat-emoji" data-emoji="â™ª">â™ª</button><button type="button" class="jf-chat-emoji" data-emoji="â™«">â™«</button><button type="button" class="jf-chat-emoji" data-emoji="â˜®">â˜®</button><button type="button" class="jf-chat-emoji" data-emoji="âœ¿">âœ¿</button><button type="button" class="jf-chat-emoji" data-emoji="âœ§">âœ§</button>
+    <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":)">:)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=";)">;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":D">:D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="xD">xD</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":P">:P</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'(">:'(</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="^_^">^_^</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="-_-">-_-</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="o_O">o_O</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="<3">&lt;3</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'D">:'D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="Â¯\\_(ãƒ„)_/Â¯">Â¯\\_(ãƒ„)_/Â¯</button>
   </div>
   <form id="jfChatForm" class="jf-chat-form">
     <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
@@ -601,24 +601,24 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 
     <section class="panel">
     <h2 style="margin:0 0 14px">Comandos da sala</h2>
-    <p style="margin-top:0">Esses botões enviam comandos para a outra pessoa. No protótipo, eles não controlam diretamente o Spotify — quem está transmitindo ainda precisa pausar ou trocar a música na aba do Spotify.</p>
+    <p style="margin-top:0">Esses botÃµes enviam comandos para a outra pessoa. No protÃ³tipo, eles nÃ£o controlam diretamente o Spotify â€” quem estÃ¡ transmitindo ainda precisa pausar ou trocar a mÃºsica na aba do Spotify.</p>
     <div class="row">
-      <button class="btn secondary" id="pauseCmd" disabled>⏸ Avisar: pausar</button>
-      <button class="btn secondary" id="nextCmd" disabled>⏭ Avisar: próxima</button>
+      <button class="btn secondary" id="pauseCmd" disabled>â¸ Avisar: pausar</button>
+      <button class="btn secondary" id="nextCmd" disabled>â­ Avisar: prÃ³xima</button>
     </div>
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
     <div class="jf-suggestion-settings">
-      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Receber sugestões de música nesta transmissão</label>
-      <p class="small">Ative no aparelho que está transmitindo para receber sugestões em um popup no canto inferior direito.</p>
+      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Receber sugestÃµes de mÃºsica nesta transmissÃ£o</label>
+      <p class="small">Ative no aparelho que estÃ¡ transmitindo para receber sugestÃµes em um popup no canto inferior direito.</p>
     </div>
     <div class="jf-suggest-form">
-      <label for="jfSuggestionText">Sugerir uma música</label>
-      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Enviar sugestão</button></div>
-      <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma música.</p>
+      <label for="jfSuggestionText">Sugerir uma mÃºsica</label>
+      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da mÃºsica â€” artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Enviar sugestÃ£o</button></div>
+      <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma mÃºsica.</p>
     </div>
   </section>
   <div id="jfSuggestionPopup" class="jf-suggestion-popup" role="status" aria-live="polite" hidden>
-    <div class="jf-popup-top"><span>♫ SUGESTÃO DE MÚSICA</span><button type="button" class="jf-popup-close" id="jfCloseSuggestion" aria-label="Fechar sugestão">✕</button></div>
+    <div class="jf-popup-top"><span>â™« SUGESTÃƒO DE MÃšSICA</span><button type="button" class="jf-popup-close" id="jfCloseSuggestion" aria-label="Fechar sugestÃ£o">âœ•</button></div>
     <strong id="jfPopupSong"></strong><span id="jfPopupFrom" class="small"></span>
     <div class="jf-popup-actions"><button type="button" class="btn" id="jfSuggestionDone">Entendi</button></div>
   </div>
@@ -626,11 +626,11 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
   
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfProfileHeading">
-    <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">âœ•</button></div>
     <div class="jf-profile jf-profile-editor">
-      <div class="jf-profile-photo"><img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden><div id="jfAvatarPlaceholder" class="jf-avatar" aria-label="Avatar padrão">☺</div><label class="jf-avatar-upload" for="jfAvatarFile">Trocar foto</label></div>
+      <div class="jf-profile-photo"><img id="jfAvatarPreview" class="jf-avatar" alt="PrÃ©via do avatar" hidden><div id="jfAvatarPlaceholder" class="jf-avatar" aria-label="Avatar padrÃ£o">â˜º</div><label class="jf-avatar-upload" for="jfAvatarFile">Trocar foto</label></div>
       <div class="jf-fields">
-        <label for="jfName">Nome de exibição</label>
+        <label for="jfName">Nome de exibiÃ§Ã£o</label>
         <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
         <label for="jfMotto">Lema do perfil (opcional)</label>
         <input id="jfMotto" type="text" maxlength="90" placeholder="Uma frase que te representa">
@@ -643,31 +643,31 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
   
 <div class="jf-modal-backdrop" id="jfFriendsModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfFriendsHeading">
-    <div class="jf-modal-head"><h2 id="jfFriendsHeading">♧ Amigos</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfFriendsModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-modal-head"><h2 id="jfFriendsHeading">â™§ Amigos</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfFriendsModal" aria-label="Fechar janela">âœ•</button></div>
     <p class="small">Guarde o nome e a sala dos seus amigos para entrar rapidinho. Para salas com senha, a entrada sem senha depende de uma amizade confirmada no servidor.</p>
-    <form id="jfFriendForm"><div class="jf-room-field"><label for="jfFriendName">Nome do amigo</label><input id="jfFriendName" maxlength="24" placeholder="Nome de exibição" required></div><div class="jf-room-field"><label for="jfFriendRoom">Nome da sala do amigo</label><input id="jfFriendRoom" maxlength="40" placeholder="nome-da-sala" required></div><div class="jf-room-modal-actions"><button class="btn" type="submit">＋ Adicionar amigo</button></div></form>
-    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div>
+    <form id="jfFriendForm"><div class="jf-room-field"><label for="jfFriendName">Nome do amigo</label><input id="jfFriendName" maxlength="24" placeholder="Nome de exibiÃ§Ã£o" required></div><div class="jf-room-field"><label for="jfFriendRoom">Nome da sala do amigo</label><input id="jfFriendRoom" maxlength="40" placeholder="nome-da-sala" required></div><div class="jf-room-modal-actions"><button class="btn" type="submit">ï¼‹ Adicionar amigo</button></div></form>
+    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista estÃ¡ vazia por enquanto.</p></div>
   </section>
 </div>
 
 <div class="jf-modal-backdrop" id="jfThemeModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
-    <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-modal-head"><h2 id="jfThemeHeading">AparÃªncia</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">âœ•</button></div>
     <div class="jf-grid">
-      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="pastel">Pastel dream</option><option value="lavender">Lavender milk</option><option value="peach">Peach soda</option><option value="mint">Mint candy</option><option value="baby-pink">Rosa bebê</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="pastel">Pastel dream</option><option value="lavender">Lavender milk</option><option value="peach">Peach soda</option><option value="mint">Mint candy</option><option value="baby-pink">Rosa bebÃª</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
       <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
     </div>
-    <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">Disponível no Frutiger Aero. A preferência fica salva neste navegador.</p></div>
-    <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
+    <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">DisponÃ­vel no Frutiger Aero. A preferÃªncia fica salva neste navegador.</p></div>
+    <p class="small" style="margin-bottom:0">Tema e cor ficam salvos sÃ³ neste navegador.</p>
   </section>
 </div>
 
 <div class="jf-modal-backdrop" id="jfOptionsModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfOptionsHeading">
-    <div class="jf-modal-head"><h2 id="jfOptionsHeading">Opções</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfOptionsModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-modal-head"><h2 id="jfOptionsHeading">OpÃ§Ãµes</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfOptionsModal" aria-label="Fechar janela">âœ•</button></div>
     <div class="jf-grid">
-      <div><label for="jfVolume">Volume do áudio recebido <span id="jfVolumeValue">100%</span></label><input id="jfVolume" type="range" min="0" max="100" step="1" value="100" aria-describedby="jfVolumeHelp"><p class="small" id="jfVolumeHelp">Controla o volume do áudio que você escuta neste aparelho.</p></div>
-      <div><label for="jfFont">Fonte da página</label><select id="jfFont"><option value="Trebuchet MS">Trebuchet MS (padrão)</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Georgia">Georgia</option><option value="Courier New">Courier New</option><option value="Tahoma">Tahoma</option><option value="system-ui">Sistema</option></select><p class="small">A fonte escolhida fica salva neste navegador.</p></div>
+      <div><label for="jfVolume">Volume do Ã¡udio recebido <span id="jfVolumeValue">100%</span></label><input id="jfVolume" type="range" min="0" max="100" step="1" value="100" aria-describedby="jfVolumeHelp"><p class="small" id="jfVolumeHelp">Controla o volume do Ã¡udio que vocÃª escuta neste aparelho.</p></div>
+      <div><label for="jfFont">Fonte da pÃ¡gina</label><select id="jfFont"><option value="Trebuchet MS">Trebuchet MS (padrÃ£o)</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Georgia">Georgia</option><option value="Courier New">Courier New</option><option value="Tahoma">Tahoma</option><option value="system-ui">Sistema</option></select><p class="small">A fonte escolhida fica salva neste navegador.</p></div>
     </div>
   </section>
 </div>
@@ -676,50 +676,50 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 <section class="panel">
     <h2 style="margin:0 0 14px">Como usar</h2>
     <div class="steps">
-      <div class="step"><div class="num">1</div><div><strong>Abra esta página nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versão hospedada do site.</span></div></div>
-      <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, “noite”. Escolham um nome difícil de adivinhar se quiserem privacidade básica.</span></div></div>
-      <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissão</strong><span>Compartilhe a aba do Spotify Web Player com áudio. No Android, aceite tocar o áudio quando solicitado.</span></div></div>
+      <div class="step"><div class="num">1</div><div><strong>Abra esta pÃ¡gina nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versÃ£o hospedada do site.</span></div></div>
+      <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, â€œnoiteâ€. Escolham um nome difÃ­cil de adivinhar se quiserem privacidade bÃ¡sica.</span></div></div>
+      <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissÃ£o</strong><span>Compartilhe a aba do Spotify Web Player com Ã¡udio. No Android, aceite tocar o Ã¡udio quando solicitado.</span></div></div>
     </div>
-    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
-    <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
+    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em â€œTransmitir Ã¡udioâ€ e escolha a aba do Spotify. Marque â€œCompartilhar Ã¡udio da abaâ€.</div>
+    <div class="notice">Importante: este Ã© um protÃ³tipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, serÃ¡ necessÃ¡rio configurar um servidor TURN para a conexÃ£o de Ã¡udio.</div>
   </section>
-  <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
+  <footer>Junto.fm Â· Projeto experimental de escuta compartilhada</footer>
 </main>
 
 <div class="jf-modal-backdrop" id="jfCreateRoomModal" hidden>
   <section class="jf-room-modal" role="dialog" aria-modal="true" aria-labelledby="jfCreateRoomTitle">
-    <button class="jf-room-modal-close" id="jfCloseCreateRoom" type="button" aria-label="Fechar">×</button>
+    <button class="jf-room-modal-close" id="jfCloseCreateRoom" type="button" aria-label="Fechar">Ã—</button>
     <div class="jf-room-modal-head">
-      <div class="jf-room-modal-icon" aria-hidden="true">♫</div>
-      <div><h2 id="jfCreateRoomTitle">Sua sala, suas músicas.</h2><p>Crie um cantinho pra ouvir junto. Se quiser, proteja com uma senha.</p></div>
+      <div class="jf-room-modal-icon" aria-hidden="true">â™«</div>
+      <div><h2 id="jfCreateRoomTitle">Sua sala, suas mÃºsicas.</h2><p>Crie um cantinho pra ouvir junto. Se quiser, proteja com uma senha.</p></div>
     </div>
     <form id="jfCreateRoomForm">
-      <div class="jf-room-field"><label for="jfNewRoomName">Nome da sala</label><input id="jfNewRoomName" maxlength="40" autocomplete="off" placeholder="ex.: madrugada-com-você" required></div>
+      <div class="jf-room-field"><label for="jfNewRoomName">Nome da sala</label><input id="jfNewRoomName" maxlength="40" autocomplete="off" placeholder="ex.: madrugada-com-vocÃª" required></div>
       <label class="jf-room-lock-option" for="jfRoomPasswordEnabled">
         <input id="jfRoomPasswordEnabled" type="checkbox">
-        <span><strong>🔒 Quero colocar uma senha</strong><small>Só entra quem souber o nome e a senha da sala.</small></span>
+        <span><strong>ðŸ”’ Quero colocar uma senha</strong><small>SÃ³ entra quem souber o nome e a senha da sala.</small></span>
       </label>
       <div class="jf-room-password-fields" id="jfRoomPasswordFields" hidden>
-        <div class="jf-room-field"><label for="jfNewRoomPassword">Senha da sala</label><input id="jfNewRoomPassword" type="password" maxlength="100" autocomplete="new-password" placeholder="Crie uma senha (mínimo 4 caracteres)"></div>
+        <div class="jf-room-field"><label for="jfNewRoomPassword">Senha da sala</label><input id="jfNewRoomPassword" type="password" maxlength="100" autocomplete="new-password" placeholder="Crie uma senha (mÃ­nimo 4 caracteres)"></div>
       </div>
       <p class="jf-room-modal-error" id="jfCreateRoomError" role="status" aria-live="polite"></p>
-      <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelCreateRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmCreateRoom" type="submit">✦ Criar sala</button></div>
+      <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelCreateRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmCreateRoom" type="submit">âœ¦ Criar sala</button></div>
     </form>
   </section>
 </div>
 
 <div class="jf-modal-backdrop" id="jfJoinRoomModal" hidden>
   <section class="jf-room-modal" role="dialog" aria-modal="true" aria-labelledby="jfJoinRoomTitle">
-    <button class="jf-room-modal-close" id="jfCloseJoinRoom" type="button" aria-label="Fechar">×</button>
+    <button class="jf-room-modal-close" id="jfCloseJoinRoom" type="button" aria-label="Fechar">Ã—</button>
     <div class="jf-room-modal-head">
-      <div class="jf-room-modal-icon" aria-hidden="true">✦</div>
-      <div><h2 id="jfJoinRoomTitle">Bora ouvir junto?</h2><p>Digite o nome da sala que já existe. Se ela tiver senha, informe também.</p></div>
+      <div class="jf-room-modal-icon" aria-hidden="true">âœ¦</div>
+      <div><h2 id="jfJoinRoomTitle">Bora ouvir junto?</h2><p>Digite o nome da sala que jÃ¡ existe. Se ela tiver senha, informe tambÃ©m.</p></div>
     </div>
     <form id="jfJoinRoomForm">
       <div class="jf-room-field"><label for="jfExistingRoomName">Nome da sala</label><input id="jfExistingRoomName" maxlength="40" autocomplete="off" placeholder="ex.: madrugada-com-voce" required></div>
       <div class="jf-room-field"><label for="jfExistingRoomPassword">Senha <span style="font-weight:400;text-transform:none">(se a sala pedir)</span></label><input id="jfExistingRoomPassword" type="password" maxlength="100" autocomplete="current-password" placeholder="Digite a senha, se houver"></div>
       <p class="jf-room-modal-error" id="jfJoinRoomError" role="status" aria-live="polite"></p>
-      <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelJoinRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmJoinRoom" type="submit">↗ Entrar na sala</button></div>
+      <div class="jf-room-modal-actions"><button class="btn secondary" id="jfCancelJoinRoom" type="button">Cancelar</button><button class="btn" id="jfConfirmJoinRoom" type="submit">â†— Entrar na sala</button></div>
     </form>
   </section>
 </div>
@@ -743,19 +743,19 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 const config = {
   iceServers: [{ urls: "stun:stun.relay.metered.ca:80" }]
 };
-// Busca os ICE servers pelo backend; a API key da credencial não é enviada ao navegador.
+// Busca os ICE servers pelo backend; a API key da credencial nÃ£o Ã© enviada ao navegador.
 const turnConfigReady = fetch("/api/turn/ice-servers")
   .then(response => {
-    if (!response.ok) throw new Error("TURN não configurado");
+    if (!response.ok) throw new Error("TURN nÃ£o configurado");
     return response.json();
   })
   .then(iceServers => {
-    if (!Array.isArray(iceServers) || !iceServers.length) throw new Error("Resposta TURN inválida");
+    if (!Array.isArray(iceServers) || !iceServers.length) throw new Error("Resposta TURN invÃ¡lida");
     config.iceServers = iceServers;
     return true;
   })
   .catch(() => {
-    console.warn("TURN indisponível; usando STUN como alternativa.");
+    console.warn("TURN indisponÃ­vel; usando STUN como alternativa.");
     return false;
   });
 
@@ -784,31 +784,31 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
       currentTrack = null;
-      $("spotifyFavorite").textContent = "♡ Favoritar música";
+      $("spotifyFavorite").textContent = "â™¡ Favoritar mÃºsica";
       $("spotifyFavoriteStatus").textContent = "";
-      $("trackTitle").textContent = "A música aparece aqui";
+      $("trackTitle").textContent = "A mÃºsica aparece aqui";
       $("trackArtist").textContent = "Conecte o Spotify para mostrar os metadados";
-      $("trackAlbum").textContent = "JUNTO.FM · Y2K RADIO";
+      $("trackAlbum").textContent = "JUNTO.FM Â· Y2K RADIO";
       $("trackArt").hidden = true; $("trackArt").removeAttribute("src"); $("trackPlaceholder").hidden = false;
       $("trackProgressFill").style.width = "0%"; $("trackElapsed").textContent = "0:00"; $("trackDuration").textContent = "0:00";
-      $("trackKicker").textContent = "✦ NOW PLAYING";
+      $("trackKicker").textContent = "âœ¦ NOW PLAYING";
       $("trackProgress").setAttribute("aria-valuenow", "0");
       jfUpdateFavoriteButton();
       return;
     }
     const nextTrackUri = String(track.uri || "");
     if (!currentTrack || String(currentTrack.uri || "") !== nextTrackUri) {
-      $("spotifyFavorite").textContent = "♡ Favoritar música";
+      $("spotifyFavorite").textContent = "â™¡ Favoritar mÃºsica";
       $("spotifyFavoriteStatus").textContent = "";
     }
     currentTrack = { ...track };
     trackBaseTime = Date.now();
     $("trackTitle").textContent = track.name;
     $("trackArtist").textContent = track.artists || "Artista desconhecido";
-    $("trackAlbum").textContent = track.album || "Spotify · Junto.fm";
+    $("trackAlbum").textContent = track.album || "Spotify Â· Junto.fm";
     if (track.image) { $("trackArt").src = track.image; $("trackArt").hidden = false; $("trackPlaceholder").hidden = true; }
     else { $("trackArt").hidden = true; $("trackPlaceholder").hidden = false; }
-    $("trackKicker").textContent = track.is_playing ? "✦ NOW PLAYING · LIVE" : "✦ PAUSED / NOT PLAYING";
+    $("trackKicker").textContent = track.is_playing ? "âœ¦ NOW PLAYING Â· LIVE" : "âœ¦ PAUSED / NOT PLAYING";
     jfUpdateFavoriteButton();
     updateTrackProgress();
   }
@@ -826,13 +826,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   async function jfFavoriteCurrentTrack(){
     if(jfSavingFavorite||!currentTrack||!currentTrack.uri)return;
     if(!spotifyConnected){$("spotifyFavoriteStatus").textContent="Conecte sua conta do Spotify primeiro.";return;}
-    jfSavingFavorite=true;jfUpdateFavoriteButton();$("spotifyFavoriteStatus").textContent="Salvando na sua biblioteca do Spotify…";
+    jfSavingFavorite=true;jfUpdateFavoriteButton();$("spotifyFavoriteStatus").textContent="Salvando na sua biblioteca do Spotifyâ€¦";
     try{
       const response=await fetch("/api/spotify/save-track",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uri:currentTrack.uri})});
       const result=await response.json().catch(()=>({}));
-      if(!response.ok)throw new Error(result.error||"Não foi possível favoritar a música.");
-      $("spotifyFavorite").textContent="♥ Salva no Spotify";
-      $("spotifyFavoriteStatus").textContent="Adicionada à sua biblioteca do Spotify!";
+      if(!response.ok)throw new Error(result.error||"NÃ£o foi possÃ­vel favoritar a mÃºsica.");
+      $("spotifyFavorite").textContent="â™¥ Salva no Spotify";
+      $("spotifyFavoriteStatus").textContent="Adicionada Ã  sua biblioteca do Spotify!";
     }catch(error){
       $("spotifyFavoriteStatus").textContent=error.message||"Falha ao salvar. Tente reconectar o Spotify.";
     }finally{jfSavingFavorite=false;jfUpdateFavoriteButton();}
@@ -848,11 +848,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       jfUpdateFavoriteButton();
       $("spotifyConnect").style.pointerEvents = status.configured ? 'auto' : 'none';
       $("spotifyConnect").style.opacity = status.configured ? '1' : '.45';
-      if (!status.configured) $("spotifyStatus").textContent = 'O servidor precisa de um Spotify Client ID para ativar esta integração.';
-      else $("spotifyStatus").textContent = spotifyConnected ? 'Spotify conectado nesta sessão.' : 'Spotify ainda não conectado neste aparelho.';
+      if (!status.configured) $("spotifyStatus").textContent = 'O servidor precisa de um Spotify Client ID para ativar esta integraÃ§Ã£o.';
+      else $("spotifyStatus").textContent = spotifyConnected ? 'Spotify conectado nesta sessÃ£o.' : 'Spotify ainda nÃ£o conectado neste aparelho.';
       if (new URLSearchParams(location.search).get('spotify') === 'connected') {
         history.replaceState({}, '', location.pathname);
-        $("spotifyStatus").textContent = 'Spotify conectado! Deixe uma música tocando e inicie a transmissão.';
+        $("spotifyStatus").textContent = 'Spotify conectado! Deixe uma mÃºsica tocando e inicie a transmissÃ£o.';
         const restoreSpotifyRoom=()=>{
           let returnRoom="",returnPassword="";
           try{returnRoom=sessionStorage.getItem("jfSpotifyReturnRoom")||"";returnPassword=sessionStorage.getItem("jfSpotifyReturnPassword")||"";}catch(_){}
@@ -864,7 +864,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         if(socket.connected) restoreSpotifyRoom();
         else socket.once("connect",restoreSpotifyRoom);
       }
-    } catch (_) { $("spotifyStatus").textContent = 'Não foi possível verificar a conexão com o Spotify.'; }
+    } catch (_) { $("spotifyStatus").textContent = 'NÃ£o foi possÃ­vel verificar a conexÃ£o com o Spotify.'; }
   }
   async function pollSpotifyTrack() {
     if (!joined || !isSender || !spotifyConnected) return;
@@ -873,7 +873,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const data = await response.json();
       if (!response.ok) { $("spotifyStatus").textContent = data.error || 'Erro ao consultar Spotify.'; return; }
       if (!data.item) {
-        $("spotifyStatus").textContent = 'Spotify conectado; nenhuma música ativa detectada.';
+        $("spotifyStatus").textContent = 'Spotify conectado; nenhuma mÃºsica ativa detectada.';
         return;
       }
       const track = {
@@ -885,7 +885,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       renderTrack(track);
       socket.emit('track-update', { room, track });
       $("spotifyStatus").textContent = 'Metadados sincronizados para a sala.';
-    } catch (_) { $("spotifyStatus").textContent = 'Falha ao atualizar a música atual.'; }
+    } catch (_) { $("spotifyStatus").textContent = 'Falha ao atualizar a mÃºsica atual.'; }
   }
   function startSpotifyPolling() {
     if (spotifyPollTimer) clearInterval(spotifyPollTimer);
@@ -987,7 +987,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
           const jitter = audio.jitter != null
             ? (audio.jitter * 1000).toFixed(1) + " ms"
-            : "indisponível";
+            : "indisponÃ­vel";
 
           panel.textContent =
             `Bitrate: ${bitrate} | Jitter: ${jitter} | Pacotes perdidos: ${lost} (${loss}%)`;
@@ -997,19 +997,19 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
             timestamp: audio.timestamp
           };
         } catch (error) {
-          console.warn("Erro ao medir áudio:", error);
+          console.warn("Erro ao medir Ã¡udio:", error);
         }
       }, 2000);
 
       $("remoteAudio").play()
-        .then(() => setStatus("Áudio recebido e reproduzindo.", true))
-        .catch(() => setStatus("Conexão pronta. Toque em Play no player para liberar o áudio.", true));
+        .then(() => setStatus("Ãudio recebido e reproduzindo.", true))
+        .catch(() => setStatus("ConexÃ£o pronta. Toque em Play no player para liberar o Ã¡udio.", true));
     };
     peer.onconnectionstatechange = () => {
       if (peers.get(id) !== peer) return;
-      if (peer.connectionState === "connected") setStatus(isSender ? "Transmissão conectada a um ouvinte." : "Áudio conectado.", true);
-      else if (peer.connectionState === "disconnected") setStatus("Conexão instável; tentando recuperar o áudio.");
-      else if (peer.connectionState === "failed") setStatus("A conexão falhou. Algumas redes precisam de um servidor TURN.");
+      if (peer.connectionState === "connected") setStatus(isSender ? "TransmissÃ£o conectada a um ouvinte." : "Ãudio conectado.", true);
+      else if (peer.connectionState === "disconnected") setStatus("ConexÃ£o instÃ¡vel; tentando recuperar o Ã¡udio.");
+      else if (peer.connectionState === "failed") setStatus("A conexÃ£o falhou. Algumas redes precisam de um servidor TURN.");
     };
     return peer;
   }
@@ -1037,7 +1037,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if (!sender.track || sender.track.kind !== 'audio') continue;
       try { sender.track.contentHint = 'music'; } catch (_) {}
       try { const params = sender.getParameters(); params.encodings = params.encodings?.length ? params.encodings : [{}]; params.encodings[0].maxBitrate = 256000; await sender.setParameters(params); }
-      catch (error) { console.warn('Bitrate personalizado indisponível:', error); }
+      catch (error) { console.warn('Bitrate personalizado indisponÃ­vel:', error); }
     }
   }
   async function createSenderOffer(id) {
@@ -1052,17 +1052,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if (peers.get(id) !== peer) return;
       await peer.setLocalDescription(offer);
       sendSignal(id, { type: 'offer', sdp: peer.localDescription });
-      setStatus(`Transmitindo áudio; conexões ativas: ${peers.size}.`, true);
-    } catch (error) { console.error('Falha ao criar oferta:', error); setStatus('Não foi possível conectar um ouvinte. Tente novamente.'); }
+      setStatus(`Transmitindo Ã¡udio; conexÃµes ativas: ${peers.size}.`, true);
+    } catch (error) { console.error('Falha ao criar oferta:', error); setStatus('NÃ£o foi possÃ­vel conectar um ouvinte. Tente novamente.'); }
   }
   function cleanRoomName(value) { return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40); }
   let pendingCreatePassword = "";
   function joinRoom(name, suppliedPassword) {
     const cleaned = cleanRoomName(name);
-    if (!cleaned) { setStatus('Digite um nome de sala válido.'); return; }
-    if (!socket.connected) { setStatus('Sem conexão com o servidor. Aguarde e tente novamente.'); return; }
-    if (joined && room === cleaned) { setStatus('Você já está nesta sala.', true); return; }
-    setStatus('Entrando na sala…');
+    if (!cleaned) { setStatus('Digite um nome de sala vÃ¡lido.'); return; }
+    if (!socket.connected) { setStatus('Sem conexÃ£o com o servidor. Aguarde e tente novamente.'); return; }
+    if (joined && room === cleaned) { setStatus('VocÃª jÃ¡ estÃ¡ nesta sala.', true); return; }
+    setStatus('Entrando na salaâ€¦');
     const password = suppliedPassword || "";
     try { sessionStorage.setItem("jfSpotifyReturnRoom", cleaned); sessionStorage.setItem("jfSpotifyReturnPassword", password); } catch (_) {}
     socket.emit('join-room', { room: cleaned, password });
@@ -1107,10 +1107,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     event.preventDefault();
     const name = cleanRoomName($("jfExistingRoomName").value);
     const password = $("jfExistingRoomPassword").value;
-    if (!name) { $("jfJoinRoomError").textContent = "Digite um nome válido (letras, números, hífen ou underline)."; return; }
-    if (!socket.connected) { $("jfJoinRoomError").textContent = "Sem conexão com o servidor. Tente novamente em instantes."; return; }
+    if (!name) { $("jfJoinRoomError").textContent = "Digite um nome vÃ¡lido (letras, nÃºmeros, hÃ­fen ou underline)."; return; }
+    if (!socket.connected) { $("jfJoinRoomError").textContent = "Sem conexÃ£o com o servidor. Tente novamente em instantes."; return; }
     $("jfConfirmJoinRoom").disabled = true;
-    $("jfJoinRoomError").textContent = "Procurando a sala…";
+    $("jfJoinRoomError").textContent = "Procurando a salaâ€¦";
     joinRoom(name, password);
   });
   $("jfCloseCreateRoom").onclick = closeCreateRoomModal;
@@ -1126,12 +1126,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const name = cleanRoomName($("jfNewRoomName").value);
     const wantsPassword = $("jfRoomPasswordEnabled").checked;
     const password = wantsPassword ? $("jfNewRoomPassword").value : "";
-    if (!name) { $("jfCreateRoomError").textContent = "Digite um nome de sala válido (letras, números, hífen ou underline)."; return; }
+    if (!name) { $("jfCreateRoomError").textContent = "Digite um nome de sala vÃ¡lido (letras, nÃºmeros, hÃ­fen ou underline)."; return; }
     if (wantsPassword && password.length < 4) { $("jfCreateRoomError").textContent = "Use uma senha com pelo menos 4 caracteres."; $("jfNewRoomPassword").focus(); return; }
-    if (!socket.connected) { $("jfCreateRoomError").textContent = "Sem conexão com o servidor. Tente novamente em instantes."; return; }
+    if (!socket.connected) { $("jfCreateRoomError").textContent = "Sem conexÃ£o com o servidor. Tente novamente em instantes."; return; }
     pendingCreatePassword = password;
     $("jfConfirmCreateRoom").disabled = true;
-    $("jfCreateRoomError").textContent = "Criando sua sala…";
+    $("jfCreateRoomError").textContent = "Criando sua salaâ€¦";
     socket.emit("create-room", { room: name, password });
   });
   socket.on("room-created", ({room: createdRoom}) => {
@@ -1142,18 +1142,18 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("create-room-error", ({message}) => {
     $("jfConfirmCreateRoom").disabled = false;
-    $("jfCreateRoomError").textContent = message || "Não foi possível criar a sala.";
+    $("jfCreateRoomError").textContent = message || "NÃ£o foi possÃ­vel criar a sala.";
   });
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !createModal.hidden) closeCreateRoomModal();
     if (event.key === "Escape" && !joinModal.hidden) closeJoinRoomModal();
   });
 
-  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
-  socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use â€œCriar salaâ€ e compartilhe o nome.'; enableControls(); });
+  socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('NÃ£o foi possÃ­vel conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicaÃ§Ã£o por HTTP/HTTPS, nÃ£o pelo arquivo HTML. ' + (error?.message || ''); });
+  socket.on('disconnect', () => { joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('ConexÃ£o perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
-    const errorMessage = message || 'Não foi possível entrar na sala.';
+    const errorMessage = message || 'NÃ£o foi possÃ­vel entrar na sala.';
     if (!joinModal.hidden) {
       $("jfJoinRoomError").textContent = errorMessage;
       $("jfConfirmJoinRoom").disabled = false;
@@ -1164,8 +1164,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null }) => {
     if (joined && room !== joinedRoom) resetSession();
     joined = true; room = joinedRoom; try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
-    setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
-    $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
+    setStatus(`VocÃª entrou na sala â€œ${room}â€. Compartilhe o nome com os ouvintes.`, true);
+    $("roomCount").textContent = `Sala: ${room} Â· participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
     if (track) renderTrack(track, true); else renderTrack(null);
     jfRenderMiniDj(transmitter);
@@ -1174,7 +1174,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
   socket.on('track-update', track => renderTrack(track, true));
   socket.on('track-clear', () => renderTrack(null));
-  socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} · participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
+  socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} Â· participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
   socket.on('peer-joined', async ({id}) => {
     setStatus('Uma pessoa entrou na sala.', true);
     if (isSender && localStream) await createSenderOffer(id);
@@ -1182,7 +1182,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   socket.on('peer-left', ({id}) => {
     closePeer(id);
     if (!isSender && peers.size === 0) { $("remoteAudio").pause(); $("remoteAudio").srcObject = null; }
-    setStatus(isSender ? `Um participante saiu. A transmissão continua; ouvintes conectados: ${peers.size}.` : 'Um participante saiu da sala.');
+    setStatus(isSender ? `Um participante saiu. A transmissÃ£o continua; ouvintes conectados: ${peers.size}.` : 'Um participante saiu da sala.');
   });
   socket.on('signal', async ({from, data}) => {
     if (!from || !data || !joined) return;
@@ -1207,9 +1207,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       } else if (data.type === 'transmission-stopped' && !isSender) {
         closePeer(from);
         if (peers.size === 0) { $("remoteAudio").pause(); $("remoteAudio").srcObject = null; }
-        setStatus('O transmissor encerrou o áudio.');
+        setStatus('O transmissor encerrou o Ã¡udio.');
       }
-    } catch (error) { console.error('Falha na sinalização WebRTC:', error); setStatus('Falha ao conectar o áudio. Tente entrar novamente na sala.'); }
+    } catch (error) { console.error('Falha na sinalizaÃ§Ã£o WebRTC:', error); setStatus('Falha ao conectar o Ã¡udio. Tente entrar novamente na sala.'); }
   });
 
   $("start").onclick = async () => {
@@ -1218,24 +1218,24 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if (!navigator.mediaDevices?.getDisplayMedia) { setStatus('A captura exige Chrome/Edge em localhost ou HTTPS.'); return; }
       const captured = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
       const audioTracks = captured.getAudioTracks();
-      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus('A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
+      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus('A captura nÃ£o incluiu Ã¡udio. Escolha a aba de mÃºsica e marque â€œCompartilhar Ã¡udioâ€.'); return; }
       audioTracks.forEach(track => { try { track.contentHint = 'music'; } catch (_) {} });
       captured.getVideoTracks().forEach(track => track.stop());
       resetSession();
       localStream = captured; isSender = true; socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
-      // Os participantes presentes recebem uma conexão individual. Novos participantes
-      // serão conectados pelo evento peer-joined do servidor.
+      // Os participantes presentes recebem uma conexÃ£o individual. Novos participantes
+      // serÃ£o conectados pelo evento peer-joined do servidor.
       const roomInfo = await new Promise(resolve => {
         // O servidor informa participantes ao entrar; guardamos os IDs atuais localmente.
         resolve([]);
       });
       enableControls();
-      // Se ouvintes já estavam na sala, IDs são guardados no conjunto abaixo.
+      // Se ouvintes jÃ¡ estavam na sala, IDs sÃ£o guardados no conjunto abaixo.
       for (const id of knownPeers) await createSenderOffer(id);
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
-      setStatus('Captura de áudio ativa. Aguardando/conectando ouvintes…', true);
+      setStatus('Captura de Ã¡udio ativa. Aguardando/conectando ouvintesâ€¦', true);
       if (spotifyConnected) startSpotifyPolling();
-    } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('Transmissão cancelada ou não permitida pelo navegador.'); }
+    } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('TransmissÃ£o cancelada ou nÃ£o permitida pelo navegador.'); }
   };
   async function stopTransmission() {
     // Notifica cada ouvinte de forma direcionada.
@@ -1243,7 +1243,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     socket.emit('transmission-stopped', { room });
     socket.emit('clear-track', { room });
     jfRenderMiniDj(null);
-    resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('Transmissão encerrada.');
+    resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('TransmissÃ£o encerrada.');
   }
   $("stop").onclick = stopTransmission;
   $("jfLeaveRoom").onclick = () => {
@@ -1254,12 +1254,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     joined = false; room = ""; $("room").value = "";
     $("remoteAudio").pause(); $("remoteAudio").srcObject = null;
     jfRenderMiniDj(null); renderTrack(null);
-    $("roomCount").textContent = "Ainda não entrou em uma sala.";
-    $("role").textContent = "Entre na sala para começar.";
+    $("roomCount").textContent = "Ainda nÃ£o entrou em uma sala.";
+    $("role").textContent = "Entre na sala para comeÃ§ar.";
     $("jfChatWindow").hidden = true; $("jfChatLauncher").classList.remove("has-unread");
     jfPeerProfiles.clear(); jfRenderPeople(); jfRenderChat([]);
     jfUpdateRoomView(); enableControls(); jfUpdateChatControls(); jfUpdateSuggestionControls();
-    setStatus(socket.connected ? "Você saiu da sala. Crie ou entre em outra sala." : "Desconectado do servidor.");
+    setStatus(socket.connected ? "VocÃª saiu da sala. Crie ou entre em outra sala." : "Desconectado do servidor.");
   };
   $("spotifyDisconnect").onclick = async () => {
     try { await fetch('/api/spotify/logout', { method: 'POST' }); } catch (_) {}
@@ -1270,18 +1270,18 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   $("pauseCmd").onclick = () => socket.emit('room-command', { room, command: 'pause' });
   $("nextCmd").onclick = () => socket.emit('room-command', { room, command: 'next' });
   socket.on('room-command', ({command}) => {
-    $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a música.' : 'O transmissor pediu para passar à próxima música.';
-    setStatus('Comando recebido. O controle da música ainda é manual neste protótipo.', true);
+    $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a mÃºsica.' : 'O transmissor pediu para passar Ã  prÃ³xima mÃºsica.';
+    setStatus('Comando recebido. O controle da mÃºsica ainda Ã© manual neste protÃ³tipo.', true);
   });
   let jfSuggestionEnabled = false;
   function jfUpdateSuggestionControls(){
     $("jfSendSuggestion").disabled = !joined || !$("jfSuggestionText").value.trim();
-    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative a opção acima para receber sugestões." : "Sugestões serão enviadas a quem estiver transmitindo.");
+    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma mÃºsica." : (isSender ? "VocÃª estÃ¡ transmitindo. Ative a opÃ§Ã£o acima para receber sugestÃµes." : "SugestÃµes serÃ£o enviadas a quem estiver transmitindo.");
   }
   $("jfReceiveSuggestions").addEventListener("change",()=>{
     jfSuggestionEnabled=$("jfReceiveSuggestions").checked;
     socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled});
-    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Recebimento de sugestões ativado neste aparelho.":"Recebimento de sugestões desativado.";
+    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Recebimento de sugestÃµes ativado neste aparelho.":"Recebimento de sugestÃµes desativado.";
   });
   $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
   $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
@@ -1290,26 +1290,26 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(!joined||!suggestion)return;
     const sendButton=$("jfSendSuggestion");
     sendButton.disabled=true;
-    $("jfSuggestionStatus").textContent="Conferindo se a música existe...";
+    $("jfSuggestionStatus").textContent="Conferindo se a mÃºsica existe...";
     try{
       const response=await fetch("/api/music/validate-suggestion?title="+encodeURIComponent(suggestion));
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.valid){
-        $("jfSuggestionStatus").textContent=result.error||"Não encontrei essa música. Tente o título oficial e, se possível, o artista.";
+        $("jfSuggestionStatus").textContent=result.error||"NÃ£o encontrei essa mÃºsica. Tente o tÃ­tulo oficial e, se possÃ­vel, o artista.";
         return;
       }
       socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
       $("jfSuggestionText").value="";
-      $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
+      $("jfSuggestionStatus").textContent="SugestÃ£o enviada para quem estiver recebendo sugestÃµes.";
     }catch(_){
-      $("jfSuggestionStatus").textContent="Não foi possível verificar a música agora. Tente novamente.";
+      $("jfSuggestionStatus").textContent="NÃ£o foi possÃ­vel verificar a mÃºsica agora. Tente novamente.";
     }finally{
       jfUpdateSuggestionControls();
     }
   });
   function jfShowSuggestion({suggestion,fromName}){
     if(!isSender||!jfSuggestionEnabled)return;
-    $("jfPopupSong").textContent=String(suggestion||"Sugestão de música").slice(0,180);
+    $("jfPopupSong").textContent=String(suggestion||"SugestÃ£o de mÃºsica").slice(0,180);
     $("jfPopupFrom").textContent="Sugerida por "+String(fromName||"Ouvinte").slice(0,24);
     $("jfSuggestionPopup").hidden=false;
   }
@@ -1317,15 +1317,15 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   $("jfCloseSuggestion").addEventListener("click",jfHideSuggestion);
   $("jfSuggestionDone").addEventListener("click",jfHideSuggestion);
   socket.on("music-suggestion",jfShowSuggestion);
-  socket.on("music-suggestion-error",({error}={})=>{$("jfSuggestionStatus").textContent=String(error||"Não foi possível enviar a sugestão.");});
-  // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
+  socket.on("music-suggestion-error",({error}={})=>{$("jfSuggestionStatus").textContent=String(error||"NÃ£o foi possÃ­vel enviar a sugestÃ£o.");});
+  // IDs dos participantes da sala sÃ£o mantidos mesmo antes de comeÃ§ar a transmissÃ£o.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
   socket.on('peer-joined', ({id}) => knownPeers.add(id));
   socket.on('peer-left', ({id}) => knownPeers.delete(id));
   socket.on('disconnect', () => knownPeers.clear());
 
-  // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
+  // Perfil local e temas visuais: mudanÃ§as isoladas nesta branch de teste.
   const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
   let jfProfile={name:"Ouvinte",avatar:"",motto:""};
   const jfPeerProfiles=new Map();
@@ -1358,16 +1358,16 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const list=$("jfPeople");list.replaceChildren();
     if(!joined){const p=document.createElement("p");p.className="small";p.textContent="Entre em uma sala para ver os participantes.";list.appendChild(p);return;}
     const all=[...(socket.id?[[socket.id,jfProfile]]:[]),...jfPeerProfiles.entries()];
-    if(!all.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
+    if(!all.length){const p=document.createElement("p");p.className="small";p.textContent="VocÃª estÃ¡ na sala.";list.appendChild(p);return;}
     for(const [id,p] of all){
       const card=document.createElement("div");card.className="jf-person";
-      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="☺";card.appendChild(av);}
-      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);
+      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="â˜º";card.appendChild(av);}
+      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (vocÃª)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);
       if(id!==socket.id){
         const actions=document.createElement("div");actions.className="jf-person-actions";
-        const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.textContent="＋ Amigo";request.title="Enviar solicitação de amizade";request.setAttribute("aria-label","Enviar solicitação de amizade para "+(p.name||"Ouvinte"));
+        const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.textContent="ï¼‹ Amigo";request.title="Enviar solicitaÃ§Ã£o de amizade";request.setAttribute("aria-label","Enviar solicitaÃ§Ã£o de amizade para "+(p.name||"Ouvinte"));
         const already=jfFriends.some(f=>f.name.toLowerCase()===(p.name||"Ouvinte").toLowerCase()&&f.room.toLowerCase()===(room||"").toLowerCase());
-        if(already){request.textContent="✓ Amigo";request.disabled=true;}
+        if(already){request.textContent="âœ“ Amigo";request.disabled=true;}
         request.addEventListener("click",()=>{if(!joined||!room){request.textContent="Entre em uma sala primeiro";return;}socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});request.disabled=true;request.textContent="Solicitada";});
         actions.appendChild(request);card.appendChild(actions);
       }
@@ -1377,7 +1377,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   socket.on("friend-request-received",({fromId,profile={},room:friendRoom})=>{
     const senderName=String(profile.name||"Ouvinte").slice(0,24);
     if(!fromId||!friendRoom)return;
-    if(window.confirm(senderName+" quer adicionar você como amigo. Aceitar?")){
+    if(window.confirm(senderName+" quer adicionar vocÃª como amigo. Aceitar?")){
       if(!jfFriends.some(f=>f.name.toLowerCase()===senderName.toLowerCase()&&f.room.toLowerCase()===String(friendRoom).toLowerCase())){
         jfFriends.push({name:senderName,room:String(friendRoom).slice(0,40)});jfFriends=jfFriends.slice(-100);
         try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}
@@ -1391,8 +1391,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(accepted&&friendRoom&&!jfFriends.some(f=>f.name.toLowerCase()===name.toLowerCase()&&f.room.toLowerCase()===String(friendRoom).toLowerCase())){
       jfFriends.push({name,room:String(friendRoom).slice(0,40)});jfFriends=jfFriends.slice(-100);
       try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}
-      jfRenderFriends();setStatus(name+" aceitou sua solicitação de amizade.",true);
-    }else if(!accepted)setStatus(name+" recusou a solicitação de amizade.");
+      jfRenderFriends();setStatus(name+" aceitou sua solicitaÃ§Ã£o de amizade.",true);
+    }else if(!accepted)setStatus(name+" recusou a solicitaÃ§Ã£o de amizade.");
   });
   const jfFriendsKey="junto_friends_v1";
   function jfLoadFriends(){try{const v=JSON.parse(localStorage.getItem(jfFriendsKey)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.name==="string"&&typeof x.room==="string").slice(0,100):[];}catch(_){return [];}}
@@ -1402,12 +1402,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(!jfFriends.length){const empty=document.createElement("p");empty.className="small";empty.textContent="Adicione seus amigos pelo nome e sala.";list.appendChild(empty);return;}
     jfFriends.forEach((friend,index)=>{const row=document.createElement("div");row.className="jf-person";row.style.display="flex";row.style.alignItems="center";row.style.justifyContent="space-between";row.style.gap="10px";
       const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const roomLabel=document.createElement("p");roomLabel.className="small";roomLabel.textContent="Sala: "+friend.room;info.append(name,roomLabel);
-      const actions=document.createElement("div");actions.style.display="flex";actions.style.gap="6px";const enter=document.createElement("button");enter.className="btn";enter.type="button";enter.textContent="Entrar";enter.addEventListener("click",()=>{closeFriendsModal();openJoinRoomModal();$("jfExistingRoomName").value=friend.room;$("jfExistingRoomPassword").value="";$("jfFriendsStatus").textContent="Para sala protegida, será necessária uma amizade reconhecida pelo servidor ou a senha.";});
+      const actions=document.createElement("div");actions.style.display="flex";actions.style.gap="6px";const enter=document.createElement("button");enter.className="btn";enter.type="button";enter.textContent="Entrar";enter.addEventListener("click",()=>{closeFriendsModal();openJoinRoomModal();$("jfExistingRoomName").value=friend.room;$("jfExistingRoomPassword").value="";$("jfFriendsStatus").textContent="Para sala protegida, serÃ¡ necessÃ¡ria uma amizade reconhecida pelo servidor ou a senha.";});
       const remove=document.createElement("button");remove.className="btn secondary";remove.type="button";remove.textContent="Remover";remove.addEventListener("click",()=>{jfFriends.splice(index,1);localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));jfRenderFriends();});actions.append(enter,remove);row.append(info,actions);list.appendChild(row);
     });
   }
   function closeFriendsModal(){$("jfFriendsModal").hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";}
-  $("jfFriendForm").addEventListener("submit",event=>{event.preventDefault();const name=$("jfFriendName").value.trim().slice(0,24),friendRoom=cleanRoomName($("jfFriendRoom").value);if(!name||!friendRoom){$("jfFriendsStatus").textContent="Informe o nome e o nome válido da sala.";return;}if(jfFriends.some(x=>x.room.toLowerCase()===friendRoom.toLowerCase())){$("jfFriendsStatus").textContent="Essa sala já está na sua lista.";return;}jfFriends.push({name,room:friendRoom});localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));$("jfFriendName").value="";$("jfFriendRoom").value="";$("jfFriendsStatus").textContent="Amigo salvo neste navegador.";jfRenderFriends();});
+  $("jfFriendForm").addEventListener("submit",event=>{event.preventDefault();const name=$("jfFriendName").value.trim().slice(0,24),friendRoom=cleanRoomName($("jfFriendRoom").value);if(!name||!friendRoom){$("jfFriendsStatus").textContent="Informe o nome e o nome vÃ¡lido da sala.";return;}if(jfFriends.some(x=>x.room.toLowerCase()===friendRoom.toLowerCase())){$("jfFriendsStatus").textContent="Essa sala jÃ¡ estÃ¡ na sua lista.";return;}jfFriends.push({name,room:friendRoom});localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));$("jfFriendName").value="";$("jfFriendRoom").value="";$("jfFriendsStatus").textContent="Amigo salvo neste navegador.";jfRenderFriends();});
   function jfInit(){
     $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";jfRenderAvatar();
     const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
@@ -1438,10 +1438,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     $("jfFont").addEventListener("change",()=>{const font=$("jfFont").value;document.documentElement.style.setProperty("--jf-font-family",`"${font}"`);try{localStorage.setItem("junto_options",JSON.stringify({volume:Number($("jfVolume").value),font}));}catch(_){} });
     $("jfAvatarFile").addEventListener("change",()=>{
       const file=$("jfAvatarFile").files&&$("jfAvatarFile").files[0];if(!file)return;
-      if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
-      const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
+      if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de atÃ© 8 MB.";return;}
+      const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="PrÃ©via pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="NÃ£o foi possÃ­vel ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
     });
-    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
+    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado Ã  sala.":"Perfil salvo. Entre na sala para compartilhar.";});
   }
   socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();}});
   socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();});
@@ -1463,7 +1463,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   function jfRenderChat(messages){
     const log=$("jfChatLog");log.replaceChildren();
-    if(!messages.length){const empty=document.createElement("p");empty.className="jf-chat-empty";empty.textContent=joined?"Nenhuma mensagem ainda. Que tal dar oi? ✦":"Entre em uma sala para começar a conversar ✦";log.appendChild(empty);return;}
+    if(!messages.length){const empty=document.createElement("p");empty.className="jf-chat-empty";empty.textContent=joined?"Nenhuma mensagem ainda. Que tal dar oi? âœ¦":"Entre em uma sala para comeÃ§ar a conversar âœ¦";log.appendChild(empty);return;}
     for(const message of messages) jfAppendChatMessage(message,false);
     log.scrollTop=log.scrollHeight;
   }
@@ -1471,7 +1471,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const log=$("jfChatLog"),empty=log.querySelector(".jf-chat-empty");if(empty)empty.remove();
     const item=document.createElement("div");item.className="jf-chat-message";
     if(message.avatar){const avatar=document.createElement("img");avatar.className="jf-chat-avatar";avatar.src=message.avatar;avatar.alt="";item.appendChild(avatar);}
-    else{const avatar=document.createElement("div");avatar.className="jf-chat-avatar";avatar.textContent="☺";item.appendChild(avatar);}
+    else{const avatar=document.createElement("div");avatar.className="jf-chat-avatar";avatar.textContent="â˜º";item.appendChild(avatar);}
     const bubble=document.createElement("div");bubble.className="jf-chat-bubble";
     const meta=document.createElement("div");meta.className="jf-chat-meta";
     const name=document.createElement("strong");name.textContent=String(message.name||"Ouvinte").slice(0,24);meta.appendChild(name);
@@ -1483,7 +1483,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   }
   function jfUpdateChatControls(){
     $("jfChatInput").disabled=!joined;$("jfChatSend").disabled=!joined||!$("jfChatInput").value.trim();
-    $("jfChatStatus").textContent=joined?"Mensagens visíveis para as pessoas nesta sala.":"Entre em uma sala para enviar mensagens.";
+    $("jfChatStatus").textContent=joined?"Mensagens visÃ­veis para as pessoas nesta sala.":"Entre em uma sala para enviar mensagens.";
   }
   const jfEmojiTray=$("jfChatEmojiTray"),jfEmojiToggle=$("jfChatEmojiToggle");
   jfEmojiToggle.addEventListener("click",()=>{
@@ -1508,7 +1508,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     socket.emit("chat-send",{text});$("jfChatInput").value="";jfUpdateChatControls();$("jfChatInput").focus();
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
-  socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="Você está enviando mensagens rápido demais. Aguarde alguns segundos.";});
+  socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="VocÃª estÃ¡ enviando mensagens rÃ¡pido demais. Aguarde alguns segundos.";});
   socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
   socket.on("joined-room",()=>jfUpdateChatControls());
 
@@ -1520,7 +1520,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 </script>
 
 <script type="module">
-/* O modelo é opcional: se o arquivo ainda não estiver publicado, o mascote CSS continua funcionando. */
+/* O modelo Ã© opcional: se o arquivo ainda nÃ£o estiver publicado, o mascote CSS continua funcionando. */
 (async()=>{
   const stage=document.querySelector("#jfMiniDj .jf-dj-stage");
   if(!stage)return;
@@ -1552,7 +1552,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     model.scale.setScalar(2.25/maxDim);
     camera.position.set(0,.12,3.65);
     camera.lookAt(0,0,0);
-    // Orientação leve de três quartos; movimentos suaves de groove sem rig embutido.
+    // OrientaÃ§Ã£o leve de trÃªs quartos; movimentos suaves de groove sem rig embutido.
     root.rotation.y=-.16;
     stage.classList.add("jf-glb-ready");
     stage.querySelectorAll(".jf-dj-light,.jf-dj-booth,.jf-dj-character").forEach(el=>el.style.display="none");
@@ -1571,9 +1571,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       renderer.render(scene,camera);
     };
     animate();
-  }catch(error){console.warn("Junto.fm: não foi possível carregar o mascote 3D; mantendo o fallback.",error);}
+  }catch(error){console.warn("Junto.fm: nÃ£o foi possÃ­vel carregar o mascote 3D; mantendo o fallback.",error);}
 })();
 </script>
 
 </body>
 </html>
+
