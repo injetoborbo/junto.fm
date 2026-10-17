@@ -313,7 +313,7 @@ footer{text-align:center;color:#78817a;font-size:12px;margin-top:25px}
           await peer.setLocalDescription(answer);
           socket.emit("signal", { room, data: { type: "answer", sdp: peer.localDescription } });
         }
-       } else if (data.type === "answer") {
+      } } else if (data.type === "answer") {
   const peer = pc;
 
   if (peer && isSender) {

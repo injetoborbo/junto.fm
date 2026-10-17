@@ -3,285 +3,271 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Junto.fm — Ouvir música junto</title>
+<title>Junto.fm — 2000s Retro Edition</title>
 <style>
-:root{
-  color-scheme: dark;
-  --bg: #0b0f0d;
-  --panel: #141a16;
-  --panel-border: #233227;
-  --muted: #8b9e90;
-  --green: #1ed760;
-  --green-hover: #1aa34a;
-  --text: #f1f5f2;
-  --danger: #ff5c5c;
+:root {
+  --win-bg: #ece9d8;
+  --win-blue: #0055ea;
+  --win-blue-grad: linear-gradient(180deg, #0a246a 0%, #a6caf0 100%);
+  --win-border: #00135c;
+  --win-gray: #d4d0c8;
+  --win-darkgray: #808080;
+  --win-lightgray: #ffffff;
+  --text: #000000;
 }
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background: radial-gradient(circle at top, #182c1f 0%, var(--bg) 60%);
-  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+
+body {
+  margin: 0;
+  background-color: #008080; /* Clássico fundo verde teal do Windows 98/XP */
+  background-image: radial-gradient(#005555 15%, transparent 16%), radial-gradient(#005555 15%, transparent 16%);
+  background-size: 60px 60px;
+  background-position: 0 0, 30px 30px;
+  font-family: Tahoma, Arial, sans-serif;
   color: var(--text);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-}
-main{
-  max-width: 680px;
-  width: 100%;
-  margin: auto;
-  padding: 30px 20px;
-}
-.brand{
-  display: flex;
   align-items: center;
-  gap: 12px;
-  font-weight: 800;
-  font-size: 24px;
-  letter-spacing: -0.5px;
-  margin-bottom: 8px;
-}
-.logo{
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--green);
-  color: #051208;
-  font-size: 24px;
-  box-shadow: 0 8px 20px rgba(30, 215, 96, 0.3);
-}
-.tag{
-  margin-left: auto;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--green);
-  border: 1px solid rgba(30, 215, 96, 0.3);
-  padding: 5px 12px;
-  border-radius: 99px;
-  background: rgba(30, 215, 96, 0.05);
-}
-h1{
-  font-size: clamp(28px, 6vw, 40px);
-  letter-spacing: -1px;
-  line-height: 1.1;
-  margin: 20px 0 10px;
-}
-p{
-  color: var(--muted);
-  line-height: 1.5;
-  font-size: 15px;
-}
-.panel{
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 20px;
-  padding: 24px;
-  margin-top: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-label{
-  display: block;
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-input{
-  width: 100%;
-  background: #0d120f;
-  border: 1px solid #2a3d2f;
-  color: white;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-input:focus{
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(30, 215, 96, 0.15);
-}
-.row{
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-.row > *{flex: 1;}
-.btn{
-  border: 0;
-  border-radius: 12px;
-  padding: 14px 18px;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  background: var(--green);
-  color: #0b0f0d;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(30, 215, 96, 0.2);
-}
-.btn:hover:not(:disabled){
-  background: var(--green-hover);
-  transform: translateY(-1px);
-}
-.btn.secondary{
-  background: #1f2b22;
-  color: #e2ede4;
-  border: 1px solid #314a37;
-  box-shadow: none;
-}
-.btn.secondary:hover:not(:disabled){
-  background: #27372c;
-}
-.btn:disabled{
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-.status{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 16px;
-  background: #0d120f;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #1a261d;
-}
-.dot{
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ff5c5c;
-  flex-shrink: 0;
-}
-.dot.ok{
-  background: var(--green);
-  box-shadow: 0 0 10px var(--green);
-}
-.player{
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.cover{
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #22422c, #101c14);
-  display: grid;
-  place-items: center;
-  font-size: 26px;
-  border: 1px solid #2e4d38;
-}
-.player h2{
-  margin: 0 0 4px;
-  font-size: 17px;
-}
-.player p{
-  margin: 0;
-  font-size: 13px;
-}
-audio{
-  width: 100%;
-  margin-top: 16px;
-  border-radius: 8px;
-}
-.notice{
-  border-left: 3px solid var(--green);
-  padding: 12px 16px;
-  background: #111e15;
-  border-radius: 0 12px 12px 0;
-  color: #d1ebd8;
-  font-size: 13px;
-  line-height: 1.5;
-  margin-top: 16px;
-  border-top: 1px solid #1a3321;
-  border-right: 1px solid #1a3321;
-  border-bottom: 1px solid #1a3321;
-}
-footer{
-  text-align: center;
-  color: #5c6e61;
-  font-size: 12px;
+  justify-content: center;
   padding: 20px;
-  border-top: 1px solid var(--panel-border);
-  margin-top: 40px;
 }
-@media(max-width: 480px){
-  main{padding: 20px 14px;}
-  .panel{padding: 18px;}
-  .player{align-items: flex-start;}
+
+/* Estilo de Janela Retrô (Win98 / XP Classic) */
+.window {
+  background: var(--win-bg);
+  border: 2px solid;
+  border-color: var(--win-lightgray) var(--win-darkgray) var(--win-darkgray) var(--win-lightgray);
+  box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 20px;
+}
+
+.window-header {
+  background: var(--win-blue-grad);
+  color: white;
+  padding: 6px 8px;
+  font-weight: bold;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  letter-spacing: 0.5px;
+}
+
+.window-buttons {
+  display: flex;
+  gap: 3px;
+}
+
+.win-btn {
+  background: var(--win-bg);
+  border: 1px solid;
+  border-color: var(--win-lightgray) var(--win-darkgray) var(--win-darkgray) var(--win-lightgray);
+  width: 16px;
+  height: 14px;
+  font-size: 9px;
+  font-weight: bold;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: black;
+}
+
+.window-body {
+  padding: 16px;
+}
+
+/* Elementos de Formulário Retrô */
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+input {
+  flex: 1;
+  background: white;
+  border: 2px solid;
+  border-color: var(--win-darkgray) var(--win-lightgray) var(--win-lightgray) var(--win-darkgray);
+  padding: 6px 8px;
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+
+button.retro-btn {
+  background: var(--win-bg);
+  border: 2px solid;
+  border-color: var(--win-lightgray) var(--win-darkgray) var(--win-darkgray) var(--win-lightgray);
+  padding: 6px 14px;
+  font-family: Tahoma, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  color: black;
+  text-align: center;
+}
+
+button.retro-btn:active:not(:disabled) {
+  border-color: var(--win-darkgray) var(--win-lightgray) var(--win-lightgray) var(--win-darkgray);
+  padding: 7px 13px 5px 15px; /* Efeito de clique */
+}
+
+button.retro-btn:disabled {
+  color: var(--win-darkgray);
+  cursor: not-allowed;
+}
+
+/* Painel estilo Winamp / Media Player */
+.player-screen {
+  background: #000000;
+  color: #00ff66;
+  font-family: "Courier New", monospace;
+  padding: 10px;
+  border: 2px solid;
+  border-color: var(--win-darkgray) var(--win-lightgray) var(--win-lightgray) var(--win-darkgray);
+  font-size: 13px;
+  margin-bottom: 12px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.status-bar {
+  background: var(--win-bg);
+  border: 1px solid;
+  border-color: var(--win-darkgray) var(--win-lightgray) var(--win-lightgray) var(--win-darkgray);
+  padding: 4px 8px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pixel-dot {
+  width: 7px;
+  height: 7px;
+  background: #c00000;
+}
+.pixel-dot.ok {
+  background: #00aa00;
+}
+
+audio {
+  width: 100%;
+  margin-top: 8px;
+  filter: contrast(120%);
+}
+
+.marquee {
+  white-space: nowrap;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.instructions {
+  font-size: 11px;
+  color: #333333;
+  background: #fff;
+  border: 1px inset var(--win-darkgray);
+  padding: 8px;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+footer {
+  color: white;
+  font-size: 11px;
+  text-shadow: 1px 1px #000;
+  margin-top: 10px;
 }
 </style>
 </head>
 <body>
-<main>
-  <div class="brand">
-    <div class="logo">♫</div> 
-    Junto.fm 
-    <span class="tag">Online</span>
-  </div>
-  <h1>Música boa é<br>melhor junto.</h1>
-  <p>Cria uma sala privada e ouve o áudio do navegador em tempo real com vários amigos.</p>
 
-  <section class="panel">
-    <label for="room">Nome da sala (usa o mesmo em todos os aparelhos)</label>
-    <div class="row">
-      <input id="room" maxlength="40" value="noite" autocomplete="off" placeholder="ex: nossa-sala">
-      <button class="btn" id="join">Entrar na sala</button>
-    </div>
-    <div class="status">
-      <span class="dot" id="dot"></span>
-      <span id="status">A ligar ao servidor...</span>
-    </div>
-  </section>
-
-  <section class="panel">
-    <div class="player">
-      <div class="cover">♫</div>
-      <div>
-        <h2>Transmissão ao Vivo</h2>
-        <p id="role">Entra numa sala para começar.</p>
+  <!-- Janela Principal de Acesso -->
+  <div class="window">
+    <div class="window-header">
+      <span>🌐 junto_config.exe</span>
+      <div class="window-buttons">
+        <button class="win-btn">_</button>
+        <button class="win-btn">□</button>
+        <button class="win-btn">×</button>
       </div>
     </div>
-    
-    <div class="row" style="margin-top:20px">
-      <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
-      <button class="btn secondary" id="stop" disabled>Parar</button>
+    <div class="window-body">
+      <label for="room">Identificação da Sala (Sessão):</label>
+      <div class="row">
+        <input id="room" maxlength="40" value="noite" autocomplete="off">
+        <button class="retro-btn" id="join">Entrar</button>
+      </div>
+      <div class="status-bar">
+        <div class="pixel-dot" id="dot"></div>
+        <span id="status">A aguardar ligação ao host...</span>
+      </div>
     </div>
+  </div>
 
-    <audio id="remoteAudio" controls autoplay playsinline></audio>
-
-    <div class="notice">
-      <strong>Dica:</strong> Abre o Spotify Web Player numa aba, clica em <strong>"Transmitir áudio da aba"</strong> e seleciona essa aba marcando <em>"Partilhar áudio da aba"</em>.
+  <!-- Janela Estilo Winamp / Player -->
+  <div class="window">
+    <div class="window-header">
+      <span>🎵 WinAudio.exe — Junto Media Player v1.0</span>
+      <div class="window-buttons">
+        <button class="win-btn">_</button>
+        <button class="win-btn">□</button>
+        <button class="win-btn">×</button>
+      </div>
     </div>
-  </section>
+    <div class="window-body">
+      
+      <div class="player-screen">
+        <div id="trackInfo">> STATUS: PARADO</div>
+        <div id="roleInfo" style="font-size:11px; color:#00bfff; margin-top:2px;">[Modo Ouvinte/Transmissor Inativo]</div>
+      </div>
 
-  <section class="panel">
-    <h3 style="margin:0 0 12px; font-size:16px;">Comandos rápidos</h3>
-    <div class="row">
-      <button class="btn secondary" id="pauseCmd" disabled>⏸ Pedir Pausa</button>
-      <button class="btn secondary" id="nextCmd" disabled>⏭ Próxima Música</button>
-    </div>
-    <div class="status" style="margin-top:12px;">
-      <span class="dot" style="background:var(--muted)"></span>
-      <span id="commandStatus">Nenhum comando recente.</span>
-    </div>
-  </section>
-</main>
+      <div class="row" style="margin-bottom: 0;">
+        <button class="retro-btn" id="start" style="flex:1;" disabled>▶ Transmitir Aba</button>
+        <button class="retro-btn" id="stop" style="flex:1;" disabled>⏹ Parar</button>
+      </div>
 
-<footer>
-  Junto.fm · Audição partilhada para múltiplos ouvintes
-</footer>
+      <audio id="remoteAudio" controls autoplay playsinline></audio>
+
+      <div class="instructions">
+        <strong>Manual rápido:</strong> Entra na sala, abre o teu player de música numa aba separada, clica em <em>"Transmitir Aba"</em> e certifica-te de marcar a opção <strong>"Partilhar áudio da aba"</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- Janela De Comandos Estilo MSN/IRC -->
+  <div class="window" style="margin-bottom: 0;">
+    <div class="window-header">
+      <span>💬 Comandos Rápidos (Chat / Sala)</span>
+    </div>
+    <div class="window-body">
+      <div class="row">
+        <button class="retro-btn" id="pauseCmd" disabled>⏸ Pedir Pausa</button>
+        <button class="retro-btn" id="nextCmd" disabled>⏭ Próxima Música</button>
+      </div>
+      <div class="status-bar" style="margin-top: 8px;">
+        <span class="pixel-dot" style="background:#808080"></span>
+        <span id="commandStatus">Nenhum evento recente na sala.</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Junto.fm · Nostalgia dos Anos 2000 Edition
+  </footer>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -289,7 +275,7 @@ footer{
   const socket = io();
   const $ = id => document.getElementById(id);
   let room = "noite";
-  let peers = {}; // Guarda as conexões por peerId: { pc, candidateQueue }
+  let peers = {};
   let localStream = null;
   let joined = false;
   let isSender = false;
@@ -310,265 +296,17 @@ footer{
   };
 
   function setStatus(message, ok = false) {
-    $("status").textContent = message;
-    $("dot").className = ok ? "dot ok" : "dot";
+    $("statustextContent" in $("status") ? "status" : "status").textContent = message;
+    $("status").innerText = message;
+    $("dot").className = ok ? "pixel-dot ok" : "pixel-dot";
   }
 
-  function enableControls() {
-    $("start").disabled = !joined || isSender;
-    $("stop").disabled = !isSender;
-    $("pauseCmd").disabled = !joined;
-    $("nextCmd").disabled = !joined;
+  function setTrackInfo(text) {
+    $("trackInfo").textContent = "> " + text;
   }
 
-  function closeAllPeers() {
-    for (const id in peers) {
-      if (peers[id].pc) {
-        peers[id].pc.close();
-      }
-    }
-    peers = {};
+  function setRoleInfo(text) {
+    $("roleInfo").innerText = text;
   }
 
-  function resetSession({ stopLocal = true } = {}) {
-    closeAllPeers();
-    if (stopLocal && localStream) {
-      localStream.getTracks().forEach(track => track.stop());
-      localStream = null;
-    }
-    isSender = false;
-    $("remoteAudio").pause();
-    $("remoteAudio").srcObject = null;
-    enableControls();
-  }
-
-  function createPeerConnection(peerId) {
-    if (peers[peerId]?.pc) {
-      peers[peerId].pc.close();
-    }
-
-    const pc = new RTCPeerConnection(config);
-    peers[peerId] = { pc, candidateQueue: [] };
-
-    pc.onicecandidate = event => {
-      if (event.candidate) {
-        socket.emit("signal", { to: peerId, data: { type: "candidate", candidate: event.candidate } });
-      }
-    };
-
-    pc.ontrack = event => {
-      const stream = event.streams && event.streams[0];
-      if (stream) {
-        $("remoteAudio").srcObject = stream;
-        $("remoteAudio").play().then(() => {
-          setStatus("Áudio a ser reproduzido com sucesso!", true);
-        }).catch(() => {
-          setStatus("Ligação pronta. Clica no play do player para ouvir.", true);
-        });
-      }
-    };
-
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState === "connected") {
-        setStatus(isSender ? "Transmissão ativa para múltiplos ouvintes." : "Áudio conectado com sucesso.", true);
-      } else if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
-        setStatus("Ligação instável com um participante.");
-      }
-    };
-
-    return pc;
-  }
-
-  async function processCandidateQueue(peerId) {
-    const peer = peers[peerId];
-    if (!peer || !peer.pc.remoteDescription) return;
-    for (const candidate of peer.candidateQueue) {
-      try {
-        await peer.pc.addIceCandidate(candidate);
-      } catch (e) {
-        console.warn("Erro ao aplicar ICE candidato:", e);
-      }
-    }
-    peer.candidateQueue = [];
-  }
-
-  function optimizeMusicSdp(sdp) {
-    const lines = sdp.split(/\r?\n/);
-    const opusPayloads = new Set();
-    for (const line of lines) {
-      const match = line.match(/^a=rtpmap:(\d+)\s+opus\/48000(?:\/2)?\s*$/i);
-      if (match) opusPayloads.add(match[1]);
-    }
-    return lines.map(line => {
-      const match = line.match(/^a=fmtp:(\d+)\s*(.*)$/i);
-      if (!match || !opusPayloads.has(match[1])) return line;
-      const payload = match[1];
-      const params = new Map();
-      for (const item of match[2].split(';')) {
-        const pair = item.trim().match(/^([^=]+)=(.*)$/);
-        if (pair) params.set(pair[1].trim().toLowerCase(), pair[2].trim());
-      }
-      params.set('stereo', '1');
-      params.set('sprop-stereo', '1');
-      params.set('maxaveragebitrate', '256000');
-      params.set('useinbandfec', '1');
-      params.set('usedtx', '0');
-      return `a=fmtp:${payload} ${Array.from(params, ([k, v]) => `${k}=${v}`).join(';')}`;
-    }).join('\r\n');
-  }
-
-  async function callPeer(peerId) {
-    if (!localStream) return;
-    const pc = createPeerConnection(peerId);
-
-    localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
-
-    try {
-      const offer = await pc.createOffer();
-      offer.sdp = optimizeMusicSdp(offer.sdp);
-      await pc.setLocalDescription(offer);
-      socket.emit("signal", { to: peerId, data: { type: "offer", sdp: pc.localDescription } });
-    } catch (e) {
-      console.error("Erro ao criar oferta para o peer:", peerId, e);
-    }
-  }
-
-  $("join").onclick = () => {
-    room = $("room").value.trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || "noite";
-    $("room").value = room;
-    socket.emit("join-room", { room });
-  };
-
-  socket.on("connect", () => setStatus("Conectado ao servidor. Clica em 'Entrar na sala'.", true));
-  socket.on("disconnect", () => { joined = false; resetSession(); enableControls(); setStatus("Ligação com o servidor perdida."); });
-
-  socket.on("joined-room", ({ room: joinedRoom }) => {
-    joined = true;
-    room = joinedRoom;
-    setStatus("Entraste na sala: " + room, true);
-    enableControls();
-  });
-
-  // Quando já existem pessoas na sala e tu entraste
-  socket.on("room-users", async ({ users }) => {
-    if (isSender) {
-      for (const peerId of users) {
-        await callPeer(peerId);
-      }
-    }
-  });
-
-  // Quando um novo participante entra na sala
-  socket.on("peer-joined", async ({ peerId }) => {
-    setStatus("Novo participante entrou na sala.", true);
-    if (isSender && localStream) {
-      await callPeer(peerId);
-    }
-  });
-
-  socket.on("peer-left", ({ peerId }) => {
-    if (peers[peerId]) {
-      peers[peerId].pc.close();
-      delete peers[peerId];
-    }
-    setStatus("Um participante saiu da sala.");
-  });
-
-  socket.on("signal", async ({ from: peerId, data }) => {
-    try {
-      if (data.type === "offer") {
-        // Se és ouvinte, recebes a oferta do transmissor
-        const pc = createPeerConnection(peerId);
-        await pc.setRemoteDescription(data.sdp);
-        await processCandidateQueue(peerId);
-        
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit("signal", { to: peerId, data: { type: "answer", sdp: pc.localDescription } });
-
-      } else if (data.type === "answer") {
-        // Se és o transmissor, recebes a resposta do ouvinte
-        const peer = peers[peerId];
-        if (peer) {
-          await peer.pc.setRemoteDescription(data.sdp);
-          await processCandidateQueue(peerId);
-        }
-
-      } else if (data.type === "candidate" && data.candidate) {
-        const peer = peers[peerId];
-        if (peer && peer.pc.remoteDescription) {
-          await peer.pc.addIceCandidate(data.candidate);
-        } else if (peer) {
-          peer.candidateQueue.push(data.candidate);
-        }
-
-      } else if (data.type === "transmission-stopped") {
-        if (!isSender) {
-          resetSession();
-          setStatus("O som foi parado pelo transmissor.");
-        }
-      }
-    } catch (e) {
-      console.error("Erro no processamento da sinalização:", e);
-    }
-  });
-
-  $("start").onclick = async () => {
-    try {
-      if (!joined) { setStatus("Primeiro tens de entrar numa sala."); return; }
-      const capturedStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      const audioTracks = capturedStream.getAudioTracks();
-      if (!audioTracks.length) {
-        capturedStream.getTracks().forEach(t => t.stop());
-        setStatus("Erro: Certifica-te de marcar 'Partilhar áudio da aba'.");
-        return;
-      }
-
-      resetSession();
-      localStream = capturedStream;
-      isSender = true;
-      localStream.getVideoTracks().forEach(track => track.stop()); // descarta vídeo
-
-      enableControls();
-      setStatus("A transmitir áudio para a sala...", true);
-
-      // Avisa os ouvintes que já estão na sala que a transmissão começou (recarrega as conexões)
-      // Como o servidor já gere os peers, podemos apenas notificar ou aguardar novos joins.
-      
-      localStream.getAudioTracks()[0].addEventListener("ended", () => {
-        socket.emit("room-command", { room, command: "stop-transmission" });
-        resetSession();
-        setStatus("Transmissão terminada.");
-      }, { once: true });
-
-    } catch (e) {
-      console.error(e);
-      resetSession();
-      setStatus("Partilha cancelada ou recusada.");
-    }
-  };
-
-  $("stop").onclick = () => {
-    resetSession();
-    setStatus("Transmissão parada.");
-  };
-
-  $("pauseCmd").onclick = () => socket.emit("room-command", { room, command: "pause" });
-  $("nextCmd").onclick = () => socket.emit("room-command", { room, command: "next" });
-
-  socket.on("room-command", ({ command }) => {
-    if (command === "pause") {
-      $("commandStatus").textContent = "Alguém pediu pausa ⏸";
-    } else if (command === "next") {
-      $("commandStatus").textContent = "Alguém pediu para passar à próxima ⏭";
-    } else if (command === "stop-transmission") {
-      if (!isSender) {
-        resetSession();
-        setStatus("O transmissor encerrou o áudio.");
-      }
-    }
-  });
-})();
-</script>
-</body>
-</html>
+  function enableControls()
