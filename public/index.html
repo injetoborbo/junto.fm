@@ -1387,8 +1387,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   const stage=document.querySelector("#jfMiniDj .jf-dj-stage");
   if(!stage)return;
   try{
-    const THREE=await import("https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js");
-    const {GLTFLoader}=await import("https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
+    const THREE = await import("https://esm.sh/three@0.170.0");
+    const { GLTFLoader } = await import("https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
     const scene=new THREE.Scene();
     const camera=new THREE.PerspectiveCamera(32,1,.01,100);
     camera.position.set(0,1.1,4.5);
