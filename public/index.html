@@ -458,7 +458,7 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -598,6 +598,15 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
   </section>
 </div>
   
+<div class="jf-modal-backdrop" id="jfFriendsModal" hidden>
+  <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfFriendsHeading">
+    <div class="jf-modal-head"><h2 id="jfFriendsHeading">♧ Amigos</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfFriendsModal" aria-label="Fechar janela">✕</button></div>
+    <p class="small">Guarde o nome e a sala dos seus amigos para entrar rapidinho. Para salas com senha, a entrada sem senha depende de uma amizade confirmada no servidor.</p>
+    <form id="jfFriendForm"><div class="jf-room-field"><label for="jfFriendName">Nome do amigo</label><input id="jfFriendName" maxlength="24" placeholder="Nome de exibição" required></div><div class="jf-room-field"><label for="jfFriendRoom">Nome da sala do amigo</label><input id="jfFriendRoom" maxlength="40" placeholder="nome-da-sala" required></div><div class="jf-room-modal-actions"><button class="btn" type="submit">＋ Adicionar amigo</button></div></form>
+    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div>
+  </section>
+</div>
+
 <div class="jf-modal-backdrop" id="jfThemeModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
     <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
@@ -801,6 +810,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if (new URLSearchParams(location.search).get('spotify') === 'connected') {
         history.replaceState({}, '', location.pathname);
         $("spotifyStatus").textContent = 'Spotify conectado! Deixe uma música tocando e inicie a transmissão.';
+        let returnRoom="",returnPassword="";try{returnRoom=sessionStorage.getItem("jfSpotifyReturnRoom")||"";returnPassword=sessionStorage.getItem("jfSpotifyReturnPassword")||"";}catch(_){}
+        if(returnRoom&&!joined&&socket.connected){sessionStorage.removeItem("jfSpotifyReturnRoom");sessionStorage.removeItem("jfSpotifyReturnPassword");joinRoom(returnRoom,returnPassword);}
       }
     } catch (_) { $("spotifyStatus").textContent = 'Não foi possível verificar a conexão com o Spotify.'; }
   }
@@ -1002,6 +1013,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if (joined && room === cleaned) { setStatus('Você já está nesta sala.', true); return; }
     setStatus('Entrando na sala…');
     const password = suppliedPassword || "";
+    try { sessionStorage.setItem("jfSpotifyReturnRoom", cleaned); sessionStorage.setItem("jfSpotifyReturnPassword", password); } catch (_) {}
     socket.emit('join-room', { room: cleaned, password });
   }
   const createModal = $("jfCreateRoomModal");
@@ -1100,7 +1112,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -1302,11 +1314,26 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}card.appendChild(details);card.tabIndex=0;list.appendChild(card);
     }
   }
+  const jfFriendsKey="junto_friends_v1";
+  function jfLoadFriends(){try{const v=JSON.parse(localStorage.getItem(jfFriendsKey)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.name==="string"&&typeof x.room==="string").slice(0,100):[];}catch(_){return [];}}
+  let jfFriends=jfLoadFriends();
+  function jfRenderFriends(){
+    const list=$("jfFriendsList");list.replaceChildren();
+    if(!jfFriends.length){const empty=document.createElement("p");empty.className="small";empty.textContent="Adicione seus amigos pelo nome e sala.";list.appendChild(empty);return;}
+    jfFriends.forEach((friend,index)=>{const row=document.createElement("div");row.className="jf-person";row.style.display="flex";row.style.alignItems="center";row.style.justifyContent="space-between";row.style.gap="10px";
+      const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const roomLabel=document.createElement("p");roomLabel.className="small";roomLabel.textContent="Sala: "+friend.room;info.append(name,roomLabel);
+      const actions=document.createElement("div");actions.style.display="flex";actions.style.gap="6px";const enter=document.createElement("button");enter.className="btn";enter.type="button";enter.textContent="Entrar";enter.addEventListener("click",()=>{closeFriendsModal();openJoinRoomModal();$("jfExistingRoomName").value=friend.room;$("jfExistingRoomPassword").value="";$("jfFriendsStatus").textContent="Para sala protegida, será necessária uma amizade reconhecida pelo servidor ou a senha.";});
+      const remove=document.createElement("button");remove.className="btn secondary";remove.type="button";remove.textContent="Remover";remove.addEventListener("click",()=>{jfFriends.splice(index,1);localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));jfRenderFriends();});actions.append(enter,remove);row.append(info,actions);list.appendChild(row);
+    });
+  }
+  function closeFriendsModal(){$("jfFriendsModal").hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";}
+  $("jfFriendForm").addEventListener("submit",event=>{event.preventDefault();const name=$("jfFriendName").value.trim().slice(0,24),friendRoom=cleanRoomName($("jfFriendRoom").value);if(!name||!friendRoom){$("jfFriendsStatus").textContent="Informe o nome e o nome válido da sala.";return;}if(jfFriends.some(x=>x.room.toLowerCase()===friendRoom.toLowerCase())){$("jfFriendsStatus").textContent="Essa sala já está na sua lista.";return;}jfFriends.push({name,room:friendRoom});localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));$("jfFriendName").value="";$("jfFriendRoom").value="";$("jfFriendsStatus").textContent="Amigo salvo neste navegador.";jfRenderFriends();});
   function jfInit(){
     $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";jfRenderAvatar();
     const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
     const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
     $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
+    $("jfOpenFriends").addEventListener("click",()=>{jfRenderFriends();openModal("jfFriendsModal");});
     $("jfOpenProfile").addEventListener("click",()=>openModal("jfProfileModal"));
     $("jfOpenOptions").addEventListener("click",()=>openModal("jfOptionsModal"));
     document.querySelectorAll("[data-close-modal]").forEach(button=>button.addEventListener("click",()=>closeModal(button.dataset.closeModal)));
