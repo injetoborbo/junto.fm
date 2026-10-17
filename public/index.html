@@ -306,6 +306,34 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 @keyframes jfModalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:520px){.jf-room-modal{padding:22px 18px;border-radius:18px}.jf-room-modal h2{font-size:21px}.jf-room-modal-actions{flex-direction:column-reverse}.jf-room-modal-actions .btn{width:100%}}
 
+/* Chat retrô: seletor de emojis e acabamento Windows XP Luna */
+.jf-chat-tools{display:flex;align-items:center;gap:7px;padding:8px 10px 0}
+.jf-chat-emoji-toggle{padding:6px 10px!important;font-size:12px!important}
+.jf-chat-emoji-tray{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;max-height:112px;overflow:auto;border-bottom:1px solid var(--jf-secondary);background:color-mix(in srgb,var(--jf-glow) 18%,#101333)}
+.jf-chat-emoji-tray[hidden]{display:none}
+.jf-chat-emoji{min-width:34px;min-height:32px;padding:3px 5px;border:1px solid transparent;border-radius:5px;background:transparent;font-size:20px;line-height:1;cursor:pointer}
+.jf-chat-emoji:hover,.jf-chat-emoji:focus-visible{border-color:var(--jf-secondary);background:color-mix(in srgb,var(--jf-primary) 25%,transparent);outline:none}
+.jf-chat-emoji-tray .jf-chat-kaomoji{font-family:Tahoma,"Segoe UI",sans-serif;font-size:12px;min-width:48px}
+html[data-jf-theme="classic"] .jf-chat-launcher{border:2px solid #fff;border-radius:9px;background:linear-gradient(#8bd2ff 0%,#3189e9 20%,#0755b8 100%);box-shadow:inset 0 1px #ffffffd9,0 2px 4px #164c8c88;color:#fff}
+html[data-jf-theme="classic"] .jf-chat-window{border:2px solid #0755b8;border-radius:8px 8px 5px 5px;background:#ece9d8;box-shadow:2px 4px 12px #123b6b88;backdrop-filter:none}
+html[data-jf-theme="classic"] .jf-chat-header{min-height:42px;padding:7px 8px 7px 12px;border-bottom:1px solid #174f9c;border-radius:5px 5px 0 0;background:linear-gradient(180deg,#3c8cf4 0%,#1765d5 48%,#0750b8 100%);box-shadow:inset 0 1px #8dc5ff}
+html[data-jf-theme="classic"] .jf-chat-heading{font-family:Tahoma,"Segoe UI",sans-serif;font-size:13px;color:#fff;text-shadow:0 1px 1px #123f88}
+html[data-jf-theme="classic"] .jf-chat-subheading{color:#e1efff;font-size:10px}
+html[data-jf-theme="classic"] .jf-chat-close{width:24px;height:23px;flex-basis:24px;border:1px solid #fff;border-radius:4px;background:linear-gradient(#ffb8a5,#f05b42 48%,#d92c16 52%,#ef6347);box-shadow:inset 0 1px #fff8;color:#fff;font-family:Tahoma,sans-serif;font-size:18px;font-weight:bold;line-height:1;text-shadow:0 1px #922}
+html[data-jf-theme="classic"] .jf-chat-log{background:linear-gradient(#f8fbff,#e8f3ff);gap:8px}
+html[data-jf-theme="classic"] .jf-chat-empty{color:#476b90}
+html[data-jf-theme="classic"] .jf-chat-avatar{border:1px solid #7f9db9;border-radius:4px;background:linear-gradient(#fff,#cde6ff);color:#0757ae}
+html[data-jf-theme="classic"] .jf-chat-bubble{border:1px solid #9ab9d6;border-radius:3px;background:#fff;box-shadow:0 1px 1px #174c8c12}
+html[data-jf-theme="classic"] .jf-chat-meta strong{color:#0757ae}
+html[data-jf-theme="classic"] .jf-chat-meta time{color:#65809b}
+html[data-jf-theme="classic"] .jf-chat-text{color:#18345b;font-family:Tahoma,"Segoe UI",sans-serif}
+html[data-jf-theme="classic"] .jf-chat-tools{background:#ece9d8;border-top:1px solid #fff}
+html[data-jf-theme="classic"] .jf-chat-emoji-tray{border-bottom:1px solid #b7cde2;background:#f4f8fc}
+html[data-jf-theme="classic"] .jf-chat-emoji:hover,html[data-jf-theme="classic"] .jf-chat-emoji:focus-visible{border-color:#7aa7d6;background:#d8eaff}
+html[data-jf-theme="classic"] .jf-chat-form{gap:5px;padding:8px;background:#ece9d8;border-top:1px solid #c4c1b8}
+html[data-jf-theme="classic"] .jf-chat-form input{border:1px solid #7f9db9;border-radius:2px;background:#fff;color:#18345b;box-shadow:inset 1px 1px 2px #0001}
+html[data-jf-theme="classic"] .jf-chat-form .btn{padding:8px 10px}
+html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece9d8;color:#536d87}
 </style>
 </head>
 <body>
@@ -380,6 +408,11 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
     <button type="button" id="jfChatClose" class="jf-chat-close" aria-label="Fechar chat">×</button>
   </header>
   <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
+  <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">☺ Emojis antigos</button><span style="font-size:10px;color:var(--muted)">kaomoji &amp; clássicos</span></div>
+  <div id="jfChatEmojiTray" class="jf-chat-emoji-tray" aria-label="Escolha um emoji" hidden>
+    <button type="button" class="jf-chat-emoji" data-emoji="☺">☺</button><button type="button" class="jf-chat-emoji" data-emoji="☻">☻</button><button type="button" class="jf-chat-emoji" data-emoji="ツ">ツ</button><button type="button" class="jf-chat-emoji" data-emoji="♥">♥</button><button type="button" class="jf-chat-emoji" data-emoji="♡">♡</button><button type="button" class="jf-chat-emoji" data-emoji="★">★</button><button type="button" class="jf-chat-emoji" data-emoji="☆">☆</button><button type="button" class="jf-chat-emoji" data-emoji="♪">♪</button><button type="button" class="jf-chat-emoji" data-emoji="♫">♫</button><button type="button" class="jf-chat-emoji" data-emoji="☮">☮</button><button type="button" class="jf-chat-emoji" data-emoji="✿">✿</button><button type="button" class="jf-chat-emoji" data-emoji="✧">✧</button>
+    <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":)">:)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=";)">;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":D">:D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="xD">xD</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":P">:P</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'(">:'(</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="^_^">^_^</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="-_-">-_-</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="o_O">o_O</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="<3">&lt;3</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'D">:'D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="¯\\_(ツ)_/¯">¯\\_(ツ)_/¯</button>
+  </div>
   <form id="jfChatForm" class="jf-chat-form">
     <input id="jfChatInput" type="text" maxlength="500" autocomplete="off" placeholder="Escreva uma mensagem..." aria-label="Mensagem do chat" disabled>
     <button class="btn" id="jfChatSend" type="submit" disabled>Enviar</button>
@@ -1126,6 +1159,23 @@ const config = {
     $("jfChatInput").disabled=!joined;$("jfChatSend").disabled=!joined||!$("jfChatInput").value.trim();
     $("jfChatStatus").textContent=joined?"Mensagens visíveis para as pessoas nesta sala.":"Entre em uma sala para enviar mensagens.";
   }
+  const jfEmojiTray=$("jfChatEmojiTray"),jfEmojiToggle=$("jfChatEmojiToggle");
+  jfEmojiToggle.addEventListener("click",()=>{
+    const open=jfEmojiTray.hidden;
+    jfEmojiTray.hidden=!open;
+    jfEmojiToggle.setAttribute("aria-expanded",String(open));
+    if(open) $("jfChatInput").focus();
+  });
+  jfEmojiTray.querySelectorAll("[data-emoji]").forEach(button=>button.addEventListener("click",()=>{
+    const input=$("jfChatInput"),emoji=button.dataset.emoji;
+    if(input.disabled)return;
+    const start=input.selectionStart??input.value.length,end=input.selectionEnd??input.value.length;
+    const next=input.value.slice(0,start)+emoji+input.value.slice(end);
+    if(next.length>500)return;
+    input.value=next;input.focus();
+    const cursor=start+emoji.length;input.setSelectionRange(cursor,cursor);
+    jfUpdateChatControls();
+  }));
   $("jfChatInput").addEventListener("input",jfUpdateChatControls);
   $("jfChatForm").addEventListener("submit",event=>{
     event.preventDefault();const text=$("jfChatInput").value.trim().slice(0,500);if(!joined||!text)return;
