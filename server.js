@@ -263,6 +263,23 @@ io.on("connection", socket => {
     socket.emit("room-created", { room });
   });
 
+  socket.on("leave-room", payload => {
+    const room = socket.data.room;
+    if (!room || (payload && payload.room && payload.room !== room)) return;
+
+    if (roomTransmitters.get(room)?.id === socket.id) {
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update", { id: socket.id, active: false });
+    }
+    socket.data.isTransmitting = false;
+    socket.leave(room);
+    socket.data.room = null;
+    socket.to(room).emit("peer-left", { id: socket.id });
+    const roomSet = io.sockets.adapter.rooms.get(room);
+    io.to(room).emit("room-count", { count: roomSet ? roomSet.size : 0 });
+    socket.emit("left-room", { room });
+  });
+
   socket.on("join-room", payload => {
     if (isRateLimited(socket, "join-room", 10, 60_000)) {
       socket.emit("join-error", { message: "Muitas tentativas de entrada. Aguarde um minuto e tente novamente." });
