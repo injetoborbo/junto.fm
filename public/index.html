@@ -3,74 +3,296 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Junto.fm — ouvir junto</title>
+<title>Junto.fm — Ouvir música junto</title>
 <style>
-:root{color-scheme:dark;--bg:#101110;--panel:#1a1d1b;--muted:#a9b2ac;--green:#7df0a7;--line:#303632}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#20372a 0,#101110 55%);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#f5f7f5;min-height:100vh}
-main{max-width:760px;margin:auto;padding:26px 18px 50px}.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:23px;letter-spacing:-.5px}.logo{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--green);color:#102017;font-size:22px}
-.tag{margin-left:auto;font-size:12px;color:var(--green);border:1px solid #3d6549;padding:6px 10px;border-radius:99px}
-h1{font-size:clamp(30px,7vw,48px);letter-spacing:-1.5px;line-height:1.05;margin:34px 0 10px}p{color:var(--muted);line-height:1.55}.panel{background:rgba(26,29,27,.94);border:1px solid var(--line);border-radius:22px;padding:20px;margin-top:18px;box-shadow:0 16px 50px #0002}
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}input{width:100%;background:#101311;border:1px solid #39423c;color:white;border-radius:12px;padding:13px;font-size:16px;outline:none}input:focus{border-color:var(--green)}
-.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}.btn{border:0;border-radius:12px;padding:13px 15px;font-weight:750;font-size:14px;cursor:pointer;background:var(--green);color:#102017}.btn.secondary{background:#303833;color:#f3f6f3;border:1px solid #424a44}.btn:disabled{opacity:.45;cursor:not-allowed}
-.status{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px;margin-top:14px}.dot{width:9px;height:9px;border-radius:50%;background:#707970}.dot.ok{background:var(--green);box-shadow:0 0 10px #7df0a766}
-.player{display:flex;align-items:center;gap:15px}.cover{width:72px;height:72px;flex-shrink:0;border-radius:16px;background:linear-gradient(135deg,#314b3a,#121c16);display:grid;place-items:center;font-size:29px}.player h2{margin:0 0 4px;font-size:18px}.player p{margin:0;font-size:13px}
-audio{width:100%;margin-top:18px}.small{font-size:12px;color:#a9b2ac}.notice{border-left:3px solid var(--green);padding:10px 13px;background:#17221a;border-radius:0 10px 10px 0;color:#dce8df;font-size:13px;line-height:1.5;margin-top:15px}
-.steps{display:grid;gap:12px}.step{display:flex;gap:12px;align-items:flex-start}.num{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;border-radius:9px;background:#2d3c31;color:var(--green);font-weight:800}.step strong{display:block;margin-bottom:3px}.step span{color:var(--muted);font-size:13px;line-height:1.45}
-footer{text-align:center;color:#78817a;font-size:12px;margin-top:25px}
-@media(max-width:480px){main{padding:18px 13px}.panel{padding:16px}.player{align-items:flex-start}.tag{font-size:10px}}
+:root{
+  color-scheme: dark;
+  --bg: #0b0f0d;
+  --panel: #141a16;
+  --panel-border: #233227;
+  --muted: #8b9e90;
+  --green: #1ed760;
+  --green-hover: #1aa34a;
+  --text: #f1f5f2;
+  --danger: #ff5c5c;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background: radial-gradient(circle at top, #182c1f 0%, var(--bg) 60%);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+main{
+  max-width: 680px;
+  width: 100%;
+  margin: auto;
+  padding: 30px 20px;
+}
+.brand{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+.logo{
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--green);
+  color: #051208;
+  font-size: 24px;
+  box-shadow: 0 8px 20px rgba(30, 215, 96, 0.3);
+}
+.tag{
+  margin-left: auto;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--green);
+  border: 1px solid rgba(30, 215, 96, 0.3);
+  padding: 5px 12px;
+  border-radius: 99px;
+  background: rgba(30, 215, 96, 0.05);
+}
+h1{
+  font-size: clamp(28px, 6vw, 40px);
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin: 20px 0 10px;
+}
+p{
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 15px;
+}
+.panel{
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+label{
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+input{
+  width: 100%;
+  background: #0d120f;
+  border: 1px solid #2a3d2f;
+  color: white;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input:focus{
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(30, 215, 96, 0.15);
+}
+.row{
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.row > *{flex: 1;}
+.btn{
+  border: 0;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  background: var(--green);
+  color: #0b0f0d;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(30, 215, 96, 0.2);
+}
+.btn:hover:not(:disabled){
+  background: var(--green-hover);
+  transform: translateY(-1px);
+}
+.btn.secondary{
+  background: #1f2b22;
+  color: #e2ede4;
+  border: 1px solid #314a37;
+  box-shadow: none;
+}
+.btn.secondary:hover:not(:disabled){
+  background: #27372c;
+}
+.btn:disabled{
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.status{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 16px;
+  background: #0d120f;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #1a261d;
+}
+.dot{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff5c5c;
+  flex-shrink: 0;
+}
+.dot.ok{
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+}
+.player{
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.cover{
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #22422c, #101c14);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  border: 1px solid #2e4d38;
+}
+.player h2{
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+.player p{
+  margin: 0;
+  font-size: 13px;
+}
+audio{
+  width: 100%;
+  margin-top: 16px;
+  border-radius: 8px;
+}
+.notice{
+  border-left: 3px solid var(--green);
+  padding: 12px 16px;
+  background: #111e15;
+  border-radius: 0 12px 12px 0;
+  color: #d1ebd8;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 16px;
+  border-top: 1px solid #1a3321;
+  border-right: 1px solid #1a3321;
+  border-bottom: 1px solid #1a3321;
+}
+footer{
+  text-align: center;
+  color: #5c6e61;
+  font-size: 12px;
+  padding: 20px;
+  border-top: 1px solid var(--panel-border);
+  margin-top: 40px;
+}
+@media(max-width: 480px){
+  main{padding: 20px 14px;}
+  .panel{padding: 18px;}
+  .player{align-items: flex-start;}
+}
 </style>
 </head>
 <body>
 <main>
-  <div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">BETA · CORRIGIDO</span></div>
+  <div class="brand">
+    <div class="logo">♫</div> 
+    Junto.fm 
+    <span class="tag">Online</span>
+  </div>
   <h1>Música boa é<br>melhor junto.</h1>
-  <p>Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+  <p>Cria uma sala privada e ouve o áudio do navegador em tempo real com vários amigos.</p>
 
   <section class="panel">
-    <label for="room">Nome da sala (use o mesmo nos dois aparelhos)</label>
+    <label for="room">Nome da sala (usa o mesmo em todos os aparelhos)</label>
     <div class="row">
-      <input id="room" maxlength="40" value="noite" autocomplete="off" placeholder="ex.: nossa-sala">
+      <input id="room" maxlength="40" value="noite" autocomplete="off" placeholder="ex: nossa-sala">
       <button class="btn" id="join">Entrar na sala</button>
     </div>
-    <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
-    <p class="small" id="help">Certifique-se de usar o mesmo nome de sala em ambos os dispositivos.</p>
+    <div class="status">
+      <span class="dot" id="dot"></span>
+      <span id="status">A ligar ao servidor...</span>
+    </div>
   </section>
 
   <section class="panel">
     <div class="player">
       <div class="cover">♫</div>
-      <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
+      <div>
+        <h2>Transmissão ao Vivo</h2>
+        <p id="role">Entra numa sala para começar.</p>
+      </div>
     </div>
-    <div class="row" style="margin-top:18px">
+    
+    <div class="row" style="margin-top:20px">
       <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
-      <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
+      <button class="btn secondary" id="stop" disabled>Parar</button>
     </div>
+
     <audio id="remoteAudio" controls autoplay playsinline></audio>
-    <div class="notice"><strong>Como transmitir o Spotify:</strong> Abra o Spotify Web Player numa aba, clique em “Transmitir áudio”, selecione essa aba e marque <strong>“Compartilhar áudio da aba”</strong>.</div>
+
+    <div class="notice">
+      <strong>Dica:</strong> Abre o Spotify Web Player numa aba, clica em <strong>"Transmitir áudio da aba"</strong> e seleciona essa aba marcando <em>"Partilhar áudio da aba"</em>.
+    </div>
   </section>
 
   <section class="panel">
-    <h2 style="margin:0 0 14px">Comandos da sala</h2>
+    <h3 style="margin:0 0 12px; font-size:16px;">Comandos rápidos</h3>
     <div class="row">
-      <button class="btn secondary" id="pauseCmd" disabled>⏸ Avisar: pausar</button>
-      <button class="btn secondary" id="nextCmd" disabled>⏭ Avisar: próxima</button>
+      <button class="btn secondary" id="pauseCmd" disabled>⏸ Pedir Pausa</button>
+      <button class="btn secondary" id="nextCmd" disabled>⏭ Próxima Música</button>
     </div>
-    <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
+    <div class="status" style="margin-top:12px;">
+      <span class="dot" style="background:var(--muted)"></span>
+      <span id="commandStatus">Nenhum comando recente.</span>
+    </div>
   </section>
-  <footer>Junto.fm · Melhorias aplicadas</footer>
 </main>
+
+<footer>
+  Junto.fm · Audição partilhada para múltiplos ouvintes
+</footer>
+
 <script src="/socket.io/socket.io.js"></script>
 <script>
 (() => {
   const socket = io();
   const $ = id => document.getElementById(id);
   let room = "noite";
-  let pc = null;
+  let peers = {}; // Guarda as conexões por peerId: { pc, candidateQueue }
   let localStream = null;
   let joined = false;
   let isSender = false;
-  let pendingCandidates = [];
-  let offerInProgress = false;
 
   const config = {
     iceServers: [
@@ -83,6 +305,8 @@ footer{text-align:center;color:#78817a;font-size:12px;margin-top:25px}
         ],
         username: "bb7ecb4be75a9bcedd093efe",
         credential: "Ab8amlhjUC7kGK3K"
+      }
+    ]
   };
 
   function setStatus(message, ok = false) {
@@ -97,76 +321,75 @@ footer{text-align:center;color:#78817a;font-size:12px;margin-top:25px}
     $("nextCmd").disabled = !joined;
   }
 
-  function closePeerOnly() {
-    if (pc) {
-      pc.onicecandidate = null;
-      pc.ontrack = null;
-      pc.onconnectionstatechange = null;
-      pc.close();
-      pc = null;
+  function closeAllPeers() {
+    for (const id in peers) {
+      if (peers[id].pc) {
+        peers[id].pc.close();
+      }
     }
+    peers = {};
   }
 
-  function resetPeer({ stopLocal = true } = {}) {
-    closePeerOnly();
+  function resetSession({ stopLocal = true } = {}) {
+    closeAllPeers();
     if (stopLocal && localStream) {
       localStream.getTracks().forEach(track => track.stop());
       localStream = null;
     }
-    pendingCandidates = [];
-    offerInProgress = false;
     isSender = false;
     $("remoteAudio").pause();
     $("remoteAudio").srcObject = null;
     enableControls();
   }
 
-  function makePeer() {
-    closePeerOnly();
-    const peer = new RTCPeerConnection(config);
-    pc = peer;
+  function createPeerConnection(peerId) {
+    if (peers[peerId]?.pc) {
+      peers[peerId].pc.close();
+    }
 
-    peer.onicecandidate = event => {
-      if (event.candidate && pc === peer) {
-        socket.emit("signal", { room, data: { type: "candidate", candidate: event.candidate } });
+    const pc = new RTCPeerConnection(config);
+    peers[peerId] = { pc, candidateQueue: [] };
+
+    pc.onicecandidate = event => {
+      if (event.candidate) {
+        socket.emit("signal", { to: peerId, data: { type: "candidate", candidate: event.candidate } });
       }
     };
 
-    peer.ontrack = event => {
-      if (pc !== peer) return;
+    pc.ontrack = event => {
       const stream = event.streams && event.streams[0];
-      if (stream) $("remoteAudio").srcObject = stream;
-      $("remoteAudio").play().then(() => {
-        setStatus("Áudio recebido e reproduzindo.", true);
-      }).catch(() => {
-        setStatus("Conexão pronta. Clique em Play no player para liberar o áudio.", true);
-      });
-    };
-
-    peer.onconnectionstatechange = () => {
-      if (pc !== peer) return;
-      if (peer.connectionState === "connected") {
-        setStatus(isSender ? "Transmissão conectada com sucesso." : "Áudio conectado com sucesso.", true);
-      } else if (peer.connectionState === "failed" || peer.connectionState === "disconnected") {
-        setStatus("Conexão instável ou perdida.");
+      if (stream) {
+        $("remoteAudio").srcObject = stream;
+        $("remoteAudio").play().then(() => {
+          setStatus("Áudio a ser reproduzido com sucesso!", true);
+        }).catch(() => {
+          setStatus("Ligação pronta. Clica no play do player para ouvir.", true);
+        });
       }
     };
 
-    return peer;
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "connected") {
+        setStatus(isSender ? "Transmissão ativa para múltiplos ouvintes." : "Áudio conectado com sucesso.", true);
+      } else if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+        setStatus("Ligação instável com um participante.");
+      }
+    };
+
+    return pc;
   }
 
-  async function applyPendingCandidates(peer) {
-    const candidates = pendingCandidates;
-    pendingCandidates = [];
-    for (const candidate of candidates) {
+  async function processCandidateQueue(peerId) {
+    const peer = peers[peerId];
+    if (!peer || !peer.pc.remoteDescription) return;
+    for (const candidate of peer.candidateQueue) {
       try {
-        if (pc === peer && peer.remoteDescription) {
-          await peer.addIceCandidate(candidate);
-        }
+        await peer.pc.addIceCandidate(candidate);
       } catch (e) {
-        console.warn("Candidato ICE rejeitado:", e);
+        console.warn("Erro ao aplicar ICE candidato:", e);
       }
     }
+    peer.candidateQueue = [];
   }
 
   function optimizeMusicSdp(sdp) {
@@ -194,29 +417,19 @@ footer{text-align:center;color:#78817a;font-size:12px;margin-top:25px}
     }).join('\r\n');
   }
 
-  async function createSenderOffer({ replacePeer = false } = {}) {
-    if (!isSender || !localStream || !joined || offerInProgress) return;
-    offerInProgress = true;
+  async function callPeer(peerId) {
+    if (!localStream) return;
+    const pc = createPeerConnection(peerId);
+
+    localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+
     try {
-      if (replacePeer) pendingCandidates = [];
-      const peer = replacePeer ? makePeer() : (pc || makePeer());
-      
-      const alreadyHasTracks = peer.getSenders().some(s => s.track && s.track.kind === "audio");
-      if (!alreadyHasTracks) {
-        localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
-      }
-      
-      const offer = await peer.createOffer();
+      const offer = await pc.createOffer();
       offer.sdp = optimizeMusicSdp(offer.sdp);
-      if (pc !== peer) return;
-      await peer.setLocalDescription(offer);
-      socket.emit("signal", { room, data: { type: "offer", sdp: peer.localDescription } });
-      setStatus("Transmitindo áudio em alta qualidade...", true);
+      await pc.setLocalDescription(offer);
+      socket.emit("signal", { to: peerId, data: { type: "offer", sdp: pc.localDescription } });
     } catch (e) {
-      console.error("Erro na oferta WebRTC:", e);
-      setStatus("Erro ao estabelecer conexão de áudio.");
-    } finally {
-      offerInProgress = false;
+      console.error("Erro ao criar oferta para o peer:", peerId, e);
     }
   }
 
@@ -226,110 +439,134 @@ footer{text-align:center;color:#78817a;font-size:12px;margin-top:25px}
     socket.emit("join-room", { room });
   };
 
-  socket.on("connect", () => setStatus("Conectado ao servidor. Clique em 'Entrar na sala'.", true));
-  socket.on("disconnect", () => { joined = false; resetPeer(); enableControls(); setStatus("Conexão perdida com o servidor."); });
+  socket.on("connect", () => setStatus("Conectado ao servidor. Clica em 'Entrar na sala'.", true));
+  socket.on("disconnect", () => { joined = false; resetSession(); enableControls(); setStatus("Ligação com o servidor perdida."); });
 
   socket.on("joined-room", ({ room: joinedRoom }) => {
     joined = true;
     room = joinedRoom;
-    setStatus("Entrou na sala: " + room, true);
+    setStatus("Entraste na sala: " + room, true);
     enableControls();
   });
 
-  socket.on("peer-ready", async () => {
-    setStatus("Outro usuário entrou na sala.", true);
-    if (isSender && localStream) {
-      await createSenderOffer({ replacePeer: true });
+  // Quando já existem pessoas na sala e tu entraste
+  socket.on("room-users", async ({ users }) => {
+    if (isSender) {
+      for (const peerId of users) {
+        await callPeer(peerId);
+      }
     }
   });
 
-  socket.on("peer-left", () => {
-    if (!isSender) resetPeer();
-    setStatus(isSender ? "Ouvinte desconectado. Aguardando novo participante..." : "A transmissão foi encerrada.");
+  // Quando um novo participante entra na sala
+  socket.on("peer-joined", async ({ peerId }) => {
+    setStatus("Novo participante entrou na sala.", true);
+    if (isSender && localStream) {
+      await callPeer(peerId);
+    }
   });
 
-  socket.on("signal", async data => {
+  socket.on("peer-left", ({ peerId }) => {
+    if (peers[peerId]) {
+      peers[peerId].pc.close();
+      delete peers[peerId];
+    }
+    setStatus("Um participante saiu da sala.");
+  });
+
+  socket.on("signal", async ({ from: peerId, data }) => {
     try {
       if (data.type === "offer") {
-        if (!isSender) {
-          closePeerOnly();
-          const peer = makePeer();
-          await peer.setRemoteDescription(data.sdp);
-          await applyPendingCandidates(peer);
-          const answer = await peer.createAnswer();
-          if (pc !== peer) return;
-          await peer.setLocalDescription(answer);
-          socket.emit("signal", { room, data: { type: "answer", sdp: peer.localDescription } });
-        }
+        // Se és ouvinte, recebes a oferta do transmissor
+        const pc = createPeerConnection(peerId);
+        await pc.setRemoteDescription(data.sdp);
+        await processCandidateQueue(peerId);
+        
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("signal", { to: peerId, data: { type: "answer", sdp: pc.localDescription } });
+
       } else if (data.type === "answer") {
-        const peer = pc;
-        if (peer && isSender) {
-          await peer.setRemoteDescription(data.sdp);
-          await applyPendingCandidates(peer);
+        // Se és o transmissor, recebes a resposta do ouvinte
+        const peer = peers[peerId];
+        if (peer) {
+          await peer.pc.setRemoteDescription(data.sdp);
+          await processCandidateQueue(peerId);
         }
+
       } else if (data.type === "candidate" && data.candidate) {
-        const peer = pc;
-        if (peer && peer.remoteDescription) {
-          try { await peer.addIceCandidate(data.candidate); } catch (e) { console.warn(e); }
-        } else {
-          pendingCandidates.push(data.candidate);
+        const peer = peers[peerId];
+        if (peer && peer.pc.remoteDescription) {
+          await peer.pc.addIceCandidate(data.candidate);
+        } else if (peer) {
+          peer.candidateQueue.push(data.candidate);
         }
+
       } else if (data.type === "transmission-stopped") {
         if (!isSender) {
-          resetPeer();
-          setStatus("O transmissor encerrou o som.");
+          resetSession();
+          setStatus("O som foi parado pelo transmissor.");
         }
       }
     } catch (e) {
-      console.error("Erro de sinalização:", e);
+      console.error("Erro no processamento da sinalização:", e);
     }
   });
 
   $("start").onclick = async () => {
     try {
-      if (!joined) { setStatus("Entre na sala primeiro."); return; }
+      if (!joined) { setStatus("Primeiro tens de entrar numa sala."); return; }
       const capturedStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
       const audioTracks = capturedStream.getAudioTracks();
       if (!audioTracks.length) {
         capturedStream.getTracks().forEach(t => t.stop());
-        setStatus("Erro: Marque a opção 'Compartilhar áudio da aba'.");
+        setStatus("Erro: Certifica-te de marcar 'Partilhar áudio da aba'.");
         return;
       }
 
-      resetPeer();
+      resetSession();
       localStream = capturedStream;
       isSender = true;
-      const peer = makePeer();
-      localStream.getAudioTracks().forEach(track => peer.addTrack(track, localStream));
-      localStream.getVideoTracks().forEach(track => track.stop()); // descarta vídeo desnecessário
-      
-      await createSenderOffer();
-
-      localStream.getAudioTracks()[0].addEventListener("ended", () => {
-        socket.emit("signal", { room, data: { type: "transmission-stopped" } });
-        resetPeer();
-        setStatus("Transmissão encerrada.");
-      }, { once: true });
+      localStream.getVideoTracks().forEach(track => track.stop()); // descarta vídeo
 
       enableControls();
+      setStatus("A transmitir áudio para a sala...", true);
+
+      // Avisa os ouvintes que já estão na sala que a transmissão começou (recarrega as conexões)
+      // Como o servidor já gere os peers, podemos apenas notificar ou aguardar novos joins.
+      
+      localStream.getAudioTracks()[0].addEventListener("ended", () => {
+        socket.emit("room-command", { room, command: "stop-transmission" });
+        resetSession();
+        setStatus("Transmissão terminada.");
+      }, { once: true });
+
     } catch (e) {
       console.error(e);
-      resetPeer();
-      setStatus("Captura de áudio cancelada ou não permitida.");
+      resetSession();
+      setStatus("Partilha cancelada ou recusada.");
     }
   };
 
   $("stop").onclick = () => {
-    socket.emit("signal", { room, data: { type: "transmission-stopped" } });
-    resetPeer();
-    setStatus("Transmissão parada por você.");
+    resetSession();
+    setStatus("Transmissão parada.");
   };
 
   $("pauseCmd").onclick = () => socket.emit("room-command", { room, command: "pause" });
   $("nextCmd").onclick = () => socket.emit("room-command", { room, command: "next" });
 
   socket.on("room-command", ({ command }) => {
-    $("commandStatus").textContent = command === "pause" ? "Alguém pediu pause." : "Alguém pediu próxima faixa.";
+    if (command === "pause") {
+      $("commandStatus").textContent = "Alguém pediu pausa ⏸";
+    } else if (command === "next") {
+      $("commandStatus").textContent = "Alguém pediu para passar à próxima ⏭";
+    } else if (command === "stop-transmission") {
+      if (!isSender) {
+        resetSession();
+        setStatus("O transmissor encerrou o áudio.");
+      }
+    }
   });
 })();
 </script>
