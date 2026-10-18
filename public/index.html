@@ -1919,48 +1919,30 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     renderer.outputColorSpace=THREE.SRGBColorSpace;
     renderer.setClearColor(0x000000,0);
     renderer.domElement.className="jf-glb-canvas";
-    renderer.domElement.setAttribute("aria-label","Modelo 3D do macaco DJ");
+    renderer.domElement.setAttribute("aria-label","Mascote 3D do miniplayer");
     stage.appendChild(renderer.domElement);
     window.dispatchEvent(new Event("jf-player-stage-ready"));
     scene.add(new THREE.HemisphereLight(0xffffff,0x51406b,2.2));
     const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);
     const rim=new THREE.DirectionalLight(0x9deaff,1.1);rim.position.set(-4,2,-3);scene.add(rim);
     const root=new THREE.Group();scene.add(root);
-    const gltf=await new GLTFLoader().loadAsync("/macaco.glb");
+    // Modelo independente do miniplayer. A pista, os participantes e o guarda-roupa
+    // continuam usando /macaco.glb. Fallback apenas enquanto o novo GLB não foi copiado.
+    const gltf=await new GLTFLoader().loadAsync("/meshypint-player.glb").catch(async error=>{
+      console.warn("Miniplayer: modelo novo não encontrado. Copie public/meshypint-player.glb.",error);
+      return new GLTFLoader().loadAsync("/macaco.glb");
+    });
     const model=gltf.scene;
     root.add(model);
-    // O macaquinho padrão do player aparece mesmo sem transmissor.
-    // Ele também precisa da pose sentada (o wardrobe.js cobre apenas o transmissor).
-    new GLTFLoader().loadAsync("/poses/female-sitting.glb").then(pose=>{
-      const clip=pose.animations?.find(a=>a.tracks?.length);
-      if(!clip){console.warn("Macaco DJ: pose sentada sem canais.");return;}
-      const key=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
-      const targets=new Map(),sources=new Map();
-      model.traverse(node=>{if(node.isBone)targets.set(key(node.name),node);});
-      pose.scene.traverse(node=>{if(node.name&&/^mixamorig/i.test(node.name))sources.set(key(node.name),node);});
-      let applied=0;
-      const frame=Math.min(.5,clip.duration*.5),inv=new THREE.Quaternion(),q=new THREE.Quaternion();
-      for(const track of clip.tracks){
-        const split=track.name.lastIndexOf(".");
-        if(split<0||track.name.slice(split+1)!=="quaternion")continue;
-        const k=key(track.name.slice(0,split)),bone=targets.get(k),source=sources.get(k);
-        if(!bone||!source)continue;
-        const value=track.createInterpolant().evaluate(frame);
-        if(!value||value.length!==4)continue;
-        inv.copy(source.quaternion).invert();
-        q.fromArray(value).premultiply(inv);
-        bone.quaternion.multiply(q).normalize();
-        applied++;
-      }
-      console.info("Macaco DJ: pose sentada aplicada em",applied,"ossos");
-      if(applied<5)console.warn("Macaco DJ: correspondência insuficiente de ossos");
-    }).catch(error=>console.warn("Macaco DJ: falha ao carregar pose sentada",error));
+    // O GLB novo não tem rig: exibir a pose que já veio modelada,
+    // sem reaplicar o FBX antigo de sentado.
     const box=new THREE.Box3().setFromObject(model);
     const size=box.getSize(new THREE.Vector3());
     const center=box.getCenter(new THREE.Vector3());
-    model.position.sub(center);
     const maxDim=Math.max(size.x,size.y,size.z)||1;
-    model.scale.setScalar(2.25/maxDim);
+    const modelScale=2.25/maxDim;
+    model.scale.setScalar(modelScale);
+    model.position.copy(center).multiplyScalar(-modelScale);
     // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
     const patriotGltf=await new GLTFLoader().loadAsync("/patrianocape_pose_heroica_final.glb").catch(error=>{
       console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
