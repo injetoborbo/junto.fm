@@ -147,7 +147,7 @@ function sceneSetup(){
     trim.userData.jfDanceGlow={x,z};
   }
   // Cadeira na casa (4,4), com assento e encosto clicáveis.
-  const chairGroup=new THREE.Group();chairGroup.position.set(1.5,0,1.5);board.add(chairGroup);
+  const chairGroup=new THREE.Group();chairGroup.position.set(1.5,-.04,1.5);chairGroup.scale.setScalar(.68);board.add(chairGroup);
   const chairMat=mat(0x355a89,.42,.37),chairLeg=mat(0x162943,.75,.28);
   cube(.94,.16,.84,chairMat,0,.35,0,chairGroup);
   cube(.94,1.13,.15,chairMat,0,.89,-.39,chairGroup);
@@ -308,7 +308,7 @@ function animate(){
     const speeds={shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1};
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
-    p.root.position.y=(d.seated&&!walking?.53:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.position.y=(d.seated&&!walking?.30:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
     p.mixer?.update(dt);
@@ -327,8 +327,8 @@ function animate(){
         const torso=/spine/.test(n);
         let x=rx,y=ry,z=rz;
         if(d.seated&&!walking){
-          if(upperLeg)x+=1.12;
-          if(lowerLeg)x-=1.32;
+          if(upperLeg)x+=1.30;
+          if(lowerLeg)x-=1.55;
           if(upperArm)x+=.15;
           if(torso)x-=.09;
         }else if(walking){
