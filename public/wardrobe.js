@@ -183,7 +183,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
         (1-s)*measure.center.y-.00018,
         (1-s)*measure.center.z+.00012);
     // O Head usa a escala NAtiva (~milésimos de unidade no GLB).\n    // Ajuste pequeno na coordenada do osso, preservado por toda animação.
-    },true,headBone,animated?{y:-.00008,z:.00050}:null,{y:-.00022,z:.0011});
+    },true,headBone,animated?{x:.00010,y:-.00008,z:.00072}:null,{x:.00026,y:-.00022,z:.00185});
   }
   if(selection.headphones!=="nenhum"){
     const wearingHat=selection.hat!=="nenhum";
