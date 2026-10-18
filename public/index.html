@@ -1385,8 +1385,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const list=$("jfPeople");list.replaceChildren();
     if(!joined){const p=document.createElement("p");p.className="small";p.textContent="Entre em uma sala para ver os participantes.";list.appendChild(p);return;}
     const all=[...(socket.id?[[socket.id,jfProfile]]:[]),...jfPeerProfiles.entries()];
-    const seen=new Set(), unique=[];
-    for(const [id,p] of all){const key=String(p.name||"Ouvinte").trim().toLocaleLowerCase()+"|"+String(p.avatar||"");if(seen.has(key))continue;seen.add(key);unique.push([id,p]);}
+    // Cada conexão tem seu próprio macaco, mesmo quando os apelidos coincidem.
+    const unique=[...new Map(all).entries()];
     if(!unique.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
     for(const [id,p] of unique){
       const card=document.createElement("div");card.className="jf-person";
