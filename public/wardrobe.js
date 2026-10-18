@@ -74,6 +74,15 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   const hipBone=getBone(monkey,"Hips");
   const bindMatrices=new Map(),followers=[];
   let isSeated=false;
+  const glassesCalibration={x:0,y:0,z:0};
+  const seatShift=new THREE.Matrix4();
+  const setSeatGlassesCalibration=(values={})=>{
+    for(const axis of ["x","y","z"]){
+      const number=Number(values[axis]);
+      if(Number.isFinite(number))glassesCalibration[axis]=THREE.MathUtils.clamp(number,-.004,.004);
+    }
+    updateAccessories(isSeated);
+  };
   for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
   const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
   const updateAccessories=(seated=isSeated)=>{
@@ -83,7 +92,14 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     monkey.updateMatrixWorld(true);
     for(const {part,bone,bindLocal,seatedLocal} of followers){
       if(!part.parent)continue;
-      correctionWorld.multiplyMatrices(bone.matrixWorld,isSeated?seatedLocal:bindLocal);
+      // A calibração é aplicada ANTES da matriz local do acessório,
+      // portanto os eixos continuam relativos ao osso Head animado.
+      if(isSeated&&(part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos")){
+        seatShift.makeTranslation(glassesCalibration.x,glassesCalibration.y,glassesCalibration.z);
+        correctionWorld.multiplyMatrices(bone.matrixWorld,seatShift).multiply(seatedLocal);
+      }else{
+        correctionWorld.multiplyMatrices(bone.matrixWorld,isSeated?seatedLocal:bindLocal);
+      }
       part.parent.updateWorldMatrix(true,false);
       parentInverse.copy(part.parent.matrixWorld).invert();
       localMatrix.multiplyMatrices(parentInverse,correctionWorld);
@@ -226,7 +242,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     monkey.traverse(obj=>{
       if(obj.isMesh&&obj.userData.jfWardrobeOwnMaterial)obj.material?.dispose();
     });
-  },{updateAccessories});
+  },{updateAccessories,setSeatGlassesCalibration});
 }
 // Encaixe INDEPENDENTE para o mascote sentado do miniplayer.
 // Cada GLB é clonado de forma exclusiva; offsets nunca alteram dress() usado
@@ -651,5 +667,5 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
       });
     }
   }
-  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),dispose:()=>{stillActive=false;disposeClothes();}};
+  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),dispose:()=>{stillActive=false;disposeClothes();}};
 }
