@@ -392,7 +392,7 @@ io.on("connection", socket => {
     const floor=room&&danceFloors.get(room);
     if(!floor?.has(socket.id))return;
     const dance=String(payload?.dance||"");
-    if(!["idle","disco","swing","bounce"].includes(dance))return;
+    if(!["idle","shake","macarena","party","capoeira","groove"].includes(dance))return;
     floor.get(socket.id).dance=dance;
     io.to(room).emit("dance-updated",{id:socket.id,...floor.get(socket.id)});
   });
