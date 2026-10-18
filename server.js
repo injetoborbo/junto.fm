@@ -545,11 +545,13 @@ io.on("connection", socket => {
     const isRoomDJ = roomTransmitters.get(socket.data.room)?.id === socket.id && socket.data.isTransmitting;
     const wantsQueue = Boolean(payload.enabled);
     const session = getSession(socket.request, null);
-    socket.data.receiveMusicSuggestions = Boolean(isRoomDJ && wantsQueue && session?.refreshToken);
+    const hasQueueScope = Boolean(session?.scope?.split(" ").includes("user-modify-playback-state"));
+    socket.data.receiveMusicSuggestions = Boolean(isRoomDJ && wantsQueue && session?.refreshToken && hasQueueScope);
     socket.emit("suggestion-settings-result", {
       enabled: socket.data.receiveMusicSuggestions,
       error: wantsQueue && !isRoomDJ ? "Comece a transmitir para ativar a fila automática." :
-        wantsQueue && !session?.refreshToken ? "Conecte sua conta Spotify como DJ e tente novamente." : ""
+        wantsQueue && !session?.refreshToken ? "Conecte sua conta Spotify como DJ e tente novamente." :
+        wantsQueue && !hasQueueScope ? "Desconecte e reconecte o Spotify para autorizar pedidos automáticos." : ""
     });
   });
 
