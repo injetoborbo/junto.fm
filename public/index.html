@@ -384,6 +384,14 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 .jf-friends-drawer-footer .jf-friends-tab.active{outline:2px solid #91b8e3;outline-offset:1px}
 .jf-friends-drawer .jf-friend-status{font-size:11px}
 
+.jf-wardrobe-modal{max-width:690px}
+.jf-wardrobe-layout{display:grid;grid-template-columns:minmax(190px,248px) minmax(200px,1fr);gap:18px;align-items:center}
+.jf-wardrobe-preview{height:248px;border-radius:12px;background:linear-gradient(150deg,#e5f2ff,#d2e5f6);display:grid;place-items:center}
+.jf-wardrobe-fields{display:grid;gap:12px}
+.jf-wardrobe-fields label{display:grid;gap:5px;font-weight:700;font-size:13px}
+.jf-wardrobe-fields select{padding:10px;border-radius:7px;border:1px solid #9eb8cf;background:#fff;color:#15283c;min-width:0}
+.jf-member-monkey{width:64px;height:68px;flex:0 0 64px;overflow:hidden;border-radius:8px;background:#e8f1fc}
+@media(max-width:540px){.jf-wardrobe-layout{grid-template-columns:1fr}.jf-wardrobe-preview{width:100%}}
 /* Friends drawer + lyrics */
 .jf-friends-launcher{right:90px}.jf-friends-drawer{right:90px}
 .jf-friends-drawer-content{padding:12px;overflow:auto;min-height:0;flex:1}
@@ -457,7 +465,7 @@ html[data-jf-theme="classic"] .track-times{
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -575,6 +583,22 @@ html[data-jf-theme="classic"] .track-times{
   </div>
 
   
+<div class="jf-modal-backdrop" id="jfWardrobeModal" hidden>
+  <section class="panel jf-modal jf-wardrobe-modal" role="dialog" aria-modal="true" aria-labelledby="jfWardrobeTitle">
+    <div class="jf-modal-head"><h2 id="jfWardrobeTitle">🐒 Trajes do seu macaco</h2><button type="button" class="btn secondary" id="jfCloseWardrobe" aria-label="Fechar trajes">✕</button></div>
+    <p class="small">Todo mundo começa com o macaco original. Escolha os acessórios que vão aparecer para as pessoas na sala.</p>
+    <div class="jf-wardrobe-layout">
+      <div id="jfWardrobePreview" class="jf-wardrobe-preview" aria-label="Prévia do seu macaco 3D"></div>
+      <div class="jf-wardrobe-fields">
+        <label>Chapéu<select id="jfWardrobeHat"><option value="nenhum">Sem chapéu</option><option value="bone">Boné</option><option value="gorro">Gorro</option><option value="palha">Chapéu de palha</option></select></label>
+        <label>Óculos<select id="jfWardrobeGlasses"><option value="nenhum">Sem óculos</option><option value="escuros">Escuros</option><option value="redondos">Redondos</option></select></label>
+        <label>Fones<select id="jfWardrobeHeadphones"><option value="nenhum">Sem fones</option><option value="azul">Azuis</option><option value="rosa">Rosas</option></select></label>
+        <label>Roupa<select id="jfWardrobeOutfit"><option value="padrao">Original</option><option value="rosa">Rosa</option></select></label>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" type="button" id="jfSaveWardrobe">Salvar traje</button><span class="small">Gratuito, sem precisar criar conta.</span></div>
+  </section>
+</div>
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfProfileHeading">
     <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">✕</button></div>
@@ -682,6 +706,7 @@ html[data-jf-theme="classic"] .track-times{
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/wardrobe.js"></script>
 <script>
 (() => {
   const socket = io();
@@ -1318,9 +1343,15 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
   const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
-  let jfProfile={name:"Ouvinte",avatar:"",motto:""};
+  let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
-  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);}catch(_){}
+  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
+  window.addEventListener("jf-wardrobe-save",event=>{
+    jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
+    try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
+    if(joined)socket.emit("profile-update",{profile:jfProfile});
+    jfRenderPeople();
+  });
   function jfUpdateFavoriteButton(){
     const button=$("spotifyFavorite");
     if(!button)return;
@@ -1359,7 +1390,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(!unique.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
     for(const [id,p] of unique){
       const card=document.createElement("div");card.className="jf-person";
-      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="☺";card.appendChild(av);}
+      card.dataset.jfMonkey="true";
+      card.dataset.wardrobe=JSON.stringify(p.wardrobe||{});
+      const monkey=document.createElement("div");monkey.className="jf-member-monkey";card.appendChild(monkey);
+      /* A identidade visual principal do participante é sempre seu macaco 3D. */
       const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);
       if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}
       const status=document.createElement("span");status.className="jf-friend-status online";status.innerHTML="<i></i> Online na sala";details.appendChild(status);card.appendChild(details);
