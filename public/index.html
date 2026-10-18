@@ -483,7 +483,7 @@ html[data-jf-theme="classic"] .track-times{
 
   
 <div class="jf-player-layout">
-<section class="panel jf-player-panel">
+<section class="panel jf-player-panel"><p id="jfRoomOwnerStatus" class="small" aria-live="polite">Entre em uma sala</p>
     <div class="player">
       <div class="cover">♫</div>
       <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
@@ -714,6 +714,20 @@ html[data-jf-theme="classic"] .track-times{
   let room = "noite";
   let joined = false;
   let isSender = false;
+  let jfRoomOwnerId=null;
+  let jfCurrentTransmitter=null;
+  let jfRoomOwner=false;
+  function jfSyncRoomOwnership(){
+    jfRoomOwner=Boolean(joined&&socket.id&&jfRoomOwnerId===socket.id);
+    const role=document.getElementById("jfRoomOwnerStatus");
+    if(role)role.textContent=!joined?"Entre em uma sala":jfRoomOwner?"👑 Você administra esta sala":"🎧 Ouvinte — somente o dono transmite";
+    enableControls();
+  }
+  function jfNotifyTransmitterAppearance(){
+    const id=jfCurrentTransmitter?.active===false?null:jfCurrentTransmitter?.id;
+    const profile=id===socket.id?jfProfile:(jfPeerProfiles.get(id)||null);
+    window.dispatchEvent(new CustomEvent("jf-player-monkey",{detail:{id:id||null,wardrobe:profile?.wardrobe||null,skin:id===socket.id&&document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default"}}));
+  }
   let localStream = null;
   let spotifyConnected = false;
   let spotifyPollTimer = null;
@@ -765,7 +779,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     // O mascote permanece no player; o selo vermelho só aparece durante uma transmissão.
     miniDj.hidden = false;
     liveBadge.hidden = !active;
+    jfCurrentTransmitter=active?transmitter:null;
     $("jfTransmitterName").textContent = transmitterName;
+    jfNotifyTransmitterAppearance();
     miniDj.setAttribute("aria-label", active
       ? "Mascote ao lado do player. Ao vivo: " + transmitterName
       : "Mascote 3D do Junto.fm ao lado do player");
@@ -910,7 +926,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfUpdateRoomView();
     $("join").disabled = !socket.connected;
     $("createRoom").disabled = !socket.connected;
-    $("start").disabled = !joined || isSender;
+    $("start").disabled = !joined || !jfRoomOwner || isSender;
     $("stop").disabled = !joined || !isSender;
     $("pauseCmd").disabled = !joined;
     $("nextCmd").disabled = !joined;
@@ -1175,9 +1191,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     setStatus(errorMessage);
     enableControls();
   });
-  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null }) => {
+  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null,ownerId=null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -1186,6 +1202,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
   socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
+  socket.on("room-owner-update",({ownerId}={})=>{jfRoomOwnerId=ownerId||null;jfSyncRoomOwnership();jfRenderPeople();});
+  socket.on("transmission-denied",({message}={})=>{
+    if(isSender){resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
+    setStatus(message||"Somente o dono da sala pode transmitir.");
+    enableControls();
+  });
   socket.on('track-update', track => renderTrack(track, true));
   socket.on('track-clear', () => renderTrack(null));
   socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} · participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
@@ -1229,6 +1251,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   $("start").onclick = async () => {
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
+      if (!jfRoomOwner) { setStatus('Somente o dono da sala pode transmitir o Spotify.'); return; }
       if (!navigator.mediaDevices?.getDisplayMedia) { setStatus('A captura exige Chrome/Edge em localhost ou HTTPS.'); return; }
       // Música capturada da aba deve permanecer estéreo, sem tratamento de voz.
       // Alguns navegadores ignoram estas preferências na captura de tela.
@@ -1350,6 +1373,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
     try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
     if(joined)socket.emit("profile-update",{profile:jfProfile});
+    jfNotifyTransmitterAppearance();
     jfRenderPeople();
   });
   function jfUpdateFavoriteButton(){
@@ -1516,10 +1540,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     });
     $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
   }
-  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();jfRenderFriends();}});
+  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();}});
   socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();jfRenderFriends();});
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();jfRenderFriends();});
-  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});});
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
+  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});jfNotifyTransmitterAppearance();});
   socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
@@ -1582,7 +1606,40 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
   socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="Você está enviando mensagens rápido demais. Aguarde alguns segundos.";});
-  socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
+  let jfNotificationAudio=null,lastChatSound=0;
+  function jfChatNotificationSound(){
+    if(Date.now()-lastChatSound<600)return;
+    lastChatSound=Date.now();
+    try{
+      jfNotificationAudio ||= new (window.AudioContext||window.webkitAudioContext)();
+      if(jfNotificationAudio.state!=="running")return;
+      const start=jfNotificationAudio.currentTime;
+      for(const [i,hz] of [740,990].entries()){
+        const osc=jfNotificationAudio.createOscillator(),gain=jfNotificationAudio.createGain();
+        osc.type="sine";osc.frequency.setValueAtTime(hz,start+i*.1);
+        gain.gain.setValueAtTime(.0001,start+i*.1);
+        gain.gain.exponentialRampToValueAtTime(.07,start+i*.1+.012);
+        gain.gain.exponentialRampToValueAtTime(.0001,start+i*.1+.13);
+        osc.connect(gain);gain.connect(jfNotificationAudio.destination);
+        osc.start(start+i*.1);osc.stop(start+i*.1+.14);
+      }
+    }catch(error){console.debug("Áudio de notificação indisponível:",error);}
+  }
+  document.addEventListener("pointerdown",()=>{if(!jfNotificationAudio)return; jfNotificationAudio.resume().catch(()=>{});},{passive:true});
+  document.addEventListener("keydown",()=>{jfNotificationAudio?.resume().catch(()=>{});});
+  socket.on("chat-message",message=>{
+    if(joined&&message&&message.room===room){
+      jfAppendChatMessage(message);
+      if($("jfChatWindow").hidden){
+        $("jfChatLauncher").classList.add("has-unread");
+        $("jfChatUnread").title="Novas mensagens";
+        if(message.senderId!==socket.id){
+          if(!jfNotificationAudio)try{jfNotificationAudio=new (window.AudioContext||window.webkitAudioContext)();}catch(_){}
+          jfChatNotificationSound();
+        }
+      }
+    }
+  });
   socket.on("joined-room",()=>jfUpdateChatControls());
 
   jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();
