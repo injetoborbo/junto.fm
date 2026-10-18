@@ -143,6 +143,7 @@ async function putMember(id,details){
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
     entry.root.rotation.y=.65;
+    entry.root.position.set(entry.data.x-2.5,.77,entry.data.z-2.5);
     const tag=nameSprite(profile.name);
     entry.root.add(tag);entry.name=tag;
     scene.add(entry.root);
@@ -163,30 +164,59 @@ function updateChoices(){
 function animate(){
   if(!active||!renderer)return;
   frame=requestAnimationFrame(animate);
-  const time=clock.getElapsedTime();
+  const dt=Math.min(clock.getDelta(),.065);
+  const time=clock.elapsedTime;
+  if(scene.userData.disco)scene.userData.disco.rotation.y+=dt*.34;
   for(const [id,p] of people){
     if(!p.root)continue;
     const d=p.data,style=d.dance||"idle";
     const targetX=d.x-2.5,targetZ=d.z-2.5;
-    p.root.position.x+= (targetX-p.root.position.x)*.16;
-    p.root.position.z+= (targetZ-p.root.position.z)*.16;
-    const phase=time*(style==="disco"?6.4:style==="swing"?4.3:style==="bounce"?7.5:2.0);
-    p.root.position.y=.77+(style==="idle"?.015*Math.sin(phase):.085*Math.abs(Math.sin(phase)));
-    p.root.rotation.z=style==="swing"?.10*Math.sin(phase):style==="disco"?.06*Math.sin(phase):0;
-    p.root.rotation.y=.65+(style==="disco"?.20*Math.sin(phase*.5):style==="swing"?.12*Math.sin(phase):0);
-    // Dança simples usando ossos, sem substituir a rigagem Mixamo do macaco.
+    const dx=targetX-p.root.position.x,dz=targetZ-p.root.position.z;
+    const distance=Math.hypot(dx,dz);
+    const walking=distance>.025;
+    // 0.7 casa por segundo: um caminhar leve, sem teleportar.
+    if(walking){
+      const step=Math.min(.70*dt,distance);
+      p.root.position.x+=dx/distance*step;
+      p.root.position.z+=dz/distance*step;
+      // O macaco olha para o destino sem girar bruscamente.
+      const heading=Math.atan2(dx,dz);
+      const angleDiff=Math.atan2(Math.sin(heading-p.root.rotation.y),Math.cos(heading-p.root.rotation.y));
+      p.root.rotation.y+=Math.max(-dt*4,Math.min(dt*4,angleDiff));
+    }
+    p.walkTime=(p.walkTime||0)+(walking?dt*7.8:0);
+    const stride=Math.sin(p.walkTime);
+    const phase=time*(style==="disco"?6.4:style==="swing"?4.3:style==="bounce"?7.5:2);
+    p.root.position.y=.77+(walking?.032*Math.abs(stride):style==="idle"?.009*Math.sin(phase):.06*Math.abs(Math.sin(phase)));
+    p.root.rotation.z=walking?0:style==="swing"?.10*Math.sin(phase):style==="disco"?.06*Math.sin(phase):0;
+    if(!walking)p.root.rotation.y+=Math.atan2(Math.sin(.65-p.root.rotation.y),Math.cos(.65-p.root.rotation.y))*Math.min(1,dt*1.6);
+    if(!walking&&style==="disco")p.root.rotation.y+=dt*.12*Math.sin(phase*.5);
     if(p.rig){
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
         if(!obj.userData.jfDanceRest)obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
         const [rx,ry,rz]=obj.userData.jfDanceRest;
         const n=obj.name.toLowerCase();
-        let arm=0,leg=0,torso=0;
-        if(/(leftarm|rightarm|leftshoulder|rightshoulder)/.test(n))arm=n.includes("left")?1:-1;
-        if(/(leftupleg|rightupleg|leftleg|rightleg)/.test(n))leg=n.includes("left")?1:-1;
-        if(/spine/.test(n))torso=1;
-        obj.rotation.set(rx+arm*(style==="disco"?.18*Math.sin(phase):style==="swing"?.23*Math.sin(phase):0),
-          ry+torso*(style==="idle"?0:.11*Math.sin(phase)),rz+arm*(style==="idle"?0:.13*Math.cos(phase))+leg*(style==="bounce"?.06*Math.sin(phase):0));
+        const isLeft=n.includes("left"),side=isLeft?1:-1;
+        const upperLeg=/(leftupleg|rightupleg)/.test(n);
+        const lowerLeg=/(leftleg|rightleg)/.test(n)&&!upperLeg;
+        const upperArm=/(leftarm|rightarm)/.test(n);
+        const forearm=/(leftforearm|rightforearm)/.test(n);
+        const torso=/spine/.test(n);
+        let x=rx,y=ry,z=rz;
+        if(walking){
+          if(upperLeg)x+=side*.36*stride;
+          if(lowerLeg)x+=.15*Math.max(0,-side*stride);
+          if(upperArm)x-=side*.26*stride;
+          if(forearm)x-=side*.10*stride;
+          if(torso)z+=.022*stride;
+        }else if(style!=="idle"){
+          if(upperArm)x+=side*(style==="disco"?.20*Math.sin(phase):.26*Math.sin(phase));
+          if(upperArm)z+=side*.12*Math.cos(phase);
+          if(upperLeg)x+=side*(style==="bounce"?.09*Math.sin(phase):.05*Math.sin(phase));
+          if(torso)y+=.08*Math.sin(phase);
+        }
+        obj.rotation.set(x,y,z);
       });
     }
   }
