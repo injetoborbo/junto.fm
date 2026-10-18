@@ -4,7 +4,7 @@ import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTF
 import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 
 const OPTIONS={
-  hat:["nenhum","bone","gorro","palha"],
+  hat:["nenhum","bone","gorro","palha","branco"],
   glasses:["nenhum","escuros","redondos"],
   headphones:["nenhum","azul","rosa"],
   outfit:["padrao","rosa"]
@@ -17,11 +17,28 @@ const base=await new GLTFLoader().loadAsync("/macaco.glb").catch(error=>{
 });
 let previewRenderer=null;
 let previewYaw=-.18;
+// Carrega apenas o chapéu equipado e compartilha o asset entre usuários.
+const hatAssetUrls={
+  palha:"/Meshy_AI_Straw_Hat_with_Red_Ri_1018034335_texture.glb",
+  branco:"/Meshy_AI_White_Sun_Hat_1018035045_texture.glb"
+};
+const hatAssetCache=new Map(),hatLoader=new GLTFLoader();
+function getHatAsset(type){
+  if(!hatAssetUrls[type])return Promise.resolve(null);
+  if(!hatAssetCache.has(type)){
+    hatAssetCache.set(type,hatLoader.loadAsync(hatAssetUrls[type]).then(gltf=>gltf.scene).catch(error=>{
+      hatAssetCache.delete(type);
+      console.warn("GLB do chapéu não encontrado em public/: "+hatAssetUrls[type],error);
+      return null;
+    }));
+  }
+  return hatAssetCache.get(type);
+}
 function material(color,options={}){return new THREE.MeshStandardMaterial({color,roughness:.7,...options});}
 function addPart(parent,geo,mat,x,y,z,sx=1,sy=1,sz=1){
-  const mesh=new THREE.Mesh(geo,mat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
+  const mesh=new THREE.Mesh(geo,mat);mesh.userData.jfWardrobeGenerated=true;mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
 }
-function dress(model,selection){
+function dress(model,selection,render){
   const parts=new THREE.Group();parts.name="jfWardrobeParts";model.add(parts);
   // Acessórios proporcionais ao macaco original normalizado em 1,8 unidades.
   // As posições são de prévia; não se substitui o modelo original nem sua rigagem.
@@ -30,16 +47,24 @@ function dress(model,selection){
   const ink=material(0x26262b,{metalness:.22,roughness:.36});
   const glass=material(0x19273a,{transparent:true,opacity:.78,metalness:.12,roughness:.27,side:THREE.DoubleSide});
   const sphere=(mat,x,y,z,rx,ry,rz)=>addPart(parts,new THREE.SphereGeometry(1,20,12),mat,x,y,z,rx,ry,rz);
-  if(selection.hat==="palha"){
-    addPart(parts,new THREE.CylinderGeometry(.185,.205,.17,40),straw,0,.86,0);
-    addPart(parts,new THREE.CylinderGeometry(.305,.305,.025,40),straw,0,.775,0);
-    addPart(parts,new THREE.CylinderGeometry(.208,.208,.025,40),strawDark,0,.811,0);
-    // Pequenas nervuras do chapéu em vez de um disco sem textura.
-    for(let i=0;i<20;i++){
-      const a=i*Math.PI/10;
-      const line=addPart(parts,new THREE.BoxGeometry(.105,.004,.008),strawDark,Math.sin(a)*.246,.791,Math.cos(a)*.246);
-      line.rotation.y=a;
-    }
+  if(selection.hat==="palha"||selection.hat==="branco"){
+    const accessory=selection.hat;
+    getHatAsset(accessory).then(asset=>{
+      if(!asset||!parts.parent)return;
+      const hat=asset.clone(true);
+      hat.name="jfMeshyHat_"+accessory;
+      const bounds=new THREE.Box3().setFromObject(hat);
+      const size=bounds.getSize(new THREE.Vector3());
+      const center=bounds.getCenter(new THREE.Vector3());
+      // Os dois GLBs têm aba no plano XZ e altura no eixo Y.
+      const brimWidth=accessory==="palha"?.69:.66;
+      const scale=brimWidth/Math.max(size.x,size.z,.0001);
+      hat.scale.setScalar(scale);
+      hat.position.set(-center.x*scale,.79-bounds.min.y*scale,-center.z*scale);
+      hat.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
+      parts.add(hat);
+      render();
+    });
   }else if(selection.hat==="bone"){
     sphere(blue,0,.815,-.02,.245,.122,.225);
     const brim=sphere(material(0x2a668e),0,.755,.205,.205,.018,.13);
@@ -121,7 +146,7 @@ function makeScene(target,wardrobe,{preview=false}={}){
   const normalized=new THREE.Group();
   monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
   normalized.add(monkey);
-  dress(normalized,sanitize(wardrobe));
+  dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera));
   scene.add(normalized);
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
   camera.position.set(0,.04,preview?4.25:4.0);camera.lookAt(0,.035,0);
@@ -156,7 +181,7 @@ function makeScene(target,wardrobe,{preview=false}={}){
       target.removeEventListener("pointercancel",up);
     }
     normalized.getObjectByName("jfWardrobeParts")?.traverse(obj=>{
-      if(!obj.isMesh)return;
+      if(!obj.isMesh||!obj.userData.jfWardrobeGenerated)return;
       obj.geometry?.dispose();
       (Array.isArray(obj.material)?obj.material:[obj.material]).forEach(mat=>mat?.dispose());
     });
