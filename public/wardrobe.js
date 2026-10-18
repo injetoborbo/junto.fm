@@ -228,18 +228,30 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   scene.add(normalized);
   let active=true;
   let disposeOutfit=()=>{};
-  // Vestir DEPOIS da pose. Os offsets dos acessórios são calculados a partir
-  // da posição atual dos ossos; vestir antes usa a cabeça em pé.
+  // Acessórios foram modelados para a pose original do macaco.
+  // Precarregar as peças e fixá-las aos ossos ANTES de sentar o personagem,
+  // preservando os encaixes corretos da prévia de trajes.
   const dressNow=()=>{
     if(!active)return;
     disposeOutfit=dress(normalized,sanitize(wardrobe),()=>{if(active)renderer.render(scene,camera);},monkey);
     renderer.render(scene,camera);
   };
   if(playerSitting){
-    loadPlayerSittingPose().then(asset=>{
+    const outfit=sanitize(wardrobe);
+    const needed=[
+      outfit.hat!=="nenhum"?outfit.hat:null,
+      outfit.glasses!=="nenhum"?outfit.glasses:null,
+      outfit.headphones!=="nenhum"?"fone":null,
+      outfit.outfit==="rosa"?"vestido":null
+    ].filter(Boolean);
+    Promise.all([...needed.map(getAsset),loadPlayerSittingPose()]).then(async results=>{
       if(!active)return;
-      if(asset&&applyPlayerSittingPose(monkey,asset)){
-        // Reenquadrar depois de dobrar pernas e braços, antes de vestir.
+      // dress() usa microtasks para anexar os GLBs previamente carregados.
+      dressNow();
+      await Promise.resolve();
+      if(!active)return;
+      const pose=results[results.length-1];
+      if(pose&&applyPlayerSittingPose(monkey,pose)){
         const sittingBox=new THREE.Box3().setFromObject(normalized,true);
         if(!sittingBox.isEmpty()){
           const c=sittingBox.getCenter(new THREE.Vector3());
@@ -247,8 +259,8 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
           normalized.position.y-=.12;
         }
       }else console.warn("Pose sentada indisponível; usando pose original.");
-      dressNow();
-    });
+      renderer.render(scene,camera);
+    }).catch(error=>console.warn("Mascote: falha ao montar acessórios sentados",error));
   }
   if(skin==="capitao-patria"){
     // Render independente da mesma skin 3D do player, sem editar o GLB base.
