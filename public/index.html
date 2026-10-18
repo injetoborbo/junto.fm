@@ -214,6 +214,36 @@ main{max-width:1080px}
 .jf-song-confirmation[hidden]{display:none!important}
 .jf-song-confirmation .row{margin-top:8px;gap:8px}
 
+/* Pesquisa de músicas: acompanha as variáveis do tema ativo. */
+.jf-song-result{background:linear-gradient(160deg,color-mix(in srgb,var(--jf-glow) 48%,var(--card,#e8f1ff)),color-mix(in srgb,var(--jf-secondary) 16%,var(--card,#dce9fa)));box-shadow:inset 0 1px #ffffff66}
+.jf-song-result:hover,.jf-song-result:focus-visible{border-color:var(--jf-secondary);filter:brightness(1.08);outline-offset:2px}
+.jf-song-confirmation{background:color-mix(in srgb,var(--jf-glow) 34%,transparent);color:var(--ink)}
+/* Windows XP / Classic: azul metálico escuro, não o azul pastel padrão. */
+html[data-jf-theme="classic"] .jf-song-result{
+  color:#f5f9ff;border:1px solid #234b83;border-radius:5px;
+  background:linear-gradient(180deg,#829dbb 0%,#456c9c 13%,#244d84 48%,#153764 52%,#214c84 100%);
+  box-shadow:inset 0 1px 0 #d8e8fb9c,inset 0 -1px 0 #09284d,0 2px 5px #163b6940;
+  text-shadow:0 1px 1px #071c3b;
+}
+html[data-jf-theme="classic"] .jf-song-result small{color:#d8e7fb;opacity:1}
+html[data-jf-theme="classic"] .jf-song-result:hover,
+html[data-jf-theme="classic"] .jf-song-result:focus-visible{
+  background:linear-gradient(180deg,#a2b8d0,#648cb9 18%,#31639b 50%,#205080 52%,#356da3);
+  border-color:#9bc3f3;filter:none;
+}
+html[data-jf-theme="classic"] .jf-song-confirmation{
+  color:#f5faff;border:1px solid #244c7e;border-radius:5px;
+  background:linear-gradient(#6489b5,#315d93 43%,#1b457c 52%,#173965);
+  box-shadow:inset 0 1px 0 #c8dffb99,0 2px 7px #09284a55;
+}
+html[data-jf-theme="classic"] .jf-song-confirmation strong{color:#ffffff;text-shadow:0 1px 2px #102e57}
+html[data-jf-theme="classic"] .jf-song-confirmation .btn{background:linear-gradient(#d9e9ff,#82addf 48%,#356eb1 52%,#204e8d);border:1px solid #153d75;color:#fff;text-shadow:0 1px #193b6d}
+html[data-jf-theme="classic"] .jf-song-confirmation .btn.secondary{background:linear-gradient(#eff4fa,#c0d2e9 48%,#8caacb 52%,#6486ac);color:#173a65;text-shadow:none}
+html[data-jf-theme="aero"] .jf-song-result{color:#f5ffff;background:linear-gradient(#155b80cc,#07314dec);border-color:#60d9f0}
+html[data-jf-theme="aero"] .jf-song-result small{color:#d3faff}
+html[data-jf-theme="aero"] .jf-song-confirmation{background:linear-gradient(#135c81da,#06334fef);color:#f5ffff;border-color:#60d9f0}
+
+
 .jf-suggestion-popup[hidden]{display:none!important}
 .jf-suggestion-popup{position:fixed;left:22px;right:auto;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
 .jf-popup-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--jf-secondary);font-size:10px;font-weight:900;letter-spacing:1.2px}
