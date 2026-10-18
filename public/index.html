@@ -1586,7 +1586,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);
     const rim=new THREE.DirectionalLight(0x9deaff,1.1);rim.position.set(-4,2,-3);scene.add(rim);
     const root=new THREE.Group();scene.add(root);
-    const gltf=await new GLTFLoader().loadAsync("/Meshypint.glb");
+    const gltf=await new GLTFLoader().loadAsync("/macaco.glb");
     const model=gltf.scene;
     root.add(model);
     const box=new THREE.Box3().setFromObject(model);
