@@ -1611,10 +1611,18 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       patriot.scale.setScalar(2.25/(Math.max(ps.x,ps.y,ps.z)||1));
       // Pose estática de voo: aplica rotações aos ossos do Mixamo no modelo rigado.
       // Não altera a skin padrão nem o arquivo GLB original.
+      // GLTFLoader pode converter ':' em '_' nos nomes dos ossos.
+      // Identificar pelo sufixo normalizado evita depender do prefixo Mixamo.
       const bones={};
-      patriot.traverse(object=>{if(object.isBone)bones[object.name]=object;});
+      const normalizeBoneName=name=>name.toLowerCase().replace(/[^a-z0-9]/g,"");
+      patriot.traverse(object=>{
+        if(object.isBone){
+          const key=normalizeBoneName(object.name).replace(/^mixamorig/,"");
+          bones[key]=object;
+        }
+      });
       const poseBone=(name,x=0,y=0,z=0)=>{
-        const bone=bones["mixamorig:"+name];
+        const bone=bones[normalizeBoneName(name)];
         if(bone){bone.rotation.x+=x;bone.rotation.y+=y;bone.rotation.z+=z;}
       };
       // Braços ligeiramente afastados do tronco e estendidos, mãos relaxadas.
@@ -1628,7 +1636,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       poseBone("LeftUpLeg",-.06,0,-.055);
       poseBone("RightUpLeg",-.06,0,.055);
       poseBone("Spine2",.045,0,0);
-      console.info("Junto.fm: pose de voo v2", {totalBones:Object.keys(bones).length,leftArm:!!bones["mixamorig:LeftArm"],rightArm:!!bones["mixamorig:RightArm"],skinnedMeshes:(()=>{let n=0;patriot.traverse(o=>{if(o.isSkinnedMesh)n++;});return n;})()});
+      console.info("Junto.fm: pose de voo v2", {totalBones:Object.keys(bones).length,leftArm:!!bones.leftarm,rightArm:!!bones.rightarm,skinnedMeshes:(()=>{let n=0;patriot.traverse(o=>{if(o.isSkinnedMesh)n++;});return n;})()});
 
       // Pontos pequenos apenas nas pupilas: sem halos grandes ou luz no rosto.
       const pupilGlowMaterial=new THREE.MeshBasicMaterial({
