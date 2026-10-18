@@ -1943,6 +1943,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const modelScale=2.25/maxDim;
     model.scale.setScalar(modelScale);
     model.position.copy(center).multiplyScalar(-modelScale);
+    // O novo GLB inclui a mesa de DJ na parte inferior. Subir o conjunto
+    // sem mudar modelScale para a mesa não ser cortada pelo rodapé do player.
+    model.position.y+=.16;
     // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
     const patriotGltf=await new GLTFLoader().loadAsync("/patrianocape_pose_heroica_final.glb").catch(error=>{
       console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
