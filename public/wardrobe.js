@@ -34,6 +34,22 @@ function getHatAsset(type){
   }
   return hatAssetCache.get(type);
 }
+const glassesAssetUrls={
+  escuros:"/oculos_escuros.glb",
+  redondos:"/oculos_redondos.glb"
+};
+const glassesCache=new Map();
+function getGlassesAsset(type){
+  if(!glassesAssetUrls[type])return Promise.resolve(null);
+  if(!glassesCache.has(type)){
+    glassesCache.set(type,hatLoader.loadAsync(glassesAssetUrls[type]).then(gltf=>gltf.scene).catch(error=>{
+      glassesCache.delete(type);
+      console.warn("Óculos GLB não encontrado:",glassesAssetUrls[type],error);
+      return null;
+    }));
+  }
+  return glassesCache.get(type);
+}
 function material(color,options={}){return new THREE.MeshStandardMaterial({color,roughness:.7,...options});}
 function addPart(parent,geo,mat,x,y,z,sx=1,sy=1,sz=1){
   const mesh=new THREE.Mesh(geo,mat);mesh.userData.jfWardrobeGenerated=true;mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
@@ -57,12 +73,12 @@ function dress(model,selection,render){
       const box=new THREE.Box3().setFromObject(hat);
       const extent=box.getSize(new THREE.Vector3());
       const center=box.getCenter(new THREE.Vector3());
-      const width=accessory==="palha"?.64:.62;
+      const width=accessory==="palha"?.79:.77;
       const scale=width/Math.max(extent.x,extent.z,.0001);
       hat.scale.setScalar(scale);
       // Apoiar a ABA (e não o topo do chapéu) na cabeça.
       // O centro do modelo Meshy é aproximadamente o plano da aba.
-      const brimY=H.headTop-.075;
+      const brimY=H.headTop-.015;
       hat.position.set(-center.x*scale,brimY-center.y*scale,-center.z*scale-.015);
       hat.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
       parts.add(hat);
@@ -79,19 +95,22 @@ function dress(model,selection,render){
     sphere(mat(0xffd6e9),0,.96,0,.037,.037,.037);
   }
   if(selection.glasses!=="nenhum"){
-    const frame=selection.glasses==="escuros"?dark:mat(0xb3a5c4,{metalness:.48,roughness:.3});
-    const glass=mat(selection.glasses==="escuros"?0x162132:0xc5e9fc,{
-      transparent:true,opacity:selection.glasses==="escuros"?.83:.25,
-      side:THREE.DoubleSide,metalness:.15,roughness:.28
+    const accessory=selection.glasses;
+    // Óculos de verdade, já modelados para o macaco, em vez de esferas na frente dos olhos.
+    getGlassesAsset(accessory).then(asset=>{
+      if(!asset||!parts.parent||!parts.userData.active)return;
+      const glasses=asset.clone(true);
+      glasses.name="jfRealGlasses_"+accessory;
+      const box=new THREE.Box3().setFromObject(glasses);
+      const size=box.getSize(new THREE.Vector3());
+      const center=box.getCenter(new THREE.Vector3());
+      const scale=.34/Math.max(size.x,.00001);
+      glasses.scale.setScalar(scale);
+      glasses.position.set(-center.x*scale,.442-center.y*scale,.278-center.z*scale);
+      glasses.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
+      parts.add(glasses);
+      render();
     });
-    for(const sign of [-1,1]){
-      sphere(glass,sign*.115,H.eyes,H.front+.016,.077,.069,.008);
-      const ring=addPart(parts,new THREE.TorusGeometry(.073,.007,8,32),frame,sign*.115,H.eyes,H.front+.029);
-      ring.rotation.y=sign*-.08;
-      const arm=addPart(parts,new THREE.BoxGeometry(.085,.012,.012),frame,sign*.218,H.eyes+.007,.244);
-      arm.rotation.y=sign*-.25;
-    }
-    addPart(parts,new THREE.BoxGeometry(.066,.011,.012),frame,0,H.eyes+.009,H.front+.028);
   }
   if(selection.headphones!=="nenhum"){
     const shell=selection.headphones==="rosa"?pink:navy;
