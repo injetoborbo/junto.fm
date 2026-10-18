@@ -72,8 +72,23 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   const neckBone=getBone(monkey,"Neck");
   const torsoBone=getBone(monkey,"Spine2")||getBone(monkey,"Spine");
   const hipBone=getBone(monkey,"Hips");
-  const bindMatrices=new Map();
-  for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone, bone.matrixWorld.clone());
+  const bindMatrices=new Map(),followers=[];
+  for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
+  const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
+  const updateAccessories=()=>{
+    if(!animated||!state.userData.active||!followers.length)return;
+    // Garantir osso atualizado APÓS mixer/pose, inclusive no modo sentado.
+    monkey.updateMatrixWorld(true);
+    for(const {part,bone,bindLocal} of followers){
+      if(!part.parent)continue;
+      correctionWorld.multiplyMatrices(bone.matrixWorld,bindLocal);
+      part.parent.updateWorldMatrix(true,false);
+      parentInverse.copy(part.parent.matrixWorld).invert();
+      localMatrix.multiplyMatrices(parentInverse,correctionWorld);
+      localMatrix.decompose(part.position,part.quaternion,part.scale);
+      part.updateMatrix();
+    }
+  };
   // Converter do espaço ORIGINAL do acessório para o local do osso na pose
   // inicial; nunca usar a matriz atual (que pode ser de uma dança).
   const attachAtBind=(part,bone,sourceBindWorld,offset={})=>{
@@ -83,12 +98,17 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     part.updateMatrix();
     const local=new THREE.Matrix4().copy(boneBind).invert()
       .multiply(sourceBindWorld).multiply(part.matrix);
-    bone.add(part);
-    local.decompose(part.position,part.quaternion,part.scale);
-    part.position.x+=offset.x||0;
-    part.position.y+=offset.y||0;
-    part.position.z+=offset.z||0;
-    part.updateMatrix();
+    // Armazenar a relação com o osso na pose original. No modo animado,
+    // o acessório continua sob o grupo do avatar; a matriz é sincronizada
+    // explicitamente com o Head/Neck/Hips após cada frame.
+    const atBone=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
+    local.decompose(atBone,rotation,scale);
+    atBone.x+=offset.x||0;
+    atBone.y+=offset.y||0;
+    atBone.z+=offset.z||0;
+    const bindLocal=new THREE.Matrix4().compose(atBone,rotation,scale);
+    followers.push({part,bone,bindLocal});
+    updateAccessories();
   };
   const worldHead=new THREE.Vector3(-.13,.28,-.05);
   const worldTop=new THREE.Vector3(-.13,.9,0);
@@ -115,6 +135,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
         monkey.updateMatrixWorld(true);
         if(followHead&&headBone)headBone.attach(part);
       }
+      updateAccessories();
       render();
     });
   };
@@ -141,6 +162,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
         state.updateWorldMatrix(true,true);
         if(headBone)headBone.attach(hat);
       }
+      updateAccessories();
       render();
     });
   }else if(selection.hat==="bone"||selection.hat==="gorro"){
@@ -193,14 +215,14 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       part.position.x=rawX;
     },false,hipBone||torsoBone);
   }
-  return ()=>{
+  return Object.assign(()=>{
     state.userData.active=false;
     // As geometrias GLB são compartilhadas com os outros usuários;
     // descarte apenas os materiais clonados dos fones.
     monkey.traverse(obj=>{
       if(obj.isMesh&&obj.userData.jfWardrobeOwnMaterial)obj.material?.dispose();
     });
-  };
+  },{updateAccessories});
 }
 // Encaixe INDEPENDENTE para o mascote sentado do miniplayer.
 // Cada GLB é clonado de forma exclusiva; offsets nunca alteram dress() usado
@@ -625,5 +647,5 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
       });
     }
   }
-  return {group:root,rig:monkey,dispose:()=>{stillActive=false;disposeClothes();}};
+  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),dispose:()=>{stillActive=false;disposeClothes();}};
 }
