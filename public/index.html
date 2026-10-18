@@ -1612,6 +1612,33 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const patriotScale=1.86/(Math.max(ps.x,ps.y,ps.z)||1);
       patriot.scale.setScalar(patriotScale);
       patriot.position.copy(pc).multiplyScalar(-patriotScale);
+      // Capa Meshy separada do esqueleto, presa ao mesmo grupo do personagem.
+      // Se o arquivo ainda não estiver em public/, mantém o personagem normal.
+      const capeAsset="/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb";
+      const capeGltf=await new GLTFLoader().loadAsync(capeAsset).catch(error=>{
+        console.warn("Junto.fm: capa não encontrada, coloque o GLB em public/.",error);
+        return null;
+      });
+      if(capeGltf){
+        const capeMount=new THREE.Group();
+        capeMount.name="jfPatriotCapeMount";
+        capeMount.position.set(0,-.18,-.42);
+        capeMount.rotation.x=-.07;
+        const cape=capeGltf.scene;
+        cape.name="jfPatriotCape";
+        cape.scale.setScalar(.74);
+        cape.traverse(part=>{
+          if(part.isMesh){
+            part.frustumCulled=false;
+            part.castShadow=false;
+            part.receiveShadow=false;
+          }
+        });
+        capeMount.add(cape);
+        patriotRoot.add(capeMount);
+        console.info("Junto.fm: capa 3D separada carregada com sucesso.");
+      }
+
       // A pose dos braços e mãos já está salva no GLB novo do AccuRIG.
       // Ajustar apenas os ossos das pernas e dos pés, sem tocar nos braços.
       const rigBones=new Map();
