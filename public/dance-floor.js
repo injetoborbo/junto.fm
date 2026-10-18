@@ -46,29 +46,32 @@ function buildAnimationAction(member,style){
   member.rig.updateMatrixWorld(true);
   data.scene.traverse(obj=>{if(obj.isBone)sourceBones.set(boneKey(obj.name),obj);});
   member.rig.traverse(obj=>{if(obj.isBone)targetBones.set(boneKey(obj.name),obj);});
-  const tracks=[],srParent=new THREE.Quaternion(),trParent=new THREE.Quaternion();
-  const srcRestInverse=new THREE.Quaternion(),delta=new THREE.Quaternion(),result=new THREE.Quaternion();
-  const invSrParent=new THREE.Quaternion(),invTrParent=new THREE.Quaternion();
+  const tracks=[];
+  const invSourceRest=new THREE.Quaternion(),sample=new THREE.Quaternion();
+  const corrected=new THREE.Quaternion(),reference=new THREE.Quaternion();
+  // GLBs Mixamo sem skin usam pose inicial diferente do macaco vestido.
+  // Transferir a mudança LOCAL relativa à pose inicial de cada osso.
   for(const track of data.clip.tracks){
     const dot=track.name.lastIndexOf(".");
-    if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+    if(dot<0)continue;
+    const property=track.name.slice(dot+1);
     const key=boneKey(track.name.slice(0,dot));
     const source=sourceBones.get(key),target=targetBones.get(key);
-    if(!source||!target||!target.parent)continue;
-    // Remover apenas deslocamento de raiz; preservar os passos originais de braços/pernas.
+    if(!source||!target||property!=="quaternion")continue;
     const rest=member.restBones?.get(target.uuid)||target.quaternion.clone();
-    source.parent?.getWorldQuaternion(srParent);
-    target.parent.getWorldQuaternion(trParent);
-    invSrParent.copy(srParent).invert();
-    invTrParent.copy(trParent).invert();
-    srcRestInverse.copy(source.quaternion).invert();
+    invSourceRest.copy(source.quaternion).invert();
     const values=new Float32Array(track.values.length);
     for(let i=0;i<track.values.length;i+=4){
-      const animated=new THREE.Quaternion().fromArray(track.values,i);
-      delta.copy(animated).multiply(srcRestInverse);
-      delta.premultiply(srParent).multiply(invSrParent);
-      result.copy(invTrParent).multiply(delta).multiply(trParent).multiply(rest).normalize();
-      result.toArray(values,i);
+      sample.fromArray(track.values,i);
+      // Em repouso, a rotação resultante deve ser exatamente a pose do macaco.
+      corrected.copy(sample).premultiply(invSourceRest);
+      corrected.premultiply(rest).normalize();
+      // Evitar saltos entre quaternions equivalentes com sinais opostos.
+      if(i>0){
+        reference.fromArray(values,i-4);
+        if(reference.dot(corrected)<0)corrected.set(-corrected.x,-corrected.y,-corrected.z,-corrected.w);
+      }
+      corrected.toArray(values,i);
     }
     tracks.push(new THREE.QuaternionKeyframeTrack(target.name+".quaternion",track.times.slice(),values));
   }
