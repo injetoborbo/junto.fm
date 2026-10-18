@@ -1628,14 +1628,14 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         const capeCenter=capeBox.getCenter(new THREE.Vector3());
         // Encaixe em unidades do player (já normalizadas), sem depender
         // da escala bruta exportada pelo Meshy.
-        const capeScale=1.47/Math.max(capeSize.y,.001);
+        const capeScale=1.32/Math.max(capeSize.y,.001);
         cape.scale.setScalar(capeScale);
         cape.position.copy(capeCenter).multiplyScalar(-capeScale);
         capeMount=new THREE.Group();
         capeMount.name="jfPatriotCapeMount";
-        // Topo no alto das costas, barra levemente atrás das botas.
-        capeMount.position.set(0,-.09,-.40);
-        capeMount.rotation.x=-.10;
+        // Capa menor, elevada e afastada das pernas para evitar atravessamento.
+        capeMount.position.set(0,.02,-.52);
+        capeMount.rotation.x=.08;
         cape.traverse(part=>{
           if(part.isMesh){
             part.frustumCulled=false;
