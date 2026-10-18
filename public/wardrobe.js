@@ -199,19 +199,31 @@ async function dressMiniPlayer(selection,render,monkey,root,isActive){
   const jobs=[];
   if(selection.hat==="palha"||selection.hat==="branco"){
     const type=selection.hat;
-    jobs.push(add(type,(hat,measure)=>{
-      const width=type==="palha"?.94:.92;
-      const s=width/Math.max(measure.size.x,measure.size.z,1e-6);
+    jobs.push((async()=>{
+      const asset=await getAsset(type);
+      if(!asset||!isActive()||!head||!top)return;
+      // Ancoragem DIRETA no osso Head, usando o HeadTop como referência
+      // anatômica. Não converter a posição entre monkey e normalized.
+      monkey.updateMatrixWorld(true);
+      const hat=asset.clone(true);
+      hat.name="jfMiniHat_"+type;
+      const measure=getBounds(hat);
+      const worldScale=head.getWorldScale(new THREE.Vector3()).x||1;
+      const desiredWidth=type==="palha"?.94:.92;
+      const nativeScale=desiredWidth/
+        (Math.max(measure.size.x,measure.size.z,1e-6)*worldScale);
+      const topLocal=head.worldToLocal(top.getWorldPosition(new THREE.Vector3()));
       const brim=measure.box.min.y+measure.size.y*.12;
-      // Chapéus Meshy estão dimensionados para o grupo normalizado, NÃO
-      // para a escala local do monkey. Usar a mesma referência da lista.
-      hat.scale.setScalar(s);
+      head.add(hat);
+      hat.scale.setScalar(nativeScale);
       hat.position.set(
-        headPos.x-measure.center.x*s,
-        topPos.y-.17-brim*s,
-        headPos.z-measure.center.z*s+.05
+        topLocal.x-measure.center.x*nativeScale,
+        topLocal.y*.80-brim*nativeScale,
+        topLocal.z-measure.center.z*nativeScale+.05/worldScale
       );
-    },head,root));
+      copies.push(hat);
+      render();
+    })());
   }else if(selection.hat!=="nenhum"){
     jobs.push(add(selection.hat,part=>{part.position.x=rawX;},head));
   }
