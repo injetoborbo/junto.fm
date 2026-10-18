@@ -20,9 +20,13 @@ const animationFiles={
   capoeira:"/dance/macacocapoera.glb",
   groove:"/dance/macacodancagay.glb"
 };
+// As animações Mixamo importadas ainda não foram retargeteadas para todos os rigs.
+// Não as aplicar diretamente: rotações locais incompatíveis deformam os avatares.
+// Manter o fallback procedural até validar clips retargeteados por tipo de rig.
+const ENABLE_UNRETARGETED_MIXAMO=false;
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
 function loadClip(style){
-  if(!animationFiles[style])return Promise.resolve(null);
+  if(!ENABLE_UNRETARGETED_MIXAMO||!animationFiles[style])return Promise.resolve(null);
   if(!clipPromises.has(style)){
     clipPromises.set(style,gltfLoader.loadAsync(animationFiles[style]).then(gltf=>{
       const clip=gltf.animations?.find(c=>c.tracks?.length)||null;
@@ -36,7 +40,7 @@ function loadClip(style){
   return clipPromises.get(style);
 }
 function buildAnimationAction(member,style){
-  if(!member.rig||!animationClips.has(style))return null;
+  if(!ENABLE_UNRETARGETED_MIXAMO||!member.rig||!animationClips.has(style))return null;
   const boneByName=new Map();
   member.rig.traverse(node=>{
     if(!node.isBone)return;
@@ -68,7 +72,7 @@ function switchDance(member,style){
   member.action?.fadeOut(.24);
   member.currentDance=style;
   member.action=null;
-  if(style==="idle"||!animationClips.has(style))return;
+  if(!ENABLE_UNRETARGETED_MIXAMO||style==="idle"||!animationClips.has(style))return;
   const action=buildAnimationAction(member,style);
   if(action){action.reset().fadeIn(.24).play();member.action=action;}
 }
