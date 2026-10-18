@@ -17,146 +17,152 @@ const base=await new GLTFLoader().loadAsync("/macaco.glb").catch(error=>{
 });
 let previewRenderer=null;
 let previewYaw=-.18;
-// Carrega apenas o chapéu equipado e compartilha o asset entre usuários.
-const hatAssetUrls={
+// Todas as roupas são GLBs ajustados ao corpo original do macaco.
+// Modelos pequenos de roupa/óculos/fones usam a escala ORIGINAL do macaco;
+// apenas os chapéus Meshy grandes precisam ser normalizados.
+const ASSETS={
   palha:"/Meshy_AI_Straw_Hat_with_Red_Ri_1018034335_texture.glb",
-  branco:"/Meshy_AI_White_Sun_Hat_1018035045_texture.glb"
-};
-const hatAssetCache=new Map(),hatLoader=new GLTFLoader();
-function getHatAsset(type){
-  if(!hatAssetUrls[type])return Promise.resolve(null);
-  if(!hatAssetCache.has(type)){
-    hatAssetCache.set(type,hatLoader.loadAsync(hatAssetUrls[type]).then(gltf=>gltf.scene).catch(error=>{
-      hatAssetCache.delete(type);
-      console.warn("GLB do chapéu não encontrado em public/: "+hatAssetUrls[type],error);
-      return null;
-    }));
-  }
-  return hatAssetCache.get(type);
-}
-const glassesAssetUrls={
+  branco:"/chapeu_sol_branco_corrigido.glb",
+  bone:"/bone_azul.glb",
+  gorro:"/touca_preta.glb",
   escuros:"/oculos_escuros.glb",
-  redondos:"/oculos_redondos.glb"
+  redondos:"/oculos_redondos.glb",
+  fone:"/fone_preto.glb",
+  vestido:"/vestido_rosa.glb"
 };
-const glassesCache=new Map();
-function getGlassesAsset(type){
-  if(!glassesAssetUrls[type])return Promise.resolve(null);
-  if(!glassesCache.has(type)){
-    glassesCache.set(type,hatLoader.loadAsync(glassesAssetUrls[type]).then(gltf=>gltf.scene).catch(error=>{
-      glassesCache.delete(type);
-      console.warn("Óculos GLB não encontrado:",glassesAssetUrls[type],error);
+const assetCache=new Map(),loader=new GLTFLoader();
+function getAsset(name){
+  if(!ASSETS[name])return Promise.resolve(null);
+  if(!assetCache.has(name)){
+    assetCache.set(name,loader.loadAsync(ASSETS[name]).then(gltf=>gltf.scene).catch(error=>{
+      assetCache.delete(name);
+      const notice=document.getElementById("jfWardrobeAssetStatus");
+      if(notice&&!document.getElementById("jfWardrobeModal")?.hidden)
+        notice.textContent="Arquivo ausente: "+ASSETS[name]+". Extraia o pacote de acessórios na pasta public.";
+      console.warn("Trajes: não carregou "+ASSETS[name],error);
       return null;
     }));
   }
-  return glassesCache.get(type);
+  return assetCache.get(name);
 }
-function material(color,options={}){return new THREE.MeshStandardMaterial({color,roughness:.7,...options});}
-function addPart(parent,geo,mat,x,y,z,sx=1,sy=1,sz=1){
-  const mesh=new THREE.Mesh(geo,mat);mesh.userData.jfWardrobeGenerated=true;mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
+function getBone(root,part){
+  let bone=null;
+  root.traverse(o=>{
+    if(!bone&&o.isBone&&o.name.toLowerCase().endsWith(":"+part.toLowerCase()))bone=o;
+  });
+  return bone;
 }
-function dress(model,selection,render,monkey){
-  const parts=new THREE.Group();
-  parts.name="jfWardrobeParts";parts.userData.active=true;
-  model.add(parts);
-  const mat=(color,options={})=>material(color,options);
-  const sphere=(color,x,y,z,sx,sy,sz)=>addPart(parts,new THREE.SphereGeometry(1,24,16),color,x,y,z,sx,sy,sz);
-  // Coordenadas do macaco normalizado: topo da cabeça ~0.90,
-  // centro dos olhos ~0.43 e quadril ~-0.20.
-  const H={headTop:.85,eyes:.435,front:.275,ears:.405,waist:-.17};
-  const navy=mat(0x3376ab),pink=mat(0xde78aa),dark=mat(0x24212a,{metalness:.18,roughness:.46});
-  if(selection.hat==="palha"||selection.hat==="branco"){
-    const accessory=selection.hat;
-    getHatAsset(accessory).then(asset=>{
-      if(!asset||!parts.parent||!parts.userData.active)return;
-      const hat=asset.clone(true);
-      hat.name="jfMeshyHat_"+accessory;
-      const box=new THREE.Box3().setFromObject(hat);
-      const extent=box.getSize(new THREE.Vector3());
-      const center=box.getCenter(new THREE.Vector3());
-      const width=accessory==="palha"?.82:.79;
-      const scale=width/Math.max(extent.x,extent.z,.0001);
-      hat.scale.setScalar(scale);
-      // Apoiar a ABA (e não o topo do chapéu) na cabeça.
-      // O centro do modelo Meshy é aproximadamente o plano da aba.
-      const brimY=H.headTop-.03;
-      // A aba está na metade inferior do Meshy GLB (e não no centro).
-      const brimSurface=box.min.y+(extent.y*.13);
-      hat.position.set(-center.x*scale,brimY-brimSurface*scale,-center.z*scale-.025);
-      hat.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
-      parts.add(hat);
+function getBounds(root){
+  const box=new THREE.Box3().setFromObject(root);
+  return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
+}
+function dress(root,selection,render,monkey){
+  const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
+  const headBone=getBone(monkey,"Head");
+  const topBone=getBone(monkey,"HeadTop_End");
+  const neckBone=getBone(monkey,"Neck");
+  monkey.updateMatrixWorld(true);
+  const worldHead=new THREE.Vector3(-.13,.28,-.05);
+  const worldTop=new THREE.Vector3(-.13,.9,0);
+  const worldNeck=new THREE.Vector3(-.13,.18,-.05);
+  if(headBone)headBone.getWorldPosition(worldHead);
+  if(topBone)topBone.getWorldPosition(worldTop);
+  if(neckBone)neckBone.getWorldPosition(worldNeck);
+  // Corrige o desvio lateral do GLB antigo: a cabeça NÃO fica em X=0.
+  const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
+  const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
+  const rawNeckZ=(worldNeck.z-monkey.position.z)/monkey.scale.z;
+  const attachFitted=(file,configure,followHead=false)=>{
+    getAsset(file).then(asset=>{
+      if(!asset||!state.userData.active)return;
+      const part=asset.clone(true);
+      part.name="jfWardrobe_"+file;
+      const measure=getBounds(part);
+      configure(part,measure);
+      monkey.add(part);
+      monkey.updateMatrixWorld(true);
+      if(followHead&&headBone)headBone.attach(part);
       render();
     });
-  }else if(selection.hat==="bone"){
-    const cap=sphere(navy,0,.835,-.025,.22,.10,.215);
-    cap.rotation.x=-.03;
-    const brim=sphere(mat(0x215d87),0,.775,.213,.19,.015,.12);
-    brim.rotation.x=-.08;
-  }else if(selection.hat==="gorro"){
-    sphere(pink,0,.84,-.005,.223,.12,.205);
-    const hem=addPart(parts,new THREE.CylinderGeometry(.215,.218,.035,40),mat(0xa84a7a),0,.78,-.005);
-    sphere(mat(0xffd6e9),0,.96,0,.037,.037,.037);
+  };
+  if(selection.hat==="palha"||selection.hat==="branco"){
+    const type=selection.hat;
+    getAsset(type).then(asset=>{
+      if(!asset||!state.userData.active)return;
+      const hat=asset.clone(true);
+      const measure=getBounds(hat);
+      // Meshy: aba = Y mínimo + cerca de 12% da altura. Apoio = topo - 17 cm visuais.
+      const width=type==="palha"?.83:.81;
+      const scale=width/Math.max(measure.size.x,measure.size.z,1e-6);
+      const brim=measure.box.min.y+measure.size.y*.12;
+      hat.scale.setScalar(scale);
+      hat.position.set(worldHead.x-measure.center.x*scale,
+        worldTop.y-.17-brim*scale,
+        worldHead.z-measure.center.z*scale+.05);
+      hat.name="jfWardrobeHat_"+type;
+      state.add(hat);
+      // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
+      state.updateWorldMatrix(true,true);
+      if(headBone)headBone.attach(hat);
+      render();
+    });
+  }else if(selection.hat==="bone"||selection.hat==="gorro"){
+    attachFitted(selection.hat,part=>{
+      part.position.x=rawX;
+    },true);
   }
   if(selection.glasses!=="nenhum"){
-    const accessory=selection.glasses;
-    getGlassesAsset(accessory).then(asset=>{
-      if(!asset||!parts.parent||!parts.userData.active)return;
-      // Os óculos GLB foram modelados no espaço original de macaco.glb.
-      // Nunca re-normalizar: herdam automaticamente a mesma escala do macaco.
-      const glasses=asset.clone(true);
-      glasses.name="jfRealGlasses_"+accessory;
-      glasses.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
-      monkey.add(glasses);
-      render();
-    });
+    attachFitted(selection.glasses,(part,measure)=>{
+      const s=.88;
+      part.scale.setScalar(s);
+      // Escalonar em torno do centro da peça, e não em torno do chão do cenário.
+      part.position.set(rawX+(1-s)*measure.center.x,
+        (1-s)*measure.center.y-.00018,
+        (1-s)*measure.center.z+.00012);
+    },true);
   }
   if(selection.headphones!=="nenhum"){
-    const shell=selection.headphones==="rosa"?pink:navy;
-    const padding=mat(0x252833,{roughness:.88});
     const wearingHat=selection.hat!=="nenhum";
-    if(wearingHat){
-      // Se já usa chapéu, os fones ficam apoiados NO PESCOÇO.
-      // Evita arco atravessando a copa e almofadas flutuando nas orelhas.
-      const band=addPart(parts,new THREE.TorusGeometry(.24,.013,10,40,Math.PI),shell,0,.15,-.055);
-      band.rotation.x=-.22;
-      for(const sign of [-1,1]){
-        sphere(shell,sign*.255,.08,.055,.048,.068,.063);
-        sphere(padding,sign*.234,.08,.072,.018,.055,.052);
+    attachFitted("fone",(part,measure)=>{
+      part.traverse(node=>{
+        if(!node.isMesh)return;
+        const name=node.name.toLowerCase();
+        if(name.includes("interior"))return;
+        node.material=node.material.clone();
+        node.userData.jfWardrobeOwnMaterial=true;
+        node.material.color.set(selection.headphones==="rosa"?"#e06ba6":"#368dd0");
+      });
+      if(wearingHat){
+        // Headset apoiado no pescoço, sem atravessar chapéu e olhos.
+        const sc=.8;
+        part.scale.setScalar(sc);
+        part.position.set(rawX-measure.center.x*sc,
+          rawNeckY-measure.center.y*sc-.0005,
+          rawNeckZ-measure.center.z*sc+.0003);
+      }else{
+        // Geometria do fone foi originalmente feita para macaco.glb.
+        const sc=.95;
+        part.scale.setScalar(sc);
+        part.position.set(rawX+(1-sc)*measure.center.x,
+          (1-sc)*measure.center.y-.00005,
+          (1-sc)*measure.center.z);
       }
-    }else{
-      const band=addPart(parts,new THREE.TorusGeometry(.35,.016,10,44,Math.PI),shell,0,.66,-.05);
-      for(const sign of [-1,1]){
-        sphere(shell,sign*.38,.48,-.05,.052,.09,.085);
-        sphere(padding,sign*.347,.48,-.05,.018,.074,.068);
-      }
-    }
+    },!wearingHat);
   }
   if(selection.outfit==="rosa"){
-    const fabric=mat(0xf18abc,{roughness:.9,side:THREE.DoubleSide});
-    const trim=mat(0xd65298,{roughness:.87,side:THREE.DoubleSide});
-    // Vestido solto curto, sem encostar nas mãos nem cobrir as pernas.
-    const segments=48,rings=9,positions=[],uvs=[],indices=[];
-    for(let j=0;j<=rings;j++){
-      const t=j/rings,y=-.13-.31*t;
-      const radius=.158+.113*Math.sin(t*Math.PI*.53);
-      for(let i=0;i<=segments;i++){
-        const a=2*Math.PI*i/segments;
-        const r=radius+.009*Math.sin(10*a)*t*t;
-        positions.push(Math.cos(a)*r,y+.006*Math.sin(10*a)*t*t,Math.sin(a)*r);
-        uvs.push(i/segments,t);
-      }
-    }
-    for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){
-      const n=j*(segments+1)+i,k=n+segments+1;
-      indices.push(n,k,n+1,k,k+1,n+1);
-    }
-    const geom=new THREE.BufferGeometry();
-    geom.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
-    geom.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
-    geom.setIndex(indices);geom.computeVertexNormals();
-    addPart(parts,geom,fabric,0,0,0);
-    addPart(parts,new THREE.TorusGeometry(.267,.007,8,48),trim,0,-.437,0).rotation.x=Math.PI/2;
-    addPart(parts,new THREE.CylinderGeometry(.17,.176,.045,36),fabric,0,-.13,0);
+    attachFitted("vestido",(part)=>{
+      // Vestido modelado em coordenadas do corpo do macaco, sem escala arbitrária.
+      part.position.x=rawX;
+    },false);
   }
+  return ()=>{
+    state.userData.active=false;
+    // As geometrias GLB são compartilhadas com os outros usuários;
+    // descarte apenas os materiais clonados dos fones.
+    monkey.traverse(obj=>{
+      if(obj.isMesh&&obj.userData.jfWardrobeOwnMaterial)obj.material?.dispose();
+    });
+  };
 }
 function makeScene(target,wardrobe,{preview=false}={}){
   if(!base)return null;
@@ -178,7 +184,7 @@ function makeScene(target,wardrobe,{preview=false}={}){
   const normalized=new THREE.Group();
   monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
   normalized.add(monkey);
-  dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera),monkey);
+  const disposeOutfit=dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera),monkey);
   scene.add(normalized);
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
   camera.position.set(0,.04,preview?4.25:4.0);camera.lookAt(0,.035,0);
@@ -212,13 +218,7 @@ function makeScene(target,wardrobe,{preview=false}={}){
       target.removeEventListener("pointerup",up);
       target.removeEventListener("pointercancel",up);
     }
-    const wardrobeParts=normalized.getObjectByName("jfWardrobeParts");
-    if(wardrobeParts)wardrobeParts.userData.active=false;
-    wardrobeParts?.traverse(obj=>{
-      if(!obj.isMesh||!obj.userData.jfWardrobeGenerated)return;
-      obj.geometry?.dispose();
-      (Array.isArray(obj.material)?obj.material:[obj.material]).forEach(mat=>mat?.dispose());
-    });
+    disposeOutfit();
     renderer.dispose();target.replaceChildren();
   },renderer};
 }
