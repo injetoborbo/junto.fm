@@ -1625,6 +1625,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   }
   function jfRenderFriends(){
     $("jfFriendsGuest").hidden=jfCanUseFriends();
+    const googleGuestLink=$("jfFriendsGuest").querySelector("a");
+    googleGuestLink.hidden=!jfAccountConfigured;
     $("jfFriendsStatus").textContent=!jfCanUseFriends()?(jfAccountConfigured?"Faça login para desbloquear as amizades.":"Cadastro em preparação: Google e banco de dados ainda não configurados."):"Suas amizades ficam salvas na conta.";
     const list=$("jfFriendsList");list.replaceChildren();
     if(!jfCanUseFriends()){const p=document.createElement("p");p.className="small";p.textContent="Visitantes não podem usar amizades.";list.appendChild(p);}
