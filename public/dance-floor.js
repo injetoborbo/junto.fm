@@ -44,7 +44,8 @@ function buildAnimationAction(member,style){
   const sourceBones=new Map(),targetBones=new Map();
   data.scene.updateMatrixWorld(true);
   member.rig.updateMatrixWorld(true);
-  data.scene.traverse(obj=>{if(obj.isBone)sourceBones.set(boneKey(obj.name),obj);});
+  // GLB sem skin: GLTFLoader cria Object3D comuns, não necessariamente Bone.
+  data.scene.traverse(obj=>{if(obj.name&&/^mixamorig/i.test(obj.name))sourceBones.set(boneKey(obj.name),obj);});
   member.rig.traverse(obj=>{if(obj.isBone)targetBones.set(boneKey(obj.name),obj);});
   const tracks=[];
   const invSourceRest=new THREE.Quaternion(),sample=new THREE.Quaternion();
@@ -64,7 +65,7 @@ function buildAnimationAction(member,style){
     for(let i=0;i<track.values.length;i+=4){
       sample.fromArray(track.values,i);
       // Em repouso, a rotação resultante deve ser exatamente a pose do macaco.
-      corrected.copy(sample).premultiply(invSourceRest);
+      corrected.copy(invSourceRest).multiply(sample);
       corrected.premultiply(rest).normalize();
       // Evitar saltos entre quaternions equivalentes com sinais opostos.
       if(i>0){
@@ -75,7 +76,8 @@ function buildAnimationAction(member,style){
     }
     tracks.push(new THREE.QuaternionKeyframeTrack(target.name+".quaternion",track.times.slice(),values));
   }
-  if(tracks.length<5){console.warn("Mixamo: ossos correspondentes insuficientes para",style);return null;}
+  if(tracks.length<5){console.warn("Mixamo: ossos correspondentes insuficientes para",style,tracks.length);return null;}
+  console.info("Mixamo retarget:",style,tracks.length,"ossos com animação");
   member.mixer ||=new THREE.AnimationMixer(member.rig);
   const clip=new THREE.AnimationClip("junto-retarget-"+style,data.clip.duration,tracks);
   const action=member.mixer.clipAction(clip);
