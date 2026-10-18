@@ -571,7 +571,8 @@ io.on("connection", socket => {
       name: String(profile.name || "Ouvinte").slice(0, 24),
       avatar: typeof profile.avatar === "string" && profile.avatar.length <= 220000 ? profile.avatar : "",
       text,
-      time: Date.now()
+      time: Date.now(),
+      senderId:socket.id
     };
     const history = roomChatMessages.get(room) || [];
     history.push(message);
