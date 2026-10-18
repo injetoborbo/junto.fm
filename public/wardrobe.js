@@ -76,7 +76,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone, bone.matrixWorld.clone());
   // Converter do espaço ORIGINAL do acessório para o local do osso na pose
   // inicial; nunca usar a matriz atual (que pode ser de uma dança).
-  const attachAtBind=(part,bone,sourceBindWorld,forward=0)=>{
+  const attachAtBind=(part,bone,sourceBindWorld,offset={})=>{
     if(!bone)return;
     const boneBind=bindMatrices.get(bone);
     if(!boneBind)return;
@@ -85,7 +85,9 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       .multiply(sourceBindWorld).multiply(part.matrix);
     bone.add(part);
     local.decompose(part.position,part.quaternion,part.scale);
-    if(forward)part.position.z+=forward;
+    part.position.x+=offset.x||0;
+    part.position.y+=offset.y||0;
+    part.position.z+=offset.z||0;
     part.updateMatrix();
   };
   const worldHead=new THREE.Vector3(-.13,.28,-.05);
@@ -99,7 +101,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
   const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
   const rawNeckZ=(worldNeck.z-monkey.position.z)/monkey.scale.z;
-  const attachFitted=(file,configure,followHead=false,animatedAnchor=null,forward=0)=>{
+  const attachFitted=(file,configure,followHead=false,animatedAnchor=null,animatedOffset=null)=>{
     getAsset(file).then(asset=>{
       if(!asset||!state.userData.active)return;
       const part=asset.clone(true);
@@ -108,7 +110,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       configure(part,measure);
       monkey.add(part);
       if(animated){
-        if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,forward);
+        if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{});
       }else{
         monkey.updateMatrixWorld(true);
         if(followHead&&headBone)headBone.attach(part);
@@ -134,7 +136,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       state.add(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
       if(animated){
-        attachAtBind(hat,headBone,rootBindWorld);
+        attachAtBind(hat,headBone,rootBindWorld,{y:-.030,z:-.006});
       }else{
         state.updateWorldMatrix(true,true);
         if(headBone)headBone.attach(hat);
@@ -154,11 +156,8 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       part.position.set(rawX+(1-s)*measure.center.x,
         (1-s)*measure.center.y-.00018,
         (1-s)*measure.center.z+.00012);
-    // O GLB dos óculos foi criado em unidades ~0.006 de largura.
-    // O afastamento anterior (.00042) ainda deixava as lentes dentro
-    // do rosto; .00135 no eixo frontal local do Head preserva a
-    // rigagem e desloca apenas as lentes, inclusive com Sitting Idle.
-    },true,headBone,animated?.00135:0);
+    // Ajuste local ao Head: não depende da câmera nem da pose corrente.
+    },true,headBone,animated?{y:-.004,z:.0026}:null);
   }
   if(selection.headphones!=="nenhum"){
     const wearingHat=selection.hat!=="nenhum";
