@@ -264,6 +264,8 @@ function close(){
   for(const id of [...people.keys()])removeMember(id);
   scene?.userData.cleanup?.();
   scene?.userData.signTexture?.dispose();
+  for(const tile of scene?.userData.glowingTiles||[])tile.material.dispose();
+  for(const {beam} of scene?.userData.beams||[])beam.material.dispose();
   renderer?.dispose();renderer?.domElement.remove();
   for(const t of nameMaterialCache.values())t.dispose();nameMaterialCache.clear();
   scene=null;camera=null;renderer=null;board=null;tiles.length=0;
