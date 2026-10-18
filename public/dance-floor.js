@@ -308,7 +308,7 @@ function animate(){
     const speeds={shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1};
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
-    p.root.position.y=(d.seated&&!walking?.30:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.position.y=(d.seated&&!walking?.67:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
     p.mixer?.update(dt);
