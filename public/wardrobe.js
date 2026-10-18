@@ -58,7 +58,7 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey,{seated=false}={}){
+function dress(root,selection,render,monkey){
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
   const headBone=getBone(monkey,"Head");
   const topBone=getBone(monkey,"HeadTop_End");
@@ -85,7 +85,6 @@ function dress(root,selection,render,monkey,{seated=false}={}){
       monkey.add(part);
       monkey.updateMatrixWorld(true);
       if(followHead&&headBone)headBone.attach(part);
-      else if(seated&&file==="fone"&&neckBone)neckBone.attach(part);
       render();
     });
   };
@@ -168,6 +167,104 @@ function dress(root,selection,render,monkey,{seated=false}={}){
     });
   };
 }
+// Encaixe INDEPENDENTE para o mascote sentado do miniplayer.
+// Cada GLB é clonado de forma exclusiva; offsets nunca alteram dress() usado
+// pelos participantes, guarda-roupa e pista. Calibrado em unidades do macaco.glb.
+async function dressMiniPlayer(selection,render,monkey,isActive){
+  const copies=[],ownMaterials=[];
+  const head=getBone(monkey,"Head");
+  const top=getBone(monkey,"HeadTop_End");
+  const neck=getBone(monkey,"Neck");
+  monkey.updateMatrixWorld(true);
+  const headPos=head?.getWorldPosition(new THREE.Vector3())||new THREE.Vector3();
+  const topPos=top?.getWorldPosition(new THREE.Vector3())||headPos.clone();
+  const neckPos=neck?.getWorldPosition(new THREE.Vector3())||headPos.clone();
+  const scale=monkey.scale.x||1;
+  const headHeight=topPos.distanceTo(headPos)/scale||.0064;
+  const rawX=(headPos.x-monkey.position.x)/scale;
+  const neckY=(neckPos.y-monkey.position.y)/scale;
+  const neckZ=(neckPos.z-monkey.position.z)/scale;
+  const add=async(file,configure,anchor)=>{
+    const asset=await getAsset(file);
+    if(!asset||!isActive())return;
+    const part=asset.clone(true);part.name="jfMini_"+file;
+    const box=getBounds(part);
+    monkey.add(part);
+    configure(part,box);
+    monkey.updateMatrixWorld(true);
+    if(anchor)anchor.attach(part);
+    copies.push(part);
+    render();
+  };
+  const jobs=[];
+  if(selection.hat==="palha"||selection.hat==="branco"){
+    const type=selection.hat;
+    jobs.push(add(type,(hat,measure)=>{
+      const width=type==="palha"?.94:.92;
+      const s=width/Math.max(measure.size.x,measure.size.z,1e-6);
+      const brim=measure.box.min.y+measure.size.y*.12;
+      hat.scale.setScalar(s);
+      // O chapéu mantém o apoio no topo da cabeça na posição original.
+      // Converter coordenadas do mundo para o modelo normalizado.
+      const worldTarget=new THREE.Vector3(
+        headPos.x-measure.center.x*s,
+        topPos.y-.17-brim*s,
+        headPos.z-measure.center.z*s+.05
+      );
+      monkey.worldToLocal(worldTarget);
+      hat.position.copy(worldTarget);
+    },head));
+  }else if(selection.hat!=="nenhum"){
+    jobs.push(add(selection.hat,part=>{part.position.x=rawX;},head));
+  }
+  if(selection.glasses!=="nenhum"){
+    jobs.push(add(selection.glasses,(part,measure)=>{
+      const s=.88;
+      part.scale.setScalar(s);
+      // Os óculos do GLB em pé ficam perto da testa ao sentar.
+      // Descer 22% da distância Head -> HeadTop e aproximar do rosto.
+      part.position.set(
+        rawX+(1-s)*measure.center.x,
+        (1-s)*measure.center.y-.00018-headHeight*.22,
+        (1-s)*measure.center.z+.00012+headHeight*.025
+      );
+    },head));
+  }
+  if(selection.headphones!=="nenhum"){
+    const wearingHat=selection.hat!=="nenhum";
+    jobs.push(add("fone",(part,measure)=>{
+      part.traverse(node=>{
+        if(!node.isMesh||node.name.toLowerCase().includes("interior"))return;
+        const mats=Array.isArray(node.material)?node.material:[node.material];
+        const replacement=mats.map(mat=>{
+          const copy=mat.clone();
+          copy.color?.set(selection.headphones==="rosa"?"#e06ba6":"#368dd0");
+          ownMaterials.push(copy);return copy;
+        });
+        node.material=Array.isArray(node.material)?replacement:replacement[0];
+      });
+      const s=wearingHat?.78:.95;
+      part.scale.setScalar(s);
+      if(wearingHat){
+        part.position.set(rawX-measure.center.x*s,
+          neckY-measure.center.y*s-.0005,
+          neckZ-measure.center.z*s+.0003);
+      }else{
+        part.position.set(rawX+(1-s)*measure.center.x,
+          (1-s)*measure.center.y-.00005,
+          (1-s)*measure.center.z);
+      }
+    },wearingHat?neck:head));
+  }
+  if(selection.outfit==="rosa"){
+    jobs.push(add("vestido",part=>{part.position.x=rawX;},null));
+  }
+  await Promise.all(jobs);
+  return ()=>{
+    copies.forEach(part=>part.removeFromParent());
+    ownMaterials.forEach(mat=>mat.dispose());
+  };
+}
 // Pose Mixamo opcional, exclusiva do macaco ao lado do player.
 let playerSittingPosePromise=null;
 function loadPlayerSittingPose(){
@@ -233,39 +330,26 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   scene.add(normalized);
   let active=true;
   let disposeOutfit=()=>{};
-  // Acessórios foram modelados para a pose original do macaco.
-  // Precarregar as peças e fixá-las aos ossos ANTES de sentar o personagem,
-  // preservando os encaixes corretos da prévia de trajes.
-  const dressNow=()=>{
-    if(!active)return;
-    disposeOutfit=dress(normalized,sanitize(wardrobe),()=>{if(active)renderer.render(scene,camera);},monkey,{seated:playerSitting});
-    renderer.render(scene,camera);
-  };
+  const renderOutfit=()=>{if(active)renderer.render(scene,camera);};
   if(playerSitting){
-    const outfit=sanitize(wardrobe);
-    const needed=[
-      outfit.hat!=="nenhum"?outfit.hat:null,
-      outfit.glasses!=="nenhum"?outfit.glasses:null,
-      outfit.headphones!=="nenhum"?"fone":null,
-      outfit.outfit==="rosa"?"vestido":null
-    ].filter(Boolean);
-    Promise.all([...needed.map(getAsset),loadPlayerSittingPose()]).then(async results=>{
-      if(!active)return;
-      // dress() usa microtasks para anexar os GLBs previamente carregados.
-      dressNow();
-      await Promise.resolve();
-      if(!active)return;
-      const pose=results[results.length-1];
-      if(pose&&applyPlayerSittingPose(monkey,pose)){
-        const sittingBox=new THREE.Box3().setFromObject(normalized,true);
-        if(!sittingBox.isEmpty()){
-          const c=sittingBox.getCenter(new THREE.Vector3());
-          normalized.position.sub(c);
-          normalized.position.y-=.12;
-        }
-      }else console.warn("Pose sentada indisponível; usando pose original.");
-      renderer.render(scene,camera);
-    }).catch(error=>console.warn("Mascote: falha ao montar acessórios sentados",error));
+    // Clones e encaixes próprios no miniplayer, antes de aplicar a pose.
+    (async()=>{
+      try{
+        const dispose=await dressMiniPlayer(sanitize(wardrobe),renderOutfit,monkey,()=>active);
+        if(!active){dispose();return;}
+        disposeOutfit=dispose;
+        const pose=await loadPlayerSittingPose();
+        if(!active)return;
+        if(pose&&applyPlayerSittingPose(monkey,pose)){
+          const box=new THREE.Box3().setFromObject(normalized,true);
+          if(!box.isEmpty()){
+            normalized.position.sub(box.getCenter(new THREE.Vector3()));
+            normalized.position.y-=.12;
+          }
+        }else console.warn("Miniplayer: pose sentada indisponível.");
+        renderOutfit();
+      }catch(error){console.warn("Miniplayer: falha ao montar acessórios próprios",error);}
+    })();
   }
   if(skin==="capitao-patria"){
     // Render independente da mesma skin 3D do player, sem editar o GLB base.
@@ -335,7 +419,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
   // A câmera precisa existir antes que dress() possa solicitar um render.
-  if(!playerSitting)dressNow();
+  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey);
   let dragStart=null;
   const down=event=>{
     if(!preview)return;
