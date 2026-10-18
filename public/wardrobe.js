@@ -460,7 +460,12 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
       target.removeEventListener("pointercancel",up);
     }
     disposeOutfit();
-    renderer.dispose();target.replaceChildren();
+    // THREE.WebGLRenderer.dispose() libera recursos internos mas não fecha
+    // imediatamente o contexto WebGL. Trocas repetidas de roupa/prévia
+    // ultrapassavam o limite do navegador e apagavam o canvas do DJ.
+    renderer.dispose();
+    renderer.forceContextLoss();
+    target.replaceChildren();
   },renderer};
 }
 // Miniplayer: a cena principal em index.html renderiza o GLB Meshypint.
