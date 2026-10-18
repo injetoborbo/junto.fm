@@ -26,7 +26,7 @@ const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map(
 const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 let sittingPosePromise=null;
 function sittingPose(){
-  if(!sittingPosePromise)sittingPosePromise=gltfLoader.loadAsync("/poses/female-sitting.glb").then(gltf=>{
+  if(!sittingPosePromise)sittingPosePromise=gltfLoader.loadAsync("/poses/sitting-idle.glb").then(gltf=>{
     const clip=gltf.animations?.find(c=>c.tracks?.length);
     if(!clip)return null;
     const sourceBones=new Map();
