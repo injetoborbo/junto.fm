@@ -397,7 +397,7 @@ html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece
 .jf-track-info{min-width:0}
 .jf-mini-dj[hidden]{display:none!important}
 .jf-mini-dj{width:170px;min-width:0;align-self:stretch;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:3px;padding:5px 2px 0;border-left:1px solid color-mix(in srgb,var(--jf-secondary) 25%,transparent)}
-.jf-dj-stage{position:relative;width:160px;height:208px;min-height:208px;perspective:none;isolation:isolate;overflow:visible}
+.jf-dj-stage{position:relative;width:160px;height:164px;min-height:164px;perspective:none;isolation:isolate;overflow:visible}
 .jf-dj-stage:before{content:"";position:absolute;left:18px;right:18px;bottom:8px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--jf-glow) 55%,transparent);filter:blur(7px)}
 .jf-glb-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:4;pointer-events:none}
 .jf-dj-caption{max-width:100%;text-align:center;line-height:1.25;display:grid;gap:3px}
@@ -1940,12 +1940,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const size=box.getSize(new THREE.Vector3());
     const center=box.getCenter(new THREE.Vector3());
     const maxDim=Math.max(size.x,size.y,size.z)||1;
-    const modelScale=2.25/maxDim;
+    const modelScale=1.88/maxDim;
     model.scale.setScalar(modelScale);
     model.position.copy(center).multiplyScalar(-modelScale);
     // O novo GLB inclui a mesa de DJ na parte inferior. Subir o conjunto
     // sem mudar modelScale para a mesa não ser cortada pelo rodapé do player.
-    model.position.y+=.16;
+    model.position.y+=.08;
     // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
     const patriotGltf=await new GLTFLoader().loadAsync("/patrianocape_pose_heroica_final.glb").catch(error=>{
       console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
