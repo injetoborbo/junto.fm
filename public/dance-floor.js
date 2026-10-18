@@ -39,35 +39,81 @@ function nameSprite(name){
   return sprite;
 }
 function sceneSetup(){
-  scene=new THREE.Scene();scene.background=new THREE.Color(0xd9ecfb);
-  scene.add(new THREE.HemisphereLight(0xffffff,0x708db7,2.6));
-  const sun=new THREE.DirectionalLight(0xffffff,2.6);sun.position.set(-4,11,8);scene.add(sun);
-  const ambient=new THREE.DirectionalLight(0xffb5ec,1.2);ambient.position.set(4,6,-3);scene.add(ambient);
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0xb3d7e9);
+  scene.fog=new THREE.Fog(0xb3d7e9,16,32);
+  scene.add(new THREE.HemisphereLight(0xfff8ec,0x5b75a3,2.35));
+  const sunlight=new THREE.DirectionalLight(0xfff4d9,2.5);sunlight.position.set(2,10,8);scene.add(sunlight);
+  const pinkLight=new THREE.PointLight(0xff70bd,25,12);pinkLight.position.set(-1,3,0);scene.add(pinkLight);
+  const blueLight=new THREE.PointLight(0x65bbff,25,12);blueLight.position.set(2,3,-2);scene.add(blueLight);
+  const mat=(color,metalness=0,roughness=.65)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
+  const surface=mat(0xd6e7f1),edge=mat(0x638db2),wall=mat(0xa9c6d9);
+  const gold=mat(0xffd477,.6,.27),wood=mat(0x9873a8),glass=mat(0x95d7ed,.22,.15);
+  const mesh=(geo,material,x,y,z,parent=scene)=>{
+    const object=new THREE.Mesh(geo,material);object.position.set(x,y,z);parent.add(object);return object;
+  };
+  const cube=(w,h,d,material,x,y,z,parent=scene)=>mesh(new THREE.BoxGeometry(w,h,d),material,x,y,z,parent);
   board=new THREE.Group();scene.add(board);
-  const tileGeo=new THREE.BoxGeometry(.94,.24,.94);
-  const materials=[new THREE.MeshStandardMaterial({color:0xf4f0fc,roughness:.77}),new THREE.MeshStandardMaterial({color:0xc4d8f2,roughness:.77})];
+  cube(6.65,.26,6.65,edge,0,-.34,0,board);
+  const tileGeo=new THREE.BoxGeometry(.982,.09,.982);
+  const tilesMats=[mat(0xffe0ef,.08,.28),mat(0xc6e4f9,.08,.3),mat(0xd8d1ff,.08,.32),mat(0xfff1d4,.08,.32)];
   for(let x=0;x<6;x++)for(let z=0;z<6;z++){
-    const mesh=new THREE.Mesh(tileGeo,materials[(x+z)%2]);
-    mesh.position.set(x-2.5,-.17,z-2.5);mesh.userData.tile={x,z};mesh.receiveShadow=true;board.add(mesh);tiles.push(mesh);
+    const tile=new THREE.Mesh(tileGeo,tilesMats[(x+z)%4]);
+    tile.position.set(x-2.5,-.13,z-2.5);tile.userData.tile={x,z};
+    board.add(tile);tiles.push(tile);
+    cube(.91,.025,.91,mat((x+z)%2===0?0xffffff:0xc9eaf8,.1,.5),x-2.5,-.075,z-2.5,board);
   }
-  const wallMat=new THREE.MeshStandardMaterial({color:0x7a9cc7,roughness:.83});
-  const back=new THREE.Mesh(new THREE.BoxGeometry(6.65,2.15,.14),wallMat);back.position.set(0,.9,-3.12);scene.add(back);
-  const side=new THREE.Mesh(new THREE.BoxGeometry(.14,2.15,6.65),wallMat);side.position.set(-3.12,.9,0);scene.add(side);
-  for(const [x,z] of [[-2.7,-2.7],[2.7,-2.7],[-2.7,2.7],[2.7,2.7]]){
-    const lamp=new THREE.Mesh(new THREE.SphereGeometry(.11,12,10),new THREE.MeshBasicMaterial({color:0xffd577}));
-    lamp.position.set(x,1.83,z);scene.add(lamp);
+  // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
+  cube(6.7,2.35,.18,wall,0,.96,-3.12);
+  cube(.18,2.35,6.7,wall,-3.12,.96,0);
+  cube(6.7,.18,.25,wood,0,2.19,-3.12);
+  cube(.25,.18,6.7,wood,-3.12,2.19,0);
+  cube(6.65,.24,.3,edge,0,-.01,-3.08);
+  cube(.3,.24,6.65,edge,-3.08,-.01,0);
+  // Painel de DJ, telas iluminadas e botões de mixagem fora das casas da pista.
+  cube(2.5,.9,.42,wood,1.55,.53,-2.83);
+  cube(1.22,.58,.12,mat(0x182846,.15,.28),1.55,1.19,-2.92);
+  for(let k=0;k<7;k++)cube(.09,.08+(k%3)*.11,.03,k%2?mat(0x78f2dd):mat(0xff87b6),1.11+k*.15,1.02,-2.84);
+  for(const x of [.65,2.45]){
+    mesh(new THREE.CylinderGeometry(.27,.27,.035,24),mat(0x18243b,.6,.25),x,1.01,-2.66);
+    mesh(new THREE.CylinderGeometry(.12,.12,.045,24),gold,x,1.05,-2.66);
   }
+  // Luminárias redondas e arabescos discretos nas paredes, estilo club retrô.
+  for(const [x,z] of [[-2.82,-2.82],[2.82,-2.82],[-2.82,2.82]]){
+    const stand=mesh(new THREE.CylinderGeometry(.07,.09,1.34,12),wood,x,.56,z);
+    const globe=mesh(new THREE.SphereGeometry(.25,20,12),glass,x,1.48,z);
+    const glow=new THREE.PointLight(x<0?0xff88ce:0x88e7ff,5,3.5);glow.position.set(x,1.55,z);scene.add(glow);
+  }
+  // Globo espelhado em pequenos quadrados, sem partículas pesadas.
+  const disco=new THREE.Group();disco.position.set(-1.5,2.25,-1.5);
+  disco.add(new THREE.Mesh(new THREE.IcosahedronGeometry(.31,2),mat(0xe9f5fd,.92,.11)));
+  const mirror=mat(0xffffff,.85,.1);
+  for(let j=0;j<18;j++){
+    const a=j*Math.PI*2/18;
+    const facet=cube(.12,.1,.025,mirror,Math.cos(a)*.31,Math.sin(a)*.25,Math.sin(a*2)*.11,disco);
+    facet.rotation.z=a;
+  }
+  scene.add(disco);scene.userData.disco=disco;
+  // Faixa decorativa com nome do club.
+  const canvas=document.createElement("canvas");canvas.width=512;canvas.height=160;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#344e89";ctx.fillRect(0,0,512,160);
+  ctx.strokeStyle="#ffe0ae";ctx.lineWidth=12;ctx.strokeRect(7,7,498,146);
+  ctx.fillStyle="#ffffff";ctx.textAlign="center";ctx.font="bold 70px Trebuchet MS";ctx.fillText("JUNTO CLUB",256,102);
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.84),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
+  sign.position.set(-1.25,1.3,-2.99);scene.add(sign);scene.userData.signTexture=texture;
   camera=new THREE.OrthographicCamera(-6.35,6.35,4.25,-4.25,.1,100);
-  camera.position.set(9,12,9);camera.lookAt(0,.45,0);
+  camera.position.set(9,12,9);camera.lookAt(0,.55,0);
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
   renderer.outputColorSpace=THREE.SRGBColorSpace;
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.4));
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.3));
   viewport.replaceChildren(renderer.domElement);
   const resize=()=>{
     if(!renderer||!active)return;
-    const width=Math.max(300,viewport.clientWidth),height=Math.max(280,viewport.clientHeight);
+    const width=Math.max(220,viewport.clientWidth),height=Math.max(220,viewport.clientHeight);
     renderer.setSize(width,height,false);
-    const aspect=width/height,halfH=4.3;
+    const aspect=width/height,halfH=5.15;
     camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;
     camera.updateProjectionMatrix();
   };
