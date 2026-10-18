@@ -81,7 +81,21 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       const number=Number(values[axis]);
       if(Number.isFinite(number))glassesCalibration[axis]=THREE.MathUtils.clamp(number,-.004,.004);
     }
-    updateAccessories(isSeated);
+    // No controle de inspeção, a pose sentada é a referência obrigatória:
+    // o slider não depende do critério de parada da animação.
+    updateAccessories(true);
+  };
+  const getGlassesDiagnostics=()=>{
+    const eyewear=followers.find(({part})=>part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos");
+    if(!eyewear)return {loaded:false,requested:selection.glasses,seated:isSeated};
+    monkey.updateMatrixWorld(true);
+    const world=eyewear.part.getWorldPosition(new THREE.Vector3());
+    const center=eyewear.bone.getWorldPosition(new THREE.Vector3());
+    return {loaded:true,requested:selection.glasses,seated:isSeated,
+      bone:eyewear.bone.name,
+      coordinates:world.toArray().map(v=>Number(v.toFixed(4))),
+      boneCoordinates:center.toArray().map(v=>Number(v.toFixed(4))),
+      calibration:{...glassesCalibration}};
   };
   for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
   const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
@@ -94,7 +108,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       if(!part.parent)continue;
       // A calibração é aplicada ANTES da matriz local do acessório,
       // portanto os eixos continuam relativos ao osso Head animado.
-      if(isSeated&&(part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos")){
+      if((part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos")&&isSeated){
         seatShift.makeTranslation(glassesCalibration.x,glassesCalibration.y,glassesCalibration.z);
         correctionWorld.multiplyMatrices(bone.matrixWorld,seatShift).multiply(seatedLocal);
       }else{
@@ -242,7 +256,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     monkey.traverse(obj=>{
       if(obj.isMesh&&obj.userData.jfWardrobeOwnMaterial)obj.material?.dispose();
     });
-  },{updateAccessories,setSeatGlassesCalibration});
+  },{updateAccessories,setSeatGlassesCalibration,getGlassesDiagnostics});
 }
 // Encaixe INDEPENDENTE para o mascote sentado do miniplayer.
 // Cada GLB é clonado de forma exclusiva; offsets nunca alteram dress() usado
@@ -667,5 +681,5 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
       });
     }
   }
-  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),dispose:()=>{stillActive=false;disposeClothes();}};
+  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }
