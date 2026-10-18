@@ -31,7 +31,8 @@ const roomTracks = new Map();
 const roomTransmitters = new Map();
 const roomChatMessages = new Map();
 const roomAccess = new Map();
-const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state user-library-modify";
+const roomQueueJobs = new Map(); // Serializa pedidos por sala; respeita a ordem de chegada.
+const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state user-library-modify user-modify-playback-state";
 
 function cookieValue(req, name) {
   const cookies = String(req.headers.cookie || "").split(";");
@@ -145,6 +146,7 @@ app.get("/spotify/callback", async (req, res) => {
     });
     const session = getSession(req, res, true);
     session.accessToken = tokens.access_token;
+    session.scope = tokens.scope || "";
     session.refreshToken = tokens.refresh_token || session.refreshToken;
     session.expiresAt = Date.now() + (tokens.expires_in || 3600) * 1000;
     res.redirect("/?spotify=connected");
@@ -220,6 +222,43 @@ async function findRealSong(input) {
     if (normalizeMusicText(track.trackName) !== requestedTitle) return false;
     return !requestedArtist || normalizeMusicText(track.artistName) === requestedArtist;
   });
+}
+
+// Os pedidos dos ouvintes são processados com o token do transmissor,
+// nunca com uma credencial fornecida pelo ouvinte.
+async function findSpotifyQueueTrack(token, suggestion) {
+  const parts = suggestion.split(/\s+[—–-]\s+/);
+  const title = normalizeMusicText(parts[0]);
+  const artist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
+  const endpoint = new URL("https://api.spotify.com/v1/search");
+  endpoint.search = new URLSearchParams({ q: suggestion, type: "track", limit: "15", market: "BR" }).toString();
+  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
+  if (!response.ok) {
+    if (response.status === 403) throw new Error("O aplicativo Spotify não tem acesso à busca de faixas. Confira as permissões da integração.");
+    if (response.status === 429) throw new Error("O Spotify limitou as consultas. Tente novamente em instantes.");
+    throw new Error("Não consegui consultar o catálogo do Spotify (HTTP " + response.status + ").");
+  }
+  const body = await response.json();
+  return (body.tracks?.items || []).find(track =>
+    normalizeMusicText(track.name) === title &&
+    (!artist || (track.artists || []).some(person => normalizeMusicText(person.name) === artist)) &&
+    /^spotify:track:[A-Za-z0-9]{22}$/.test(track.uri || "")
+  ) || null;
+}
+async function addSpotifyQueueTrack(token, uri) {
+  const endpoint = new URL("https://api.spotify.com/v1/me/player/queue");
+  endpoint.searchParams.set("uri", uri);
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+  });
+  if (response.ok) return;
+  const body = await response.json().catch(() => ({}));
+  const message = body.error?.message || "";
+  if (response.status === 403) throw new Error("O Spotify recusou a fila. O DJ precisa de Premium e autorizar o controle de reprodução. Reconecte o Spotify.");
+  if (response.status === 404) throw new Error("Nenhum dispositivo Spotify ativo. Abra o Spotify do DJ e inicie a reprodução antes de pedir.");
+  if (response.status === 429) throw new Error("O Spotify limitou os pedidos. Aguarde um pouco.");
+  throw new Error("Não foi possível adicionar à fila do Spotify (HTTP " + response.status + "). " + message.slice(0, 100));
 }
 
 app.get("/api/music/validate-suggestion", async (req, res) => {
@@ -503,32 +542,62 @@ io.on("connection", socket => {
 
   socket.on("suggestion-settings", payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
-    socket.data.receiveMusicSuggestions = Boolean(payload.enabled);
+    const isRoomDJ = roomTransmitters.get(socket.data.room)?.id === socket.id && socket.data.isTransmitting;
+    const wantsQueue = Boolean(payload.enabled);
+    const session = getSession(socket.request, null);
+    socket.data.receiveMusicSuggestions = Boolean(isRoomDJ && wantsQueue && session?.refreshToken);
+    socket.emit("suggestion-settings-result", {
+      enabled: socket.data.receiveMusicSuggestions,
+      error: wantsQueue && !isRoomDJ ? "Comece a transmitir para ativar a fila automática." :
+        wantsQueue && !session?.refreshToken ? "Conecte sua conta Spotify como DJ e tente novamente." : ""
+    });
   });
 
-  socket.on("music-suggestion", async payload => {
+  socket.on("music-suggestion", payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
     const suggestion = String(payload.suggestion || "").trim().slice(0, 180);
-    if (!suggestion || isRateLimited(socket, "music-suggestion", 5, 60000)) return;
-    try {
-      if (!(await findRealSong(suggestion))) {
-        socket.emit("music-suggestion-error", { error: "Sugestão recusada: não encontrei uma música com esse título exato." });
-        return;
-      }
-    } catch (_) {
-      socket.emit("music-suggestion-error", { error: "Não foi possível verificar a música agora. Tente novamente." });
+    const requestRoom = socket.data.room;
+    if (!suggestion) return;
+    if (isRateLimited(socket, "music-suggestion", 3, 60000)) {
+      socket.emit("music-suggestion-error", { error: "Limite de três pedidos por minuto. Aguarde um pouco." });
       return;
     }
-    const peer = io.sockets.sockets.get(socket.id);
-    const fromName = String(payload.fromName || peer?.data.profile?.name || "Ouvinte").trim().slice(0, 24) || "Ouvinte";
-    const roomMembers = io.sockets.adapter.rooms.get(socket.data.room) || new Set();
-    for (const id of roomMembers) {
-      if (id === socket.id) continue;
-      const recipient = io.sockets.sockets.get(id);
-      if (recipient?.data.receiveMusicSuggestions) {
-        recipient.emit("music-suggestion", { suggestion, fromName });
-      }
+    const active = roomTransmitters.get(requestRoom);
+    const dj = active && io.sockets.sockets.get(active.id);
+    if (!dj || dj.data.room !== requestRoom || !dj.data.isTransmitting || !dj.data.receiveMusicSuggestions) {
+      socket.emit("music-suggestion-error", { error: "O DJ ainda não ativou os pedidos automáticos." });
+      return;
     }
+    const previous = roomQueueJobs.get(requestRoom) || Promise.resolve();
+    const task = previous.catch(() => {}).then(async () => {
+      // Revalida quem controla a transmissão antes de tocar no Spotify.
+      if (roomTransmitters.get(requestRoom)?.id !== dj.id ||
+          !dj.data.isTransmitting || !dj.data.receiveMusicSuggestions) {
+        socket.emit("music-suggestion-error", { error: "A transmissão ou a fila do DJ foi desativada." });
+        return;
+      }
+      try {
+        const session = getSession(dj.request, null);
+        if (!session?.refreshToken) throw new Error("O DJ precisa reconectar o Spotify.");
+        if (session.scope && !session.scope.split(" ").includes("user-modify-playback-state"))
+          throw new Error("O DJ precisa desconectar e reconectar o Spotify para autorizar a fila.");
+        const token = await validSpotifyAccessToken(session);
+        const track = await findSpotifyQueueTrack(token, suggestion);
+        if (!track) throw new Error("Não encontrei a faixa exata no Spotify. Tente 'Música - Artista'.");
+        await addSpotifyQueueTrack(token, track.uri);
+        const fromName = String(socket.data.profile?.name || "Ouvinte").slice(0, 24);
+        io.to(requestRoom).emit("music-queued", {
+          title: track.name.slice(0, 180),
+          artist: (track.artists || []).map(a => a.name).join(", ").slice(0, 120),
+          fromName
+        });
+      } catch (err) {
+        socket.emit("music-suggestion-error", { error: err.message || "Falha ao adicionar a música à fila." });
+        console.warn("Pedido de música não enfileirado:", err.message);
+      }
+    });
+    roomQueueJobs.set(requestRoom, task);
+    task.finally(() => { if (roomQueueJobs.get(requestRoom) === task) roomQueueJobs.delete(requestRoom); });
   });
 
   socket.on("room-command", payload => {
