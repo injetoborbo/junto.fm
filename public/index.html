@@ -415,6 +415,15 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 .jf-friend-request{width:34px!important;height:34px!important;min-width:34px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;border-radius:7px!important}
 .jf-friend-request svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .jf-friend-request:disabled{opacity:.65}
+.jf-friends-guest{padding:16px;border:1px solid #b5c9e0;border-radius:10px;background:#e9f3ff;color:#193d62;margin:12px 0}
+.jf-friends-guest p{font-size:12px;margin:8px 0}
+#jfFriendsList,#jfDrawerFriendsList{display:grid;grid-template-columns:1fr!important;gap:6px!important}
+.jf-friend-compact{display:flex;align-items:center;gap:9px;min-height:56px;padding:6px 9px;border:1px solid #c8d9eb;border-radius:8px;background:#f9fcff;color:#193d62}
+.jf-friend-compact .jf-friend-photo{width:38px;height:38px;flex:0 0 38px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#dceafa;font-weight:800}
+.jf-friend-compact .jf-friend-photo img{width:100%;height:100%;object-fit:cover}
+.jf-friend-compact .jf-friend-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;font-size:12px}
+.jf-friend-compact button{font-size:11px;padding:6px 8px;white-space:nowrap}
+
 
 /* Windows Media Player 9/XP inspired finish for the music player */
 html[data-jf-theme="classic"] .jf-player-panel{
@@ -471,7 +480,7 @@ html[data-jf-theme="classic"] .track-times{
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Entrar com Google</a><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -634,8 +643,9 @@ html[data-jf-theme="classic"] .track-times{
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfFriendsHeading">
     <div class="jf-modal-head"><h2 id="jfFriendsHeading">♧ Amigos</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfFriendsModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-friends-tabs" role="tablist" aria-label="Seções de amigos"><button class="btn secondary jf-friends-tab active" id="jfFriendsTabList" type="button" role="tab" aria-selected="true">Meus amigos</button><button class="btn secondary jf-friends-tab" id="jfRequestsTab" type="button" role="tab" aria-selected="false">Solicitações <span id="jfRequestCount" class="jf-request-count" hidden>0</span></button></div><div id="jfFriendsPane"><p class="small">Seus amigos salvos. Online indica presença na mesma sala.</p>
-    <form id="jfFriendForm"><div class="jf-room-field"><label for="jfFriendName">Nome do amigo</label><input id="jfFriendName" maxlength="24" placeholder="Nome de exibição" required></div><div class="jf-room-field"><label for="jfFriendRoom">Nome da sala do amigo</label><input id="jfFriendRoom" maxlength="40" placeholder="nome-da-sala" required></div><div class="jf-room-modal-actions"><button class="btn" type="submit">＋ Adicionar amigo</button></div></form>
-    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div></div><div id="jfRequestsPane" hidden><p class="small">Aceite ou recuse pedidos recebidos nesta sessão.</p><div id="jfIncomingRequests" class="jf-people"><p class="small">Nenhuma solicitação pendente.</p></div></div>
+    <p class="small">Adicione pessoas cadastradas pelo perfil delas na sala. Visitantes não podem enviar nem receber solicitações.</p>
+    <div id="jfFriendsGuest" class="jf-friends-guest" hidden><strong>🔒 Amizades para contas cadastradas</strong><p>Entre com Google para salvar amigos. Seu nome, e-mail e foto do Google não são exibidos.</p><a class="btn" href="/auth/google">Entrar com Google</a></div>
+    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div></div><div id="jfRequestsPane" hidden><p class="small">Solicitações vinculadas à sua conta, disponíveis quando você voltar.</p><div id="jfIncomingRequests" class="jf-people"><p class="small">Nenhuma solicitação pendente.</p></div></div>
   </section>
 </div>
 
