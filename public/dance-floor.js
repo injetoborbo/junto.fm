@@ -267,7 +267,7 @@ async function putMember(id,details){
   try{
     const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
-    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;
     entry.restBones=new Map();
     entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
     sittingPose().then(pose=>{
@@ -410,6 +410,7 @@ function animate(){
         obj.rotation.set(x,y,z);
       });
     }
+    p.updateAccessories?.();
   }
   if(!inspectCleanup)renderer.render(scene,camera);
 }
