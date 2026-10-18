@@ -1596,7 +1596,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const maxDim=Math.max(size.x,size.y,size.z)||1;
     model.scale.setScalar(2.25/maxDim);
     // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
-    const patriotGltf=await new GLTFLoader().loadAsync("/macacopatria.glb").catch(error=>{
+    const patriotGltf=await new GLTFLoader().loadAsync("/macacopatria_rigged_test.glb").catch(error=>{
       console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
       return null;
     });
@@ -1646,7 +1646,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const animate=()=>{
       requestAnimationFrame(animate);
       const t=clock.getElapsedTime();
-      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
+      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=Math.sin(t*(patriotRoot.visible?1.4:2.1))*(patriotRoot.visible?.085:.035);root.rotation.z=Math.sin(t*1.7)*.018;}
       renderer.render(scene,camera);
     };
     animate();
