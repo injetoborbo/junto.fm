@@ -272,6 +272,20 @@ app.get("/api/music/validate-suggestion", async (req, res) => {
   }
 });
 
+// Guarda-roupa público: só peças comuns entram no perfil da sala.
+// A skin Capitão Pátria permanece restrita ao fluxo de autenticação admin.
+const wardrobeOptions = Object.freeze({
+  hat: ["nenhum", "bone", "gorro", "palha"],
+  glasses: ["nenhum", "escuros", "redondos"],
+  headphones: ["nenhum", "azul", "rosa"],
+  outfit: ["padrao", "rosa"]
+});
+function cleanWardrobe(input) {
+  const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
+  return Object.fromEntries(Object.entries(wardrobeOptions).map(([key, allowed]) =>
+    [key, allowed.includes(source[key]) ? source[key] : allowed[0]]));
+}
+
 function cleanRoom(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
 }
@@ -506,7 +520,7 @@ io.on("connection", socket => {
     const allowedImage = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,", "data:image/gif;base64,"].includes(prefix);
     const safeAvatar = avatar.length <= 220000 && allowedImage && comma < avatar.length - 1 ? avatar : "";
     const motto = String(payload.profile.motto || "").trim().replace(/\s+/g, " ").slice(0, 90);
-    const profile = { name, avatar: safeAvatar, motto };
+    const profile = { name, avatar: safeAvatar, motto, wardrobe: cleanWardrobe(payload.profile.wardrobe) };
     socket.data.profile = profile;
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
     if (socket.data.isTransmitting) {
