@@ -1675,6 +1675,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     renderer.domElement.className="jf-glb-canvas";
     renderer.domElement.setAttribute("aria-label","Modelo 3D do macaco DJ");
     stage.appendChild(renderer.domElement);
+    window.dispatchEvent(new Event("jf-player-stage-ready"));
     scene.add(new THREE.HemisphereLight(0xffffff,0x51406b,2.2));
     const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);
     const rim=new THREE.DirectionalLight(0x9deaff,1.1);rim.position.set(-4,2,-3);scene.add(rim);
