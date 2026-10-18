@@ -179,9 +179,9 @@ function loadPlayerSittingPose(){
 }
 function applyPlayerSittingPose(monkey,source){
   const clip=source?.animations?.find(anim=>anim.tracks?.length);
-  if(!clip)return false;
+  if(!clip){console.warn("Pose sentada: GLB sem animação utilizável.");return false;}
   const targets=new Map();
-  const clean=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const clean=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
   monkey.traverse(obj=>{if(obj.isBone)targets.set(clean(obj.name),obj);});
   const sources=new Map();
   source.scene.traverse(obj=>{if(obj.name&&/^mixamorig/i.test(obj.name))sources.set(clean(obj.name),obj);});
@@ -202,6 +202,7 @@ function applyPlayerSittingPose(monkey,source){
     bone.quaternion.multiply(result).normalize();
     applied++;
   }
+  console.info("Pose sentada Mixamo: ossos aplicados",applied,"de",clip.tracks.length,"canais");
   return applied>=5;
 }
 function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false}={}){
@@ -346,6 +347,7 @@ function updatePlayerMonkey(detail={}){
   const adminCostume=document.getElementById("jfMiniDj")?.classList.contains("jf-homelander");
   playerInstance?.dispose();playerInstance=null;
   const shown=Boolean(detail.id && !adminCostume && playerStage && base);
+  console.info("Mascote do player:",shown?"modelo personalizado ativo":"modelo alternativo ativo",{temTransmissor:!!detail.id,adminCostume});
   playerHolder.style.display=shown?"block":"none";
   playerStage?.querySelector("canvas.jf-glb-canvas")?.style.setProperty("visibility",shown?"hidden":"visible");
   if(shown){
