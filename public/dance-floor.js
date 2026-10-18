@@ -234,8 +234,9 @@ async function putMember(id,details){
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
     entry.restBones=new Map();
     entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
-    for(const key of Object.keys(animationFiles))loadClip(key).then(()=>{
-      if(active&&people.get(id)===entry)entry.currentDance=null;
+    for(const key of Object.keys(animationFiles))loadClip(key).then(clip=>{
+      // Só reiniciar a ação quando a animação atualmente escolhida terminar de carregar.
+      if(clip&&active&&people.get(id)===entry&&entry.data.dance===key&&entry.currentDance===key&&!entry.action)entry.currentDance=null;
     });
     entry.root.rotation.y=.65;
     entry.root.position.set(entry.data.x-2.5,.77,entry.data.z-2.5);
