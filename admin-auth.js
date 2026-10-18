@@ -70,4 +70,5 @@ module.exports = function setupAdmin(app) {
     for (const [key, exp] of states) if (exp < Date.now()) states.delete(key);
     for (const [key, s] of sessions) if (s.expires < Date.now()) sessions.delete(key);
   }, 60 * 60 * 1000).unref();
+  return { isAdmin: req => Boolean(session(req)) };
 };
