@@ -39,91 +39,97 @@ function addPart(parent,geo,mat,x,y,z,sx=1,sy=1,sz=1){
   const mesh=new THREE.Mesh(geo,mat);mesh.userData.jfWardrobeGenerated=true;mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
 }
 function dress(model,selection,render){
-  const parts=new THREE.Group();parts.name="jfWardrobeParts";model.add(parts);
-  // Acessórios proporcionais ao macaco original normalizado em 1,8 unidades.
-  // As posições são de prévia; não se substitui o modelo original nem sua rigagem.
-  const straw=material(0xd4aa65,{roughness:.94,side:THREE.DoubleSide});
-  const strawDark=material(0x9a7042),blue=material(0x387caa),rose=material(0xd7649e);
-  const ink=material(0x26262b,{metalness:.22,roughness:.36});
-  const glass=material(0x19273a,{transparent:true,opacity:.78,metalness:.12,roughness:.27,side:THREE.DoubleSide});
-  const sphere=(mat,x,y,z,rx,ry,rz)=>addPart(parts,new THREE.SphereGeometry(1,20,12),mat,x,y,z,rx,ry,rz);
+  const parts=new THREE.Group();
+  parts.name="jfWardrobeParts";
+  model.add(parts);
+  const mat=(color,options={})=>material(color,options);
+  const sphere=(color,x,y,z,sx,sy,sz)=>addPart(parts,new THREE.SphereGeometry(1,24,16),color,x,y,z,sx,sy,sz);
+  // Coordenadas do macaco normalizado: topo da cabeça ~0.90,
+  // centro dos olhos ~0.43 e quadril ~-0.20.
+  const H={headTop:.85,eyes:.435,front:.275,ears:.405,waist:-.17};
+  const navy=mat(0x3376ab),pink=mat(0xde78aa),dark=mat(0x24212a,{metalness:.18,roughness:.46});
   if(selection.hat==="palha"||selection.hat==="branco"){
     const accessory=selection.hat;
     getHatAsset(accessory).then(asset=>{
       if(!asset||!parts.parent)return;
       const hat=asset.clone(true);
       hat.name="jfMeshyHat_"+accessory;
-      const bounds=new THREE.Box3().setFromObject(hat);
-      const size=bounds.getSize(new THREE.Vector3());
-      const center=bounds.getCenter(new THREE.Vector3());
-      // Os dois GLBs têm aba no plano XZ e altura no eixo Y.
-      const brimWidth=accessory==="palha"?.69:.66;
-      const scale=brimWidth/Math.max(size.x,size.z,.0001);
+      const box=new THREE.Box3().setFromObject(hat);
+      const extent=box.getSize(new THREE.Vector3());
+      const center=box.getCenter(new THREE.Vector3());
+      const width=accessory==="palha"?.64:.62;
+      const scale=width/Math.max(extent.x,extent.z,.0001);
       hat.scale.setScalar(scale);
-      hat.position.set(-center.x*scale,.79-bounds.min.y*scale,-center.z*scale);
+      // Apoiar a ABA (e não o topo do chapéu) na cabeça.
+      // O centro do modelo Meshy é aproximadamente o plano da aba.
+      const brimY=H.headTop-.075;
+      hat.position.set(-center.x*scale,brimY-center.y*scale,-center.z*scale-.015);
       hat.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
       parts.add(hat);
       render();
     });
   }else if(selection.hat==="bone"){
-    sphere(blue,0,.815,-.02,.245,.122,.225);
-    const brim=sphere(material(0x2a668e),0,.755,.205,.205,.018,.13);
-    brim.rotation.x=-.13;
+    const cap=sphere(navy,0,.835,-.025,.22,.10,.215);
+    cap.rotation.x=-.03;
+    const brim=sphere(mat(0x215d87),0,.775,.213,.19,.015,.12);
+    brim.rotation.x=-.08;
   }else if(selection.hat==="gorro"){
-    sphere(rose,0,.845,0,.242,.145,.222);
-    addPart(parts,new THREE.CylinderGeometry(.235,.232,.052,30),material(0xb94c84),0,.773,0);
-    sphere(material(0xffd2e8),0,.988,0,.055,.055,.055);
+    sphere(pink,0,.84,-.005,.223,.12,.205);
+    const hem=addPart(parts,new THREE.CylinderGeometry(.215,.218,.035,40),mat(0xa84a7a),0,.78,-.005);
+    sphere(mat(0xffd6e9),0,.96,0,.037,.037,.037);
   }
   if(selection.glasses!=="nenhum"){
-    const frame=selection.glasses==="escuros"?ink:material(0xb8a6db,{metalness:.55,roughness:.28});
+    const frame=selection.glasses==="escuros"?dark:mat(0xb3a5c4,{metalness:.48,roughness:.3});
+    const glass=mat(selection.glasses==="escuros"?0x162132:0xc5e9fc,{
+      transparent:true,opacity:selection.glasses==="escuros"?.83:.25,
+      side:THREE.DoubleSide,metalness:.15,roughness:.28
+    });
     for(const sign of [-1,1]){
-      const lens=sphere(selection.glasses==="escuros"?glass:material(0xeaf5ff,{transparent:true,opacity:.22,side:THREE.DoubleSide}),sign*.117,.45,.265,.092,.084,.012);
-      lens.rotation.y=sign*-.12;
-      const ring=addPart(parts,new THREE.TorusGeometry(.087,.009,8,32),frame,sign*.117,.45,.279);
-      ring.scale.set(1,1,.7);
-      const temple=addPart(parts,new THREE.BoxGeometry(.10,.015,.014),frame,sign*.244,.459,.222);
-      temple.rotation.y=sign*-.28;
+      sphere(glass,sign*.115,H.eyes,H.front+.016,.077,.069,.008);
+      const ring=addPart(parts,new THREE.TorusGeometry(.073,.007,8,32),frame,sign*.115,H.eyes,H.front+.029);
+      ring.rotation.y=sign*-.08;
+      const arm=addPart(parts,new THREE.BoxGeometry(.085,.012,.012),frame,sign*.218,H.eyes+.007,.244);
+      arm.rotation.y=sign*-.25;
     }
-    addPart(parts,new THREE.BoxGeometry(.07,.012,.018),frame,0,.461,.278);
+    addPart(parts,new THREE.BoxGeometry(.066,.011,.012),frame,0,H.eyes+.009,H.front+.028);
   }
   if(selection.headphones!=="nenhum"){
-    const shell=selection.headphones==="rosa"?rose:blue;
-    const pad=material(0x21222c,{roughness:.85});
-    // Arco fino sobre a cabeça, em vez de um bloco gigante.
-    const band=addPart(parts,new THREE.TorusGeometry(.267,.023,10,40,Math.PI),shell,0,.714,0);
+    const shell=selection.headphones==="rosa"?pink:navy;
+    const padding=mat(0x252833,{roughness:.88});
+    // Arco sobre a cabeça e almofadas FORA das orelhas.
+    const band=addPart(parts,new THREE.TorusGeometry(.37,.016,10,48,Math.PI),shell,0,.635,-.035);
     band.rotation.z=0;
     for(const sign of [-1,1]){
-      sphere(shell,sign*.265,.588,0,.066,.115,.099);
-      sphere(pad,sign*.245,.583,0,.028,.083,.077);
+      sphere(shell,sign*.414,.43,-.018,.064,.095,.095);
+      sphere(padding,sign*.381,.43,-.018,.021,.076,.076);
     }
   }
   if(selection.outfit==="rosa"){
-    // Saia de tecido com pregas arredondadas, mais leve que o cone anterior.
-    const fabric=material(0xf385bd,{roughness:.89,side:THREE.DoubleSide});
-    const hem=material(0xd84f98,{roughness:.9,side:THREE.DoubleSide});
-    const segments=64,rings=9,positions=[],uvs=[],faces=[];
+    const fabric=mat(0xf18abc,{roughness:.9,side:THREE.DoubleSide});
+    const trim=mat(0xd65298,{roughness:.87,side:THREE.DoubleSide});
+    // Vestido solto curto, sem encostar nas mãos nem cobrir as pernas.
+    const segments=48,rings=9,positions=[],uvs=[],indices=[];
     for(let j=0;j<=rings;j++){
-      const t=j/rings,y=-.13-.33*t;
-      const baseRadius=.163+.13*Math.sin(t*Math.PI*.58);
+      const t=j/rings,y=-.13-.31*t;
+      const radius=.158+.113*Math.sin(t*Math.PI*.53);
       for(let i=0;i<=segments;i++){
         const a=2*Math.PI*i/segments;
-        const pleat=.012*Math.sin(10*a)*(t*t);
-        const radius=baseRadius+pleat;
-        positions.push(Math.cos(a)*radius,y+.01*Math.sin(a*10)*t*t,Math.sin(a)*radius);
+        const r=radius+.009*Math.sin(10*a)*t*t;
+        positions.push(Math.cos(a)*r,y+.006*Math.sin(10*a)*t*t,Math.sin(a)*r);
         uvs.push(i/segments,t);
       }
     }
     for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){
-      const a=j*(segments+1)+i,b=a+segments+1;
-      faces.push(a,b,a+1,b,b+1,a+1);
+      const n=j*(segments+1)+i,k=n+segments+1;
+      indices.push(n,k,n+1,k,k+1,n+1);
     }
-    const geometry=new THREE.BufferGeometry();
-    geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
-    geometry.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
-    geometry.setIndex(faces);geometry.computeVertexNormals();
-    addPart(parts,geometry,fabric,0,0,0);
-    addPart(parts,new THREE.TorusGeometry(.286,.009,8,64),hem,0,-.46,0).rotation.x=Math.PI/2;
-    addPart(parts,new THREE.CylinderGeometry(.174,.178,.055,32),fabric,0,-.115,0);
+    const geom=new THREE.BufferGeometry();
+    geom.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+    geom.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
+    geom.setIndex(indices);geom.computeVertexNormals();
+    addPart(parts,geom,fabric,0,0,0);
+    addPart(parts,new THREE.TorusGeometry(.267,.007,8,48),trim,0,-.437,0).rotation.x=Math.PI/2;
+    addPart(parts,new THREE.CylinderGeometry(.17,.176,.045,36),fabric,0,-.13,0);
   }
 }
 function makeScene(target,wardrobe,{preview=false}={}){
