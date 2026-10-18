@@ -1554,6 +1554,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfSongPending=false;jfUpdateSuggestionControls();
     jfSongStatus(String(error||"Não foi possível adicionar a música à fila."));
   });
+  // Ambos os controles dispensam somente o aviso, sem mexer na fila Spotify.
+  const jfDismissSongNotice=()=>{$("jfSuggestionPopup").hidden=true;};
+  $("jfSuggestionDone")?.addEventListener("click",jfDismissSongNotice);
+  $("jfCloseSuggestion")?.addEventListener("click",jfDismissSongNotice);
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
