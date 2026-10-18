@@ -70,9 +70,7 @@ function dress(root,selection,render,monkey,{seated=false}={}){
   if(headBone)headBone.getWorldPosition(worldHead);
   if(topBone)topBone.getWorldPosition(worldTop);
   if(neckBone)neckBone.getWorldPosition(worldNeck);
-  const headSpan=headBone&&topBone
-    ?headBone.worldToLocal(worldTop.clone()).length()
-    :0;
+
   // Corrige o desvio lateral do GLB antigo: a cabeça NÃO fica em X=0.
   const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
   const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
@@ -86,17 +84,8 @@ function dress(root,selection,render,monkey,{seated=false}={}){
       configure(part,measure);
       monkey.add(part);
       monkey.updateMatrixWorld(true);
-      if(followHead&&headBone){
-        headBone.attach(part);
-        if(seated&&file===selection.glasses){
-          // Calibrar óculos no rosto inclinado, só no miniplayer.
-          part.position.y-=headSpan*.19;
-          part.position.z+=headSpan*.045;
-        }
-      }else if(seated&&file==="fone"&&neckBone){
-        // Fones que ficam no pescoço devem seguir o osso do pescoço.
-        neckBone.attach(part);
-      }
+      if(followHead&&headBone)headBone.attach(part);
+      else if(seated&&file==="fone"&&neckBone)neckBone.attach(part);
       render();
     });
   };
@@ -119,7 +108,6 @@ function dress(root,selection,render,monkey,{seated=false}={}){
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
       state.updateWorldMatrix(true,true);
       if(headBone)headBone.attach(hat);
-      if(seated&&headBone)hat.position.y-=headSpan*.025;
       render();
     });
   }else if(selection.hat==="bone"||selection.hat==="gorro"){
@@ -206,6 +194,9 @@ function applyPlayerSittingPose(monkey,source){
     const dot=track.name.lastIndexOf(".");
     if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
     const key=clean(track.name.slice(0,dot)),bone=targets.get(key),src=sources.get(key);
+    // O FBX sentado inclina/torce muito pescoço e cabeça. Evitar esses
+    // dois canais preserva o rosto (e os acessórios) do macaco original.
+    if(key==="head"||key==="neck")continue;
     if(!bone||!src)continue;
     const interpolation=track.createInterpolant();
     const values=interpolation.evaluate(time);
