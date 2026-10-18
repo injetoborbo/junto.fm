@@ -234,12 +234,16 @@ async function findSpotifyQueueTrack(token, suggestion) {
   const title = normalizeMusicText(parts[0]);
   const artist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
   const endpoint = new URL("https://api.spotify.com/v1/search");
-  endpoint.search = new URLSearchParams({ q: [parts[0],parts.slice(1).join(" ")].filter(Boolean).join(" "), type: "track", limit: "30", market: "BR" }).toString();
+  endpoint.search = new URLSearchParams({ q: [parts[0],parts.slice(1).join(" ")].filter(Boolean).join(" "), type: "track", limit: "10", market: "BR" }).toString();
   const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
   if (!response.ok) {
     if (response.status === 403) throw new Error("O aplicativo Spotify não tem acesso à busca de faixas. Confira as permissões da integração.");
     if (response.status === 429) throw new Error("O Spotify limitou as consultas. Tente novamente em instantes.");
-    throw new Error("Não consegui consultar o catálogo do Spotify (HTTP " + response.status + ").");
+    // Não expor tokens, apenas uma mensagem útil do endpoint.
+    const detail=await response.json().catch(()=>({}));
+    console.warn("Busca Spotify recusada:",response.status,String(detail.error?.message||"").slice(0,120));
+    if(response.status===400)throw new Error("O Spotify recusou a pesquisa da faixa. Tente novamente; se persistir, reconecte o Spotify.");
+    throw new Error("Não consegui consultar o catálogo do Spotify (HTTP "+response.status+").");
   }
   const body = await response.json();
   const tracks=(body.tracks?.items||[]).filter(track=>/^spotify:track:[A-Za-z0-9]{22}$/.test(track.uri||""));
