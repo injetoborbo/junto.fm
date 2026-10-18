@@ -1618,17 +1618,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         if(bone){bone.rotation.x+=x;bone.rotation.y+=y;bone.rotation.z+=z;}
       };
       // Braços ligeiramente afastados do tronco e estendidos, mãos relaxadas.
-      poseBone("LeftArm",-.12,0,-.38);
-      poseBone("RightArm",-.12,0,.38);
-      poseBone("LeftForeArm",0,0,-.12);
-      poseBone("RightForeArm",0,0,.12);
+      poseBone("LeftArm",-.18,0,-.95);
+      poseBone("RightArm",-.18,0,.95);
+      poseBone("LeftForeArm",0,0,-.08);
+      poseBone("RightForeArm",0,0,.08);
       poseBone("LeftHand",0,.10,-.08);
       poseBone("RightHand",0,-.10,.08);
       // Pernas discretamente afastadas, postura de voo estacionário.
       poseBone("LeftUpLeg",-.06,0,-.055);
       poseBone("RightUpLeg",-.06,0,.055);
       poseBone("Spine2",.045,0,0);
-      console.info("Junto.fm: pose de voo aplicada aos ossos disponíveis.",Object.keys(bones).length);
+      console.info("Junto.fm: pose de voo v2", {totalBones:Object.keys(bones).length,leftArm:!!bones["mixamorig:LeftArm"],rightArm:!!bones["mixamorig:RightArm"],skinnedMeshes:(()=>{let n=0;patriot.traverse(o=>{if(o.isSkinnedMesh)n++;});return n;})()});
 
       // Pontos pequenos apenas nas pupilas: sem halos grandes ou luz no rosto.
       const pupilGlowMaterial=new THREE.MeshBasicMaterial({
