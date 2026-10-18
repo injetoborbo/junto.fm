@@ -83,7 +83,7 @@ async function validSpotifyAccessToken(session) {
 }
 
 app.use(express.json({ limit: "10kb" }));
-require("./admin-auth")(app);
+const adminAuth = require("./admin-auth")(app);
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
@@ -269,6 +269,19 @@ app.get("/api/lyrics", async (req, res) => {
 });
 
 io.on("connection", socket => {
+  socket.data.isAdmin = adminAuth.isAdmin(socket.request);
+  socket.data.avatarSkin = "default";
+  socket.on("avatar-skin-set", payload => {
+    if (!socket.data.room) return;
+    const requested = payload && payload.skin;
+    if (requested !== "default" && requested !== "capitao-patria") return;
+    if (requested === "capitao-patria" && !socket.data.isAdmin) {
+      socket.emit("avatar-skin-error", { message: "Skin exclusiva do administrador." });
+      return;
+    }
+    socket.data.avatarSkin = requested;
+    io.to(socket.data.room).emit("avatar-skin-update", { id: socket.id, skin: requested });
+  });
   socket.on("create-room", payload => {
     if (isRateLimited(socket, "create-room", 5, 60_000)) {
       socket.emit("create-room-error", { message: "Muitas tentativas de criação. Aguarde um minuto e tente novamente." });
