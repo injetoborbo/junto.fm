@@ -318,7 +318,17 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 .jf-room-entry-actions[hidden],#jfLeaveRoom[hidden]{display:none!important}
 body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
 body:not(.jf-in-room) .jf-topbar{justify-content:center}
-body:not(.jf-in-room) .jf-top-actions,body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
+body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
+/* Na tela de entrada, exibir apenas Perfil e Trajes no canto superior direito. */
+body:not(.jf-in-room) .jf-top-actions{display:flex!important;position:fixed;top:16px;right:20px;z-index:20;gap:8px;margin:0}
+body:not(.jf-in-room) .jf-top-actions > :not(#jfOpenWardrobe):not(#jfOpenProfile){display:none!important}
+body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{display:inline-flex!important;min-height:40px;width:auto;min-width:92px;padding:7px 10px}
+@media(max-width:600px){
+ body:not(.jf-in-room) .jf-top-actions{top:10px;right:10px;gap:5px}
+ body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{min-width:0;min-height:36px;padding:5px 7px;font-size:11px}
+ body:not(.jf-in-room) .jf-topbar{padding-top:58px}
+}
+
 body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(.jf-modal-backdrop){display:none!important}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{justify-content:center;flex-wrap:wrap}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{flex:1 1 190px;min-height:52px}
