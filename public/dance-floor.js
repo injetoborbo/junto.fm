@@ -200,6 +200,17 @@ socket?.on("dance-updated",entry=>{
   if(entry.id===socket.id)updateChoices();
 });
 socket?.on("dance-left",({id})=>{if(active)removeMember(id);});
+function refreshDancer(id){
+  if(!active||!people.has(id))return;
+  const data={...people.get(id).data};
+  removeMember(id);putMember(id,data);
+  count.textContent=people.size+"/8 macacos";
+}
+socket?.on("profile-update",({id})=>{if(id)setTimeout(()=>refreshDancer(id),0);});
+socket?.on("avatar-skin-update",({id})=>{if(id)setTimeout(()=>refreshDancer(id),0);});
+window.addEventListener("jf-wardrobe-save",()=>refreshDancer(socket.id));
+window.addEventListener("jf-admin-skin-changed",()=>refreshDancer(socket.id));
+
 socket?.on("dance-error",({message})=>{if(active)setStatus(message||"Não foi possível mover.");});
 socket?.on("room-kicked",close);
 socket?.on("left-room",close);
