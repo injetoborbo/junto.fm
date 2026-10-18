@@ -107,7 +107,7 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 .jf-person:hover .jf-motto,.jf-person:focus-within .jf-motto{display:block}
 .jf-person .jf-person-details{display:flex;flex-direction:column;min-width:0}
 .jf-person .jf-person-details strong{display:block}
-.jf-room-kick{font-size:11px!important;white-space:nowrap;background:#8c2744!important;color:#fff!important;border:1px solid #c95a73!important}
+.jf-room-kick{flex:0 0 auto!important;min-width:0!important;width:28px!important;height:28px!important;padding:0!important;font-size:15px!important;line-height:1!important;white-space:nowrap;background:#8c2744!important;color:#fff!important;border:1px solid #c95a73!important;border-radius:6px!important;display:inline-flex!important;align-items:center;justify-content:center}
 .jf-room-kick:hover{background:#b73354!important}
 .jf-retro-emoji-title{font-size:11px;font-weight:800;letter-spacing:.04em;margin:8px 3px 5px;color:var(--jf-primary)}
 .jf-retro-emoji-grid{display:flex;flex-wrap:wrap;gap:4px;padding-bottom:6px;border-bottom:1px solid #aab7cf55}
@@ -1738,7 +1738,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
           const kick=document.createElement("button");
           kick.type="button";
           kick.className="btn secondary jf-room-kick";
-          kick.textContent="✕ Expulsar";
+          kick.textContent="✕";
           kick.title="Expulsar este participante da sala";
           kick.setAttribute("aria-label","Expulsar "+String(p.name||"Ouvinte"));
           kick.addEventListener("click",()=>{
