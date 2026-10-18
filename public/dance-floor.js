@@ -1,5 +1,6 @@
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
+import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {createDanceAvatar} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
@@ -12,6 +13,65 @@ const count=document.getElementById("jfDanceCount");
 const openButton=document.getElementById("jfOpenDance");
 const closeButton=document.getElementById("jfCloseDance");
 const choices=[...document.querySelectorAll("[data-jf-dance]")];
+const animationFiles={
+  shake:"/dance/macacochaqualha.glb",
+  macarena:"/dance/macacomacarena.glb",
+  party:"/dance/macacodanca.glb",
+  capoeira:"/dance/macacocapoera.glb",
+  groove:"/dance/macacodancagay.glb"
+};
+const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
+function loadClip(style){
+  if(!animationFiles[style])return Promise.resolve(null);
+  if(!clipPromises.has(style)){
+    clipPromises.set(style,gltfLoader.loadAsync(animationFiles[style]).then(gltf=>{
+      const clip=gltf.animations?.find(c=>c.tracks?.length)||null;
+      if(clip)animationClips.set(style,clip);
+      return clip;
+    }).catch(error=>{
+      console.warn("Animação GLB não encontrada:",animationFiles[style],error);
+      return null;
+    }));
+  }
+  return clipPromises.get(style);
+}
+function buildAnimationAction(member,style){
+  if(!member.rig||!animationClips.has(style))return null;
+  const boneByName=new Map();
+  member.rig.traverse(node=>{
+    if(!node.isBone)return;
+    boneByName.set(node.name.toLowerCase().replace(/[^a-z0-9]/g,""),node);
+  });
+  const source=animationClips.get(style);
+  const tracks=[];
+  for(const track of source.tracks){
+    const dot=track.name.lastIndexOf(".");
+    if(dot<0)continue;
+    const path=track.name.slice(0,dot),property=track.name.slice(dot+1);
+    if(property!=="quaternion")continue; // impede deslocamento do personagem para fora da casa
+    const sourceName=path.split("/").pop().replace(/^.*\|/,"");
+    const target=boneByName.get(sourceName.toLowerCase().replace(/[^a-z0-9]/g,""));
+    if(!target)continue;
+    const copy=track.clone();
+    copy.name=target.name+".quaternion";
+    tracks.push(copy);
+  }
+  if(tracks.length<5)return null;
+  member.mixer ||=new THREE.AnimationMixer(member.rig);
+  const clip=new THREE.AnimationClip("junto-"+style,source.duration,tracks);
+  const action=member.mixer.clipAction(clip);
+  action.setLoop(THREE.LoopRepeat,Infinity);
+  return action;
+}
+function switchDance(member,style){
+  if(member.currentDance===style)return;
+  member.action?.fadeOut(.24);
+  member.currentDance=style;
+  member.action=null;
+  if(style==="idle"||!animationClips.has(style))return;
+  const action=buildAnimationAction(member,style);
+  if(action){action.reset().fadeIn(.24).play();member.action=action;}
+}
 let active=false,room=null,renderer=null,scene=null,camera=null,board=null,frame=0,sequence=0;
 let down=null;
 const people=new Map();
@@ -156,6 +216,9 @@ async function putMember(id,details){
     const avatar=await createDanceAvatar(profile.wardrobe,currentSkin(id),()=>{});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    for(const key of Object.keys(animationFiles))loadClip(key).then(()=>{
+      if(active&&people.get(id)===entry)entry.currentDance=null;
+    });
     entry.root.rotation.y=.65;
     entry.root.position.set(entry.data.x-2.5,.77,entry.data.z-2.5);
     const tag=nameSprite(profile.name);
@@ -165,6 +228,8 @@ async function putMember(id,details){
 }
 function removeMember(id){
   const member=people.get(id);if(!member)return;
+  member.mixer?.stopAllAction();
+  member.mixer?.uncacheRoot(member.rig);
   member.dispose?.();
   if(member.name)member.name.material.dispose();
   if(member.root)scene?.remove(member.root);
@@ -192,6 +257,7 @@ function animate(){
   for(const [id,p] of people){
     if(!p.root)continue;
     const d=p.data,style=d.dance||"idle";
+    switchDance(p,style);
     const targetX=d.x-2.5,targetZ=d.z-2.5;
     const dx=targetX-p.root.position.x,dz=targetZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
@@ -213,7 +279,8 @@ function animate(){
     p.root.rotation.z=walking?0:style==="swing"?.10*Math.sin(phase):style==="disco"?.06*Math.sin(phase):0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin(.65-p.root.rotation.y),Math.cos(.65-p.root.rotation.y))*Math.min(1,dt*1.6);
     if(!walking&&style==="disco")p.root.rotation.y+=dt*.12*Math.sin(phase*.5);
-    if(p.rig){
+    p.mixer?.update(dt);
+    if(p.rig&&!p.action){
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
         if(!obj.userData.jfDanceRest)obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
