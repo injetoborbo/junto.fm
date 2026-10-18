@@ -116,11 +116,11 @@ function dress(model,selection,render){
     const shell=selection.headphones==="rosa"?pink:navy;
     const padding=mat(0x252833,{roughness:.88});
     // Arco sobre a cabeça e almofadas FORA das orelhas.
-    const band=addPart(parts,new THREE.TorusGeometry(.37,.016,10,48,Math.PI),shell,0,.635,-.035);
+    const band=addPart(parts,new THREE.TorusGeometry(.32,.012,10,48,Math.PI),shell,0,.65,-.035);
     band.rotation.z=0;
     for(const sign of [-1,1]){
-      sphere(shell,sign*.414,.43,-.018,.064,.095,.095);
-      sphere(padding,sign*.381,.43,-.018,.021,.076,.076);
+      sphere(shell,sign*.356,.48,-.018,.044,.078,.071);
+      sphere(padding,sign*.337,.48,-.018,.014,.066,.060);
     }
   }
   if(selection.outfit==="rosa"){
