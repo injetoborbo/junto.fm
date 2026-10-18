@@ -278,11 +278,12 @@ function animate(){
     }
     p.walkTime=(p.walkTime||0)+(walking?dt*7.8:0);
     const stride=Math.sin(p.walkTime);
-    const phase=time*(style==="disco"?6.4:style==="swing"?4.3:style==="bounce"?7.5:2);
-    p.root.position.y=.77+(walking?.032*Math.abs(stride):style==="idle"?.009*Math.sin(phase):.06*Math.abs(Math.sin(phase)));
-    p.root.rotation.z=walking?0:style==="swing"?.10*Math.sin(phase):style==="disco"?.06*Math.sin(phase):0;
+    const speeds={shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1};
+    const phase=time*(speeds[style]||2);
+    const pulse=Math.sin(phase),bounce=Math.abs(pulse);
+    p.root.position.y=.77+(walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin(.65-p.root.rotation.y),Math.cos(.65-p.root.rotation.y))*Math.min(1,dt*1.6);
-    if(!walking&&style==="disco")p.root.rotation.y+=dt*.12*Math.sin(phase*.5);
     p.mixer?.update(dt);
     if(p.rig&&!p.action){
       p.rig.traverse(obj=>{
@@ -304,11 +305,36 @@ function animate(){
           if(upperArm)x-=side*.26*stride;
           if(forearm)x-=side*.10*stride;
           if(torso)z+=.022*stride;
-        }else if(style!=="idle"){
-          if(upperArm)x+=side*(style==="disco"?.20*Math.sin(phase):.26*Math.sin(phase));
-          if(upperArm)z+=side*.12*Math.cos(phase);
-          if(upperLeg)x+=side*(style==="bounce"?.09*Math.sin(phase):.05*Math.sin(phase));
-          if(torso)y+=.08*Math.sin(phase);
+        }else if(style==="shake"){
+          if(upperArm){x+=side*.26*Math.sin(phase);z+=side*.22*Math.cos(phase);}
+          if(forearm)x+=side*.22*Math.sin(phase+1);
+          if(upperLeg)x+=side*.08*Math.sin(phase);
+          if(torso){y+=.09*Math.sin(phase);z+=.055*Math.cos(phase);}
+        }else if(style==="macarena"){
+          // Oito tempos: braços à frente, abertos, mãos à cabeça e à cintura.
+          const beat=Math.floor(phase/Math.PI*2)%8;
+          const reach=beat<2?1:beat<4?.55:beat<6?-.35:-.1;
+          if(upperArm){x+=reach*.65;z+=side*(beat>=2&&beat<4?.80:beat>=4&&beat<6?.35:.08);}
+          if(forearm)x+=(beat>=4&&beat<6?-.65:beat>=6?.65:.12);
+          if(upperLeg)x+=side*.075*Math.sin(phase/2);
+          if(torso)y+=.15*Math.sin(phase/2);
+        }else if(style==="party"){
+          if(upperArm){x+=side*.55*Math.sin(phase);z+=side*(.40+.25*Math.cos(phase));}
+          if(forearm)x+=.30+.22*Math.sin(phase+side);
+          if(upperLeg)x+=side*.17*Math.sin(phase);
+          if(torso){y+=.12*Math.sin(phase);z+=.05*Math.cos(phase);}
+        }else if(style==="capoeira"){
+          // Ginga no lugar: alterna apoio das pernas e guarda dos braços.
+          if(upperLeg)x+=side*.24*Math.sin(phase);
+          if(lowerLeg)x+=.12*Math.max(0,side*Math.sin(phase));
+          if(upperArm){x+=-side*.28*Math.sin(phase);z+=side*.28;}
+          if(forearm)x+=-.32;
+          if(torso){y+=.14*Math.sin(phase);z+=.11*Math.sin(phase);}
+        }else if(style==="groove"){
+          if(upperArm){x+=.25*Math.sin(phase+side);z+=side*(.28+.2*Math.sin(phase));}
+          if(forearm)x+=side*.18*Math.cos(phase);
+          if(upperLeg)x+=side*.13*Math.cos(phase);
+          if(torso){y+=.18*Math.sin(phase);z+=.08*Math.sin(phase/2);}
         }
         obj.rotation.set(x,y,z);
       });
