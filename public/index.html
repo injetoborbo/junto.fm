@@ -1607,8 +1607,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const pb=new THREE.Box3().setFromObject(patriot);
       const pc=pb.getCenter(new THREE.Vector3());
       const ps=pb.getSize(new THREE.Vector3());
-      patriot.position.sub(pc);
-      patriot.scale.setScalar(2.25/(Math.max(ps.x,ps.y,ps.z)||1));
+      // Enquadramento próprio da skin: centralizar com a escala aplicada.
+      // Altura com margem evita cortar cabeça e botas no mini player.
+      const patriotScale=1.86/(Math.max(ps.x,ps.y,ps.z)||1);
+      patriot.scale.setScalar(patriotScale);
+      patriot.position.copy(pc).multiplyScalar(-patriotScale);
       // A pose dos braços e mãos já está salva no GLB novo do AccuRIG.
       // Ajustar apenas os ossos das pernas e dos pés, sem tocar nos braços.
       const rigBones=new Map();
@@ -1636,7 +1639,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         leftLeg:rotateRigBone("CC_Base_L_Thigh",upWorld,-.045),
         rightLeg:rotateRigBone("CC_Base_R_Thigh",upWorld,.045),
         leftFoot:rotateRigBone("CC_Base_L_Foot",footPitchWorld,.32),
-        rightFoot:rotateRigBone("CC_Base_R_Foot",footPitchWorld,.32)
+        rightFoot:rotateRigBone("CC_Base_R_Foot",footPitchWorld,.32),
+        // Descer suavemente ambos os braços, preservando a rotação
+        // dos pulsos e a abertura das palmas já gravadas no GLB.
+        leftArm:rotateRigBone("CC_Base_L_Upperarm",upWorld,-.17),
+        rightArm:rotateRigBone("CC_Base_R_Upperarm",upWorld,.17)
       };
       console.info("Junto.fm: pose de levitacao AccuRIG",footPoseResult,
         "ossos reconhecidos:",rigBones.size);
@@ -1681,7 +1688,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const animate=()=>{
       requestAnimationFrame(animate);
       const t=clock.getElapsedTime();
-      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=patriotRoot.visible ? .065+Math.sin(t*1.35)*.065 : Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
+      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=patriotRoot.visible ? .005+Math.sin(t*1.35)*.045 : Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
       renderer.render(scene,camera);
     };
     animate();
