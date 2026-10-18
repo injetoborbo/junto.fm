@@ -24,6 +24,29 @@ const animationFiles={
 // em vez de copiar diretamente quaternions locais entre rigs diferentes.
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
 const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+let sittingPosePromise=null;
+function sittingPose(){
+  if(!sittingPosePromise)sittingPosePromise=gltfLoader.loadAsync("/poses/female-sitting.glb").then(gltf=>{
+    const clip=gltf.animations?.find(c=>c.tracks?.length);
+    if(!clip)return null;
+    const sourceBones=new Map();
+    gltf.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
+    const changes=new Map(),time=Math.min(.5,clip.duration*.5);
+    for(const track of clip.tracks){
+      const dot=track.name.lastIndexOf(".");
+      if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+      const name=boneKey(track.name.slice(0,dot)),source=sourceBones.get(name);
+      if(!source||name==="head"||name==="neck")continue;
+      const value=track.createInterpolant().evaluate(time);
+      if(!value||value.length!==4)continue;
+      // Rotação relativa à pose original do próprio arquivo Mixamo.
+      const correction=source.quaternion.clone().invert().multiply(new THREE.Quaternion().fromArray(value));
+      changes.set(name,correction);
+    }
+    return changes.size>=5?changes:null;
+  }).catch(error=>{console.warn("Pose sentada indisponível",error);return null;});
+  return sittingPosePromise;
+}
 function loadClip(style){
   if(!animationFiles[style])return Promise.resolve(null);
   if(!clipPromises.has(style)){
@@ -246,6 +269,16 @@ async function putMember(id,details){
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
     entry.restBones=new Map();
     entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
+    sittingPose().then(pose=>{
+      if(!pose||!active||people.get(id)!==entry)return;
+      entry.sitRotations=new Map();
+      entry.rig.traverse(bone=>{
+        if(!bone.isBone)return;
+        const correction=pose.get(boneKey(bone.name));
+        const rest=entry.restBones.get(bone.uuid);
+        if(correction&&rest)entry.sitRotations.set(bone.uuid,rest.clone().multiply(correction));
+      });
+    });
     for(const key of Object.keys(animationFiles))loadClip(key).then(clip=>{
       // Só reiniciar a ação quando a animação atualmente escolhida terminar de carregar.
       if(clip&&active&&people.get(id)===entry&&entry.data.dance===key&&entry.currentDance===key&&!entry.action)entry.currentDance=null;
@@ -308,13 +341,18 @@ function animate(){
     const speeds={shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1};
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
-    p.root.position.y=(d.seated&&!walking?.67:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    // A pose altera as articulações, não enterra o grupo inteiro no chão.
+    p.root.position.y=.77+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
     p.mixer?.update(dt);
     if(p.rig&&!p.action){
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
+        if(d.seated&&!walking&&p.sitRotations?.has(obj.uuid)){
+          obj.quaternion.copy(p.sitRotations.get(obj.uuid));
+          return;
+        }
         if(!obj.userData.jfDanceRest)obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
         const [rx,ry,rz]=obj.userData.jfDanceRest;
         const n=obj.name.toLowerCase();
@@ -326,12 +364,7 @@ function animate(){
         const upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm;
         const torso=/spine/.test(n);
         let x=rx,y=ry,z=rz;
-        if(d.seated&&!walking){
-          if(upperLeg)x+=1.30;
-          if(lowerLeg)x-=1.55;
-          if(upperArm)x+=.15;
-          if(torso)x-=.09;
-        }else if(walking){
+        if(walking){
           if(upperLeg)x+=side*.36*stride;
           if(lowerLeg)x+=.15*Math.max(0,-side*stride);
           if(upperArm)x-=side*.26*stride;
@@ -380,6 +413,7 @@ function open(){
   if(!room){setStatus("Entre em uma sala para usar a pista.");return;}
   if(active)return;
   active=true;sequence++;people.clear();
+  void sittingPose();
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
   try{sceneSetup();clock.start();animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
