@@ -231,7 +231,16 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   if(playerSitting){
     loadPlayerSittingPose().then(asset=>{
       if(!active||!asset)return;
-      if(applyPlayerSittingPose(monkey,asset))renderer.render(scene,camera);
+      if(applyPlayerSittingPose(monkey,asset)){
+        // Reenquadra após dobrar as pernas: a pose sentada muda o volume do GLB.
+        const sittingBox=new THREE.Box3().setFromObject(normalized,true);
+        if(!sittingBox.isEmpty()){
+          const c=sittingBox.getCenter(new THREE.Vector3());
+          normalized.position.sub(c);
+          normalized.position.y-=.12;
+        }
+        renderer.render(scene,camera);
+      }
       else console.warn("Pose sentada: ossos Mixamo insuficientes.");
     });
   }
@@ -299,7 +308,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     });
   }
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
-  camera.position.set(0,.04,preview?4.25:4.0);camera.lookAt(0,.035,0);
+  camera.position.set(0,.04,playerSitting?3.25:preview?4.25:4.0);camera.lookAt(0,.035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
   let dragStart=null;
@@ -346,7 +355,7 @@ playerHolder.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:n
 // Movimento de levitação independente do render 3D, sem modificar o rig sentado.
 if(!document.getElementById("jfPlayerHoverStyle")){
   const style=document.createElement("style");style.id="jfPlayerHoverStyle";
-  style.textContent="@keyframes jf-player-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}@media(prefers-reduced-motion:reduce){.jf-transmitter-wardrobe{animation:none!important}}";
+  style.textContent="@keyframes jf-player-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@media(prefers-reduced-motion:reduce){.jf-transmitter-wardrobe{animation:none!important}}";
   document.head.appendChild(style);
 }
 playerStage?.appendChild(playerHolder);
