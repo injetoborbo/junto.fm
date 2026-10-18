@@ -323,7 +323,11 @@ function animate(){
     const d=p.data,style=d.seated?"idle":d.dance||"idle";
     switchDance(p,style);
     const targetX=d.x-2.5,targetZ=d.z-2.5;
-    const dx=targetX-p.root.position.x,dz=targetZ-p.root.position.z;
+    // A cadeira usa um deslocamento visual. O destino da caminhada
+    // precisa ser o mesmo para não provocar oscilação infinita.
+    const seatedOffsetX=d.seated?.12:0,seatedOffsetZ=d.seated?-.12:0;
+    const poseX=targetX+seatedOffsetX,poseZ=targetZ+seatedOffsetZ;
+    const dx=poseX-p.root.position.x,dz=poseZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
     const walking=distance>.025;
     // 0.7 casa por segundo: um caminhar leve, sem teleportar.
@@ -343,12 +347,7 @@ function animate(){
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
     // A pose altera as articulações, não enterra o grupo inteiro no chão.
     p.root.position.y=(d.seated&&!walking?.70:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
-    // Ajuste visual do assento: deslocamento na direção da cadeira,
-    // sem alterar a posição de rede nem interferir no caminho ao andar.
-    if(d.seated&&!walking){
-      p.root.position.x=targetX+.12;
-      p.root.position.z=targetZ-.12;
-    }
+
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
     p.mixer?.update(dt);
