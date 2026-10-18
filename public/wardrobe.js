@@ -15,41 +15,90 @@ const $=id=>document.getElementById(id);
 const base=await new GLTFLoader().loadAsync("/macaco.glb").catch(error=>{
   console.warn("Guarda-roupa: macaco.glb não foi encontrado.",error);return null;
 });
-const cache=new Map();
 let previewRenderer=null;
+let previewYaw=-.18;
 function material(color,options={}){return new THREE.MeshStandardMaterial({color,roughness:.7,...options});}
 function addPart(parent,geo,mat,x,y,z,sx=1,sy=1,sz=1){
   const mesh=new THREE.Mesh(geo,mat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
 }
 function dress(model,selection){
   const parts=new THREE.Group();parts.name="jfWardrobeParts";model.add(parts);
-  // Coordenadas no espaço do modelo depois da normalização em makeScene.
-  const navy=material(0x23699c),pink=material(0xff70c5),red=material(0xc33a4a);
-  if(selection.hat!=="nenhum"){
-    const col=selection.hat==="palha"?0xdbb979:selection.hat==="gorro"?0xdf6268:0x307ab2;
-    const hatMat=material(col,{side:THREE.DoubleSide});
-    addPart(parts,new THREE.CylinderGeometry(.23,.25,.15,24),hatMat,0,.92,0);
-    if(selection.hat==="bone") addPart(parts,new THREE.BoxGeometry(.31,.023,.15),hatMat,0,.87,.22);
-    if(selection.hat==="palha") addPart(parts,new THREE.CylinderGeometry(.37,.37,.025,28),hatMat,0,.84,0);
-    if(selection.hat==="gorro") addPart(parts,new THREE.SphereGeometry(.09,12,8),hatMat,0,1.04,0);
+  // Acessórios proporcionais ao macaco original normalizado em 1,8 unidades.
+  // As posições são de prévia; não se substitui o modelo original nem sua rigagem.
+  const straw=material(0xd4aa65,{roughness:.94,side:THREE.DoubleSide});
+  const strawDark=material(0x9a7042),blue=material(0x387caa),rose=material(0xd7649e);
+  const ink=material(0x26262b,{metalness:.22,roughness:.36});
+  const glass=material(0x19273a,{transparent:true,opacity:.78,metalness:.12,roughness:.27,side:THREE.DoubleSide});
+  const sphere=(mat,x,y,z,rx,ry,rz)=>addPart(parts,new THREE.SphereGeometry(1,20,12),mat,x,y,z,rx,ry,rz);
+  if(selection.hat==="palha"){
+    addPart(parts,new THREE.CylinderGeometry(.185,.205,.17,40),straw,0,.86,0);
+    addPart(parts,new THREE.CylinderGeometry(.305,.305,.025,40),straw,0,.775,0);
+    addPart(parts,new THREE.CylinderGeometry(.208,.208,.025,40),strawDark,0,.811,0);
+    // Pequenas nervuras do chapéu em vez de um disco sem textura.
+    for(let i=0;i<20;i++){
+      const a=i*Math.PI/10;
+      const line=addPart(parts,new THREE.BoxGeometry(.105,.004,.008),strawDark,Math.sin(a)*.246,.791,Math.cos(a)*.246);
+      line.rotation.y=a;
+    }
+  }else if(selection.hat==="bone"){
+    sphere(blue,0,.815,-.02,.245,.122,.225);
+    const brim=sphere(material(0x2a668e),0,.755,.205,.205,.018,.13);
+    brim.rotation.x=-.13;
+  }else if(selection.hat==="gorro"){
+    sphere(rose,0,.845,0,.242,.145,.222);
+    addPart(parts,new THREE.CylinderGeometry(.235,.232,.052,30),material(0xb94c84),0,.773,0);
+    sphere(material(0xffd2e8),0,.988,0,.055,.055,.055);
   }
   if(selection.glasses!=="nenhum"){
-    const frame=material(selection.glasses==="escuros"?0x171923:0xffe6f4);
+    const frame=selection.glasses==="escuros"?ink:material(0xb8a6db,{metalness:.55,roughness:.28});
     for(const sign of [-1,1]){
-      addPart(parts,new THREE.TorusGeometry(.102,.015,8,22),frame,sign*.135,.48,.275);
-      if(selection.glasses==="escuros") addPart(parts,new THREE.CircleGeometry(.087,24),material(0x171b2e,{transparent:true,opacity:.8,side:THREE.DoubleSide}),sign*.135,.48,.283);
+      const lens=sphere(selection.glasses==="escuros"?glass:material(0xeaf5ff,{transparent:true,opacity:.22,side:THREE.DoubleSide}),sign*.117,.45,.265,.092,.084,.012);
+      lens.rotation.y=sign*-.12;
+      const ring=addPart(parts,new THREE.TorusGeometry(.087,.009,8,32),frame,sign*.117,.45,.279);
+      ring.scale.set(1,1,.7);
+      const temple=addPart(parts,new THREE.BoxGeometry(.10,.015,.014),frame,sign*.244,.459,.222);
+      temple.rotation.y=sign*-.28;
     }
-    addPart(parts,new THREE.BoxGeometry(.09,.02,.02),frame,0,.48,.275);
+    addPart(parts,new THREE.BoxGeometry(.07,.012,.018),frame,0,.461,.278);
   }
   if(selection.headphones!=="nenhum"){
-    const col=selection.headphones==="rosa"?pink:navy;
-    const band=addPart(parts,new THREE.TorusGeometry(.35,.035,8,30,Math.PI),col,0,.78,0);
+    const shell=selection.headphones==="rosa"?rose:blue;
+    const pad=material(0x21222c,{roughness:.85});
+    // Arco fino sobre a cabeça, em vez de um bloco gigante.
+    const band=addPart(parts,new THREE.TorusGeometry(.267,.023,10,40,Math.PI),shell,0,.714,0);
     band.rotation.z=0;
-    for(const sign of [-1,1])addPart(parts,new THREE.BoxGeometry(.12,.26,.15),col,sign*.355,.59,0);
+    for(const sign of [-1,1]){
+      sphere(shell,sign*.265,.588,0,.066,.115,.099);
+      sphere(pad,sign*.245,.583,0,.028,.083,.077);
+    }
   }
   if(selection.outfit==="rosa"){
-    addPart(parts,new THREE.CylinderGeometry(.22,.35,.35,32,1,true),material(0xec7bb9,{side:THREE.DoubleSide}),0,-.19,0);
-    addPart(parts,new THREE.CylinderGeometry(.20,.22,.25,28),pink,0,.075,0);
+    // Saia de tecido com pregas arredondadas, mais leve que o cone anterior.
+    const fabric=material(0xf385bd,{roughness:.89,side:THREE.DoubleSide});
+    const hem=material(0xd84f98,{roughness:.9,side:THREE.DoubleSide});
+    const segments=64,rings=9,positions=[],uvs=[],faces=[];
+    for(let j=0;j<=rings;j++){
+      const t=j/rings,y=-.13-.33*t;
+      const baseRadius=.163+.13*Math.sin(t*Math.PI*.58);
+      for(let i=0;i<=segments;i++){
+        const a=2*Math.PI*i/segments;
+        const pleat=.012*Math.sin(10*a)*(t*t);
+        const radius=baseRadius+pleat;
+        positions.push(Math.cos(a)*radius,y+.01*Math.sin(a*10)*t*t,Math.sin(a)*radius);
+        uvs.push(i/segments,t);
+      }
+    }
+    for(let j=0;j<rings;j++)for(let i=0;i<segments;i++){
+      const a=j*(segments+1)+i,b=a+segments+1;
+      faces.push(a,b,a+1,b,b+1,a+1);
+    }
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+    geometry.setAttribute("uv",new THREE.Float32BufferAttribute(uvs,2));
+    geometry.setIndex(faces);geometry.computeVertexNormals();
+    addPart(parts,geometry,fabric,0,0,0);
+    addPart(parts,new THREE.TorusGeometry(.286,.009,8,64),hem,0,-.46,0).rotation.x=Math.PI/2;
+    addPart(parts,new THREE.CylinderGeometry(.174,.178,.055,32),fabric,0,-.115,0);
   }
 }
 function makeScene(target,wardrobe,{preview=false}={}){
@@ -75,10 +124,44 @@ function makeScene(target,wardrobe,{preview=false}={}){
   dress(normalized,sanitize(wardrobe));
   scene.add(normalized);
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
-  camera.position.set(0,.05,preview?3.35:3.5);camera.lookAt(0,0,0);
-  normalized.rotation.y=-.18;
+  camera.position.set(0,.04,preview?4.25:4.0);camera.lookAt(0,.035,0);
+  normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
-  return {dispose:()=>{renderer.dispose();target.replaceChildren();},renderer};
+  let dragStart=null;
+  const down=event=>{
+    if(!preview)return;
+    dragStart={x:event.clientX,y:normalized.rotation.y};
+    target.setPointerCapture?.(event.pointerId);
+  };
+  const move=event=>{
+    if(!dragStart)return;
+    previewYaw=dragStart.y+(event.clientX-dragStart.x)*.012;
+    normalized.rotation.y=previewYaw;
+    renderer.render(scene,camera);
+  };
+  const up=()=>{dragStart=null;};
+  if(preview){
+    target.style.touchAction="pan-y";
+    target.style.cursor="grab";
+    target.addEventListener("pointerdown",down);
+    target.addEventListener("pointermove",move);
+    target.addEventListener("pointerup",up);
+    target.addEventListener("pointercancel",up);
+  }
+  return {dispose:()=>{
+    if(preview){
+      target.removeEventListener("pointerdown",down);
+      target.removeEventListener("pointermove",move);
+      target.removeEventListener("pointerup",up);
+      target.removeEventListener("pointercancel",up);
+    }
+    normalized.getObjectByName("jfWardrobeParts")?.traverse(obj=>{
+      if(!obj.isMesh)return;
+      obj.geometry?.dispose();
+      (Array.isArray(obj.material)?obj.material:[obj.material]).forEach(mat=>mat?.dispose());
+    });
+    renderer.dispose();target.replaceChildren();
+  },renderer};
 }
 function readSaved(){
   try{return sanitize(JSON.parse(localStorage.getItem("junto_profile")||"{}").wardrobe);}catch{return defaults();}
