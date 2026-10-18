@@ -20,49 +20,61 @@ const animationFiles={
   capoeira:"/dance/macacocapoera.glb",
   groove:"/dance/macacodancagay.glb"
 };
-// As animações Mixamo importadas ainda não foram retargeteadas para todos os rigs.
-// Não as aplicar diretamente: rotações locais incompatíveis deformam os avatares.
-// Manter o fallback procedural até validar clips retargeteados por tipo de rig.
-const ENABLE_UNRETARGETED_MIXAMO=false;
+// Danças Mixamo reais: transferir variações da pose de descanso em espaço global,
+// em vez de copiar diretamente quaternions locais entre rigs diferentes.
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
+const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 function loadClip(style){
-  if(!ENABLE_UNRETARGETED_MIXAMO||!animationFiles[style])return Promise.resolve(null);
+  if(!animationFiles[style])return Promise.resolve(null);
   if(!clipPromises.has(style)){
     clipPromises.set(style,gltfLoader.loadAsync(animationFiles[style]).then(gltf=>{
       const clip=gltf.animations?.find(c=>c.tracks?.length)||null;
-      if(clip)animationClips.set(style,clip);
+      if(clip)animationClips.set(style,{clip,scene:gltf.scene});
       return clip;
     }).catch(error=>{
-      console.warn("Animação GLB não encontrada:",animationFiles[style],error);
+      console.warn("Animação Mixamo indisponível:",animationFiles[style],error);
       return null;
     }));
   }
   return clipPromises.get(style);
 }
 function buildAnimationAction(member,style){
-  if(!ENABLE_UNRETARGETED_MIXAMO||!member.rig||!animationClips.has(style))return null;
-  const boneByName=new Map();
-  member.rig.traverse(node=>{
-    if(!node.isBone)return;
-    boneByName.set(node.name.toLowerCase().replace(/[^a-z0-9]/g,""),node);
-  });
-  const source=animationClips.get(style);
-  const tracks=[];
-  for(const track of source.tracks){
+  const data=animationClips.get(style);
+  if(!member.rig||!data)return null;
+  const sourceBones=new Map(),targetBones=new Map();
+  data.scene.updateMatrixWorld(true);
+  member.rig.updateMatrixWorld(true);
+  data.scene.traverse(obj=>{if(obj.isBone)sourceBones.set(boneKey(obj.name),obj);});
+  member.rig.traverse(obj=>{if(obj.isBone)targetBones.set(boneKey(obj.name),obj);});
+  const tracks=[],srParent=new THREE.Quaternion(),trParent=new THREE.Quaternion();
+  const srcRestInverse=new THREE.Quaternion(),delta=new THREE.Quaternion(),result=new THREE.Quaternion();
+  const invSrParent=new THREE.Quaternion(),invTrParent=new THREE.Quaternion();
+  for(const track of data.clip.tracks){
     const dot=track.name.lastIndexOf(".");
-    if(dot<0)continue;
-    const path=track.name.slice(0,dot),property=track.name.slice(dot+1);
-    if(property!=="quaternion")continue; // impede deslocamento do personagem para fora da casa
-    const sourceName=path.split("/").pop().replace(/^.*\|/,"");
-    const target=boneByName.get(sourceName.toLowerCase().replace(/[^a-z0-9]/g,""));
-    if(!target)continue;
-    const copy=track.clone();
-    copy.name=target.name+".quaternion";
-    tracks.push(copy);
+    if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+    const key=boneKey(track.name.slice(0,dot));
+    const source=sourceBones.get(key),target=targetBones.get(key);
+    if(!source||!target||!target.parent)continue;
+    // Remover apenas deslocamento de raiz; preservar os passos originais de braços/pernas.
+    const rest=member.restBones?.get(target.uuid)||target.quaternion.clone();
+    source.parent?.getWorldQuaternion(srParent);
+    target.parent.getWorldQuaternion(trParent);
+    invSrParent.copy(srParent).invert();
+    invTrParent.copy(trParent).invert();
+    srcRestInverse.copy(source.quaternion).invert();
+    const values=new Float32Array(track.values.length);
+    for(let i=0;i<track.values.length;i+=4){
+      const animated=new THREE.Quaternion().fromArray(track.values,i);
+      delta.copy(animated).multiply(srcRestInverse);
+      delta.premultiply(srParent).multiply(invSrParent);
+      result.copy(invTrParent).multiply(delta).multiply(trParent).multiply(rest).normalize();
+      result.toArray(values,i);
+    }
+    tracks.push(new THREE.QuaternionKeyframeTrack(target.name+".quaternion",track.times.slice(),values));
   }
-  if(tracks.length<5)return null;
+  if(tracks.length<5){console.warn("Mixamo: ossos correspondentes insuficientes para",style);return null;}
   member.mixer ||=new THREE.AnimationMixer(member.rig);
-  const clip=new THREE.AnimationClip("junto-"+style,source.duration,tracks);
+  const clip=new THREE.AnimationClip("junto-retarget-"+style,data.clip.duration,tracks);
   const action=member.mixer.clipAction(clip);
   action.setLoop(THREE.LoopRepeat,Infinity);
   return action;
@@ -72,7 +84,7 @@ function switchDance(member,style){
   member.action?.fadeOut(.24);
   member.currentDance=style;
   member.action=null;
-  if(!ENABLE_UNRETARGETED_MIXAMO||style==="idle"||!animationClips.has(style))return;
+  if(style==="idle"||!animationClips.has(style))return;
   const action=buildAnimationAction(member,style);
   if(action){action.reset().fadeIn(.24).play();member.action=action;}
 }
@@ -220,6 +232,8 @@ async function putMember(id,details){
     const avatar=await createDanceAvatar(profile.wardrobe,currentSkin(id),()=>{});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    entry.restBones=new Map();
+    entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
     for(const key of Object.keys(animationFiles))loadClip(key).then(()=>{
       if(active&&people.get(id)===entry)entry.currentDance=null;
     });
