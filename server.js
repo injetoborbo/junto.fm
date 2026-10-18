@@ -505,9 +505,24 @@ io.on("connection", socket => {
       socket.to(previousRoom).emit("peer-left", { id: socket.id });
     }
 
-    const peers = [...(io.sockets.adapter.rooms.get(room) || [])].filter(id => id !== socket.id);
     socket.join(room);
     socket.data.room = room;
+    // Replace a stale connection from this very same browser tab.
+    // This prevents a ghost profile from surviving a refresh/reconnect.
+    if(socket.data.clientId){
+      const roomMembers=[...(io.sockets.adapter.rooms.get(room)||[])];
+      for(const oldId of roomMembers){
+        if(oldId===socket.id)continue;
+        const old=io.sockets.sockets.get(oldId);
+        if(!old||old.data.clientId!==socket.data.clientId)continue;
+        if(roomOwners.get(room)===oldId){
+          roomOwners.set(room,socket.id);
+          io.to(room).emit("room-owner-update",{ownerId:socket.id});
+        }
+        old.disconnect(true);
+      }
+    }
+    const peers = [...(io.sockets.adapter.rooms.get(room) || [])].filter(id => id !== socket.id);
     const profiles = Object.fromEntries(peers.map(id => {
       const peer = io.sockets.sockets.get(id);
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
