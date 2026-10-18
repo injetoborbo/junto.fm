@@ -249,7 +249,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
       }else console.warn("Pose sentada indisponível; usando pose original.");
       dressNow();
     });
-  }else dressNow();
+  }
   if(skin==="capitao-patria"){
     // Render independente da mesma skin 3D do player, sem editar o GLB base.
     getAsset("hero").then(asset=>{
@@ -317,6 +317,8 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   camera.position.set(0,.04,playerSitting?3.25:preview?4.25:4.0);camera.lookAt(0,.035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
+  // A câmera precisa existir antes que dress() possa solicitar um render.
+  if(!playerSitting)dressNow();
   let dragStart=null;
   const down=event=>{
     if(!preview)return;
