@@ -1516,6 +1516,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   $("jfSuggestionText").addEventListener("input",()=>{
     clearTimeout(jfSongSearchTimer);++jfSongSearchSeq;
     jfSelectedSong=null;$("jfSongConfirmation").hidden=true;$("jfSongResults").replaceChildren();
+    if(!jfSongPending && joined)jfSongStatus("Pesquise e selecione uma música do catálogo.");
     jfUpdateSuggestionControls();
     if(joined&&$("jfSuggestionText").value.trim().length>=2)jfSongSearchTimer=setTimeout(jfSearchSongs,350);
   });
