@@ -166,7 +166,45 @@ function dress(root,selection,render,monkey){
     });
   };
 }
-function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
+// Pose Mixamo opcional, exclusiva do macaco ao lado do player.
+let playerSittingPosePromise=null;
+function loadPlayerSittingPose(){
+  if(!playerSittingPosePromise){
+    playerSittingPosePromise=new GLTFLoader().loadAsync("/poses/female-sitting.glb").catch(error=>{
+      console.warn("Pose sentada do player ainda não disponível:",error);
+      return null;
+    });
+  }
+  return playerSittingPosePromise;
+}
+function applyPlayerSittingPose(monkey,source){
+  const clip=source?.animations?.find(anim=>anim.tracks?.length);
+  if(!clip)return false;
+  const targets=new Map();
+  const clean=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  monkey.traverse(obj=>{if(obj.isBone)targets.set(clean(obj.name),obj);});
+  const sources=new Map();
+  source.scene.traverse(obj=>{if(obj.name&&/^mixamorig/i.test(obj.name))sources.set(clean(obj.name),obj);});
+  const time=Math.min(.5,clip.duration*.5);
+  let applied=0;
+  const original=new THREE.Quaternion(),animated=new THREE.Quaternion(),result=new THREE.Quaternion();
+  for(const track of clip.tracks){
+    const dot=track.name.lastIndexOf(".");
+    if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+    const key=clean(track.name.slice(0,dot)),bone=targets.get(key),src=sources.get(key);
+    if(!bone||!src)continue;
+    const interpolation=track.createInterpolant();
+    const values=interpolation.evaluate(time);
+    if(!values||values.length!==4)continue;
+    original.copy(src.quaternion).invert();
+    animated.fromArray(values);
+    result.copy(original).multiply(animated);
+    bone.quaternion.multiply(result).normalize();
+    applied++;
+  }
+  return applied>=5;
+}
+function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false}={}){
   if(!base)return null;
   const width=preview?248:64,height=preview?248:68;
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
@@ -189,6 +227,13 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
   const disposeOutfit=dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera),monkey);
   scene.add(normalized);
   let active=true;
+  if(playerSitting){
+    loadPlayerSittingPose().then(asset=>{
+      if(!active||!asset)return;
+      if(applyPlayerSittingPose(monkey,asset))renderer.render(scene,camera);
+      else console.warn("Pose sentada: ossos Mixamo insuficientes.");
+    });
+  }
   if(skin==="capitao-patria"){
     // Render independente da mesma skin 3D do player, sem editar o GLB base.
     getAsset("hero").then(asset=>{
@@ -304,7 +349,7 @@ function updatePlayerMonkey(detail={}){
   playerHolder.style.display=shown?"block":"none";
   playerStage?.querySelector("canvas.jf-glb-canvas")?.style.setProperty("visibility",shown?"hidden":"visible");
   if(shown){
-    playerInstance=makeScene(playerHolder,sanitize(detail.wardrobe),{preview:true});
+    playerInstance=makeScene(playerHolder,sanitize(detail.wardrobe),{preview:true,playerSitting:true});
     playerHolder.style.pointerEvents="none";
     // O mascote do player acompanha a transmissão, não gira pelo mouse.
   }
