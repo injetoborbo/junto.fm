@@ -1441,9 +1441,27 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
     try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
     if(joined)socket.emit("profile-update",{profile:jfProfile});
+    if(jfCanUseFriends())jfPersistAccountProfile();
     jfNotifyTransmitterAppearance();
     jfRenderPeople();
   });
+  async function jfPersistAccountProfile(){
+    if(!jfCanUseFriends())return;
+    try{
+      const response=await fetch("/api/account/profile",{
+        method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({profile:jfProfile})
+      });
+      if(!response.ok)throw Error("Não foi possível salvar sua conta.");
+      const data=await response.json();
+      jfAccount=data.profile;
+      const status=document.getElementById("jfProfileStatus");
+      if(status)status.textContent="Perfil salvo na sua conta.";
+    }catch(error){
+      const status=document.getElementById("jfProfileStatus");
+      if(status)status.textContent="Falha ao salvar na conta. Tente novamente.";
+    }
+  }
   function jfUpdateFavoriteButton(){
     const button=$("spotifyFavorite");
     if(!button)return;
@@ -1685,7 +1703,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
       const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
     });
-    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
+    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo neste navegador.";if(jfCanUseFriends())jfPersistAccountProfile();});
   }
   socket.on("profile-update",({id,profile})=>{
     if(!id||id===socket.id||!profile)return;
