@@ -1614,29 +1614,41 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       patriot.position.copy(pc).multiplyScalar(-patriotScale);
       // Capa Meshy separada do esqueleto, presa ao mesmo grupo do personagem.
       // Se o arquivo ainda não estiver em public/, mantém o personagem normal.
+      // Capa independente: normalizada e encaixada atrás dos ombros.
+      // O GLB Meshy tem altura ~1.90; o mascote é normalizado para 1.86.
       const capeAsset="/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb";
-      const capeGltf=await new GLTFLoader().loadAsync(capeAsset).catch(error=>{
-        console.warn("Junto.fm: capa não encontrada, coloque o GLB em public/.",error);
-        return null;
-      });
-      if(capeGltf){
-        const capeMount=new THREE.Group();
-        capeMount.name="jfPatriotCapeMount";
-        capeMount.position.set(0,-.18,-.42);
-        capeMount.rotation.x=-.07;
+      let capeMount=null;
+      try{
+        const capeResponse=await fetch(capeAsset,{method:"HEAD"});
+        if(!capeResponse.ok)throw new Error("HTTP "+capeResponse.status+" ao acessar "+capeAsset);
+        const capeGltf=await new GLTFLoader().loadAsync(capeAsset);
         const cape=capeGltf.scene;
-        cape.name="jfPatriotCape";
-        cape.scale.setScalar(.74);
+        const capeBox=new THREE.Box3().setFromObject(cape);
+        const capeSize=capeBox.getSize(new THREE.Vector3());
+        const capeCenter=capeBox.getCenter(new THREE.Vector3());
+        // Encaixe em unidades do player (já normalizadas), sem depender
+        // da escala bruta exportada pelo Meshy.
+        const capeScale=1.47/Math.max(capeSize.y,.001);
+        cape.scale.setScalar(capeScale);
+        cape.position.copy(capeCenter).multiplyScalar(-capeScale);
+        capeMount=new THREE.Group();
+        capeMount.name="jfPatriotCapeMount";
+        // Topo no alto das costas, barra levemente atrás das botas.
+        capeMount.position.set(0,-.09,-.40);
+        capeMount.rotation.x=-.10;
         cape.traverse(part=>{
           if(part.isMesh){
             part.frustumCulled=false;
+            part.material.side=THREE.DoubleSide;
             part.castShadow=false;
             part.receiveShadow=false;
           }
         });
         capeMount.add(cape);
         patriotRoot.add(capeMount);
-        console.info("Junto.fm: capa 3D separada carregada com sucesso.");
+        console.info("Junto.fm: capa 3D carregada",{arquivo:capeAsset,escala:capeScale,tamanho:capeSize.toArray()});
+      }catch(error){
+        console.warn("Junto.fm: CAPA NÃO CARREGOU. Verifique se o arquivo GLB está dentro da pasta public/ com o nome exato.",capeAsset,error);
       }
 
       // A pose dos braços e mãos já está salva no GLB novo do AccuRIG.
