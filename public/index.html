@@ -559,12 +559,12 @@ html[data-jf-theme="classic"] .track-times{
     </div>
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
     <div class="jf-suggestion-settings">
-      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Receber sugestões de música nesta transmissão</label>
-      <p class="small">Ative no aparelho que está transmitindo para receber sugestões em um popup no canto inferior direito.</p>
+      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Adicionar pedidos automaticamente à fila do meu Spotify</label>
+      <p class="small">O DJ conecta o Spotify, começa a transmitir e ativa a fila. Pedidos dos ouvintes entram automaticamente na fila real do Spotify (requer Premium e dispositivo ativo).</p>
     </div>
     <div class="jf-suggest-form">
-      <label for="jfSuggestionText">Sugerir uma música</label>
-      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Enviar sugestão</button></div>
+      <label for="jfSuggestionText">Pedir música na fila do DJ</label>
+      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Pedir música</button></div>
       <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma música.</p>
     </div>
   </section>
@@ -1273,48 +1273,42 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   let jfSuggestionEnabled = false;
   function jfUpdateSuggestionControls(){
     $("jfSendSuggestion").disabled = !joined || !$("jfSuggestionText").value.trim();
-    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative a opção acima para receber sugestões." : "Sugestões serão enviadas a quem estiver transmitindo.");
+    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative os pedidos automáticos acima." : "Os pedidos serão enviados à fila real do Spotify se o DJ ativar a opção.");
   }
   $("jfReceiveSuggestions").addEventListener("change",()=>{
     jfSuggestionEnabled=$("jfReceiveSuggestions").checked;
     socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled});
-    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Recebimento de sugestões ativado neste aparelho.":"Recebimento de sugestões desativado.";
+    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Solicitando ativação da fila automática...":"Fila automática desativada.";
   });
   $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
   $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
-  $("jfSendSuggestion").addEventListener("click",async()=>{
+  $("jfSendSuggestion").addEventListener("click",()=>{
     const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
     if(!joined||!suggestion)return;
-    const sendButton=$("jfSendSuggestion");
-    sendButton.disabled=true;
-    $("jfSuggestionStatus").textContent="Conferindo se a música existe...";
-    try{
-      const response=await fetch("/api/music/validate-suggestion?title="+encodeURIComponent(suggestion));
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok||!result.valid){
-        $("jfSuggestionStatus").textContent=result.error||"Não encontrei essa música. Tente o título oficial e, se possível, o artista.";
-        return;
-      }
-      socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
-      $("jfSuggestionText").value="";
-      $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
-    }catch(_){
-      $("jfSuggestionStatus").textContent="Não foi possível verificar a música agora. Tente novamente.";
-    }finally{
-      jfUpdateSuggestionControls();
+    socket.emit("music-suggestion",{room,suggestion});
+    $("jfSuggestionText").value="";
+    $("jfSuggestionStatus").textContent="Pedido enviado. Aguardando confirmação do Spotify do DJ...";
+    jfUpdateSuggestionControls();
+  });
+  // Nunca informar sucesso antes de o Spotify confirmar a inclusão.
+  socket.on("music-queued",({title,artist,fromName}={})=>{
+    const description=String(title||"Música")+" — "+String(artist||"");
+    $("jfSuggestionStatus").textContent="✓ Na fila do Spotify: "+description;
+    if(isSender){
+      $("jfPopupSong").textContent=description.slice(0,180);
+      $("jfPopupFrom").textContent="Adicionada automaticamente · Pedido de "+String(fromName||"Ouvinte").slice(0,24);
+      $("jfSuggestionPopup").hidden=false;
     }
   });
-  function jfShowSuggestion({suggestion,fromName}){
-    if(!isSender||!jfSuggestionEnabled)return;
-    $("jfPopupSong").textContent=String(suggestion||"Sugestão de música").slice(0,180);
-    $("jfPopupFrom").textContent="Sugerida por "+String(fromName||"Ouvinte").slice(0,24);
-    $("jfSuggestionPopup").hidden=false;
-  }
-  function jfHideSuggestion(){$("jfSuggestionPopup").hidden=true;}
-  $("jfCloseSuggestion").addEventListener("click",jfHideSuggestion);
-  $("jfSuggestionDone").addEventListener("click",jfHideSuggestion);
-  socket.on("music-suggestion",jfShowSuggestion);
-  socket.on("music-suggestion-error",({error}={})=>{$("jfSuggestionStatus").textContent=String(error||"Não foi possível enviar a sugestão.");});
+  socket.on("suggestion-settings-result",({enabled,error}={})=>{
+    jfSuggestionEnabled=Boolean(enabled);
+    $("jfReceiveSuggestions").checked=jfSuggestionEnabled;
+    if(error)$("jfSuggestionStatus").textContent=error;
+    else if(jfSuggestionEnabled)$("jfSuggestionStatus").textContent="Fila automática ativada: pedidos entram no Spotify do DJ.";
+  });
+  socket.on("music-suggestion-error",({error}={})=>{
+    $("jfSuggestionStatus").textContent=String(error||"Não foi possível adicionar a música à fila.");
+  });
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
