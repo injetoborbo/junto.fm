@@ -86,6 +86,7 @@ async function validSpotifyAccessToken(session) {
 
 app.use(express.json({ limit: "10kb" }));
 const adminAuth = require("./admin-auth")(app);
+const accountAuth = require("./account-auth")(app);
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
@@ -338,6 +339,11 @@ function releaseRoomOwnership(room,departingId){
     roomChatMessages.delete(room);
   }
 }
+io.use(async (socket,next)=>{
+  try { socket.data.account=await accountAuth.accountFromRequest(socket.request); }
+  catch(error){ console.warn("Conta na conexão:",error.message); socket.data.account=null; }
+  next();
+});
 io.on("connection", socket => {
   // Um identificador por aba permite reconciliar sockets após reconexão.
   const rawClientId=socket.handshake.auth?.clientId;
@@ -424,33 +430,58 @@ io.on("connection", socket => {
     socket.emit("room-kick-result",{ok:true,message:"Participante removido da sala."});
   });
 
-  socket.on("friend-request", payload => {
-    const room = cleanRoom(payload && payload.room);
-    const targetId = String(payload && payload.targetId || "");
-    const target = io.sockets.sockets.get(targetId);
-    const senderName = String((socket.data.profile || {}).name || "").trim().toLocaleLowerCase();
-    const targetName = String((target && target.data.profile || {}).name || "").trim().toLocaleLowerCase();
-    if (!room || socket.data.room !== room || !target || target.data.room !== room || targetId === socket.id || (senderName && targetName && senderName === targetName)) {
-      socket.emit("friend-request-result", { accepted: false, error: "not-available" });
-      return;
-    }
-    const profile = socket.data.profile || { name: "Ouvinte" };
-    target.emit("friend-request-received", { fromId: socket.id, profile: { name: String(profile.name || "Ouvinte").slice(0, 24), avatar: String(profile.avatar || "").slice(0, 500), motto: String(profile.motto || "").slice(0, 90) }, room });
-  });
 
-  socket.on("friend-request-response", payload => {
-    const targetId = String(payload && payload.targetId || "");
-    const target = io.sockets.sockets.get(targetId);
-    if (!target || !socket.data.room || target.data.room !== socket.data.room || targetId === socket.id) return;
-    const accepted = !!(payload && payload.accepted);
-    if (!accepted) {
-      target.emit("friend-request-result", { accepted: false, profile: { name: String((socket.data.profile || {}).name || "Amigo").slice(0, 24) } });
-      return;
+  async function sendFriends(peer=socket){
+    const account=peer.data.account;
+    if(!account)return;
+    const [friends,requests]=await Promise.all([accountAuth.friends(account.id),accountAuth.requests(account.id)]);
+    const onlineRooms=new Map();
+    for(const member of io.sockets.sockets.values()){
+      if(member.data.account?.id&&member.data.room)onlineRooms.set(member.data.account.id,member.data.room);
     }
-    const profile = socket.data.profile || { name: "Ouvinte" };
-    target.emit("friend-request-result", { accepted: true, profile: { name: String(profile.name || "Amigo").slice(0, 24), avatar: String(profile.avatar || "").slice(0, 500), motto: String(profile.motto || "").slice(0, 90) }, room: socket.data.room });
+    peer.emit("friends-state",{friends:friends.map(f=>({...f,room:onlineRooms.get(f.id)||null})),requests});
+  }
+  async function notifyFriends(accountId){
+    for(const member of io.sockets.sockets.values())
+      if(member.data.account?.id===accountId)await sendFriends(member);
+  }
+  socket.on("friends-list",async()=>{
+    if(!socket.data.account)return socket.emit("friends-error",{message:"Entre com Google para usar amizades."});
+    try{await sendFriends();}catch(error){socket.emit("friends-error",{message:"Falha ao carregar amizades."});}
   });
-
+  socket.on("friend-request",async payload=>{
+    const account=socket.data.account;
+    if(!account)return socket.emit("friends-error",{message:"Visitantes não podem adicionar amigos. Entre com Google."});
+    const target=io.sockets.sockets.get(String(payload?.targetId||""));
+    if(!socket.data.room||!target||target.data.room!==socket.data.room||!target.data.account||target.data.account.id===account.id)
+      return socket.emit("friends-error",{message:"O outro participante precisa estar cadastrado."});
+    try{
+      const result=await accountAuth.request(account.id,target.data.account.id);
+      if(!result.ok)return socket.emit("friends-error",{message:result.error});
+      await notifyFriends(target.data.account.id);
+      await sendFriends();
+      socket.emit("friends-notice",{message:"Solicitação enviada."});
+    }catch(error){socket.emit("friends-error",{message:"Falha ao enviar solicitação."});}
+  });
+  socket.on("friend-request-response",async payload=>{
+    const account=socket.data.account;
+    if(!account)return socket.emit("friends-error",{message:"Entre com Google para responder."});
+    const from=String(payload?.fromAccountId||"");
+    if(!/^[0-9a-f-]{36}$/i.test(from))return;
+    try{
+      const found=await accountAuth.respond(account.id,from,Boolean(payload?.accepted));
+      if(!found)return socket.emit("friends-error",{message:"Solicitação não encontrada."});
+      await notifyFriends(from);await notifyFriends(account.id);
+    }catch(error){socket.emit("friends-error",{message:"Falha ao responder."});}
+  });
+  socket.on("friend-remove",async payload=>{
+    const account=socket.data.account;
+    if(!account)return socket.emit("friends-error",{message:"Entre com Google para remover amigos."});
+    const id=String(payload?.accountId||"");
+    if(!/^[0-9a-f-]{36}$/i.test(id))return;
+    try{await accountAuth.remove(account.id,id);await notifyFriends(id);await notifyFriends(account.id);}
+    catch(error){socket.emit("friends-error",{message:"Falha ao remover."});}
+  });
   socket.on("leave-room", payload => {
     const room = socket.data.room;
     if (!room || (payload && payload.room && payload.room !== room)) return;
