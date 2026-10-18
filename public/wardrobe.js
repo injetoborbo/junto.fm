@@ -335,31 +335,31 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     renderer.dispose();target.replaceChildren();
   },renderer};
 }
-// Mascote do player: a roupa vem do perfil do transmissor (Socket.IO),
-// nunca do perfil de quem está assistindo.
+// O mascote do player representa SEMPRE o usuário deste navegador,
+// nunca o transmissor. Mantém a pose sentada e os acessórios locais.
 let playerInstance=null;
 const playerStage=document.querySelector("#jfMiniDj .jf-dj-stage");
 const playerHolder=document.createElement("div");
 playerHolder.className="jf-transmitter-wardrobe";
 playerHolder.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none;display:none";
 playerStage?.appendChild(playerHolder);
-function updatePlayerMonkey(detail={}){
+function updatePlayerMonkey(){
   const adminCostume=document.getElementById("jfMiniDj")?.classList.contains("jf-homelander");
   playerInstance?.dispose();playerInstance=null;
-  const shown=Boolean(detail.id && !adminCostume && playerStage && base);
-  console.info("Mascote do player:",shown?"modelo personalizado ativo":"modelo alternativo ativo",{temTransmissor:!!detail.id,adminCostume});
+  const shown=Boolean(!adminCostume&&playerStage&&base);
   playerHolder.style.display=shown?"block":"none";
   playerStage?.querySelector("canvas.jf-glb-canvas")?.style.setProperty("visibility",shown?"hidden":"visible");
   if(shown){
-    playerInstance=makeScene(playerHolder,sanitize(detail.wardrobe),{preview:true,playerSitting:true});
+    playerInstance=makeScene(playerHolder,readSaved(),{preview:true,playerSitting:true});
     playerHolder.style.pointerEvents="none";
-    // O mascote do player acompanha a transmissão, não gira pelo mouse.
   }
 }
-window.addEventListener("jf-player-monkey",event=>updatePlayerMonkey(event.detail));
-window.addEventListener("jf-player-stage-ready",()=>updatePlayerMonkey(window.jfLastTransmitterAppearance||{}));
+window.addEventListener("jf-player-stage-ready",updatePlayerMonkey);
+window.addEventListener("jf-local-profile-updated",updatePlayerMonkey);
+window.addEventListener("jf-wardrobe-save",updatePlayerMonkey);
+window.addEventListener("storage",event=>{if(event.key==="junto_profile")updatePlayerMonkey();});
 if(playerStage){
-  new MutationObserver(()=>updatePlayerMonkey(window.jfLastTransmitterAppearance||{}))
+  new MutationObserver(updatePlayerMonkey)
     .observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
 }
 function readSaved(){
