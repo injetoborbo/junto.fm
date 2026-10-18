@@ -40,7 +40,7 @@ function addPart(parent,geo,mat,x,y,z,sx=1,sy=1,sz=1){
 }
 function dress(model,selection,render){
   const parts=new THREE.Group();
-  parts.name="jfWardrobeParts";
+  parts.name="jfWardrobeParts";parts.userData.active=true;
   model.add(parts);
   const mat=(color,options={})=>material(color,options);
   const sphere=(color,x,y,z,sx,sy,sz)=>addPart(parts,new THREE.SphereGeometry(1,24,16),color,x,y,z,sx,sy,sz);
@@ -51,7 +51,7 @@ function dress(model,selection,render){
   if(selection.hat==="palha"||selection.hat==="branco"){
     const accessory=selection.hat;
     getHatAsset(accessory).then(asset=>{
-      if(!asset||!parts.parent)return;
+      if(!asset||!parts.parent||!parts.userData.active)return;
       const hat=asset.clone(true);
       hat.name="jfMeshyHat_"+accessory;
       const box=new THREE.Box3().setFromObject(hat);
@@ -186,7 +186,9 @@ function makeScene(target,wardrobe,{preview=false}={}){
       target.removeEventListener("pointerup",up);
       target.removeEventListener("pointercancel",up);
     }
-    normalized.getObjectByName("jfWardrobeParts")?.traverse(obj=>{
+    const wardrobeParts=normalized.getObjectByName("jfWardrobeParts");
+    if(wardrobeParts)wardrobeParts.userData.active=false;
+    wardrobeParts?.traverse(obj=>{
       if(!obj.isMesh||!obj.userData.jfWardrobeGenerated)return;
       obj.geometry?.dispose();
       (Array.isArray(obj.material)?obj.material:[obj.material]).forEach(mat=>mat?.dispose());
