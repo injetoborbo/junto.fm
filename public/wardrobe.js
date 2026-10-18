@@ -193,7 +193,8 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
     // Render independente da mesma skin 3D do player, sem editar o GLB base.
     getAsset("hero").then(asset=>{
       if(!asset||!active)return;
-      const hero=asset.clone(true);
+      // O Capitão Pátria é SkinnedMesh: clone() comum quebra o vínculo dos ossos.
+      const hero=cloneSkeleton(asset);
       const bounds=new THREE.Box3().setFromObject(hero);
       const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
       const sc=1.78/Math.max(size.x,size.y,size.z,.001);
@@ -202,7 +203,27 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
       const group=new THREE.Group();group.rotation.y=-.18;group.add(hero);
       scene.add(group);
       normalized.visible=false;
-      renderer.render(scene,camera);
+      // Reenquadrar pelo volume REAL, considerando esqueleto e capa.
+      // A lista usa um canvas pequeno e não pode herdar o zoom da prévia.
+      const fitHeroToCard=()=>{
+        group.updateMatrixWorld(true);
+        const box=new THREE.Box3().setFromObject(group,true);
+        if(box.isEmpty())return;
+        const center=box.getCenter(new THREE.Vector3());
+        const size=box.getSize(new THREE.Vector3());
+        const fov=THREE.MathUtils.degToRad(camera.fov);
+        const aspect=Math.max(camera.aspect,.001);
+        const distance=Math.max(
+          size.y/(2*Math.tan(fov/2)),
+          size.x/(2*Math.tan(fov/2)*aspect),
+          size.z
+        )*1.30;
+        camera.position.set(center.x,center.y+distance*.025,center.z+distance);
+        camera.lookAt(center);
+        camera.updateProjectionMatrix();
+        renderer.render(scene,camera);
+      };
+      fitHeroToCard();
       // Mesma capa da skin do player, mantendo alinhamento e texturas.
       getAsset("heroCape").then(capeAsset=>{
         if(!capeAsset||!active)return;
@@ -219,7 +240,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
         cape.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
         capeMount.add(cape);
         group.add(capeMount);
-        renderer.render(scene,camera);
+        fitHeroToCard();
       });
     });
   }
