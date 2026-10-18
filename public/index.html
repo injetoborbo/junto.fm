@@ -206,6 +206,14 @@ main{max-width:1080px}
 .jf-suggest-form{margin-top:15px}
 .jf-suggest-form .row{align-items:stretch}
 .jf-suggest-form input{flex:1 1 230px}
+.jf-song-results{display:grid;gap:6px;margin-top:9px;max-height:240px;overflow:auto}
+.jf-song-result{width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--jf-secondary);border-radius:9px;background:var(--jf-glow);color:var(--ink);cursor:pointer}
+.jf-song-result img{width:42px;height:42px;object-fit:cover;border-radius:5px}
+.jf-song-result span{display:grid;gap:2px;min-width:0}.jf-song-result small{opacity:.8}
+.jf-song-confirmation{margin-top:9px;padding:10px;border:1px solid var(--jf-secondary);border-radius:9px}
+.jf-song-confirmation[hidden]{display:none!important}
+.jf-song-confirmation .row{margin-top:8px;gap:8px}
+
 .jf-suggestion-popup[hidden]{display:none!important}
 .jf-suggestion-popup{position:fixed;left:22px;right:auto;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
 .jf-popup-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--jf-secondary);font-size:10px;font-weight:900;letter-spacing:1.2px}
@@ -633,7 +641,12 @@ html[data-jf-theme="classic"] .track-times{
     </div>
     <div class="jf-suggest-form">
       <label for="jfSuggestionText">Pedir música na fila do DJ</label>
-      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Pedir música</button></div>
+      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" autocomplete="off" placeholder="Pesquise música ou artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Buscar música</button></div>
+      <div id="jfSongResults" class="jf-song-results" aria-live="polite"></div>
+      <div id="jfSongConfirmation" class="jf-song-confirmation" hidden>
+        <strong id="jfSongChosen"></strong>
+        <div class="row"><button class="btn" id="jfConfirmSong" type="button">Confirmar pedido</button><button class="btn secondary" id="jfCancelSong" type="button">Cancelar</button></div>
+      </div>
       <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma música.</p>
     </div>
   </section>
@@ -1422,30 +1435,79 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a música.' : 'O transmissor pediu para passar à próxima música.';
     setStatus('Comando recebido. O controle da música ainda é manual neste protótipo.', true);
   });
-  let jfSuggestionEnabled = false;
+  let jfSuggestionEnabled=false,jfSelectedSong=null,jfSongSearchTimer=null,jfSongSearchSeq=0,jfSongPending=false;
+  function jfSongStatus(message){$("jfSuggestionStatus").textContent=message;}
   function jfUpdateSuggestionControls(){
-    $("jfSendSuggestion").disabled = !joined || !$("jfSuggestionText").value.trim();
-    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative os pedidos automáticos acima." : "Os pedidos serão enviados à fila real do Spotify se o DJ ativar a opção.");
+    $("jfSendSuggestion").disabled=!joined||jfSongPending||$("jfSuggestionText").value.trim().length<2;
+    $("jfConfirmSong").disabled=!joined||jfSongPending||!jfSelectedSong;
+    if(!joined)jfSongStatus("Entre na sala para sugerir uma música.");
+  }
+  function jfSelectSong(song){
+    jfSelectedSong=song;
+    $("jfSongResults").replaceChildren();
+    $("jfSongConfirmation").hidden=false;
+    $("jfSongChosen").textContent=song.title+" — "+song.artist;
+    jfSongStatus("Confira a música e clique em Confirmar pedido.");
+    jfUpdateSuggestionControls();
+  }
+  async function jfSearchSongs(){
+    const q=$("jfSuggestionText").value.trim();
+    const seq=++jfSongSearchSeq;
+    jfSelectedSong=null;
+    $("jfSongConfirmation").hidden=true;
+    const results=$("jfSongResults");results.replaceChildren();
+    if(!joined||q.length<2){jfUpdateSuggestionControls();return;}
+    jfSongStatus("Procurando músicas no catálogo...");
+    try{
+      const response=await fetch("/api/music/search?q="+encodeURIComponent(q),{cache:"no-store"});
+      const body=await response.json();
+      if(seq!==jfSongSearchSeq)return;
+      if(!response.ok)throw Error(body.error||"Busca indisponível.");
+      const tracks=Array.isArray(body.tracks)?body.tracks:[];
+      if(!tracks.length){jfSongStatus("Nenhuma faixa encontrada. Tente o nome do artista e da música.");return;}
+      jfSongStatus("Selecione a música desejada:");
+      for(const song of tracks){
+        const button=document.createElement("button");button.type="button";button.className="jf-song-result";
+        if(song.artwork&&/^https:\/\//.test(song.artwork)){
+          const img=document.createElement("img");img.src=song.artwork;img.alt="Capa do álbum";img.loading="lazy";button.append(img);
+        }
+        const names=document.createElement("span"),title=document.createElement("strong"),artist=document.createElement("small");
+        title.textContent=song.title;artist.textContent=song.artist;
+        names.append(title,artist);button.append(names);
+        button.addEventListener("click",()=>jfSelectSong(song));results.append(button);
+      }
+    }catch(error){if(seq===jfSongSearchSeq)jfSongStatus(error.message||"Falha na busca.");}
   }
   $("jfReceiveSuggestions").addEventListener("change",()=>{
     jfSuggestionEnabled=$("jfReceiveSuggestions").checked;
     socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled});
-    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Solicitando ativação da fila automática...":"Fila automática desativada.";
+    jfSongStatus(jfSuggestionEnabled?"Solicitando ativação da fila automática...":"Fila automática desativada.");
   });
-  $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
-  $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
-  $("jfSendSuggestion").addEventListener("click",()=>{
-    const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
-    if(!joined||!suggestion)return;
-    socket.emit("music-suggestion",{room,suggestion});
-    $("jfSuggestionText").value="";
+  $("jfSuggestionText").addEventListener("input",()=>{
+    clearTimeout(jfSongSearchTimer);++jfSongSearchSeq;
+    jfSelectedSong=null;$("jfSongConfirmation").hidden=true;$("jfSongResults").replaceChildren();
     jfUpdateSuggestionControls();
-    $("jfSuggestionStatus").textContent="Pedido enviado. Aguardando confirmação do Spotify do DJ...";
+    if(joined&&$("jfSuggestionText").value.trim().length>=2)jfSongSearchTimer=setTimeout(jfSearchSongs,350);
   });
-  // Nunca informar sucesso antes de o Spotify confirmar a inclusão.
+  $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();jfSearchSongs();}});
+  $("jfSendSuggestion").addEventListener("click",jfSearchSongs);
+  $("jfCancelSong").addEventListener("click",()=>{
+    jfSelectedSong=null;$("jfSongConfirmation").hidden=true;
+    jfSongStatus("Escolha outra música para sugerir.");
+    jfSearchSongs();
+  });
+  $("jfConfirmSong").addEventListener("click",()=>{
+    if(!joined||jfSongPending||!jfSelectedSong)return;
+    const suggestion=(jfSelectedSong.title+" — "+jfSelectedSong.artist).slice(0,180);
+    jfSongPending=true;jfUpdateSuggestionControls();
+    socket.emit("music-suggestion",{room,suggestion});
+    jfSongStatus("Pedido confirmado. Aguardando o Spotify do DJ adicionar à fila...");
+    $("jfSongConfirmation").hidden=true;$("jfSongResults").replaceChildren();
+  });
   socket.on("music-queued",({title,artist,fromName}={})=>{
     const description=String(title||"Música")+" — "+String(artist||"");
-    $("jfSuggestionStatus").textContent="✓ Na fila do Spotify: "+description;
+    jfSongPending=false;jfSelectedSong=null;jfUpdateSuggestionControls();
+    jfSongStatus("✓ Música adicionada à fila do Spotify: "+description);
     if(isSender){
       $("jfPopupSong").textContent=description.slice(0,180);
       $("jfPopupFrom").textContent="Adicionada automaticamente · Pedido de "+String(fromName||"Ouvinte").slice(0,24);
@@ -1453,13 +1515,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }
   });
   socket.on("suggestion-settings-result",({enabled,error}={})=>{
-    jfSuggestionEnabled=Boolean(enabled);
-    $("jfReceiveSuggestions").checked=jfSuggestionEnabled;
-    if(error)$("jfSuggestionStatus").textContent=error;
-    else if(jfSuggestionEnabled)$("jfSuggestionStatus").textContent="Fila automática ativada: pedidos entram no Spotify do DJ.";
+    jfSuggestionEnabled=Boolean(enabled);$("jfReceiveSuggestions").checked=jfSuggestionEnabled;
+    if(error)jfSongStatus(error);
+    else if(jfSuggestionEnabled)jfSongStatus("Fila automática ativada: pedidos entram no Spotify do DJ.");
   });
   socket.on("music-suggestion-error",({error}={})=>{
-    $("jfSuggestionStatus").textContent=String(error||"Não foi possível adicionar a música à fila.");
+    jfSongPending=false;jfUpdateSuggestionControls();
+    jfSongStatus(String(error||"Não foi possível adicionar a música à fila."));
   });
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
