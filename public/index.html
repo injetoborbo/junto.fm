@@ -378,6 +378,17 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 .jf-seat-inspect-viewport{height:min(68dvh,570px);min-height:300px;overflow:hidden;background:#0b142b;border-radius:9px;touch-action:none}
 .jf-seat-inspect-viewport canvas{width:100%;height:100%;display:block}
 .jf-seat-inspect-panel .small{margin:8px 0 0}
+.jf-seat-calibration{margin-top:9px;border:1px solid var(--jf-secondary,#749cc7);border-radius:8px;padding:8px;background:var(--jf-glow,#d9e8ff);font-size:12px;color:var(--ink)}
+.jf-seat-calibration summary{cursor:pointer;font-weight:800}
+.jf-seat-build{font-size:10px;opacity:.7}
+.jf-seat-calibration-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.jf-seat-calibration-grid label{display:flex;flex-direction:column;gap:5px;min-width:0}
+.jf-seat-calibration-grid input{width:100%;accent-color:var(--jf-secondary,#316eb1)}
+.jf-seat-calibration-grid output{font-variant-numeric:tabular-nums;font-family:monospace}
+.jf-seat-calibration-actions{display:flex;gap:6px;flex-wrap:wrap}
+.jf-seat-calibration-actions button{font-size:11px;padding:6px 10px}
+@media(max-width:450px){.jf-seat-calibration-grid{grid-template-columns:1fr}}
+
 
 @media(max-width:600px){.jf-dance-modal{padding:9px!important}.jf-dance-stage{min-height:210px;aspect-ratio:4/3;max-height:41dvh}.jf-dance-toolbar{font-size:11px}.jf-dance-launch{bottom:10px;left:10px}#jfDanceModal{bottom:8px;left:8px;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}#jfDanceModal .jf-dance-modal{max-height:calc(100dvh - 16px)}}
 body:not(.jf-in-room) .jf-topbar{justify-content:center}
@@ -732,6 +743,16 @@ html[data-jf-theme="classic"] .track-times{
   <section class="jf-seat-inspect-panel" role="dialog" aria-modal="true" aria-label="Inspecionar macaco sentado">
     <div class="jf-seat-inspect-header"><strong>🐒 Macaco sentado · Visualização ampliada</strong><button type="button" class="btn secondary" id="jfSeatInspectClose">✕ Fechar</button></div>
     <div id="jfSeatInspectViewport" class="jf-seat-inspect-viewport"></div>
+    <details class="jf-seat-calibration">
+      <summary>🕶️ Ajustar óculos ao vivo <span class="jf-seat-build">· teste de encaixe v2</span></summary>
+      <p class="small">O ajuste acontece imediatamente no macaco REAL da pista. Gire a câmera para conferir o encaixe de frente e de lado.</p>
+      <div class="jf-seat-calibration-grid">
+        <label>Esquerda / direita <input id="jfSeatGlassesX" type="range" min="-0.003" max="0.003" step="0.0001" value="0"><output id="jfSeatGlassesXValue">0.0000</output></label>
+        <label>Altura <input id="jfSeatGlassesY" type="range" min="-0.003" max="0.003" step="0.0001" value="0"><output id="jfSeatGlassesYValue">0.0000</output></label>
+        <label>Frente / trás <input id="jfSeatGlassesZ" type="range" min="-0.003" max="0.003" step="0.0001" value="0"><output id="jfSeatGlassesZValue">0.0000</output></label>
+      </div>
+      <div class="jf-seat-calibration-actions"><button type="button" id="jfSeatGlassesPreset" class="btn secondary">Afastar e centralizar (teste)</button><button type="button" id="jfSeatGlassesReset" class="btn secondary">Restaurar</button><button type="button" id="jfSeatGlassesCopy" class="btn secondary">Copiar ajustes</button></div>
+    </details>
     <p class="small">Arraste para girar a câmera. Use a rodinha do mouse para aproximar.</p>
   </section>
 </div>
