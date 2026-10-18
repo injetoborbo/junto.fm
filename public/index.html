@@ -765,7 +765,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const content=$("jfLyricsContent");if(content.dataset.synced!=="true"||!jfLyricsData||!currentTrack)return;
     const elapsed=Math.max(0,(Number(currentTrack.progress_ms)||0)+(currentTrack.is_playing?Date.now()-trackBaseTime:0))/1000;const lines=JSON.parse(content.dataset.lines||"[]");let active=-1;
     for(let i=0;i<lines.length;i++){if(lines[i].time<=elapsed)active=i;else break;}
-    content.querySelectorAll(".jf-lyrics-line").forEach((line,i)=>{line.classList.toggle("active",i===active);if(i===active&&line.dataset.scrolled!=="true"){line.dataset.scrolled="true";line.scrollIntoView({block:"nearest",behavior:"smooth"});}else if(i!==active)line.dataset.scrolled="false";});
+    content.querySelectorAll(".jf-lyrics-line").forEach((line,i)=>{line.classList.toggle("active",i===active);if(i===active&&line.dataset.scrolled!=="true"){line.dataset.scrolled="true";const lineTop=line.offsetTop-content.offsetTop;const target=Math.max(0,lineTop-content.clientHeight/2+line.offsetHeight/2);content.scrollTo({top:target,behavior:"smooth"});}else if(i!==active)line.dataset.scrolled="false";});
   }
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
