@@ -275,7 +275,7 @@ app.get("/api/music/validate-suggestion", async (req, res) => {
 // Guarda-roupa público: só peças comuns entram no perfil da sala.
 // A skin Capitão Pátria permanece restrita ao fluxo de autenticação admin.
 const wardrobeOptions = Object.freeze({
-  hat: ["nenhum", "bone", "gorro", "palha"],
+  hat: ["nenhum", "bone", "gorro", "palha", "branco"],
   glasses: ["nenhum", "escuros", "redondos"],
   headphones: ["nenhum", "azul", "rosa"],
   outfit: ["padrao", "rosa"]
