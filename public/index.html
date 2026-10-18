@@ -1370,6 +1370,24 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
   let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
+  const jfPeerSkins=new Map();
+  let jfLocalHeroPreview=false;
+  function jfMySkin(){return jfLocalHeroPreview||document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default";}
+  function jfPublishOwnSkin(){
+    if(joined&&!jfLocalHeroPreview)socket.emit("avatar-skin-set",{skin:jfMySkin()});
+    jfRenderPeople();
+  }
+  window.addEventListener("jf-admin-skin-changed",jfPublishOwnSkin);
+  window.addEventListener("jf-local-skin-preview",event=>{
+    jfLocalHeroPreview=Boolean(event.detail?.enabled);
+    jfRenderPeople();
+  });
+  socket.on("avatar-skin-update",({id,skin}={})=>{
+    if(!id)return;
+    jfPeerSkins.set(id,skin==="capitao-patria"?"capitao-patria":"default");
+    jfRenderPeople();
+  });
+  socket.on("avatar-skin-error",({message}={})=>setStatus(message||"Skin não autorizada."));
   try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
   window.addEventListener("jf-wardrobe-save",event=>{
     jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
@@ -1418,6 +1436,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const card=document.createElement("div");card.className="jf-person";
       card.dataset.jfMonkey="true";
       card.dataset.wardrobe=JSON.stringify(p.wardrobe||{});
+    card.dataset.skin=id===socket.id?jfMySkin():(jfPeerSkins.get(id)||"default");
       const monkey=document.createElement("div");monkey.className="jf-member-monkey";card.appendChild(monkey);
       /* A identidade visual principal do participante é sempre seu macaco 3D. */
       const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"")+(id===jfRoomOwnerId?" 👑":"");details.appendChild(label);
@@ -1544,9 +1563,16 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   }
   socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();}});
   socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();jfRenderFriends();});
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
-  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});jfNotifyTransmitterAppearance();});
-  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
+  socket.on("joined-room",({profiles={},avatarSkins={}})=>{
+    jfPeerProfiles.clear();jfPeerSkins.clear();
+    for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);
+    for(const [id,skin] of Object.entries(avatarSkins))jfPeerSkins.set(id,skin==="capitao-patria"?"capitao-patria":"default");
+    jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});
+    if(!jfLocalHeroPreview)socket.emit("avatar-skin-set",{skin:jfMySkin()});
+    jfNotifyTransmitterAppearance();
+  });
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
   function jfSetChatOpen(open){
@@ -1830,6 +1856,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   document.getElementById("jfAdminPanel").appendChild(preview);
   const setPreview=enabled=>{
    apply(enabled?"capitao-patria":"default");
+   window.dispatchEvent(new CustomEvent("jf-local-skin-preview",{detail:{enabled}}));
    preview.setAttribute("aria-pressed",String(enabled));
    preview.textContent=enabled?"↩ Remover skin de teste":"👁 Testar Capitão Pátria (local)";
    status.textContent=enabled?"Prévia local: uniforme e olhos vermelhos (sem login ou sincronização)":"Prévia disponível somente neste computador";
@@ -1839,7 +1866,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
  fetch("/api/admin/status",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
   status.textContent=data.admin?"Administrador autenticado":data.configured?"Acesso livre — sem login necessário":"Login administrativo ainda não configurado";
   login.hidden=!data.configured||data.admin;logout.hidden=!data.admin;wrap.hidden=!data.admin;
-  if(data.admin){check.checked=sessionStorage.getItem("jf-admin-skin")==="capitao-patria";apply(check.checked?"capitao-patria":"default");}
+  if(data.admin){check.checked=sessionStorage.getItem("jf-admin-skin")==="capitao-patria";apply(check.checked?"capitao-patria":"default");window.dispatchEvent(new CustomEvent("jf-admin-skin-changed",{detail:{skin:check.checked?"capitao-patria":"default"}}));}
  }).catch(()=>{status.textContent="Não foi possível verificar o administrador";});
  login.addEventListener("click",()=>{location.href="/auth/github";});
  logout.addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});sessionStorage.removeItem("jf-admin-skin");location.reload();});
