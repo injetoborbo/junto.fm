@@ -1633,8 +1633,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         cape.position.copy(capeCenter).multiplyScalar(-capeScale);
         capeMount=new THREE.Group();
         capeMount.name="jfPatriotCapeMount";
-        // Capa menor, elevada e afastada das pernas para evitar atravessamento.
-        capeMount.position.set(0,.02,-.52);
+        // Capa abaixada para encaixar no ombro, mas mantida afastada das pernas.
+        capeMount.position.set(0,-.12,-.56);
         capeMount.rotation.x=.08;
         cape.traverse(part=>{
           if(part.isMesh){
