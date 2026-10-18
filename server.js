@@ -475,7 +475,8 @@ io.on("connection", socket => {
       const peer = io.sockets.sockets.get(id);
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
     }));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
+    const avatarSkins=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.avatarSkin==="capitao-patria"?"capitao-patria":"default"]));
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
