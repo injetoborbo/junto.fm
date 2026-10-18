@@ -7,7 +7,7 @@ module.exports=function setupAccounts(app){
   const secret=process.env.GOOGLE_CLIENT_SECRET||"";
   const dbUrl=process.env.DATABASE_URL||"";
   const enabled=Boolean(clientId&&secret&&dbUrl);
-  const pool=dbUrl?new Pool({connectionString:dbUrl,ssl:process.env.PGSSL==="disable"?false:{rejectUnauthorized:false},max:5}):null;
+  const pool=dbUrl?new Pool({connectionString:dbUrl,ssl:process.env.PGSSL==="require"?{rejectUnauthorized:true}:false,max:5}):null;
   const states=new Map();
   const lifetime=30*24*60*60*1000;
   const ready=pool?pool.query(`
@@ -68,6 +68,7 @@ module.exports=function setupAccounts(app){
     if(!enabled||!await ready)return res.status(503).send("Login Google ainda não configurado.");
     const state=crypto.randomBytes(24).toString("hex");
     states.set(state,{expires:Date.now()+600000});
+    setCookie(req,res,"junto_google_state",state,600);
     const url=new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.search=new URLSearchParams({client_id:clientId,redirect_uri:redirectUri(req),response_type:"code",scope:"openid",state,prompt:"select_account"}).toString();
     res.redirect(url.toString());
@@ -75,7 +76,9 @@ module.exports=function setupAccounts(app){
   app.get("/auth/google/callback",async(req,res)=>{
     const state=String(req.query.state||"");
     const pending=states.get(state);states.delete(state);
-    if(!pending||pending.expires<Date.now()||typeof req.query.code!=="string")return res.status(400).send("Login inválido ou expirado.");
+    const cookieState=cookie(req,"junto_google_state");
+    setCookie(req,res,"junto_google_state","",0);
+    if(!pending||pending.expires<Date.now()||cookieState!==state||typeof req.query.code!=="string")return res.status(400).send("Login inválido ou expirado.");
     try{
       if(!enabled||!await ready)throw Error("Conta não configurada.");
       const response=await fetch("https://oauth2.googleapis.com/token",{
