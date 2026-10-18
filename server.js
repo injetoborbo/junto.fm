@@ -242,11 +242,20 @@ async function findSpotifyQueueTrack(token, suggestion) {
     throw new Error("Não consegui consultar o catálogo do Spotify (HTTP " + response.status + ").");
   }
   const body = await response.json();
-  return (body.tracks?.items || []).find(track =>
-    normalizeMusicText(track.name) === title &&
-    (!artist || (track.artists || []).some(person => normalizeMusicText(person.name) === artist)) &&
-    /^spotify:track:[A-Za-z0-9]{22}$/.test(track.uri || "")
-  ) || null;
+  const tracks=(body.tracks?.items||[]).filter(track=>/^spotify:track:[A-Za-z0-9]{22}$/.test(track.uri||""));
+  const exact=tracks.find(track=>normalizeMusicText(track.name)===title&&
+    (!artist||(track.artists||[]).some(person=>normalizeMusicText(person.name)===artist)));
+  if(exact)return exact;
+  // Aceitar variações de remaster, ao vivo e sufixos quando o artista coincide.
+  // Nunca escolher faixa só pela posição no resultado: exigir correspondência.
+  return tracks.find(track=>{
+    const name=normalizeMusicText(track.name);
+    const artistMatch=!artist||(track.artists||[]).some(person=>{
+      const n=normalizeMusicText(person.name);
+      return n===artist||n.includes(artist)||artist.includes(n);
+    });
+    return artistMatch&&(name===title||name.startsWith(title+" ")||title.startsWith(name+" "));
+  })||null;
 }
 async function addSpotifyQueueTrack(token, uri) {
   const endpoint = new URL("https://api.spotify.com/v1/me/player/queue");
@@ -263,6 +272,31 @@ async function addSpotifyQueueTrack(token, uri) {
   if (response.status === 429) throw new Error("O Spotify limitou os pedidos. Aguarde um pouco.");
   throw new Error("Não foi possível adicionar à fila do Spotify (HTTP " + response.status + "). " + message.slice(0, 100));
 }
+
+// Busca pública para sugerir faixas com nome e artista antes de confirmar.
+// Não acessa credenciais Spotify do usuário nem revela tokens do DJ.
+app.get("/api/music/search", async (req,res)=>{
+  const q=String(req.query.q||"").trim().slice(0,100);
+  if(q.length<2)return res.json({tracks:[]});
+  try{
+    const endpoint=new URL("https://itunes.apple.com/search");
+    endpoint.search=new URLSearchParams({term:q,entity:"song",media:"music",country:"BR",limit:"30"}).toString();
+    const response=await fetch(endpoint,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(6500)});
+    if(!response.ok)throw Error("Catálogo indisponível");
+    const body=await response.json();
+    const seen=new Set(),tracks=[];
+    for(const item of body.results||[]){
+      const title=String(item.trackName||"").trim().slice(0,150);
+      const artist=String(item.artistName||"").trim().slice(0,120);
+      if(!title||!artist)continue;
+      const key=normalizeMusicText(title+" "+artist);
+      if(seen.has(key))continue;seen.add(key);
+      tracks.push({title,artist,album:String(item.collectionName||"").slice(0,100),artwork:String(item.artworkUrl100||"")});
+      if(tracks.length>=12)break;
+    }
+    res.json({tracks});
+  }catch(error){res.status(503).json({tracks:[],error:"Busca de músicas indisponível no momento."});}
+});
 
 app.get("/api/music/validate-suggestion", async (req, res) => {
   const title = String(req.query.title || "").trim().slice(0, 180);
