@@ -387,6 +387,40 @@ io.on("connection", socket => {
     socket.emit("room-created", { room });
   });
 
+  // Expulsão: somente o dono da sala pode remover OUTRA conexão.
+  // Isso remove a pessoa da sala atual, não é banimento permanente.
+  socket.on("room-kick", payload => {
+    const room=socket.data.room;
+    const targetId=typeof payload?.targetId==="string"?payload.targetId:"";
+    if(!room || !isRoomOwner(socket,room)){
+      socket.emit("room-kick-result",{ok:false,message:"Somente o dono da sala pode expulsar participantes."});
+      return;
+    }
+    if(!targetId || targetId===socket.id){
+      socket.emit("room-kick-result",{ok:false,message:"Escolha outro participante."});
+      return;
+    }
+    const target=io.sockets.sockets.get(targetId);
+    if(!target || target.data.room!==room){
+      socket.emit("room-kick-result",{ok:false,message:"Participante não está mais nesta sala."});
+      return;
+    }
+    // Remove primeiro do servidor para evitar que comandos atrasados continuem válidos.
+    target.data.isTransmitting=false;
+    target.data.receiveMusicSuggestions=false;
+    target.data.room=null;
+    target.leave(room);
+    if(roomTransmitters.get(room)?.id===targetId){
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update",{id:targetId,active:false});
+    }
+    target.emit("room-kicked",{room,message:"O administrador expulsou você desta sala."});
+    io.to(room).emit("peer-left",{id:targetId});
+    const count=io.sockets.adapter.rooms.get(room)?.size||0;
+    io.to(room).emit("room-count",{count});
+    socket.emit("room-kick-result",{ok:true,message:"Participante removido da sala."});
+  });
+
   socket.on("friend-request", payload => {
     const room = cleanRoom(payload && payload.room);
     const targetId = String(payload && payload.targetId || "");
