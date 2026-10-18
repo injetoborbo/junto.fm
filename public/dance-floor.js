@@ -40,15 +40,15 @@ function nameSprite(name){
 }
 function sceneSetup(){
   scene=new THREE.Scene();
-  scene.background=new THREE.Color(0xb3d7e9);
-  scene.fog=new THREE.Fog(0xb3d7e9,16,32);
-  scene.add(new THREE.HemisphereLight(0xfff8ec,0x5b75a3,2.35));
-  const sunlight=new THREE.DirectionalLight(0xfff4d9,2.5);sunlight.position.set(2,10,8);scene.add(sunlight);
-  const pinkLight=new THREE.PointLight(0xff70bd,25,12);pinkLight.position.set(-1,3,0);scene.add(pinkLight);
-  const blueLight=new THREE.PointLight(0x65bbff,25,12);blueLight.position.set(2,3,-2);scene.add(blueLight);
+  scene.background=new THREE.Color(0x090d20);
+  scene.fog=new THREE.Fog(0x090d20,14,29);
+  scene.add(new THREE.HemisphereLight(0x9caeea,0x171629,1.15));
+  const sunlight=new THREE.DirectionalLight(0xa4b9f5,1.25);sunlight.position.set(2,10,8);scene.add(sunlight);
+  const pinkLight=new THREE.PointLight(0xff389d,33,9);pinkLight.position.set(-1,3,0);scene.add(pinkLight);
+  const blueLight=new THREE.PointLight(0x27acff,34,9);blueLight.position.set(2,3,-2);scene.add(blueLight);
   const mat=(color,metalness=0,roughness=.65)=>new THREE.MeshStandardMaterial({color,metalness,roughness});
-  const surface=mat(0xd6e7f1),edge=mat(0x638db2),wall=mat(0xa9c6d9);
-  const gold=mat(0xffd477,.6,.27),wood=mat(0x9873a8),glass=mat(0x95d7ed,.22,.15);
+  const surface=mat(0x14213c),edge=mat(0x182747,.35,.4),wall=mat(0x131a36);
+  const gold=mat(0xffbd6c,.72,.22),wood=mat(0x261837,.35,.4),glass=mat(0x26d6fc,.35,.12);
   const mesh=(geo,material,x,y,z,parent=scene)=>{
     const object=new THREE.Mesh(geo,material);object.position.set(x,y,z);parent.add(object);return object;
   };
@@ -56,12 +56,14 @@ function sceneSetup(){
   board=new THREE.Group();scene.add(board);
   cube(6.65,.26,6.65,edge,0,-.34,0,board);
   const tileGeo=new THREE.BoxGeometry(.982,.09,.982);
-  const tilesMats=[mat(0xffe0ef,.08,.28),mat(0xc6e4f9,.08,.3),mat(0xd8d1ff,.08,.32),mat(0xfff1d4,.08,.32)];
+  const tilesMats=[mat(0x252044,.45,.27),mat(0x112c44,.42,.25),mat(0x24203c,.4,.28),mat(0x163546,.46,.25)];
   for(let x=0;x<6;x++)for(let z=0;z<6;z++){
     const tile=new THREE.Mesh(tileGeo,tilesMats[(x+z)%4]);
     tile.position.set(x-2.5,-.13,z-2.5);tile.userData.tile={x,z};
     board.add(tile);tiles.push(tile);
-    cube(.91,.025,.91,mat((x+z)%2===0?0xffffff:0xc9eaf8,.1,.5),x-2.5,-.075,z-2.5,board);
+    const trimMat=new THREE.MeshStandardMaterial({color:0x232d50,emissive:(x+z)%2?0x00d7ff:0xff3ea8,emissiveIntensity:.48,roughness:.32});
+    const trim=cube(.92,.012,.92,trimMat,x-2.5,-.078,z-2.5,board);
+    trim.userData.jfDanceGlow={x,z};
   }
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
   cube(6.7,2.35,.18,wall,0,.96,-3.12);
@@ -82,10 +84,10 @@ function sceneSetup(){
   for(const [x,z] of [[-2.82,-2.82],[2.82,-2.82],[-2.82,2.82]]){
     const stand=mesh(new THREE.CylinderGeometry(.07,.09,1.34,12),wood,x,.56,z);
     const globe=mesh(new THREE.SphereGeometry(.25,20,12),glass,x,1.48,z);
-    const glow=new THREE.PointLight(x<0?0xff88ce:0x88e7ff,5,3.5);glow.position.set(x,1.55,z);scene.add(glow);
+    const glow=new THREE.PointLight(x<0?0xff3cac:0x24dfff,9,4);glow.position.set(x,1.55,z);scene.add(glow);
   }
   // Globo espelhado em pequenos quadrados, sem partículas pesadas.
-  const disco=new THREE.Group();disco.position.set(-1.5,2.25,-1.5);
+  const disco=new THREE.Group();disco.position.set(-1.5,2.45,-1.5);
   disco.add(new THREE.Mesh(new THREE.IcosahedronGeometry(.31,2),mat(0xe9f5fd,.92,.11)));
   const mirror=mat(0xffffff,.85,.1);
   for(let j=0;j<18;j++){
@@ -94,14 +96,26 @@ function sceneSetup(){
     facet.rotation.z=a;
   }
   scene.add(disco);scene.userData.disco=disco;
+  // Holofotes neon translúcidos, girando devagar.
+  const beamGeometry=new THREE.ConeGeometry(.46,4.7,14,1,true);
+  beamGeometry.translate(0,-2.35,0);
+  const beams=[];
+  for(const [x,z,color,phase] of [[-2.1,-2.3,0xff3caa,0],[2.25,-2.4,0x24d9ff,1.8],[.4,2.25,0x9a65ff,3.1]]){
+    const beam=new THREE.Mesh(beamGeometry,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.095,depthWrite:false,side:THREE.DoubleSide}));
+    beam.position.set(x,2.85,z);beam.rotation.x=.18;beam.rotation.z=.14;
+    scene.add(beam);beams.push({beam,phase});
+    const lamp=new THREE.PointLight(color,14,5);lamp.position.set(x,2.35,z);scene.add(lamp);
+  }
+  scene.userData.beams=beams;
+  scene.userData.glowingTiles=board.children.filter(o=>o.userData?.jfDanceGlow);
   // Faixa decorativa com nome do club.
   const canvas=document.createElement("canvas");canvas.width=512;canvas.height=160;
   const ctx=canvas.getContext("2d");
-  ctx.fillStyle="#344e89";ctx.fillRect(0,0,512,160);
-  ctx.strokeStyle="#ffe0ae";ctx.lineWidth=12;ctx.strokeRect(7,7,498,146);
-  ctx.fillStyle="#ffffff";ctx.textAlign="center";ctx.font="bold 70px Trebuchet MS";ctx.fillText("JUNTO CLUB",256,102);
+  ctx.fillStyle="#100e2b";ctx.fillRect(0,0,512,160);
+  ctx.strokeStyle="#ff55c6";ctx.lineWidth=12;ctx.strokeRect(7,7,498,146);
+  ctx.fillStyle="#e8faff";ctx.textAlign="center";ctx.font="bold 70px Trebuchet MS";ctx.fillText("JUNTO CLUB",256,102);
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
-  const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.84),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide}));
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.84),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false}));
   sign.position.set(-1.25,1.3,-2.99);scene.add(sign);scene.userData.signTexture=texture;
   camera=new THREE.OrthographicCamera(-6.35,6.35,4.25,-4.25,.1,100);
   camera.position.set(9,12,9);camera.lookAt(0,.55,0);
@@ -166,6 +180,14 @@ function animate(){
   frame=requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),.065);
   const time=clock.elapsedTime;
+  for(const {beam,phase} of scene.userData.beams||[]){
+    beam.rotation.z=.16*Math.sin(time*.55+phase);
+    beam.rotation.x=.16*Math.cos(time*.43+phase);
+  }
+  for(const tile of scene.userData.glowingTiles||[]){
+    const {x,z}=tile.userData.jfDanceGlow;
+    tile.material.emissiveIntensity=.19+.45*(.5+.5*Math.sin(time*1.85+(x+z)*.63));
+  }
   if(scene.userData.disco)scene.userData.disco.rotation.y+=dt*.34;
   for(const [id,p] of people){
     if(!p.root)continue;
