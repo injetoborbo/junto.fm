@@ -471,7 +471,15 @@ async function openSeatInspect(){
     inspectViewport.removeEventListener("pointercancel",up);
     inspectViewport.removeEventListener("wheel",wheel);
     // Um canvas não pode pertencer a dois elementos: devolve-o à pista.
-    if(renderer?.domElement&&viewport)viewport.appendChild(renderer.domElement);
+    if(renderer?.domElement&&viewport){
+      viewport.appendChild(renderer.domElement);
+      // Restaurar dimensões e câmera da pista ao fechar a inspeção.
+      const width=Math.max(220,viewport.clientWidth),height=Math.max(220,viewport.clientHeight);
+      renderer.setSize(width,height,false);
+      const aspect=width/height,halfH=4.55;
+      camera.left=-halfH*aspect;camera.right=halfH*aspect;
+      camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
+    }
     inspectModal.hidden=true;
     inspectCleanup=null;
   };
