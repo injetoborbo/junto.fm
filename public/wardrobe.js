@@ -29,7 +29,8 @@ const ASSETS={
   redondos:"/oculos_redondos.glb",
   fone:"/fone_preto.glb",
   vestido:"/vestido_rosa.glb",
-  hero:"/patrianocape_pose_heroica_final.glb"
+  hero:"/patrianocape_pose_heroica_final.glb",
+  heroCape:"/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb"
 };
 const assetCache=new Map(),loader=new GLTFLoader();
 function getAsset(name){
@@ -202,6 +203,24 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
       scene.add(group);
       normalized.visible=false;
       renderer.render(scene,camera);
+      // Mesma capa da skin do player, mantendo alinhamento e texturas.
+      getAsset("heroCape").then(capeAsset=>{
+        if(!capeAsset||!active)return;
+        const cape=capeAsset.clone(true);
+        const capeBox=new THREE.Box3().setFromObject(cape);
+        const capeCenter=capeBox.getCenter(new THREE.Vector3());
+        const capeSize=capeBox.getSize(new THREE.Vector3());
+        const capeScale=1.32/Math.max(capeSize.y,.001);
+        cape.scale.setScalar(capeScale);
+        cape.position.copy(capeCenter).multiplyScalar(-capeScale);
+        const capeMount=new THREE.Group();
+        capeMount.position.set(0,-.12,-.56);
+        capeMount.rotation.x=.08;
+        cape.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
+        capeMount.add(cape);
+        group.add(capeMount);
+        renderer.render(scene,camera);
+      });
     });
   }
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
