@@ -1287,8 +1287,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(!joined||!suggestion)return;
     socket.emit("music-suggestion",{room,suggestion});
     $("jfSuggestionText").value="";
-    $("jfSuggestionStatus").textContent="Pedido enviado. Aguardando confirmação do Spotify do DJ...";
     jfUpdateSuggestionControls();
+    $("jfSuggestionStatus").textContent="Pedido enviado. Aguardando confirmação do Spotify do DJ...";
   });
   // Nunca informar sucesso antes de o Spotify confirmar a inclusão.
   socket.on("music-queued",({title,artist,fromName}={})=>{
