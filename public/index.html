@@ -1417,6 +1417,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
   const jfPeerClientIds=new Map();
+  const jfPeerRegistered=new Map();
   const jfPeerSkins=new Map();
   let jfLocalHeroPreview=false;
   function jfMySkin(){return jfLocalHeroPreview||document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default";}
@@ -1535,13 +1536,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(id!==socket.id){
         const actions=document.createElement("div");actions.className="jf-person-actions";
         const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg>';request.title="Enviar solicitação de amizade";request.setAttribute("aria-label","Enviar solicitação de amizade para "+(p.name||"Ouvinte"));
-        const sameName=String(jfProfile.name||"").trim().toLocaleLowerCase()===String(p.name||"").trim().toLocaleLowerCase();
-        const already=jfFriends.some(f=>f.name.toLowerCase()===(p.name||"Ouvinte").toLowerCase()&&f.room.toLowerCase()===(room||"").toLowerCase());
-        const pending=jfIncomingRequests.some(r=>r.fromId===id)||jfOutgoingRequests.has(id);
-        if(sameName){request.disabled=true;request.title="Não é possível enviar solicitação para o próprio perfil";}
+        const sameName=false; // Nomes públicos não são identidades.
+        const already=false; // Amizades reais são verificadas pelo servidor.
+        const pending=jfOutgoingRequests.has(id);
+        if(!jfCanUseFriends()||!jfPeerRegistered.get(id)){request.disabled=true;request.title=!jfCanUseFriends()?"Entre com Google para adicionar amigos":"O participante está como visitante";}
         else if(already){request.textContent="✓";request.disabled=true;request.title="Já está na sua lista de amigos";}
         else if(pending){request.disabled=true;request.title="Solicitação já enviada ou recebida";}
-        request.addEventListener("click",()=>{if(!joined||!room)return;if(String(jfProfile.name||"").trim().toLocaleLowerCase()===String(p.name||"").trim().toLocaleLowerCase()){setStatus("Você não pode adicionar seu próprio perfil.");return;}jfOutgoingRequests.add(id);socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});jfRenderPeople();});
+        request.addEventListener("click",()=>{if(!joined||!room||!jfCanUseFriends()||!jfPeerRegistered.get(id))return;jfOutgoingRequests.add(id);socket.emit("friend-request",{targetId:id});jfRenderPeople();});
         actions.appendChild(request);
         if(jfRoomOwner){
           const kick=document.createElement("button");
@@ -1691,15 +1692,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfPeerProfiles.set(id,profile);
     jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();
   });
-  socket.on("peer-joined",({id,clientId}={})=>{
+  socket.on("peer-joined",({id,clientId,registered=false}={})=>{
     if(!id||id===socket.id)return;
     if(clientId)jfPeerClientIds.set(id,clientId);
+    jfPeerRegistered.set(id,Boolean(registered));
     jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});
     jfRenderPeople();jfRenderFriends();
   });
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerClientIds.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
-  socket.on("joined-room",({profiles={},avatarSkins={},clientIds={}})=>{
-    jfPeerProfiles.clear();jfPeerSkins.clear();jfPeerClientIds.clear();
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerClientIds.delete(id);jfPeerRegistered.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
+  socket.on("joined-room",({profiles={},avatarSkins={},clientIds={},registeredPeers={}})=>{
+    jfPeerProfiles.clear();jfPeerSkins.clear();jfPeerClientIds.clear();jfPeerRegistered.clear();
+    for(const [id,value] of Object.entries(registeredPeers))jfPeerRegistered.set(id,Boolean(value));
     for(const [id,p] of Object.entries(profiles))if(id!==socket.id)jfPeerProfiles.set(id,p);
     for(const [id,clientId] of Object.entries(clientIds))if(id!==socket.id&&clientId)jfPeerClientIds.set(id,clientId);
     for(const [id,skin] of Object.entries(avatarSkins))jfPeerSkins.set(id,skin==="capitao-patria"?"capitao-patria":"default");
@@ -1707,7 +1710,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(!jfLocalHeroPreview)socket.emit("avatar-skin-set",{skin:jfMySkin()});
     jfNotifyTransmitterAppearance();
   });
-  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerClientIds.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerRegistered.clear();jfPeerClientIds.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
   function jfSetChatOpen(open){
@@ -1798,7 +1801,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("joined-room",()=>jfUpdateChatControls());
 
-  jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();
+  jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();jfFetchAccount();
   enableControls();
   refreshSpotifyStatus();
   setInterval(updateTrackProgress, 1000);
