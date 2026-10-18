@@ -471,6 +471,34 @@ function readSaved(){
 }
 let selection=readSaved();
 let editing={...selection};
+
+// Antecipar o download dos acessórios antes da primeira abertura do guarda-roupa.
+// getAsset compartilha a mesma Promise entre pré-carga, prévia e avatares.
+// Carregar aos poucos impede que todas as texturas disputem a conexão de uma vez.
+const wardrobePrefetchKeys=["bone","gorro","palha","branco","escuros","redondos","fone","vestido"];
+function prefetchWardrobeAssets(){
+  const preferred=[
+    selection.hat,
+    selection.glasses,
+    selection.headphones!=="nenhum"?"fone":null,
+    selection.outfit==="rosa"?"vestido":null
+  ].filter(name=>ASSETS[name]);
+  const queue=[...new Set([...preferred,...wardrobePrefetchKeys])];
+  let next=0;
+  async function worker(){
+    while(next<queue.length){
+      const file=queue[next++];
+      await getAsset(file);
+    }
+  }
+  // Duas cargas paralelas, compartilhadas com todas as instâncias da cena.
+  void Promise.all([worker(),worker()]);
+}
+if(document.readyState==="complete"){
+  setTimeout(prefetchWardrobeAssets,500);
+}else{
+  window.addEventListener("load",()=>setTimeout(prefetchWardrobeAssets,500),{once:true});
+}
 const selectors=Object.fromEntries(Object.keys(OPTIONS).map(k=>[k,$("jfWardrobe"+k[0].toUpperCase()+k.slice(1))]));
 const preview=$("jfWardrobePreview");
 function showPreview(){
