@@ -136,7 +136,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       state.add(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
       if(animated){
-        attachAtBind(hat,headBone,rootBindWorld,{y:-.030,z:-.006});
+        attachAtBind(hat,headBone,rootBindWorld,{y:-.00020,z:-.00004});
       }else{
         state.updateWorldMatrix(true,true);
         if(headBone)headBone.attach(hat);
@@ -156,8 +156,8 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       part.position.set(rawX+(1-s)*measure.center.x,
         (1-s)*measure.center.y-.00018,
         (1-s)*measure.center.z+.00012);
-    // Ajuste local ao Head: não depende da câmera nem da pose corrente.
-    },true,headBone,animated?{y:-.004,z:.0026}:null);
+    // O Head usa a escala NAtiva (~milésimos de unidade no GLB).\n    // Ajuste pequeno na coordenada do osso, preservado por toda animação.
+    },true,headBone,animated?{y:-.00008,z:.00050}:null);
   }
   if(selection.headphones!=="nenhum"){
     const wearingHat=selection.hat!=="nenhum";
