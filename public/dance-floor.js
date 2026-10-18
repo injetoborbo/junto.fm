@@ -197,11 +197,12 @@ function animate(){
         if(!obj.userData.jfDanceRest)obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
         const [rx,ry,rz]=obj.userData.jfDanceRest;
         const n=obj.name.toLowerCase();
-        const isLeft=n.includes("left"),side=isLeft?1:-1;
-        const upperLeg=/(leftupleg|rightupleg)/.test(n);
-        const lowerLeg=/(leftleg|rightleg)/.test(n)&&!upperLeg;
-        const upperArm=/(leftarm|rightarm)/.test(n);
-        const forearm=/(leftforearm|rightforearm)/.test(n);
+        // Compatível com esqueletos Mixamo e AccuRig/Reallusion.
+        const isLeft=/left|(?:^|_)l_(?:arm|hand|thigh|calf|leg|shoulder)/.test(n),side=isLeft?1:-1;
+        const upperLeg=/(upleg|upperleg|thigh)/.test(n);
+        const lowerLeg=/(calf|shin|lowerleg|leg$)/.test(n)&&!upperLeg;
+        const forearm=/(forearm|lowerarm)/.test(n);
+        const upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm;
         const torso=/spine/.test(n);
         let x=rx,y=ry,z=rz;
         if(walking){
@@ -229,7 +230,7 @@ function open(){
   if(active)return;
   active=true;sequence++;people.clear();
   modal.hidden=false;
-  document.body.style.overflow="hidden";
+  if(openButton)openButton.hidden=true;
   try{sceneSetup();clock.start();animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
   catch(error){console.error(error);setStatus("Não foi possível abrir a pista 3D.");close();}
 }
@@ -240,11 +241,12 @@ function close(){
   socket.emit("dance-exit");
   for(const id of [...people.keys()])removeMember(id);
   scene?.userData.cleanup?.();
+  scene?.userData.signTexture?.dispose();
   renderer?.dispose();renderer?.domElement.remove();
   for(const t of nameMaterialCache.values())t.dispose();nameMaterialCache.clear();
   scene=null;camera=null;renderer=null;board=null;tiles.length=0;
   modal.hidden=true;
-  if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";
+  if(openButton)openButton.hidden=false;
   if(oldRoom)setStatus("Saiu da pista.");
 }
 openButton?.addEventListener("click",open);
