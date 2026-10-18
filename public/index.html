@@ -723,7 +723,17 @@ html[data-jf-theme="classic"] .track-times{
 <script type="module" src="/wardrobe.js"></script>
 <script>
 (() => {
-  const socket = io();
+  // Stable identity for one browser tab across a reload or reconnect.
+  let jfClientId;
+  try{
+    jfClientId=sessionStorage.getItem("jf-tab-client-id");
+    if(!/^[a-zA-Z0-9_-]{16,90}$/.test(jfClientId||"")){
+      const bytes=crypto.getRandomValues(new Uint8Array(20));
+      jfClientId="tab_"+Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
+      sessionStorage.setItem("jf-tab-client-id",jfClientId);
+    }
+  }catch(_){jfClientId="tab_"+Math.random().toString(36).slice(2)+Date.now().toString(36);}
+  const socket = io({auth:{clientId:jfClientId}});
   const $ = id => document.getElementById(id);
   let room = "noite";
   let joined = false;
@@ -1396,6 +1406,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
   let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
+  const jfPeerClientIds=new Map();
   const jfPeerSkins=new Map();
   let jfLocalHeroPreview=false;
   function jfMySkin(){return jfLocalHeroPreview||document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default";}
@@ -1454,9 +1465,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   function jfRenderPeople(){
     const list=$("jfPeople");list.replaceChildren();
     if(!joined){const p=document.createElement("p");p.className="small";p.textContent="Entre em uma sala para ver os participantes.";list.appendChild(p);return;}
-    const all=[...(socket.id?[[socket.id,jfProfile]]:[]),...jfPeerProfiles.entries()];
-    // Cada conexão tem seu próprio macaco, mesmo quando os apelidos coincidem.
-    const unique=[...new Map(all).entries()];
+    // Render a single entry for each browser tab, not each transient Socket.IO ID.
+    // Keep separate people who happen to choose the same nickname.
+    const active=new Map();
+    const all=[...jfPeerProfiles.entries(),...(socket.id?[[socket.id,jfProfile]]:[])];
+    for(const [id,p] of all){
+      if(id===socket.id)continue;
+      const clientId=jfPeerClientIds.get(id);
+      active.set(clientId?"client:"+clientId:"socket:"+id,[id,p]);
+    }
+    if(socket.id)active.set("client:"+jfClientId,[socket.id,jfProfile]);
+    const unique=[...active.values()];
     if(!unique.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
     for(const [id,p] of unique){
       const card=document.createElement("div");card.className="jf-person";
@@ -1603,18 +1622,28 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     });
     $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
   }
-  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();}});
-  socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();jfRenderFriends();});
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
-  socket.on("joined-room",({profiles={},avatarSkins={}})=>{
-    jfPeerProfiles.clear();jfPeerSkins.clear();
-    for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);
+  socket.on("profile-update",({id,profile})=>{
+    if(!id||id===socket.id||!profile)return;
+    jfPeerProfiles.set(id,profile);
+    jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();
+  });
+  socket.on("peer-joined",({id,clientId}={})=>{
+    if(!id||id===socket.id)return;
+    if(clientId)jfPeerClientIds.set(id,clientId);
+    jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});
+    jfRenderPeople();jfRenderFriends();
+  });
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerClientIds.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
+  socket.on("joined-room",({profiles={},avatarSkins={},clientIds={}})=>{
+    jfPeerProfiles.clear();jfPeerSkins.clear();jfPeerClientIds.clear();
+    for(const [id,p] of Object.entries(profiles))if(id!==socket.id)jfPeerProfiles.set(id,p);
+    for(const [id,clientId] of Object.entries(clientIds))if(id!==socket.id&&clientId)jfPeerClientIds.set(id,clientId);
     for(const [id,skin] of Object.entries(avatarSkins))jfPeerSkins.set(id,skin==="capitao-patria"?"capitao-patria":"default");
     jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});
     if(!jfLocalHeroPreview)socket.emit("avatar-skin-set",{skin:jfMySkin()});
     jfNotifyTransmitterAppearance();
   });
-  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerClientIds.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
   function jfSetChatOpen(open){

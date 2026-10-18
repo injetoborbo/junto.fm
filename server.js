@@ -339,6 +339,9 @@ function releaseRoomOwnership(room,departingId){
   }
 }
 io.on("connection", socket => {
+  // Um identificador por aba permite reconciliar sockets após reconexão.
+  const rawClientId=socket.handshake.auth?.clientId;
+  socket.data.clientId=typeof rawClientId==="string" && /^[a-zA-Z0-9_-]{16,90}$/.test(rawClientId)?rawClientId:null;
   socket.data.isAdmin = adminAuth.isAdmin(socket.request);
   socket.data.avatarSkin = "default";
   socket.on("avatar-skin-set", payload => {
@@ -502,17 +505,33 @@ io.on("connection", socket => {
       socket.to(previousRoom).emit("peer-left", { id: socket.id });
     }
 
-    const peers = [...(io.sockets.adapter.rooms.get(room) || [])].filter(id => id !== socket.id);
     socket.join(room);
     socket.data.room = room;
+    // Replace a stale connection from this very same browser tab.
+    // This prevents a ghost profile from surviving a refresh/reconnect.
+    if(socket.data.clientId){
+      const roomMembers=[...(io.sockets.adapter.rooms.get(room)||[])];
+      for(const oldId of roomMembers){
+        if(oldId===socket.id)continue;
+        const old=io.sockets.sockets.get(oldId);
+        if(!old||old.data.clientId!==socket.data.clientId)continue;
+        if(roomOwners.get(room)===oldId){
+          roomOwners.set(room,socket.id);
+          io.to(room).emit("room-owner-update",{ownerId:socket.id});
+        }
+        old.disconnect(true);
+      }
+    }
+    const peers = [...(io.sockets.adapter.rooms.get(room) || [])].filter(id => id !== socket.id);
     const profiles = Object.fromEntries(peers.map(id => {
       const peer = io.sockets.sockets.get(id);
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
     }));
     const avatarSkins=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.avatarSkin==="capitao-patria"?"capitao-patria":"default"]));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
+    const clientIds=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.clientId||null]));
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
-    socket.to(room).emit("peer-joined", { id: socket.id });
+    socket.to(room).emit("peer-joined", { id: socket.id, clientId:socket.data.clientId });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
   });
 
