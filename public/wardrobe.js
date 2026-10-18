@@ -371,3 +371,40 @@ const people=$("jfPeople");
 if(people)observer.observe(people,{childList:true,subtree:false});
 window.addEventListener("jf-wardrobe-save",()=>{selection=readSaved();refreshPeople();});
 refreshPeople();
+
+/* API reaproveitável da pista isométrica: usa a mesma rigagem e os mesmos GLBs.
+   A pista é pequena e evita criar WebGLRenderers por participante. */
+export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{}){
+  if(!base)throw Error("Modelo macaco.glb indisponível.");
+  const root=new THREE.Group();
+  const monkey=cloneSkeleton(base.scene);
+  const bounds=new THREE.Box3().setFromObject(monkey);
+  const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+  const scale=1.50/Math.max(size.x,size.y,size.z,.0001);
+  monkey.scale.setScalar(scale);
+  monkey.position.copy(center).multiplyScalar(-scale);
+  root.add(monkey);
+  let stillActive=true;
+  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey);
+  if(skin==="capitao-patria"){
+    const asset=await getAsset("hero");
+    if(asset&&stillActive){
+      const hero=cloneSkeleton(asset);
+      const hbox=new THREE.Box3().setFromObject(hero);
+      const sz=hbox.getSize(new THREE.Vector3()),mid=hbox.getCenter(new THREE.Vector3());
+      const hs=1.5/Math.max(sz.x,sz.y,sz.z,.0001);
+      hero.scale.setScalar(hs);hero.position.copy(mid).multiplyScalar(-hs);
+      root.add(hero);monkey.visible=false;
+      getAsset("heroCape").then(cape=>{
+        if(!cape||!stillActive)return;
+        const copy=cape.clone(true),box=new THREE.Box3().setFromObject(copy);
+        const csz=box.getSize(new THREE.Vector3()),cc=box.getCenter(new THREE.Vector3());
+        const cs=1.05/Math.max(csz.y,.001);
+        copy.scale.setScalar(cs);copy.position.copy(cc).multiplyScalar(-cs);
+        const mount=new THREE.Group();mount.position.set(0,.23,-.27);mount.add(copy);root.add(mount);
+        requestRender();
+      });
+    }
+  }
+  return {group:root,rig:monkey,dispose:()=>{stillActive=false;disposeClothes();}};
+}
