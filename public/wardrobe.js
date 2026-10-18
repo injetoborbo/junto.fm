@@ -222,6 +222,31 @@ function makeScene(target,wardrobe,{preview=false}={}){
     renderer.dispose();target.replaceChildren();
   },renderer};
 }
+// Mascote do player: a roupa vem do perfil do transmissor (Socket.IO),
+// nunca do perfil de quem está assistindo.
+let playerInstance=null;
+const playerStage=document.querySelector("#jfMiniDj .jf-dj-stage");
+const playerHolder=document.createElement("div");
+playerHolder.className="jf-transmitter-wardrobe";
+playerHolder.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none;display:none";
+playerStage?.appendChild(playerHolder);
+function updatePlayerMonkey(detail={}){
+  const adminCostume=document.getElementById("jfMiniDj")?.classList.contains("jf-homelander");
+  playerInstance?.dispose();playerInstance=null;
+  const shown=Boolean(detail.id && !adminCostume && playerStage && base);
+  playerHolder.style.display=shown?"block":"none";
+  playerStage?.querySelector("canvas.jf-glb-canvas")?.style.setProperty("visibility",shown?"hidden":"visible");
+  if(shown){
+    playerInstance=makeScene(playerHolder,sanitize(detail.wardrobe),{preview:true});
+    playerHolder.style.pointerEvents="none";
+    // O mascote do player acompanha a transmissão, não gira pelo mouse.
+  }
+}
+window.addEventListener("jf-player-monkey",event=>updatePlayerMonkey(event.detail));
+if(playerStage){
+  new MutationObserver(()=>updatePlayerMonkey(window.jfLastTransmitterAppearance||{}))
+    .observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
+}
 function readSaved(){
   try{return sanitize(JSON.parse(localStorage.getItem("junto_profile")||"{}").wardrobe);}catch{return defaults();}
 }
