@@ -485,6 +485,7 @@ io.on("connection", socket => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room || !payload.to || !payload.data) return;
     const target = io.sockets.sockets.get(payload.to);
     if (!target || target.data.room !== socket.data.room) return;
+    if(payload.data.type==="offer" && (!isRoomOwner(socket,socket.data.room)||!socket.data.isTransmitting))return;
     target.emit("signal", { from: socket.id, data: payload.data });
   });
 
