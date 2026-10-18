@@ -1573,6 +1573,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         jfProfile.avatar=jfAccount.avatar||"";
         jfProfile.motto=jfAccount.motto||"";
         jfProfile.wardrobe=jfAccount.wardrobe||jfProfile.wardrobe;
+        window.dispatchEvent(new CustomEvent("jf-local-profile-updated",{detail:{wardrobe:jfProfile.wardrobe}}));
         $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;
         jfRenderAvatar();
         if(joined)socket.emit("profile-update",{profile:jfProfile});
