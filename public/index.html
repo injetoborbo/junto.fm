@@ -1595,63 +1595,42 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     model.position.sub(center);
     const maxDim=Math.max(size.x,size.y,size.z)||1;
     model.scale.setScalar(2.25/maxDim);
-    // Skin 3D v2: peças anatômicas arredondadas e capa atrás do personagem.
-    // O GLB original continua visível; nenhuma peça ocupa a cabeça inteira.
-    const costume=new THREE.Group();costume.visible=false;root.add(costume);
-    const blue=new THREE.MeshStandardMaterial({color:0x153a83,roughness:.85,side:THREE.DoubleSide});
-    const red=new THREE.MeshStandardMaterial({color:0xc51f3a,roughness:.72,side:THREE.DoubleSide});
-    const gold=new THREE.MeshStandardMaterial({color:0xf0c15b,metalness:.35,roughness:.4,side:THREE.DoubleSide});
-    const white=new THREE.MeshStandardMaterial({color:0xf5f0e5,roughness:.75,side:THREE.DoubleSide});
-    const glow=new THREE.MeshBasicMaterial({color:0xff1818,side:THREE.DoubleSide});
-    const unit=2.25/maxDim,bw=size.x*unit,bh=size.y*unit,bd=size.z*unit;
-    const ellipsoid=(parent,mat,x,y,z,rx,ry,rz)=>{
-      const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),mat);
-      mesh.position.set(x,y,z);mesh.scale.set(rx,ry,rz);parent.add(mesh);return mesh;
-    };
-    const segment=(parent,mat,start,end,r1,r2)=>{
-      const delta=new THREE.Vector3().subVectors(end,start);
-      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,delta.length(),10),mat);
-      mesh.position.copy(start).add(end).multiplyScalar(.5);
-      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());
-      parent.add(mesh);return mesh;
-    };
-    const v=(x,y,z)=>new THREE.Vector3(x,y,z);
-    // Colete justo e curvado, em vez de um cilindro largo e quadrado.
-    ellipsoid(costume,blue,0,-bh*.095,bd*.075,bw*.245,bh*.19,bd*.245);
-    // Cinto dourado e emblema central pequeno.
-    ellipsoid(costume,gold,0,-bh*.235,bd*.12,bw*.245,bh*.023,bd*.205);
-    const emblem=new THREE.Mesh(new THREE.IcosahedronGeometry(bw*.045,0),gold);
-    emblem.position.set(0,-bh*.015,bd*.31);costume.add(emblem);
-    for(const sign of [-1,1]){
-      // Ombreiras pequenas, seguindo a largura do tronco.
-      ellipsoid(costume,gold,sign*bw*.255,bh*.025,0,bw*.105,bh*.042,bd*.13);
-      // Faixa lateral azul e luvas discretas.
-      segment(costume,blue,v(sign*bw*.28,-bh*.02,0),v(sign*bw*.36,-bh*.18,bd*.015),bw*.064,bw*.055);
-      ellipsoid(costume,red,sign*bw*.37,-bh*.205,bd*.02,bw*.075,bh*.075,bd*.09);
-      // Botas baixas; pés e mãos originais permanecem reconhecíveis.
-      ellipsoid(costume,red,sign*bw*.13,-bh*.405,bd*.055,bw*.12,bh*.075,bd*.16);
-      // Dois traços dourados no peito.
-      segment(costume,gold,v(sign*bw*.07,bh*.02,bd*.29),v(sign*bw*.17,-bh*.04,bd*.28),bw*.012,bw*.012);
-    }
-    // Capa com queda natural, atrás das costas, sem cobrir o rosto.
-    const capeTop=bh*.015,capeBottom=-bh*.455;
-    const capePositions=new Float32Array([
-      -bw*.235,capeTop,-bd*.24,  bw*.235,capeTop,-bd*.24, -bw*.38,capeBottom,-bd*.42,
-       bw*.235,capeTop,-bd*.24, bw*.38,capeBottom,-bd*.42, -bw*.38,capeBottom,-bd*.42
-    ]);
-    const capeGeometry=new THREE.BufferGeometry();
-    capeGeometry.setAttribute("position",new THREE.BufferAttribute(capePositions,3));
-    capeGeometry.computeVertexNormals();
-    costume.add(new THREE.Mesh(capeGeometry,red));
-    // Olhos laser: pequenos e na frente do rosto; sem esferas enormes.
-    const eyes=new THREE.Group();costume.add(eyes);
-    for(const sign of [-1,1]){
-      const eye=ellipsoid(eyes,glow,sign*bw*.13,bh*.245,bd*.435,bw*.038,bh*.018,bd*.017);
-      const light=new THREE.PointLight(0xff1515,.28,bw*.45);
-      light.position.copy(eye.position);eyes.add(light);
+    // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
+    const patriotGltf=await new GLTFLoader().loadAsync("/macacopatria.glb").catch(error=>{
+      console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
+      return null;
+    });
+    const patriot=patriotGltf?.scene||null;
+    const patriotRoot=new THREE.Group();root.add(patriotRoot);
+    if(patriot){
+      patriotRoot.add(patriot);
+      const pb=new THREE.Box3().setFromObject(patriot);
+      const pc=pb.getCenter(new THREE.Vector3());
+      const ps=pb.getSize(new THREE.Vector3());
+      patriot.position.sub(pc);
+      patriot.scale.setScalar(2.25/(Math.max(ps.x,ps.y,ps.z)||1));
+      // Olhos vermelhos já pintados no modelo; glow é uma camada visual.
+      // Coordenadas proporcionais: ajustar após inspeção da prévia no navegador.
+      const glowMaterial=new THREE.MeshBasicMaterial({
+        color:0xff2222,transparent:true,opacity:.72,
+        blending:THREE.AdditiveBlending,depthWrite:false
+      });
+      const eyesGlow=new THREE.Group();
+      patriotRoot.add(eyesGlow);
+      for(const sign of [-1,1]){
+        const halo=new THREE.Mesh(new THREE.SphereGeometry(.047,16,12),glowMaterial);
+        halo.scale.set(1,.58,.24);
+        halo.position.set(sign*.135,.52,.42);
+        eyesGlow.add(halo);
+      }
+      const eyeLight=new THREE.PointLight(0xff2020,.8,1.1);
+      eyeLight.position.set(0,.52,.46);
+      patriotRoot.add(eyeLight);
     }
     function updateAdminCostume(){
-      costume.visible=document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")||false;
+      const enabled=Boolean(patriot)&&Boolean(document.getElementById("jfMiniDj")?.classList.contains("jf-homelander"));
+      model.visible=!enabled;
+      patriotRoot.visible=enabled;
     }
     window.addEventListener("jf-admin-skin-changed",updateAdminCostume);
     new MutationObserver(updateAdminCostume).observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
