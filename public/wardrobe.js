@@ -170,7 +170,7 @@ function dress(root,selection,render,monkey){
 // Encaixe INDEPENDENTE para o mascote sentado do miniplayer.
 // Cada GLB é clonado de forma exclusiva; offsets nunca alteram dress() usado
 // pelos participantes, guarda-roupa e pista. Calibrado em unidades do macaco.glb.
-async function dressMiniPlayer(selection,render,monkey,isActive){
+async function dressMiniPlayer(selection,render,monkey,root,isActive){
   const copies=[],ownMaterials=[];
   const head=getBone(monkey,"Head");
   const top=getBone(monkey,"HeadTop_End");
@@ -184,14 +184,14 @@ async function dressMiniPlayer(selection,render,monkey,isActive){
   const rawX=(headPos.x-monkey.position.x)/scale;
   const neckY=(neckPos.y-monkey.position.y)/scale;
   const neckZ=(neckPos.z-monkey.position.z)/scale;
-  const add=async(file,configure,anchor)=>{
+  const add=async(file,configure,anchor,parent=monkey)=>{
     const asset=await getAsset(file);
     if(!asset||!isActive())return;
     const part=asset.clone(true);part.name="jfMini_"+file;
     const box=getBounds(part);
-    monkey.add(part);
+    parent.add(part);
     configure(part,box);
-    monkey.updateMatrixWorld(true);
+    root.updateMatrixWorld(true);
     if(anchor)anchor.attach(part);
     copies.push(part);
     render();
@@ -203,17 +203,15 @@ async function dressMiniPlayer(selection,render,monkey,isActive){
       const width=type==="palha"?.94:.92;
       const s=width/Math.max(measure.size.x,measure.size.z,1e-6);
       const brim=measure.box.min.y+measure.size.y*.12;
-      hat.scale.setScalar(s/scale);
-      // O chapéu mantém o apoio no topo da cabeça na posição original.
-      // Converter coordenadas do mundo para o modelo normalizado.
-      const worldTarget=new THREE.Vector3(
+      // Chapéus Meshy estão dimensionados para o grupo normalizado, NÃO
+      // para a escala local do monkey. Usar a mesma referência da lista.
+      hat.scale.setScalar(s);
+      hat.position.set(
         headPos.x-measure.center.x*s,
         topPos.y-.17-brim*s,
         headPos.z-measure.center.z*s+.05
       );
-      monkey.worldToLocal(worldTarget);
-      hat.position.copy(worldTarget);
-    },head));
+    },head,root));
   }else if(selection.hat!=="nenhum"){
     jobs.push(add(selection.hat,part=>{part.position.x=rawX;},head));
   }
@@ -225,8 +223,8 @@ async function dressMiniPlayer(selection,render,monkey,isActive){
       // Descer 22% da distância Head -> HeadTop e aproximar do rosto.
       part.position.set(
         rawX+(1-s)*measure.center.x,
-        (1-s)*measure.center.y-.00018-headHeight*.22,
-        (1-s)*measure.center.z+.00012+headHeight*.025
+        (1-s)*measure.center.y-.00018,
+        (1-s)*measure.center.z+.00012
       );
     },head));
   }
@@ -335,7 +333,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     // Clones e encaixes próprios no miniplayer, antes de aplicar a pose.
     (async()=>{
       try{
-        const dispose=await dressMiniPlayer(sanitize(wardrobe),renderOutfit,monkey,()=>active);
+        const dispose=await dressMiniPlayer(sanitize(wardrobe),renderOutfit,monkey,normalized,()=>active);
         if(!active){dispose();return;}
         disposeOutfit=dispose;
         const pose=await loadPlayerSittingPose();
