@@ -107,6 +107,12 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 .jf-person:hover .jf-motto,.jf-person:focus-within .jf-motto{display:block}
 .jf-person .jf-person-details{display:flex;flex-direction:column;min-width:0}
 .jf-person .jf-person-details strong{display:block}
+.jf-room-kick{font-size:11px!important;white-space:nowrap;background:#8c2744!important;color:#fff!important;border:1px solid #c95a73!important}
+.jf-room-kick:hover{background:#b73354!important}
+.jf-retro-emoji-title{font-size:11px;font-weight:800;letter-spacing:.04em;margin:8px 3px 5px;color:var(--jf-primary)}
+.jf-retro-emoji-grid{display:flex;flex-wrap:wrap;gap:4px;padding-bottom:6px;border-bottom:1px solid #aab7cf55}
+.jf-retro-emoji-grid .jf-chat-emoji{min-width:32px;min-height:32px;font-size:19px;border-radius:5px}
+.jf-retro-emoji-grid .jf-chat-kaomoji{font-size:12px;min-width:52px;padding:4px 6px}
 @media(prefers-reduced-motion:reduce){.jf-person{transition:none}}
 @media(max-width:520px){.jf-grid{grid-template-columns:1fr}.jf-profile{grid-template-columns:62px minmax(0,1fr);gap:12px}.jf-avatar{width:62px;height:62px}.jf-fields input[type=text]{font-size:16px;padding:13px 10px}.jf-fields input[type=file]{font-size:11px;padding:7px}#jfSaveProfile{width:100%;flex-basis:100%}#jfProfileStatus{flex-basis:100%}}
 
@@ -548,6 +554,14 @@ html[data-jf-theme="classic"] .track-times{
   <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
   <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">☺ Emojis</button></div>
   <div id="jfChatEmojiTray" class="jf-chat-emoji-tray" aria-label="Escolha um emoji" hidden>
+    <div class="jf-retro-emoji-title">✦ Emojis retrô · MSN / anos 2000</div>
+    <div class="jf-retro-emoji-grid">
+      <button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😎" title="Inserir 😎">😎</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😜" title="Inserir 😜">😜</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😛" title="Inserir 😛">😛</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😂" title="Inserir 😂">😂</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😭" title="Inserir 😭">😭</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🥺" title="Inserir 🥺">🥺</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😍" title="Inserir 😍">😍</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😘" title="Inserir 😘">😘</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😡" title="Inserir 😡">😡</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😈" title="Inserir 😈">😈</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👻" title="Inserir 👻">👻</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👾" title="Inserir 👾">👾</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👽" title="Inserir 👽">👽</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🤖" title="Inserir 🤖">🤖</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💾" title="Inserir 💾">💾</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💿" title="Inserir 💿">💿</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📼" title="Inserir 📼">📼</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📟" title="Inserir 📟">📟</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🕹️" title="Inserir 🕹️">🕹️</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎮" title="Inserir 🎮">🎮</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎧" title="Inserir 🎧">🎧</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📺" title="Inserir 📺">📺</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="☎️" title="Inserir ☎️">☎️</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💌" title="Inserir 💌">💌</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💔" title="Inserir 💔">💔</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💖" title="Inserir 💖">💖</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💘" title="Inserir 💘">💘</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="✨" title="Inserir ✨">✨</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌟" title="Inserir 🌟">🌟</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🔥" title="Inserir 🔥">🔥</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="⚡" title="Inserir ⚡">⚡</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💤" title="Inserir 💤">💤</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎵" title="Inserir 🎵">🎵</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎶" title="Inserir 🎶">🎶</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌈" title="Inserir 🌈">🌈</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍒" title="Inserir 🍒">🍒</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍕" title="Inserir 🍕">🍕</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍦" title="Inserir 🍦">🍦</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="☕" title="Inserir ☕">☕</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌻" title="Inserir 🌻">🌻</button>
+    </div>
+    <div class="jf-retro-emoji-title">✦ Carinhas clássicas</div>
+    <div class="jf-retro-emoji-grid">
+      <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(╯°□°）╯︵ ┻━┻" title="Inserir carinha">(╯°□°）╯︵ ┻━┻</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(づ｡◕‿‿◕｡)づ" title="Inserir carinha">(づ｡◕‿‿◕｡)づ</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(≧◡≦)" title="Inserir carinha">(≧◡≦)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(T_T)" title="Inserir carinha">(T_T)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(¬_¬)" title="Inserir carinha">(¬_¬)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(&gt;_&lt;)" title="Inserir carinha">(&gt;_&lt;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧" title="Inserir carinha">(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="( ͡° ͜ʖ ͡°)" title="Inserir carinha">( ͡° ͜ʖ ͡°)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(｡♥‿♥｡)" title="Inserir carinha">(｡♥‿♥｡)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="ʕ•ᴥ•ʔ" title="Inserir carinha">ʕ•ᴥ•ʔ</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(=^･ω･^=)" title="Inserir carinha">(=^･ω･^=)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(⌐■_■)" title="Inserir carinha">(⌐■_■)</button>
+    </div>
     <button type="button" class="jf-chat-emoji" data-emoji="☺">☺</button><button type="button" class="jf-chat-emoji" data-emoji="☻">☻</button><button type="button" class="jf-chat-emoji" data-emoji="ツ">ツ</button><button type="button" class="jf-chat-emoji" data-emoji="♥">♥</button><button type="button" class="jf-chat-emoji" data-emoji="♡">♡</button><button type="button" class="jf-chat-emoji" data-emoji="★">★</button><button type="button" class="jf-chat-emoji" data-emoji="☆">☆</button><button type="button" class="jf-chat-emoji" data-emoji="♪">♪</button><button type="button" class="jf-chat-emoji" data-emoji="♫">♫</button><button type="button" class="jf-chat-emoji" data-emoji="☮">☮</button><button type="button" class="jf-chat-emoji" data-emoji="✿">✿</button><button type="button" class="jf-chat-emoji" data-emoji="✧">✧</button>
     <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":)">:)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=";)">;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":D">:D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="xD">xD</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":P">:P</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'(">:'(</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="^_^">^_^</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="-_-">-_-</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="o_O">o_O</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="<3">&lt;3</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'D">:'D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="¯\\_(ツ)_/¯">¯\\_(ツ)_/¯</button>
   </div>
@@ -1293,21 +1307,33 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('Transmissão encerrada.');
   }
   $("stop").onclick = stopTransmission;
-  $("jfLeaveRoom").onclick = () => {
-    if (!joined) return;
-    const leavingRoom = room;
-    if (isSender) stopTransmission(); else resetSession();
-    socket.emit("leave-room", { room: leavingRoom });
-    joined = false; room = ""; $("room").value = "";
-    $("remoteAudio").pause(); $("remoteAudio").srcObject = null;
-    jfRenderMiniDj(null); renderTrack(null);
-    $("roomCount").textContent = "Ainda não entrou em uma sala.";
-    $("role").textContent = "Entre na sala para começar.";
-    $("jfChatWindow").hidden = true; $("jfChatLauncher").classList.remove("has-unread");
-    jfPeerProfiles.clear(); jfRenderPeople(); jfRenderChat([]);
-    jfUpdateRoomView(); enableControls(); jfUpdateChatControls(); jfUpdateSuggestionControls();
-    setStatus(socket.connected ? "Você saiu da sala. Crie ou entre em outra sala." : "Desconectado do servidor.");
-  };
+  function jfLeaveCurrentRoom({notifyServer=true,reason=""}={}){
+    if(!joined)return;
+    const leavingRoom=room;
+    if(isSender){
+      if(notifyServer)stopTransmission();
+      else{resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
+    }else resetSession();
+    if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
+    joined=false;room="";jfRoomOwnerId=null;jfRoomOwner=false;
+    $("room").value="";
+    $("remoteAudio").pause();$("remoteAudio").srcObject=null;
+    jfRenderMiniDj(null);renderTrack(null);
+    $("roomCount").textContent="Ainda não entrou em uma sala.";
+    $("role").textContent="Entre na sala para começar.";
+    $("jfChatWindow").hidden=true;$("jfChatLauncher").classList.remove("has-unread");
+    jfPeerProfiles.clear();jfPeerSkins.clear();
+    jfRenderPeople();jfRenderChat([]);
+    jfUpdateRoomView();jfSyncRoomOwnership();jfUpdateChatControls();jfUpdateSuggestionControls();
+    setStatus(reason||(socket.connected?"Você saiu da sala. Crie ou entre em outra sala.":"Desconectado do servidor."));
+  }
+  $("jfLeaveRoom").onclick=()=>jfLeaveCurrentRoom();
+  socket.on("room-kicked",({room:kickedRoom,message}={})=>{
+    if(joined&&room===kickedRoom)jfLeaveCurrentRoom({notifyServer:false,reason:message||"Você foi removido desta sala."});
+  });
+  socket.on("room-kick-result",({ok,message}={})=>{
+    setStatus(message||(ok?"Participante expulso.":"Não foi possível expulsar."));
+  });
   $("spotifyDisconnect").onclick = async () => {
     try { await fetch('/api/spotify/logout', { method: 'POST' }); } catch (_) {}
     spotifyConnected = false; $("spotifyConnect").hidden = false; $("spotifyDisconnect").hidden = true;
@@ -1452,7 +1478,23 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         else if(already){request.textContent="✓";request.disabled=true;request.title="Já está na sua lista de amigos";}
         else if(pending){request.disabled=true;request.title="Solicitação já enviada ou recebida";}
         request.addEventListener("click",()=>{if(!joined||!room)return;if(String(jfProfile.name||"").trim().toLocaleLowerCase()===String(p.name||"").trim().toLocaleLowerCase()){setStatus("Você não pode adicionar seu próprio perfil.");return;}jfOutgoingRequests.add(id);socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});jfRenderPeople();});
-        actions.appendChild(request);card.appendChild(actions);
+        actions.appendChild(request);
+        if(jfRoomOwner){
+          const kick=document.createElement("button");
+          kick.type="button";
+          kick.className="btn secondary jf-room-kick";
+          kick.textContent="✕ Expulsar";
+          kick.title="Expulsar este participante da sala";
+          kick.setAttribute("aria-label","Expulsar "+String(p.name||"Ouvinte"));
+          kick.addEventListener("click",()=>{
+            if(!joined||!jfRoomOwner||id===socket.id)return;
+            if(confirm("Expulsar "+String(p.name||"Ouvinte")+" desta sala?")){
+              socket.emit("room-kick",{targetId:id});
+            }
+          });
+          actions.appendChild(kick);
+        }
+        card.appendChild(actions);
       }
       card.tabIndex=0;list.appendChild(card);
     }
