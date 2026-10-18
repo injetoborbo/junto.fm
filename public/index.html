@@ -1928,6 +1928,32 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const gltf=await new GLTFLoader().loadAsync("/macaco.glb");
     const model=gltf.scene;
     root.add(model);
+    // O macaquinho padrão do player aparece mesmo sem transmissor.
+    // Ele também precisa da pose sentada (o wardrobe.js cobre apenas o transmissor).
+    new GLTFLoader().loadAsync("/poses/female-sitting.glb").then(pose=>{
+      const clip=pose.animations?.find(a=>a.tracks?.length);
+      if(!clip){console.warn("Macaco DJ: pose sentada sem canais.");return;}
+      const key=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+      const targets=new Map(),sources=new Map();
+      model.traverse(node=>{if(node.isBone)targets.set(key(node.name),node);});
+      pose.scene.traverse(node=>{if(node.name&&/^mixamorig/i.test(node.name))sources.set(key(node.name),node);});
+      let applied=0;
+      const frame=Math.min(.5,clip.duration*.5),inv=new THREE.Quaternion(),q=new THREE.Quaternion();
+      for(const track of clip.tracks){
+        const split=track.name.lastIndexOf(".");
+        if(split<0||track.name.slice(split+1)!=="quaternion")continue;
+        const k=key(track.name.slice(0,split)),bone=targets.get(k),source=sources.get(k);
+        if(!bone||!source)continue;
+        const value=track.createInterpolant().evaluate(frame);
+        if(!value||value.length!==4)continue;
+        inv.copy(source.quaternion).invert();
+        q.fromArray(value).premultiply(inv);
+        bone.quaternion.multiply(q).normalize();
+        applied++;
+      }
+      console.info("Macaco DJ: pose sentada aplicada em",applied,"ossos");
+      if(applied<5)console.warn("Macaco DJ: correspondência insuficiente de ossos");
+    }).catch(error=>console.warn("Macaco DJ: falha ao carregar pose sentada",error));
     const box=new THREE.Box3().setFromObject(model);
     const size=box.getSize(new THREE.Vector3());
     const center=box.getCenter(new THREE.Vector3());
