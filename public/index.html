@@ -1596,7 +1596,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const maxDim=Math.max(size.x,size.y,size.z)||1;
     model.scale.setScalar(2.25/maxDim);
     // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
-    const patriotGltf=await new GLTFLoader().loadAsync("/macacopatria_rigged_test.glb").catch(error=>{
+    const patriotGltf=await new GLTFLoader().loadAsync("/macacopatria_rig_corrigida.glb").catch(error=>{
       console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
       return null;
     });
