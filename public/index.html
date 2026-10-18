@@ -726,7 +726,9 @@ html[data-jf-theme="classic"] .track-times{
   function jfNotifyTransmitterAppearance(){
     const id=jfCurrentTransmitter?.active===false?null:jfCurrentTransmitter?.id;
     const profile=id===socket.id?jfProfile:(jfPeerProfiles.get(id)||null);
-    window.dispatchEvent(new CustomEvent("jf-player-monkey",{detail:{id:id||null,wardrobe:profile?.wardrobe||null,skin:id===socket.id&&document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default"}}));
+    const detail={id:id||null,wardrobe:profile?.wardrobe||null,skin:id===socket.id&&document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default"};
+    window.jfLastTransmitterAppearance=detail;
+    window.dispatchEvent(new CustomEvent("jf-player-monkey",{detail}));
   }
   let localStream = null;
   let spotifyConnected = false;
@@ -1181,7 +1183,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -1418,7 +1420,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       card.dataset.wardrobe=JSON.stringify(p.wardrobe||{});
       const monkey=document.createElement("div");monkey.className="jf-member-monkey";card.appendChild(monkey);
       /* A identidade visual principal do participante é sempre seu macaco 3D. */
-      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);
+      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"")+(id===jfRoomOwnerId?" 👑":"");details.appendChild(label);
       if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}
       const status=document.createElement("span");status.className="jf-friend-status online";status.innerHTML="<i></i> Online na sala";details.appendChild(status);card.appendChild(details);
       if(id!==socket.id){
@@ -1625,7 +1627,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       }
     }catch(error){console.debug("Áudio de notificação indisponível:",error);}
   }
-  document.addEventListener("pointerdown",()=>{if(!jfNotificationAudio)return; jfNotificationAudio.resume().catch(()=>{});},{passive:true});
+  // Inicializa o áudio em um gesto real do usuário para não violar autoplay.
+  document.addEventListener("pointerdown",()=>{
+    try{
+      jfNotificationAudio ||= new (window.AudioContext||window.webkitAudioContext)();
+      jfNotificationAudio.resume().catch(()=>{});
+    }catch(_){}
+  },{passive:true});
   document.addEventListener("keydown",()=>{jfNotificationAudio?.resume().catch(()=>{});});
   socket.on("chat-message",message=>{
     if(joined&&message&&message.room===room){
