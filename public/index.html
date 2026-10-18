@@ -1609,23 +1609,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const ps=pb.getSize(new THREE.Vector3());
       patriot.position.sub(pc);
       patriot.scale.setScalar(2.25/(Math.max(ps.x,ps.y,ps.z)||1));
-      // Olhos vermelhos já pintados no modelo; glow é uma camada visual.
-      // Coordenadas proporcionais: ajustar após inspeção da prévia no navegador.
-      const glowMaterial=new THREE.MeshBasicMaterial({
-        color:0xff2222,transparent:true,opacity:.72,
-        blending:THREE.AdditiveBlending,depthWrite:false
+      // Pontos pequenos apenas nas pupilas: sem halos grandes ou luz no rosto.
+      const pupilGlowMaterial=new THREE.MeshBasicMaterial({
+        color:0xff3030,transparent:true,opacity:.88,
+        blending:THREE.AdditiveBlending,depthWrite:false,depthTest:true
       });
-      const eyesGlow=new THREE.Group();
-      patriotRoot.add(eyesGlow);
       for(const sign of [-1,1]){
-        const halo=new THREE.Mesh(new THREE.SphereGeometry(.047,16,12),glowMaterial);
-        halo.scale.set(1,.58,.24);
-        halo.position.set(sign*.135,.52,.42);
-        eyesGlow.add(halo);
+        const pupil=new THREE.Mesh(new THREE.SphereGeometry(.012,16,12),pupilGlowMaterial);
+        pupil.scale.set(1,1,.45);
+        pupil.position.set(sign*.135,.52,.42);
+        patriotRoot.add(pupil);
       }
-      const eyeLight=new THREE.PointLight(0xff2020,.8,1.1);
-      eyeLight.position.set(0,.52,.46);
-      patriotRoot.add(eyeLight);
     }
     function updateAdminCostume(){
       const enabled=Boolean(patriot)&&Boolean(document.getElementById("jfMiniDj")?.classList.contains("jf-homelander"));
