@@ -234,7 +234,7 @@ async function putMember(id,details){
   const entry={data:{...details},root:null,rig:null,dispose:null,name:null};
   people.set(id,entry);
   try{
-    const avatar=await createDanceAvatar(profile.wardrobe,currentSkin(id),()=>{});
+    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
     entry.restBones=new Map();
