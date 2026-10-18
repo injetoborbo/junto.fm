@@ -78,7 +78,7 @@ function dress(model,selection,render,monkey){
       hat.scale.setScalar(scale);
       // Apoiar a ABA (e não o topo do chapéu) na cabeça.
       // O centro do modelo Meshy é aproximadamente o plano da aba.
-      const brimY=H.headTop+.16;
+      const brimY=H.headTop-.03;
       // A aba está na metade inferior do Meshy GLB (e não no centro).
       const brimSurface=box.min.y+(extent.y*.13);
       hat.position.set(-center.x*scale,brimY-brimSurface*scale,-center.z*scale-.025);
