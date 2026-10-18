@@ -225,25 +225,31 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   const normalized=new THREE.Group();
   monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
   normalized.add(monkey);
-  const disposeOutfit=dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera),monkey);
   scene.add(normalized);
   let active=true;
+  let disposeOutfit=()=>{};
+  // Vestir DEPOIS da pose. Os offsets dos acessórios são calculados a partir
+  // da posição atual dos ossos; vestir antes usa a cabeça em pé.
+  const dressNow=()=>{
+    if(!active)return;
+    disposeOutfit=dress(normalized,sanitize(wardrobe),()=>{if(active)renderer.render(scene,camera);},monkey);
+    renderer.render(scene,camera);
+  };
   if(playerSitting){
     loadPlayerSittingPose().then(asset=>{
-      if(!active||!asset)return;
-      if(applyPlayerSittingPose(monkey,asset)){
-        // Reenquadra após dobrar as pernas: a pose sentada muda o volume do GLB.
+      if(!active)return;
+      if(asset&&applyPlayerSittingPose(monkey,asset)){
+        // Reenquadrar depois de dobrar pernas e braços, antes de vestir.
         const sittingBox=new THREE.Box3().setFromObject(normalized,true);
         if(!sittingBox.isEmpty()){
           const c=sittingBox.getCenter(new THREE.Vector3());
           normalized.position.sub(c);
           normalized.position.y-=.12;
         }
-        renderer.render(scene,camera);
-      }
-      else console.warn("Pose sentada: ossos Mixamo insuficientes.");
+      }else console.warn("Pose sentada indisponível; usando pose original.");
+      dressNow();
     });
-  }
+  }else dressNow();
   if(skin==="capitao-patria"){
     // Render independente da mesma skin 3D do player, sem editar o GLB base.
     getAsset("hero").then(asset=>{
