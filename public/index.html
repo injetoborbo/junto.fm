@@ -322,6 +322,11 @@ body:not(.jf-in-room) .jf-top-actions,body:not(.jf-in-room) main>h1,body:not(.jf
 body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(.jf-modal-backdrop){display:none!important}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{justify-content:center;flex-wrap:wrap}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{flex:1 1 190px;min-height:52px}
+.jf-entry-account{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--jf-primary) 20%,transparent);text-align:center}
+.jf-entry-account .btn{min-width:190px;min-height:43px;display:inline-flex;align-items:center;justify-content:center}
+.jf-entry-account .small{max-width:390px}
+.jf-entry-account [hidden],#jfGoogleLogin[hidden],#jfEntryAccountLoggedIn[hidden]{display:none!important}
+body.jf-in-room .jf-entry-account{display:none!important}
 #jfLeaveRoom{min-width:140px}
 body.jf-in-room #jfRoomEntryPanel{width:100%;margin-bottom:24px}
 @media(max-width:520px){body:not(.jf-in-room) main{min-height:calc(100vh - 24px)}body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{width:100%}}
@@ -480,7 +485,7 @@ html[data-jf-theme="classic"] .track-times{
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Entrar com Google</a><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -489,6 +494,11 @@ html[data-jf-theme="classic"] .track-times{
     <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
       <button class="btn" id="join" type="button">↗ Entrar na sala</button>
       <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
+    </div>
+    <div class="jf-entry-account" id="jfEntryAccount">
+      <span class="small" id="jfEntryAccountHint">Entre com Google para salvar seu perfil e usar Amigos. Sem conta, você ainda pode entrar em salas.</span>
+      <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Entrar com Google</a>
+      <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
     </div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
@@ -1500,6 +1510,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       jfAccount=data.loggedIn?data.profile:null;
       $("jfGoogleLogin").hidden=!jfAccountConfigured||!!jfAccount;
       $("jfGoogleLogout").hidden=!jfAccount;
+      $("jfEntryAccountLoggedIn").hidden=!jfAccount;
+      $("jfEntryAccountHint").hidden=!!jfAccount;
+      // Se já está autenticado, nenhuma opção de login fica visível.
+      // Ao sair da conta, o reload volta à primeira janela com o botão.
       if(jfAccount){
         jfProfile.name=jfAccount.name||"Macaco";
         jfProfile.avatar=jfAccount.avatar||"";
@@ -1510,7 +1524,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         if(joined)socket.emit("profile-update",{profile:jfProfile});
         socket.emit("friends-list");
       }
-    }catch(e){jfAccount=null;jfAccountConfigured=false;}
+    }catch(e){
+      jfAccount=null;jfAccountConfigured=false;
+      $("jfGoogleLogin").hidden=true;
+      $("jfGoogleLogout").hidden=true;
+      $("jfEntryAccountLoggedIn").hidden=true;
+      $("jfEntryAccountHint").hidden=false;
+    }
     jfRenderPeople();jfRenderFriends();
   }
   $("jfGoogleLogout").addEventListener("click",async()=>{
