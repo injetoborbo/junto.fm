@@ -203,7 +203,7 @@ async function dressMiniPlayer(selection,render,monkey,isActive){
       const width=type==="palha"?.94:.92;
       const s=width/Math.max(measure.size.x,measure.size.z,1e-6);
       const brim=measure.box.min.y+measure.size.y*.12;
-      hat.scale.setScalar(s);
+      hat.scale.setScalar(s/scale);
       // O chapéu mantém o apoio no topo da cabeça na posição original.
       // Converter coordenadas do mundo para o modelo normalizado.
       const worldTarget=new THREE.Vector3(
