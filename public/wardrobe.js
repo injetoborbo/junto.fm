@@ -154,6 +154,10 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       part.position.set(rawX+(1-s)*measure.center.x,
         (1-s)*measure.center.y-.00018,
         (1-s)*measure.center.z+.00012);
+    // Medidas reais dos GLBs: as armações têm ~0,0062 de largura, e a
+    // superfície frontal da cabeça chega a Z≈0,0030. Afastar ~0,00042
+    // no eixo frontal LOCAL do Head (e não no Z global da sala) mantém
+    // as lentes à frente do rosto durante dança, caminhada e pose sentada.
     },true,headBone,animated?.00042:0);
   }
   if(selection.headphones!=="nenhum"){
