@@ -206,6 +206,44 @@ main{max-width:1080px}
 .jf-suggest-form{margin-top:15px}
 .jf-suggest-form .row{align-items:stretch}
 .jf-suggest-form input{flex:1 1 230px}
+.jf-song-results{display:grid;gap:6px;margin-top:9px;max-height:240px;overflow:auto}
+.jf-song-result{width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--jf-secondary);border-radius:9px;background:var(--jf-glow);color:var(--ink);cursor:pointer}
+.jf-song-result img{width:42px;height:42px;object-fit:cover;border-radius:5px}
+.jf-song-result span{display:grid;gap:2px;min-width:0}.jf-song-result small{opacity:.8}
+.jf-song-confirmation{margin-top:9px;padding:10px;border:1px solid var(--jf-secondary);border-radius:9px}
+.jf-song-confirmation[hidden]{display:none!important}
+.jf-song-confirmation .row{margin-top:8px;gap:8px}
+
+/* Pesquisa de músicas: acompanha as variáveis do tema ativo. */
+.jf-song-result{background:linear-gradient(160deg,color-mix(in srgb,var(--jf-glow) 48%,var(--card,#e8f1ff)),color-mix(in srgb,var(--jf-secondary) 16%,var(--card,#dce9fa)));box-shadow:inset 0 1px #ffffff66}
+.jf-song-result:hover,.jf-song-result:focus-visible{border-color:var(--jf-secondary);filter:brightness(1.08);outline-offset:2px}
+.jf-song-confirmation{background:color-mix(in srgb,var(--jf-glow) 34%,transparent);color:var(--ink)}
+/* Windows XP / Classic: azul metálico escuro, não o azul pastel padrão. */
+html[data-jf-theme="classic"] .jf-song-result{
+  color:#f5f9ff;border:1px solid #234b83;border-radius:5px;
+  background:linear-gradient(180deg,#829dbb 0%,#456c9c 13%,#244d84 48%,#153764 52%,#214c84 100%);
+  box-shadow:inset 0 1px 0 #d8e8fb9c,inset 0 -1px 0 #09284d,0 2px 5px #163b6940;
+  text-shadow:0 1px 1px #071c3b;
+}
+html[data-jf-theme="classic"] .jf-song-result small{color:#d8e7fb;opacity:1}
+html[data-jf-theme="classic"] .jf-song-result:hover,
+html[data-jf-theme="classic"] .jf-song-result:focus-visible{
+  background:linear-gradient(180deg,#a2b8d0,#648cb9 18%,#31639b 50%,#205080 52%,#356da3);
+  border-color:#9bc3f3;filter:none;
+}
+html[data-jf-theme="classic"] .jf-song-confirmation{
+  color:#f5faff;border:1px solid #244c7e;border-radius:5px;
+  background:linear-gradient(#6489b5,#315d93 43%,#1b457c 52%,#173965);
+  box-shadow:inset 0 1px 0 #c8dffb99,0 2px 7px #09284a55;
+}
+html[data-jf-theme="classic"] .jf-song-confirmation strong{color:#ffffff;text-shadow:0 1px 2px #102e57}
+html[data-jf-theme="classic"] .jf-song-confirmation .btn{background:linear-gradient(#d9e9ff,#82addf 48%,#356eb1 52%,#204e8d);border:1px solid #153d75;color:#fff;text-shadow:0 1px #193b6d}
+html[data-jf-theme="classic"] .jf-song-confirmation .btn.secondary{background:linear-gradient(#eff4fa,#c0d2e9 48%,#8caacb 52%,#6486ac);color:#173a65;text-shadow:none}
+html[data-jf-theme="aero"] .jf-song-result{color:#f5ffff;background:linear-gradient(#155b80cc,#07314dec);border-color:#60d9f0}
+html[data-jf-theme="aero"] .jf-song-result small{color:#d3faff}
+html[data-jf-theme="aero"] .jf-song-confirmation{background:linear-gradient(#135c81da,#06334fef);color:#f5ffff;border-color:#60d9f0}
+
+
 .jf-suggestion-popup[hidden]{display:none!important}
 .jf-suggestion-popup{position:fixed;left:22px;right:auto;bottom:22px;z-index:1100;width:min(360px,calc(100vw - 28px));padding:17px;border:1px solid var(--jf-secondary);border-radius:16px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-glow) 92%,#16233b),color-mix(in srgb,var(--jf-glow) 72%,#070e20));box-shadow:inset 0 1px 0 #ffffff55,0 12px 45px #0009,0 0 24px color-mix(in srgb,var(--jf-secondary) 25%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:jfModalIn .2s ease-out}
 .jf-popup-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:var(--jf-secondary);font-size:10px;font-weight:900;letter-spacing:1.2px}
@@ -317,6 +355,23 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 .jf-room-entry-panel{width:min(100%,680px);margin:0 auto 24px}
 .jf-room-entry-actions[hidden],#jfLeaveRoom[hidden]{display:none!important}
 body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
+.jf-dance-launch{position:fixed;bottom:16px;left:16px;z-index:940;width:auto;min-width:174px;margin:0;font-size:12px;box-shadow:0 6px 26px #142e5770}
+.jf-dance-launch[hidden]{display:none!important}
+#jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(568px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
+#jfDanceModal[hidden]{display:none!important}
+#jfDanceModal .jf-dance-modal{box-shadow:0 16px 55px #10254388,0 0 0 2px #cbe7ff;max-height:calc(100dvh - 28px);overflow:auto}
+#jfDanceModal .jf-dance-modal .jf-modal-head{position:sticky;top:0;z-index:2;padding:4px 0 7px;background:var(--jf-panel,#f1f7ff)}
+
+.jf-dance-modal{width:100%;max-width:100%;overflow:auto;padding:13px!important}
+.jf-dance-modal .jf-modal-head{margin-bottom:9px}
+.jf-dance-toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 10px 10px}
+.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:48vh;min-height:235px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
+.jf-dance-viewport,.jf-dance-viewport canvas{width:100%;height:100%;display:block;touch-action:manipulation}
+.jf-dance-actions{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0 4px}
+.jf-dance-actions button{font-size:12px;padding:8px 11px}
+.jf-dance-actions button.active{outline:2px solid #185bb3;outline-offset:2px}
+.jf-dance-help{text-align:center;margin:10px auto 0;max-width:620px}
+@media(max-width:600px){.jf-dance-modal{padding:9px!important}.jf-dance-stage{min-height:210px;aspect-ratio:4/3;max-height:41dvh}.jf-dance-toolbar{font-size:11px}.jf-dance-launch{bottom:10px;left:10px}#jfDanceModal{bottom:8px;left:8px;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}#jfDanceModal .jf-dance-modal{max-height:calc(100dvh - 16px)}}
 body:not(.jf-in-room) .jf-topbar{justify-content:center}
 body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
 /* Na tela de entrada, exibir apenas Perfil e Trajes no canto superior direito. */
@@ -563,6 +618,7 @@ html[data-jf-theme="classic"] .track-times{
   </section>
   <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
     <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
+    <button type="button" class="btn jf-dance-launch" id="jfOpenDance">🪩 Abrir pista de dança</button>
     <p class="small" style="margin-top:0">Participantes conectados agora.</p>
     <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
   </aside>
@@ -615,7 +671,12 @@ html[data-jf-theme="classic"] .track-times{
     </div>
     <div class="jf-suggest-form">
       <label for="jfSuggestionText">Pedir música na fila do DJ</label>
-      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Pedir música</button></div>
+      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" autocomplete="off" placeholder="Pesquise música ou artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Buscar música</button></div>
+      <div id="jfSongResults" class="jf-song-results" aria-live="polite"></div>
+      <div id="jfSongConfirmation" class="jf-song-confirmation" hidden>
+        <strong id="jfSongChosen"></strong>
+        <div class="row"><button class="btn" id="jfConfirmSong" type="button">Confirmar pedido</button><button class="btn secondary" id="jfCancelSong" type="button">Cancelar</button></div>
+      </div>
       <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma música.</p>
     </div>
   </section>
@@ -640,6 +701,22 @@ html[data-jf-theme="classic"] .track-times{
       </div>
     </div>
     <div class="row" style="margin-top:14px"><button class="btn" type="button" id="jfSaveWardrobe">Salvar traje</button><span class="small">Gratuito, sem precisar criar conta.</span></div>
+  </section>
+</div>
+<div class="jf-modal-backdrop" id="jfDanceModal" hidden>
+  <section class="panel jf-dance-modal" role="dialog" aria-modal="false" aria-labelledby="jfDanceTitle">
+    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 Junto Club</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
+    <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
+    <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
+    <div class="jf-dance-actions" aria-label="Escolha sua dança">
+      <button class="btn secondary active" data-jf-dance="idle" aria-pressed="true" type="button">🧍 Parado</button>
+      <button class="btn secondary" data-jf-dance="shake" aria-pressed="false" type="button">🐒 Chacoalhar</button>
+      <button class="btn secondary" data-jf-dance="macarena" aria-pressed="false" type="button">🙌 Macarena</button>
+      <button class="btn secondary" data-jf-dance="party" aria-pressed="false" type="button">🕺 Dança</button>
+      <button class="btn secondary" data-jf-dance="capoeira" aria-pressed="false" type="button">🥋 Capoeira</button>
+      <button class="btn secondary" data-jf-dance="groove" aria-pressed="false" type="button">🎉 Dança 2</button>
+    </div>
+    <p class="small jf-dance-help">Clique em um quadrado vazio para o macaco andar até lá. Cada pessoa escolhe sua própria dança, que aparece para todos na mesma sala.</p>
   </section>
 </div>
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
@@ -751,6 +828,7 @@ html[data-jf-theme="classic"] .track-times{
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
+<script type="module" src="/dance-floor.js"></script>
 <script>
 (() => {
   // Stable identity for one browser tab across a reload or reconnect.
@@ -1237,7 +1315,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -1355,6 +1433,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       else{resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
     }else resetSession();
     if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
+    window.dispatchEvent(new Event("jf-dance-room-left"));
     joined=false;room="";jfRoomOwnerId=null;jfRoomOwner=false;
     $("room").value="";
     $("remoteAudio").pause();$("remoteAudio").srcObject=null;
@@ -1386,30 +1465,79 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a música.' : 'O transmissor pediu para passar à próxima música.';
     setStatus('Comando recebido. O controle da música ainda é manual neste protótipo.', true);
   });
-  let jfSuggestionEnabled = false;
+  let jfSuggestionEnabled=false,jfSelectedSong=null,jfSongSearchTimer=null,jfSongSearchSeq=0,jfSongPending=false;
+  function jfSongStatus(message){$("jfSuggestionStatus").textContent=message;}
   function jfUpdateSuggestionControls(){
-    $("jfSendSuggestion").disabled = !joined || !$("jfSuggestionText").value.trim();
-    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative os pedidos automáticos acima." : "Os pedidos serão enviados à fila real do Spotify se o DJ ativar a opção.");
+    $("jfSendSuggestion").disabled=!joined||jfSongPending||$("jfSuggestionText").value.trim().length<2;
+    $("jfConfirmSong").disabled=!joined||jfSongPending||!jfSelectedSong;
+    if(!joined)jfSongStatus("Entre na sala para sugerir uma música.");
+  }
+  function jfSelectSong(song){
+    jfSelectedSong=song;
+    $("jfSongResults").replaceChildren();
+    $("jfSongConfirmation").hidden=false;
+    $("jfSongChosen").textContent=song.title+" — "+song.artist;
+    jfSongStatus("Confira a música e clique em Confirmar pedido.");
+    jfUpdateSuggestionControls();
+  }
+  async function jfSearchSongs(){
+    const q=$("jfSuggestionText").value.trim();
+    const seq=++jfSongSearchSeq;
+    jfSelectedSong=null;
+    $("jfSongConfirmation").hidden=true;
+    const results=$("jfSongResults");results.replaceChildren();
+    if(!joined||q.length<2){jfUpdateSuggestionControls();return;}
+    jfSongStatus("Procurando músicas no catálogo...");
+    try{
+      const response=await fetch("/api/music/search?q="+encodeURIComponent(q),{cache:"no-store"});
+      const body=await response.json();
+      if(seq!==jfSongSearchSeq)return;
+      if(!response.ok)throw Error(body.error||"Busca indisponível.");
+      const tracks=Array.isArray(body.tracks)?body.tracks:[];
+      if(!tracks.length){jfSongStatus("Nenhuma faixa encontrada. Tente o nome do artista e da música.");return;}
+      jfSongStatus("Selecione a música desejada:");
+      for(const song of tracks){
+        const button=document.createElement("button");button.type="button";button.className="jf-song-result";
+        if(song.artwork&&/^https:\/\//.test(song.artwork)){
+          const img=document.createElement("img");img.src=song.artwork;img.alt="Capa do álbum";img.loading="lazy";button.append(img);
+        }
+        const names=document.createElement("span"),title=document.createElement("strong"),artist=document.createElement("small");
+        title.textContent=song.title;artist.textContent=song.artist;
+        names.append(title,artist);button.append(names);
+        button.addEventListener("click",()=>jfSelectSong(song));results.append(button);
+      }
+    }catch(error){if(seq===jfSongSearchSeq)jfSongStatus(error.message||"Falha na busca.");}
   }
   $("jfReceiveSuggestions").addEventListener("change",()=>{
     jfSuggestionEnabled=$("jfReceiveSuggestions").checked;
     socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled});
-    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Solicitando ativação da fila automática...":"Fila automática desativada.";
+    jfSongStatus(jfSuggestionEnabled?"Solicitando ativação da fila automática...":"Fila automática desativada.");
   });
-  $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
-  $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
-  $("jfSendSuggestion").addEventListener("click",()=>{
-    const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
-    if(!joined||!suggestion)return;
-    socket.emit("music-suggestion",{room,suggestion});
-    $("jfSuggestionText").value="";
+  $("jfSuggestionText").addEventListener("input",()=>{
+    clearTimeout(jfSongSearchTimer);++jfSongSearchSeq;
+    jfSelectedSong=null;$("jfSongConfirmation").hidden=true;$("jfSongResults").replaceChildren();
     jfUpdateSuggestionControls();
-    $("jfSuggestionStatus").textContent="Pedido enviado. Aguardando confirmação do Spotify do DJ...";
+    if(joined&&$("jfSuggestionText").value.trim().length>=2)jfSongSearchTimer=setTimeout(jfSearchSongs,350);
   });
-  // Nunca informar sucesso antes de o Spotify confirmar a inclusão.
+  $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();jfSearchSongs();}});
+  $("jfSendSuggestion").addEventListener("click",jfSearchSongs);
+  $("jfCancelSong").addEventListener("click",()=>{
+    jfSelectedSong=null;$("jfSongConfirmation").hidden=true;
+    jfSongStatus("Escolha outra música para sugerir.");
+    jfSearchSongs();
+  });
+  $("jfConfirmSong").addEventListener("click",()=>{
+    if(!joined||jfSongPending||!jfSelectedSong)return;
+    const suggestion=(jfSelectedSong.title+" — "+jfSelectedSong.artist).slice(0,180);
+    jfSongPending=true;jfUpdateSuggestionControls();
+    socket.emit("music-suggestion",{room,suggestion});
+    jfSongStatus("Pedido confirmado. Aguardando o Spotify do DJ adicionar à fila...");
+    $("jfSongConfirmation").hidden=true;$("jfSongResults").replaceChildren();
+  });
   socket.on("music-queued",({title,artist,fromName}={})=>{
     const description=String(title||"Música")+" — "+String(artist||"");
-    $("jfSuggestionStatus").textContent="✓ Na fila do Spotify: "+description;
+    jfSongPending=false;jfSelectedSong=null;jfUpdateSuggestionControls();
+    jfSongStatus("✓ Música adicionada à fila do Spotify: "+description);
     if(isSender){
       $("jfPopupSong").textContent=description.slice(0,180);
       $("jfPopupFrom").textContent="Adicionada automaticamente · Pedido de "+String(fromName||"Ouvinte").slice(0,24);
@@ -1417,13 +1545,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }
   });
   socket.on("suggestion-settings-result",({enabled,error}={})=>{
-    jfSuggestionEnabled=Boolean(enabled);
-    $("jfReceiveSuggestions").checked=jfSuggestionEnabled;
-    if(error)$("jfSuggestionStatus").textContent=error;
-    else if(jfSuggestionEnabled)$("jfSuggestionStatus").textContent="Fila automática ativada: pedidos entram no Spotify do DJ.";
+    jfSuggestionEnabled=Boolean(enabled);$("jfReceiveSuggestions").checked=jfSuggestionEnabled;
+    if(error)jfSongStatus(error);
+    else if(jfSuggestionEnabled)jfSongStatus("Fila automática ativada: pedidos entram no Spotify do DJ.");
   });
   socket.on("music-suggestion-error",({error}={})=>{
-    $("jfSuggestionStatus").textContent=String(error||"Não foi possível adicionar a música à fila.");
+    jfSongPending=false;jfUpdateSuggestionControls();
+    jfSongStatus(String(error||"Não foi possível adicionar a música à fila."));
   });
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
@@ -1439,6 +1567,14 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   const jfPeerClientIds=new Map();
   const jfPeerRegistered=new Map();
   const jfPeerSkins=new Map();
+  window.jfDanceBridge={
+    socket,
+    getRoom:()=>joined?room:null,
+    getProfile:()=>jfProfile,
+    getPeerProfile:id=>jfPeerProfiles.get(id),
+    getSkin:()=>jfMySkin(),
+    getPeerSkin:id=>jfPeerSkins.get(id)||"default"
+  };
   let jfLocalHeroPreview=false;
   function jfMySkin(){return jfLocalHeroPreview||document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default";}
   function jfPublishOwnSkin(){
@@ -1529,6 +1665,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         jfProfile.avatar=jfAccount.avatar||"";
         jfProfile.motto=jfAccount.motto||"";
         jfProfile.wardrobe=jfAccount.wardrobe||jfProfile.wardrobe;
+        window.dispatchEvent(new CustomEvent("jf-local-profile-updated",{detail:{wardrobe:jfProfile.wardrobe}}));
         $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;
         jfRenderAvatar();
         if(joined)socket.emit("profile-update",{profile:jfProfile});
@@ -1874,22 +2011,33 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     renderer.outputColorSpace=THREE.SRGBColorSpace;
     renderer.setClearColor(0x000000,0);
     renderer.domElement.className="jf-glb-canvas";
-    renderer.domElement.setAttribute("aria-label","Modelo 3D do macaco DJ");
+    renderer.domElement.setAttribute("aria-label","Mascote 3D do miniplayer");
     stage.appendChild(renderer.domElement);
     window.dispatchEvent(new Event("jf-player-stage-ready"));
     scene.add(new THREE.HemisphereLight(0xffffff,0x51406b,2.2));
     const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);
     const rim=new THREE.DirectionalLight(0x9deaff,1.1);rim.position.set(-4,2,-3);scene.add(rim);
     const root=new THREE.Group();scene.add(root);
-    const gltf=await new GLTFLoader().loadAsync("/macaco.glb");
+    // Modelo independente do miniplayer. A pista, os participantes e o guarda-roupa
+    // continuam usando /macaco.glb. Fallback apenas enquanto o novo GLB não foi copiado.
+    const gltf=await new GLTFLoader().loadAsync("/meshypint-player.glb").catch(async error=>{
+      console.warn("Miniplayer: modelo novo não encontrado. Copie public/meshypint-player.glb.",error);
+      return new GLTFLoader().loadAsync("/macaco.glb");
+    });
     const model=gltf.scene;
     root.add(model);
+    // O GLB novo não tem rig: exibir a pose que já veio modelada,
+    // sem reaplicar o FBX antigo de sentado.
     const box=new THREE.Box3().setFromObject(model);
     const size=box.getSize(new THREE.Vector3());
     const center=box.getCenter(new THREE.Vector3());
-    model.position.sub(center);
     const maxDim=Math.max(size.x,size.y,size.z)||1;
-    model.scale.setScalar(2.25/maxDim);
+    const modelScale=1.88/maxDim;
+    model.scale.setScalar(modelScale);
+    model.position.copy(center).multiplyScalar(-modelScale);
+    // O novo GLB inclui a mesa de DJ na parte inferior. Subir o conjunto
+    // sem mudar modelScale para a mesa não ser cortada pelo rodapé do player.
+    model.position.y+=.08;
     // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
     const patriotGltf=await new GLTFLoader().loadAsync("/patrianocape_pose_heroica_final.glb").catch(error=>{
       console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);

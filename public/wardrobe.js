@@ -70,6 +70,7 @@ function dress(root,selection,render,monkey){
   if(headBone)headBone.getWorldPosition(worldHead);
   if(topBone)topBone.getWorldPosition(worldTop);
   if(neckBone)neckBone.getWorldPosition(worldNeck);
+
   // Corrige o desvio lateral do GLB antigo: a cabeça NÃO fica em X=0.
   const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
   const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
@@ -166,7 +167,157 @@ function dress(root,selection,render,monkey){
     });
   };
 }
-function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
+// Encaixe INDEPENDENTE para o mascote sentado do miniplayer.
+// Cada GLB é clonado de forma exclusiva; offsets nunca alteram dress() usado
+// pelos participantes, guarda-roupa e pista. Calibrado em unidades do macaco.glb.
+async function dressMiniPlayer(selection,render,monkey,root,isActive){
+  const copies=[],ownMaterials=[];
+  const head=getBone(monkey,"Head");
+  const top=getBone(monkey,"HeadTop_End");
+  const neck=getBone(monkey,"Neck");
+  monkey.updateMatrixWorld(true);
+  const headPos=head?.getWorldPosition(new THREE.Vector3())||new THREE.Vector3();
+  const topPos=top?.getWorldPosition(new THREE.Vector3())||headPos.clone();
+  const neckPos=neck?.getWorldPosition(new THREE.Vector3())||headPos.clone();
+  const scale=monkey.scale.x||1;
+  const headHeight=topPos.distanceTo(headPos)/scale||.0064;
+  const rawX=(headPos.x-monkey.position.x)/scale;
+  const neckY=(neckPos.y-monkey.position.y)/scale;
+  const neckZ=(neckPos.z-monkey.position.z)/scale;
+  const add=async(file,configure,anchor,parent=monkey)=>{
+    const asset=await getAsset(file);
+    if(!asset||!isActive())return;
+    const part=asset.clone(true);part.name="jfMini_"+file;
+    const box=getBounds(part);
+    parent.add(part);
+    configure(part,box);
+    root.updateMatrixWorld(true);
+    if(anchor)anchor.attach(part);
+    copies.push(part);
+    render();
+  };
+  const jobs=[];
+  if(selection.hat==="palha"||selection.hat==="branco"){
+    const type=selection.hat;
+    jobs.push((async()=>{
+      const asset=await getAsset(type);
+      if(!asset||!isActive()||!head||!top)return;
+      // Ancoragem DIRETA no osso Head, usando o HeadTop como referência
+      // anatômica. Não converter a posição entre monkey e normalized.
+      monkey.updateMatrixWorld(true);
+      const hat=asset.clone(true);
+      hat.name="jfMiniHat_"+type;
+      const measure=getBounds(hat);
+      const worldScale=head.getWorldScale(new THREE.Vector3()).x||1;
+      const desiredWidth=type==="palha"?.94:.92;
+      const nativeScale=desiredWidth/
+        (Math.max(measure.size.x,measure.size.z,1e-6)*worldScale);
+      const topLocal=head.worldToLocal(top.getWorldPosition(new THREE.Vector3()));
+      const brim=measure.box.min.y+measure.size.y*.12;
+      head.add(hat);
+      hat.scale.setScalar(nativeScale);
+      hat.position.set(
+        topLocal.x-measure.center.x*nativeScale,
+        topLocal.y*.80-brim*nativeScale,
+        topLocal.z-measure.center.z*nativeScale+.05/worldScale
+      );
+      copies.push(hat);
+      render();
+    })());
+  }else if(selection.hat!=="nenhum"){
+    jobs.push(add(selection.hat,part=>{part.position.x=rawX;},head));
+  }
+  if(selection.glasses!=="nenhum"){
+    jobs.push(add(selection.glasses,(part,measure)=>{
+      const s=.88;
+      part.scale.setScalar(s);
+      // Os óculos do GLB em pé ficam perto da testa ao sentar.
+      // Descer 22% da distância Head -> HeadTop e aproximar do rosto.
+      part.position.set(
+        rawX+(1-s)*measure.center.x,
+        (1-s)*measure.center.y-.00018,
+        (1-s)*measure.center.z+.00012
+      );
+    },head));
+  }
+  if(selection.headphones!=="nenhum"){
+    const wearingHat=selection.hat!=="nenhum";
+    jobs.push(add("fone",(part,measure)=>{
+      part.traverse(node=>{
+        if(!node.isMesh||node.name.toLowerCase().includes("interior"))return;
+        const mats=Array.isArray(node.material)?node.material:[node.material];
+        const replacement=mats.map(mat=>{
+          const copy=mat.clone();
+          copy.color?.set(selection.headphones==="rosa"?"#e06ba6":"#368dd0");
+          ownMaterials.push(copy);return copy;
+        });
+        node.material=Array.isArray(node.material)?replacement:replacement[0];
+      });
+      const s=wearingHat?.78:.95;
+      part.scale.setScalar(s);
+      if(wearingHat){
+        part.position.set(rawX-measure.center.x*s,
+          neckY-measure.center.y*s-.0005,
+          neckZ-measure.center.z*s+.0003);
+      }else{
+        part.position.set(rawX+(1-s)*measure.center.x,
+          (1-s)*measure.center.y-.00005,
+          (1-s)*measure.center.z);
+      }
+    },wearingHat?neck:head));
+  }
+  if(selection.outfit==="rosa"){
+    jobs.push(add("vestido",part=>{part.position.x=rawX;},null));
+  }
+  await Promise.all(jobs);
+  return ()=>{
+    copies.forEach(part=>part.removeFromParent());
+    ownMaterials.forEach(mat=>mat.dispose());
+  };
+}
+// Pose Mixamo opcional, exclusiva do macaco ao lado do player.
+let playerSittingPosePromise=null;
+function loadPlayerSittingPose(){
+  if(!playerSittingPosePromise){
+    playerSittingPosePromise=new GLTFLoader().loadAsync("/poses/female-sitting.glb").catch(error=>{
+      console.warn("Pose sentada do player ainda não disponível:",error);
+      return null;
+    });
+  }
+  return playerSittingPosePromise;
+}
+function applyPlayerSittingPose(monkey,source){
+  const clip=source?.animations?.find(anim=>anim.tracks?.length);
+  if(!clip){console.warn("Pose sentada: GLB sem animação utilizável.");return false;}
+  const targets=new Map();
+  const clean=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  monkey.traverse(obj=>{if(obj.isBone)targets.set(clean(obj.name),obj);});
+  const sources=new Map();
+  source.scene.traverse(obj=>{if(obj.name&&/^mixamorig/i.test(obj.name))sources.set(clean(obj.name),obj);});
+  const time=Math.min(.5,clip.duration*.5);
+  let applied=0;
+  const original=new THREE.Quaternion(),animated=new THREE.Quaternion(),result=new THREE.Quaternion();
+  for(const track of clip.tracks){
+    const dot=track.name.lastIndexOf(".");
+    if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+    const key=clean(track.name.slice(0,dot)),bone=targets.get(key),src=sources.get(key);
+    // O FBX sentado inclina/torce muito pescoço e cabeça. Evitar esses
+    // dois canais preserva o rosto (e os acessórios) do macaco original.
+    if(key==="head"||key==="neck")continue;
+    if(!bone||!src)continue;
+    const interpolation=track.createInterpolant();
+    const values=interpolation.evaluate(time);
+    if(!values||values.length!==4)continue;
+    original.copy(src.quaternion).invert();
+    animated.fromArray(values);
+    result.copy(original).multiply(animated);
+    bone.quaternion.multiply(result).normalize();
+    applied++;
+  }
+  console.info("Pose sentada Mixamo: ossos aplicados",applied,"de",clip.tracks.length,"canais");
+  return applied>=5;
+}
+function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false}={}){
   if(!base)return null;
   const width=preview?248:64,height=preview?248:68;
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
@@ -186,9 +337,30 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
   const normalized=new THREE.Group();
   monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
   normalized.add(monkey);
-  const disposeOutfit=dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera),monkey);
   scene.add(normalized);
   let active=true;
+  let disposeOutfit=()=>{};
+  const renderOutfit=()=>{if(active)renderer.render(scene,camera);};
+  if(playerSitting){
+    // Clones e encaixes próprios no miniplayer, antes de aplicar a pose.
+    (async()=>{
+      try{
+        const dispose=await dressMiniPlayer(sanitize(wardrobe),renderOutfit,monkey,normalized,()=>active);
+        if(!active){dispose();return;}
+        disposeOutfit=dispose;
+        const pose=await loadPlayerSittingPose();
+        if(!active)return;
+        if(pose&&applyPlayerSittingPose(monkey,pose)){
+          const box=new THREE.Box3().setFromObject(normalized,true);
+          if(!box.isEmpty()){
+            normalized.position.sub(box.getCenter(new THREE.Vector3()));
+            normalized.position.y-=.12;
+          }
+        }else console.warn("Miniplayer: pose sentada indisponível.");
+        renderOutfit();
+      }catch(error){console.warn("Miniplayer: falha ao montar acessórios próprios",error);}
+    })();
+  }
   if(skin==="capitao-patria"){
     // Render independente da mesma skin 3D do player, sem editar o GLB base.
     getAsset("hero").then(asset=>{
@@ -253,9 +425,11 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
     });
   }
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
-  camera.position.set(0,.04,preview?4.25:4.0);camera.lookAt(0,.035,0);
+  camera.position.set(0,.04,playerSitting?3.25:preview?4.25:4.0);camera.lookAt(0,.035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
+  // A câmera precisa existir antes que dress() possa solicitar um render.
+  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey);
   let dragStart=null;
   const down=event=>{
     if(!preview)return;
@@ -289,32 +463,9 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
     renderer.dispose();target.replaceChildren();
   },renderer};
 }
-// Mascote do player: a roupa vem do perfil do transmissor (Socket.IO),
-// nunca do perfil de quem está assistindo.
-let playerInstance=null;
-const playerStage=document.querySelector("#jfMiniDj .jf-dj-stage");
-const playerHolder=document.createElement("div");
-playerHolder.className="jf-transmitter-wardrobe";
-playerHolder.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none;display:none";
-playerStage?.appendChild(playerHolder);
-function updatePlayerMonkey(detail={}){
-  const adminCostume=document.getElementById("jfMiniDj")?.classList.contains("jf-homelander");
-  playerInstance?.dispose();playerInstance=null;
-  const shown=Boolean(detail.id && !adminCostume && playerStage && base);
-  playerHolder.style.display=shown?"block":"none";
-  playerStage?.querySelector("canvas.jf-glb-canvas")?.style.setProperty("visibility",shown?"hidden":"visible");
-  if(shown){
-    playerInstance=makeScene(playerHolder,sanitize(detail.wardrobe),{preview:true});
-    playerHolder.style.pointerEvents="none";
-    // O mascote do player acompanha a transmissão, não gira pelo mouse.
-  }
-}
-window.addEventListener("jf-player-monkey",event=>updatePlayerMonkey(event.detail));
-window.addEventListener("jf-player-stage-ready",()=>updatePlayerMonkey(window.jfLastTransmitterAppearance||{}));
-if(playerStage){
-  new MutationObserver(()=>updatePlayerMonkey(window.jfLastTransmitterAppearance||{}))
-    .observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
-}
+// Miniplayer: a cena principal em index.html renderiza o GLB Meshypint.
+// Não sobrepor o macaco do guarda-roupa neste palco; os acessórios do
+// guarda-roupa continuam normalmente na prévia e nos participantes.
 function readSaved(){
   try{return sanitize(JSON.parse(localStorage.getItem("junto_profile")||"{}").wardrobe);}catch{return defaults();}
 }
@@ -371,3 +522,40 @@ const people=$("jfPeople");
 if(people)observer.observe(people,{childList:true,subtree:false});
 window.addEventListener("jf-wardrobe-save",()=>{selection=readSaved();refreshPeople();});
 refreshPeople();
+
+/* API reaproveitável da pista isométrica: usa a mesma rigagem e os mesmos GLBs.
+   A pista é pequena e evita criar WebGLRenderers por participante. */
+export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{}){
+  if(!base)throw Error("Modelo macaco.glb indisponível.");
+  const root=new THREE.Group();
+  const monkey=cloneSkeleton(base.scene);
+  const bounds=new THREE.Box3().setFromObject(monkey);
+  const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+  const scale=1.50/Math.max(size.x,size.y,size.z,.0001);
+  monkey.scale.setScalar(scale);
+  monkey.position.copy(center).multiplyScalar(-scale);
+  root.add(monkey);
+  let stillActive=true;
+  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey);
+  if(skin==="capitao-patria"){
+    const asset=await getAsset("hero");
+    if(asset&&stillActive){
+      const hero=cloneSkeleton(asset);
+      const hbox=new THREE.Box3().setFromObject(hero);
+      const sz=hbox.getSize(new THREE.Vector3()),mid=hbox.getCenter(new THREE.Vector3());
+      const hs=1.5/Math.max(sz.x,sz.y,sz.z,.0001);
+      hero.scale.setScalar(hs);hero.position.copy(mid).multiplyScalar(-hs);
+      root.add(hero);monkey.visible=false;
+      getAsset("heroCape").then(cape=>{
+        if(!cape||!stillActive)return;
+        const copy=cape.clone(true),box=new THREE.Box3().setFromObject(copy);
+        const csz=box.getSize(new THREE.Vector3()),cc=box.getCenter(new THREE.Vector3());
+        const cs=1.05/Math.max(csz.y,.001);
+        copy.scale.setScalar(cs);copy.position.copy(cc).multiplyScalar(-cs);
+        const mount=new THREE.Group();mount.position.set(0,.23,-.27);mount.add(copy);root.add(mount);
+        requestRender();
+      });
+    }
+  }
+  return {group:root,rig:monkey,dispose:()=>{stillActive=false;disposeClothes();}};
+}

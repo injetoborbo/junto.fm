@@ -29,7 +29,8 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomTransmitters = new Map();
-const roomOwners = new Map(); // room -> socket ID do criador / sucessor
+const roomOwners = new Map();
+const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
 const roomChatMessages = new Map();
 const roomAccess = new Map();
 const roomQueueJobs = new Map(); // Serializa pedidos por sala; respeita a ordem de chegada.
@@ -233,7 +234,7 @@ async function findSpotifyQueueTrack(token, suggestion) {
   const title = normalizeMusicText(parts[0]);
   const artist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
   const endpoint = new URL("https://api.spotify.com/v1/search");
-  endpoint.search = new URLSearchParams({ q: suggestion, type: "track", limit: "15", market: "BR" }).toString();
+  endpoint.search = new URLSearchParams({ q: [parts[0],parts.slice(1).join(" ")].filter(Boolean).join(" "), type: "track", limit: "30", market: "BR" }).toString();
   const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
   if (!response.ok) {
     if (response.status === 403) throw new Error("O aplicativo Spotify não tem acesso à busca de faixas. Confira as permissões da integração.");
@@ -241,11 +242,20 @@ async function findSpotifyQueueTrack(token, suggestion) {
     throw new Error("Não consegui consultar o catálogo do Spotify (HTTP " + response.status + ").");
   }
   const body = await response.json();
-  return (body.tracks?.items || []).find(track =>
-    normalizeMusicText(track.name) === title &&
-    (!artist || (track.artists || []).some(person => normalizeMusicText(person.name) === artist)) &&
-    /^spotify:track:[A-Za-z0-9]{22}$/.test(track.uri || "")
-  ) || null;
+  const tracks=(body.tracks?.items||[]).filter(track=>/^spotify:track:[A-Za-z0-9]{22}$/.test(track.uri||""));
+  const exact=tracks.find(track=>normalizeMusicText(track.name)===title&&
+    (!artist||(track.artists||[]).some(person=>normalizeMusicText(person.name)===artist)));
+  if(exact)return exact;
+  // Aceitar variações de remaster, ao vivo e sufixos quando o artista coincide.
+  // Nunca escolher faixa só pela posição no resultado: exigir correspondência.
+  return tracks.find(track=>{
+    const name=normalizeMusicText(track.name);
+    const artistMatch=!artist||(track.artists||[]).some(person=>{
+      const n=normalizeMusicText(person.name);
+      return n===artist||n.includes(artist)||artist.includes(n);
+    });
+    return artistMatch&&(name===title||name.startsWith(title+" ")||title.startsWith(name+" "));
+  })||null;
 }
 async function addSpotifyQueueTrack(token, uri) {
   const endpoint = new URL("https://api.spotify.com/v1/me/player/queue");
@@ -262,6 +272,31 @@ async function addSpotifyQueueTrack(token, uri) {
   if (response.status === 429) throw new Error("O Spotify limitou os pedidos. Aguarde um pouco.");
   throw new Error("Não foi possível adicionar à fila do Spotify (HTTP " + response.status + "). " + message.slice(0, 100));
 }
+
+// Busca pública para sugerir faixas com nome e artista antes de confirmar.
+// Não acessa credenciais Spotify do usuário nem revela tokens do DJ.
+app.get("/api/music/search", async (req,res)=>{
+  const q=String(req.query.q||"").trim().slice(0,100);
+  if(q.length<2)return res.json({tracks:[]});
+  try{
+    const endpoint=new URL("https://itunes.apple.com/search");
+    endpoint.search=new URLSearchParams({term:q,entity:"song",media:"music",country:"BR",limit:"30"}).toString();
+    const response=await fetch(endpoint,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(6500)});
+    if(!response.ok)throw Error("Catálogo indisponível");
+    const body=await response.json();
+    const seen=new Set(),tracks=[];
+    for(const item of body.results||[]){
+      const title=String(item.trackName||"").trim().slice(0,150);
+      const artist=String(item.artistName||"").trim().slice(0,120);
+      if(!title||!artist)continue;
+      const key=normalizeMusicText(title+" "+artist);
+      if(seen.has(key))continue;seen.add(key);
+      tracks.push({title,artist,album:String(item.collectionName||"").slice(0,100),artwork:String(item.artworkUrl100||"")});
+      if(tracks.length>=12)break;
+    }
+    res.json({tracks});
+  }catch(error){res.status(503).json({tracks:[],error:"Busca de músicas indisponível no momento."});}
+});
 
 app.get("/api/music/validate-suggestion", async (req, res) => {
   const title = String(req.query.title || "").trim().slice(0, 180);
@@ -344,7 +379,59 @@ io.use(async (socket,next)=>{
   catch(error){ console.warn("Conta na conexão:",error.message); socket.data.account=null; }
   next();
 });
+function danceSnapshot(room){
+  return [...(danceFloors.get(room)||new Map()).entries()].map(([id,data])=>({id,...data}));
+}
+function danceLeave(room,id){
+  const floor=danceFloors.get(room);
+  if(!floor||!floor.delete(id))return;
+  io.to(room).emit("dance-left",{id});
+  if(!floor.size)danceFloors.delete(room);
+}
 io.on("connection", socket => {
+  socket.on("dance-enter",()=>{
+    const room=socket.data.room;
+    if(!room)return socket.emit("dance-error",{message:"Entre numa sala de música primeiro."});
+    let floor=danceFloors.get(room);
+    if(!floor){floor=new Map();danceFloors.set(room,floor);}
+    if(!floor.has(socket.id)&&floor.size>=8)return socket.emit("dance-error",{message:"Pista lotada! Máximo de 8 macacos dançando."});
+    if(!floor.has(socket.id)){
+      const taken=new Set([...floor.values()].map(v=>v.x+","+v.z));
+      let x=0,z=0;
+      outer:for(let r=0;r<5;r++)for(let ix=0;ix<6;ix++)for(let iz=0;iz<6;iz++){
+        if(Math.abs(ix-2.5)+Math.abs(iz-2.5)>r+2)continue;
+        if(!taken.has(ix+","+iz)){x=ix;z=iz;break outer;}
+      }
+      const data={x,z,dance:"idle"};
+      floor.set(socket.id,data);
+      io.to(room).emit("dance-updated",{id:socket.id,...data});
+    }
+    socket.emit("dance-state",{room,participants:danceSnapshot(room)});
+  });
+  socket.on("dance-move",payload=>{
+    const room=socket.data.room;
+    const floor=room&&danceFloors.get(room);
+    if(!floor?.has(socket.id))return;
+    if(isRateLimited(socket,"dance-move",12,1000))return;
+    const x=Number(payload?.x),z=Number(payload?.z);
+    if(!Number.isInteger(x)||!Number.isInteger(z)||x<0||x>5||z<0||z>5)return;
+    if([...floor].some(([id,p])=>id!==socket.id&&p.x===x&&p.z===z))
+      return socket.emit("dance-error",{message:"Esse quadradinho já está ocupado."});
+    const member=floor.get(socket.id);
+    member.x=x;member.z=z;
+    io.to(room).emit("dance-updated",{id:socket.id,...member});
+  });
+  socket.on("dance-style",payload=>{
+    const room=socket.data.room;
+    const floor=room&&danceFloors.get(room);
+    if(!floor?.has(socket.id))return;
+    const dance=String(payload?.dance||"");
+    if(!["idle","shake","macarena","party","capoeira","groove"].includes(dance))return;
+    floor.get(socket.id).dance=dance;
+    io.to(room).emit("dance-updated",{id:socket.id,...floor.get(socket.id)});
+  });
+  socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
+
   // Um identificador por aba permite reconciliar sockets após reconexão.
   const rawClientId=socket.handshake.auth?.clientId;
   socket.data.clientId=typeof rawClientId==="string" && /^[a-zA-Z0-9_-]{16,90}$/.test(rawClientId)?rawClientId:null;
@@ -418,6 +505,7 @@ io.on("connection", socket => {
     target.data.isTransmitting=false;
     target.data.receiveMusicSuggestions=false;
     target.data.room=null;
+    danceLeave(room,targetId);
     target.leave(room);
     if(roomTransmitters.get(room)?.id===targetId){
       roomTransmitters.delete(room);
@@ -503,6 +591,7 @@ io.on("connection", socket => {
       io.to(room).emit("transmitter-update", { id: socket.id, active: false });
     }
     socket.data.isTransmitting = false;
+    danceLeave(room,socket.id);
     releaseRoomOwnership(room,socket.id);
     socket.leave(room);
     socket.data.room = null;
@@ -544,6 +633,7 @@ io.on("connection", socket => {
         io.to(previousRoom).emit("transmitter-update", { id: socket.id, active: false });
       }
       socket.data.isTransmitting = false;
+      danceLeave(previousRoom,socket.id);
       releaseRoomOwnership(previousRoom,socket.id);
       socket.leave(previousRoom);
       socket.to(previousRoom).emit("peer-left", { id: socket.id });
@@ -753,6 +843,7 @@ io.on("connection", socket => {
     const room = socket.data.room;
     if (!room) return;
     socket.data.room=null;
+    danceLeave(room,socket.id);
     notifyPresence();
     releaseRoomOwnership(room,socket.id);
     if (roomTransmitters.get(room)?.id === socket.id) {
