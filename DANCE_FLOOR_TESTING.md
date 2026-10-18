@@ -37,3 +37,14 @@ Acesse `http://localhost:3000`. Crie uma sala no primeiro navegador; entre com o
 - `public/index.html`: botão e modal da pista.
 
 **Não publicar no Render até confirmar o funcionamento visual e a estabilidade em dois dispositivos.**
+
+## Próxima etapa: animações profissionais
+
+O ideal é baixar animações do [Mixamo](https://www.mixamo.com/) em **FBX**, com `Without Skin`, `In Place` (se disponível) e 30 FPS. Começar por três arquivos:
+- `dance_discordance.fbx`: dança disco, procura `Disco Dance` ou similar.
+- `dance_hiphop.fbx`: hip-hop.
+- `dance_shuffling.fbx`: shuffle ou twist.
+
+**IMPORTANTE:** não usar diretamente o FBX no navegador. Converter os movimentos para GLB e **retargetear os ossos** do esqueleto correto (Mixamo para o macaco básico, e AccuRig/Reallusion para Capitão Pátria). Usar `THREE.AnimationMixer` por avatar com blending/fades e sem root motion, preservando caminhada sincronizada por Socket.IO e sem tocar na rigagem dos trajes. Antes de incorporar, solicitar ao usuário os FBXs reais e checar orientações, durações e permissões de uso. A documentação do Mixamo deve ser consultada para os termos aplicáveis.
+
+O cenário atual está no tema **balada noturna**: iluminação ambiente azul-escura, holofotes neon móveis, quadriculado com material emissivo pulsante e globo espelhado. Testar principalmente contraste da pele do macaco e FPS no celular.
