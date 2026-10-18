@@ -1595,61 +1595,59 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     model.position.sub(center);
     const maxDim=Math.max(size.x,size.y,size.z)||1;
     model.scale.setScalar(2.25/maxDim);
-    // Roupa 3D low-poly do Capitão Pátria: geometria própria, sem modificar o GLB base.
-    const costume=new THREE.Group();
-    costume.visible=false;
-    root.add(costume);
-    const blue=new THREE.MeshStandardMaterial({color:0x142b62,roughness:.75,side:THREE.DoubleSide});
-    const red=new THREE.MeshStandardMaterial({color:0xb51e38,roughness:.62,side:THREE.DoubleSide});
-    const gold=new THREE.MeshStandardMaterial({color:0xf3c55d,metalness:.42,roughness:.36,side:THREE.DoubleSide});
-    const white=new THREE.MeshStandardMaterial({color:0xf9f6e9,roughness:.7,side:THREE.DoubleSide});
-    const glow=new THREE.MeshBasicMaterial({color:0xff1515,side:THREE.DoubleSide});
-    const unit=2.25/maxDim;
-    // Peças dimensionadas relativamente à caixa do macaco, mantendo-o como personagem principal.
-    const bw=size.x*unit, bh=size.y*unit, bd=size.z*unit;
-    const cylinder=(parent,radTop,radBottom,height,mat,x,y,z,segments=9)=>{
-      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radTop,radBottom,height,segments),mat);
-      mesh.position.set(x,y,z);parent.add(mesh);return mesh;
+    // Skin 3D v2: peças anatômicas arredondadas e capa atrás do personagem.
+    // O GLB original continua visível; nenhuma peça ocupa a cabeça inteira.
+    const costume=new THREE.Group();costume.visible=false;root.add(costume);
+    const blue=new THREE.MeshStandardMaterial({color:0x153a83,roughness:.85,side:THREE.DoubleSide});
+    const red=new THREE.MeshStandardMaterial({color:0xc51f3a,roughness:.72,side:THREE.DoubleSide});
+    const gold=new THREE.MeshStandardMaterial({color:0xf0c15b,metalness:.35,roughness:.4,side:THREE.DoubleSide});
+    const white=new THREE.MeshStandardMaterial({color:0xf5f0e5,roughness:.75,side:THREE.DoubleSide});
+    const glow=new THREE.MeshBasicMaterial({color:0xff1818,side:THREE.DoubleSide});
+    const unit=2.25/maxDim,bw=size.x*unit,bh=size.y*unit,bd=size.z*unit;
+    const ellipsoid=(parent,mat,x,y,z,rx,ry,rz)=>{
+      const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),mat);
+      mesh.position.set(x,y,z);mesh.scale.set(rx,ry,rz);parent.add(mesh);return mesh;
     };
-    const boxPart=(parent,w,h,d,mat,x,y,z)=>{
-      const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
-      mesh.position.set(x,y,z);parent.add(mesh);return mesh;
+    const segment=(parent,mat,start,end,r1,r2)=>{
+      const delta=new THREE.Vector3().subVectors(end,start);
+      const mesh=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,delta.length(),10),mat);
+      mesh.position.copy(start).add(end).multiplyScalar(.5);
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());
+      parent.add(mesh);return mesh;
     };
-    const chestY=-bh*.12, legY=-bh*.35;
-    const suit=cylinder(costume,bw*.32,bw*.25,bh*.39,blue,0,chestY,0);
-    suit.scale.z=.72;
-    // Peitoral dourado, estrelas e faixa vermelha.
-    boxPart(costume,bw*.44,bh*.042,bd*.08,gold,0,chestY+bh*.105,bd*.28);
-    boxPart(costume,bw*.46,bh*.045,bd*.09,red,0,chestY-bh*.11,bd*.28);
-    const star=new THREE.Mesh(new THREE.IcosahedronGeometry(Math.max(bw*.07,.04),0),gold);
-    star.position.set(0,chestY+bh*.04,bd*.34);costume.add(star);
+    const v=(x,y,z)=>new THREE.Vector3(x,y,z);
+    // Colete justo e curvado, em vez de um cilindro largo e quadrado.
+    ellipsoid(costume,blue,0,-bh*.095,bd*.075,bw*.245,bh*.19,bd*.245);
+    // Cinto dourado e emblema central pequeno.
+    ellipsoid(costume,gold,0,-bh*.235,bd*.12,bw*.245,bh*.023,bd*.205);
+    const emblem=new THREE.Mesh(new THREE.IcosahedronGeometry(bw*.045,0),gold);
+    emblem.position.set(0,-bh*.015,bd*.31);costume.add(emblem);
     for(const sign of [-1,1]){
-      const shoulder=new THREE.Mesh(new THREE.SphereGeometry(bw*.17,8,6),gold);
-      shoulder.scale.set(1.2,.48,.85);shoulder.position.set(sign*bw*.33,chestY+bh*.15,0);costume.add(shoulder);
-      const boot=cylinder(costume,bw*.115,bw*.145,bh*.20,red,sign*bw*.16,legY-bh*.08,bd*.02);
-      boot.scale.z=.85;
-      const glove=new THREE.Mesh(new THREE.SphereGeometry(bw*.11,8,6),red);
-      glove.position.set(sign*bw*.48,chestY-bh*.18,bd*.03);costume.add(glove);
+      // Ombreiras pequenas, seguindo a largura do tronco.
+      ellipsoid(costume,gold,sign*bw*.255,bh*.025,0,bw*.105,bh*.042,bd*.13);
+      // Faixa lateral azul e luvas discretas.
+      segment(costume,blue,v(sign*bw*.28,-bh*.02,0),v(sign*bw*.36,-bh*.18,bd*.015),bw*.064,bw*.055);
+      ellipsoid(costume,red,sign*bw*.37,-bh*.205,bd*.02,bw*.075,bh*.075,bd*.09);
+      // Botas baixas; pés e mãos originais permanecem reconhecíveis.
+      ellipsoid(costume,red,sign*bw*.13,-bh*.405,bd*.055,bw*.12,bh*.075,bd*.16);
+      // Dois traços dourados no peito.
+      segment(costume,gold,v(sign*bw*.07,bh*.02,bd*.29),v(sign*bw*.17,-bh*.04,bd*.28),bw*.012,bw*.012);
     }
-    // Capa azul e vermelha, aberta para deixar a silhueta do macaco visível.
-    const capeShape=new THREE.BufferGeometry();
-    const capeWidth=bw*.44, capeTop=chestY+bh*.18, capeBottom=-bh*.49;
-    const verts=new Float32Array([
-      -capeWidth*.55,capeTop,-bd*.33, capeWidth*.55,capeTop,-bd*.33, -capeWidth,capeBottom,-bd*.47,
-      capeWidth*.55,capeTop,-bd*.33, capeWidth,capeBottom,-bd*.47, -capeWidth,capeBottom,-bd*.47
+    // Capa com queda natural, atrás das costas, sem cobrir o rosto.
+    const capeTop=bh*.015,capeBottom=-bh*.455;
+    const capePositions=new Float32Array([
+      -bw*.235,capeTop,-bd*.24,  bw*.235,capeTop,-bd*.24, -bw*.38,capeBottom,-bd*.42,
+       bw*.235,capeTop,-bd*.24, bw*.38,capeBottom,-bd*.42, -bw*.38,capeBottom,-bd*.42
     ]);
-    capeShape.setAttribute("position",new THREE.BufferAttribute(verts,3));
-    capeShape.computeVertexNormals();
-    costume.add(new THREE.Mesh(capeShape,red));
-    // Faixas brancas decorativas na capa.
-    for(let i=0;i<3;i++)boxPart(costume,bw*.45,bh*.019,bd*.008,white,0,capeBottom+bh*(.055+i*.075),-bd*.49);
-    // Olhos vermelhos luminosos, posicionados na região frontal superior.
+    const capeGeometry=new THREE.BufferGeometry();
+    capeGeometry.setAttribute("position",new THREE.BufferAttribute(capePositions,3));
+    capeGeometry.computeVertexNormals();
+    costume.add(new THREE.Mesh(capeGeometry,red));
+    // Olhos laser: pequenos e na frente do rosto; sem esferas enormes.
     const eyes=new THREE.Group();costume.add(eyes);
     for(const sign of [-1,1]){
-      const eye=new THREE.Mesh(new THREE.SphereGeometry(Math.max(bw*.048,.018),12,8),glow);
-      eye.scale.set(1,.64,.38);
-      eye.position.set(sign*bw*.145,bh*.265,bd*.48);eyes.add(eye);
-      const light=new THREE.PointLight(0xff1010,.55,bw*.85);
+      const eye=ellipsoid(eyes,glow,sign*bw*.13,bh*.245,bd*.435,bw*.038,bh*.018,bd*.017);
+      const light=new THREE.PointLight(0xff1515,.28,bw*.45);
       light.position.copy(eye.position);eyes.add(light);
     }
     function updateAdminCostume(){
