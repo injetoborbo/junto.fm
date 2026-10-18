@@ -1,6 +1,7 @@
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 import {createDanceAvatar} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
@@ -466,18 +467,34 @@ async function openSeatInspect(){
   };
   inspectCleanup=clean;
   try{
-    const pose=await sittingPose();
-    if(disposed)return;
-    avatar=await createDanceAvatar(bridge.getProfile()?.wardrobe||{},"default",()=>{});
-    if(disposed){avatar.dispose();return;}
-    const rig=avatar.rig;
-    if(pose){
-      rig.traverse(bone=>{
+    // Espelhar a pose e os acessórios do avatar REAL sentado na pista.
+    // Evita diferenças entre dois processos assíncronos de montagem.
+    const live=people.get(socket.id);
+    const useLive=Boolean(live?.root&&live?.data?.seated&&live?.sitRotations?.size);
+    let inspectionGroup;
+    if(useLive){
+      live.root.updateMatrixWorld(true);
+      inspectionGroup=cloneSkeleton(live.root);
+      // A etiqueta original com o nome não pertence à inspeção.
+      const label=inspectionGroup.children.find(o=>o.isSprite);
+      label?.removeFromParent();
+    }else{
+      const pose=await sittingPose();
+      if(disposed)return;
+      avatar=await createDanceAvatar(bridge.getProfile()?.wardrobe||{},"default",()=>{});
+      if(disposed){avatar.dispose();return;}
+      const rig=avatar.rig;
+      if(pose)rig.traverse(bone=>{
         if(!bone.isBone)return;
         const correction=pose.get(boneKey(bone.name));
         if(correction)bone.quaternion.multiply(correction).normalize();
       });
+      inspectionGroup=avatar.group;
     }
+    if(disposed)return;
+    inspectViewport.setAttribute("aria-label",useLive?
+      "Cópia do macaco sentado na pista, com acessórios e pose reais":
+      "Simulação ampliada da pose sentada; sente na pista para espelhar o avatar real");
     const previewScene=new THREE.Scene();
     previewScene.background=new THREE.Color(0x0b142b);
     previewScene.add(new THREE.HemisphereLight(0xffffff,0x465474,2.5));
@@ -486,9 +503,10 @@ async function openSeatInspect(){
     floor.rotation.x=-Math.PI/2;floor.position.set(1.5,-.16,1.5);previewScene.add(floor);
     const chair=scene?.userData.seatChair?.clone(true);
     if(chair)previewScene.add(chair);
-    avatar.group.position.set(1.62,.70,1.38);
-    avatar.group.rotation.y=0;
-    previewScene.add(avatar.group);
+    inspectionGroup.position.set(1.62,.70,1.38);
+    inspectionGroup.rotation.y=0;
+    inspectionGroup.rotation.z=0;
+    previewScene.add(inspectionGroup);
     miniRenderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"low-power"});
     miniRenderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
     inspectViewport.appendChild(miniRenderer.domElement);
