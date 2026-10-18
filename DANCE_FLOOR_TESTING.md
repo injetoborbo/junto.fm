@@ -48,3 +48,22 @@ O ideal é baixar animações do [Mixamo](https://www.mixamo.com/) em **FBX**, c
 **IMPORTANTE:** não usar diretamente o FBX no navegador. Converter os movimentos para GLB e **retargetear os ossos** do esqueleto correto (Mixamo para o macaco básico, e AccuRig/Reallusion para Capitão Pátria). Usar `THREE.AnimationMixer` por avatar com blending/fades e sem root motion, preservando caminhada sincronizada por Socket.IO e sem tocar na rigagem dos trajes. Antes de incorporar, solicitar ao usuário os FBXs reais e checar orientações, durações e permissões de uso. A documentação do Mixamo deve ser consultada para os termos aplicáveis.
 
 O cenário atual está no tema **balada noturna**: iluminação ambiente azul-escura, holofotes neon móveis, quadriculado com material emissivo pulsante e globo espelhado. Testar principalmente contraste da pele do macaco e FPS no celular.
+
+## Danças Mixamo reais (próximo teste)
+Recebemos cinco animações FBX com ossos `mixamorig`:
+`macacochaqualha.fbx`, `macacomacarena.fbx`, `macacodanca.fbx`, `macacocapoera.fbx`, `macacodancagay.fbx`.
+
+O navegador precisa dos arquivos convertidos em `public/dance/*.glb`.
+No Windows, coloque os FBX na pasta Downloads (ou informe `-SourceFolder`) e execute:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\converter-dancas.ps1
+git add -f public/dance/*.glb
+git commit -m "Adicionar animacoes Mixamo da pista"
+git push origin feature/habbo-dance-floor
+```
+O conversor pressupõe o executável na pasta Downloads/capitaopatria; altere `-Converter` se necessário.
+Se algum GLB faltar, o site recorre à animação procedimental anterior para não quebrar a pista. Verifique o console do navegador.
+As ações Mixamo aplicam rotações a ossos coincidentes; se um modelo tiver rig diferente (Capitão Pátria), pode precisar de retarget no Blender.
+
+## Balada noturna
+Cenário escuro com luzes neon rosa/azul, holofotes giratórios, pista emissiva pulsante e globo espelhado.
