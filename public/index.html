@@ -1608,33 +1608,21 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
   socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="Você está enviando mensagens rápido demais. Aguarde alguns segundos.";});
-  let jfNotificationAudio=null,lastChatSound=0;
+  // Som de mensagem enviado pelo usuário (Habbo). O navegador pode exigir
+  // uma interação anterior para permitir reprodução, por política de autoplay.
+  const jfChatSound=new Audio("/habbo-message-mp.mp3");
+  jfChatSound.preload="auto";
+  jfChatSound.volume=.65;
+  let lastChatSound=0;
   function jfChatNotificationSound(){
-    if(Date.now()-lastChatSound<600)return;
+    if(Date.now()-lastChatSound<650)return;
     lastChatSound=Date.now();
     try{
-      jfNotificationAudio ||= new (window.AudioContext||window.webkitAudioContext)();
-      if(jfNotificationAudio.state!=="running")return;
-      const start=jfNotificationAudio.currentTime;
-      for(const [i,hz] of [740,990].entries()){
-        const osc=jfNotificationAudio.createOscillator(),gain=jfNotificationAudio.createGain();
-        osc.type="sine";osc.frequency.setValueAtTime(hz,start+i*.1);
-        gain.gain.setValueAtTime(.0001,start+i*.1);
-        gain.gain.exponentialRampToValueAtTime(.07,start+i*.1+.012);
-        gain.gain.exponentialRampToValueAtTime(.0001,start+i*.1+.13);
-        osc.connect(gain);gain.connect(jfNotificationAudio.destination);
-        osc.start(start+i*.1);osc.stop(start+i*.1+.14);
-      }
-    }catch(error){console.debug("Áudio de notificação indisponível:",error);}
+      jfChatSound.pause();
+      jfChatSound.currentTime=0;
+      jfChatSound.play().catch(error=>console.debug("Som de mensagem bloqueado pelo navegador:",error));
+    }catch(error){console.debug("Falha ao reproduzir notificação:",error);}
   }
-  // Inicializa o áudio em um gesto real do usuário para não violar autoplay.
-  document.addEventListener("pointerdown",()=>{
-    try{
-      jfNotificationAudio ||= new (window.AudioContext||window.webkitAudioContext)();
-      jfNotificationAudio.resume().catch(()=>{});
-    }catch(_){}
-  },{passive:true});
-  document.addEventListener("keydown",()=>{jfNotificationAudio?.resume().catch(()=>{});});
   socket.on("chat-message",message=>{
     if(joined&&message&&message.room===room){
       jfAppendChatMessage(message);
@@ -1642,7 +1630,6 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         $("jfChatLauncher").classList.add("has-unread");
         $("jfChatUnread").title="Novas mensagens";
         if(message.senderId!==socket.id){
-          if(!jfNotificationAudio)try{jfNotificationAudio=new (window.AudioContext||window.webkitAudioContext)();}catch(_){}
           jfChatNotificationSound();
         }
       }
