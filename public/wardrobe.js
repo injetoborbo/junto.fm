@@ -58,12 +58,36 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey){
+function dress(root,selection,render,monkey,{animated=false}={}){
+  // Capturar o bind pose ANTES das animações. As promessas de GLB podem
+  // resolver com o avatar andando/sentado; nesse caso attach() simples
+  // preservaria uma posição antiga num esqueleto já animado.
+  root.updateMatrixWorld(true);
+  monkey.updateMatrixWorld(true);
+  const monkeyBindWorld=monkey.matrixWorld.clone();
+  const rootBindWorld=root.matrixWorld.clone();
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
   const headBone=getBone(monkey,"Head");
   const topBone=getBone(monkey,"HeadTop_End");
   const neckBone=getBone(monkey,"Neck");
-  monkey.updateMatrixWorld(true);
+  const torsoBone=getBone(monkey,"Spine2")||getBone(monkey,"Spine");
+  const hipBone=getBone(monkey,"Hips");
+  const bindMatrices=new Map();
+  for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone, bone.matrixWorld.clone());
+  // Converter do espaço ORIGINAL do acessório para o local do osso na pose
+  // inicial; nunca usar a matriz atual (que pode ser de uma dança).
+  const attachAtBind=(part,bone,sourceBindWorld,forward=0)=>{
+    if(!bone)return;
+    const boneBind=bindMatrices.get(bone);
+    if(!boneBind)return;
+    part.updateMatrix();
+    const local=new THREE.Matrix4().copy(boneBind).invert()
+      .multiply(sourceBindWorld).multiply(part.matrix);
+    bone.add(part);
+    local.decompose(part.position,part.quaternion,part.scale);
+    if(forward)part.position.z+=forward;
+    part.updateMatrix();
+  };
   const worldHead=new THREE.Vector3(-.13,.28,-.05);
   const worldTop=new THREE.Vector3(-.13,.9,0);
   const worldNeck=new THREE.Vector3(-.13,.18,-.05);
@@ -75,7 +99,7 @@ function dress(root,selection,render,monkey){
   const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
   const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
   const rawNeckZ=(worldNeck.z-monkey.position.z)/monkey.scale.z;
-  const attachFitted=(file,configure,followHead=false)=>{
+  const attachFitted=(file,configure,followHead=false,animatedAnchor=null,forward=0)=>{
     getAsset(file).then(asset=>{
       if(!asset||!state.userData.active)return;
       const part=asset.clone(true);
@@ -83,8 +107,12 @@ function dress(root,selection,render,monkey){
       const measure=getBounds(part);
       configure(part,measure);
       monkey.add(part);
-      monkey.updateMatrixWorld(true);
-      if(followHead&&headBone)headBone.attach(part);
+      if(animated){
+        if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,forward);
+      }else{
+        monkey.updateMatrixWorld(true);
+        if(followHead&&headBone)headBone.attach(part);
+      }
       render();
     });
   };
@@ -105,14 +133,18 @@ function dress(root,selection,render,monkey){
       hat.name="jfWardrobeHat_"+type;
       state.add(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
-      state.updateWorldMatrix(true,true);
-      if(headBone)headBone.attach(hat);
+      if(animated){
+        attachAtBind(hat,headBone,rootBindWorld);
+      }else{
+        state.updateWorldMatrix(true,true);
+        if(headBone)headBone.attach(hat);
+      }
       render();
     });
   }else if(selection.hat==="bone"||selection.hat==="gorro"){
     attachFitted(selection.hat,part=>{
       part.position.x=rawX;
-    },true);
+    },true,headBone);
   }
   if(selection.glasses!=="nenhum"){
     attachFitted(selection.glasses,(part,measure)=>{
@@ -122,7 +154,7 @@ function dress(root,selection,render,monkey){
       part.position.set(rawX+(1-s)*measure.center.x,
         (1-s)*measure.center.y-.00018,
         (1-s)*measure.center.z+.00012);
-    },true);
+    },true,headBone,animated?.00042:0);
   }
   if(selection.headphones!=="nenhum"){
     const wearingHat=selection.hat!=="nenhum";
@@ -150,13 +182,13 @@ function dress(root,selection,render,monkey){
           (1-sc)*measure.center.y-.00005,
           (1-sc)*measure.center.z);
       }
-    },!wearingHat);
+    },!wearingHat,wearingHat?neckBone:headBone);
   }
   if(selection.outfit==="rosa"){
     attachFitted("vestido",(part)=>{
       // Vestido modelado em coordenadas do corpo do macaco, sem escala arbitrária.
       part.position.x=rawX;
-    },false);
+    },false,hipBone||torsoBone);
   }
   return ()=>{
     state.userData.active=false;
@@ -569,7 +601,7 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   monkey.position.copy(center).multiplyScalar(-scale);
   root.add(monkey);
   let stillActive=true;
-  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey);
+  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey,{animated:true});
   if(skin==="capitao-patria"){
     const asset=await getAsset("hero");
     if(asset&&stillActive){
