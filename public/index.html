@@ -445,6 +445,14 @@ html[data-jf-theme="classic"] .track-times{
 }
 
 </style>
+<style>
+#jfAdminPanel{margin:22px 0;padding:16px;border:1px solid #8b85d0;border-radius:15px;background:#181738;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#jfAdminPanel .jf-admin-info{display:grid;gap:5px}#jfAdminPanel .jf-admin-info small{color:#c4c6ed}
+#jfAdminPanel button{padding:10px 14px;border:1px solid #b9a9fc;border-radius:10px;background:#37316c;color:#fff;font-weight:700;cursor:pointer}
+#jfAdminSkin{accent-color:#eac26d}
+#jfMiniDj.jf-homelander .jf-dj-stage{filter:drop-shadow(0 0 10px #e9bc62)}
+#jfMiniDj.jf-homelander .jf-dj-caption:after{content:"★ CAPITÃO PÁTRIA ★";display:block;color:#f6d781;font-weight:900;font-size:10px;letter-spacing:1px}
+</style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
@@ -626,6 +634,12 @@ html[data-jf-theme="classic"] .track-times{
     <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
     <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
   </section>
+<section id="jfAdminPanel" aria-label="Administração e skin exclusiva">
+  <div class="jf-admin-info"><strong>👑 Guarda-roupa especial</strong><small id="jfAdminStatus">Verificando acesso...</small></div>
+  <div><button id="jfAdminLogin" type="button" hidden>Entrar como administrador</button>
+  <label id="jfAdminSkinWrap" hidden><input id="jfAdminSkin" type="checkbox"> Capitão Pátria ★</label>
+  <button id="jfAdminLogout" type="button" hidden>Sair do admin</button></div>
+</section>
   <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
 </main>
 
@@ -1606,5 +1620,26 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 })();
 </script>
 
+<script>
+(()=> {
+ const login=document.getElementById("jfAdminLogin"),logout=document.getElementById("jfAdminLogout"),wrap=document.getElementById("jfAdminSkinWrap"),check=document.getElementById("jfAdminSkin"),status=document.getElementById("jfAdminStatus");
+ const apply=skin=>document.getElementById("jfMiniDj")?.classList.toggle("jf-homelander",skin==="capitao-patria");
+ fetch("/api/admin/status",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
+  status.textContent=data.admin?"Administrador autenticado":data.configured?"Acesso livre — sem login necessário":"Login administrativo ainda não configurado";
+  login.hidden=!data.configured||data.admin;logout.hidden=!data.admin;wrap.hidden=!data.admin;
+  if(data.admin){check.checked=sessionStorage.getItem("jf-admin-skin")==="capitao-patria";apply(check.checked?"capitao-patria":"default");}
+ }).catch(()=>{status.textContent="Não foi possível verificar o administrador";});
+ login.addEventListener("click",()=>{location.href="/auth/github";});
+ logout.addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});sessionStorage.removeItem("jf-admin-skin");location.reload();});
+ check.addEventListener("change",async()=>{
+  const skin=check.checked?"capitao-patria":"default";
+  const r=await fetch("/api/avatar/equip",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({skin})});
+  if(!r.ok){check.checked=false;status.textContent="Skin bloqueada pelo servidor";return;}
+  sessionStorage.setItem("jf-admin-skin",skin);apply(skin);
+  // Evento de sincronização: só funciona quando o cliente Socket.IO da sala estiver disponível.
+  window.dispatchEvent(new CustomEvent("jf-admin-skin-changed",{detail:{skin}}));
+ });
+})();
+</script>
 </body>
 </html>
