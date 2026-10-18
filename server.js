@@ -29,9 +29,11 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomTransmitters = new Map();
+const roomOwners = new Map(); // room -> socket ID do criador / sucessor
 const roomChatMessages = new Map();
 const roomAccess = new Map();
-const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state user-library-modify";
+const roomQueueJobs = new Map(); // Serializa pedidos por sala; respeita a ordem de chegada.
+const SPOTIFY_SCOPES = "user-read-currently-playing user-read-playback-state user-library-modify user-modify-playback-state";
 
 function cookieValue(req, name) {
   const cookies = String(req.headers.cookie || "").split(";");
@@ -83,6 +85,7 @@ async function validSpotifyAccessToken(session) {
 }
 
 app.use(express.json({ limit: "10kb" }));
+const adminAuth = require("./admin-auth")(app);
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
@@ -144,6 +147,7 @@ app.get("/spotify/callback", async (req, res) => {
     });
     const session = getSession(req, res, true);
     session.accessToken = tokens.access_token;
+    session.scope = tokens.scope || "";
     session.refreshToken = tokens.refresh_token || session.refreshToken;
     session.expiresAt = Date.now() + (tokens.expires_in || 3600) * 1000;
     res.redirect("/?spotify=connected");
@@ -221,6 +225,43 @@ async function findRealSong(input) {
   });
 }
 
+// Os pedidos dos ouvintes são processados com o token do transmissor,
+// nunca com uma credencial fornecida pelo ouvinte.
+async function findSpotifyQueueTrack(token, suggestion) {
+  const parts = suggestion.split(/\s+[—–-]\s+/);
+  const title = normalizeMusicText(parts[0]);
+  const artist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
+  const endpoint = new URL("https://api.spotify.com/v1/search");
+  endpoint.search = new URLSearchParams({ q: suggestion, type: "track", limit: "15", market: "BR" }).toString();
+  const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
+  if (!response.ok) {
+    if (response.status === 403) throw new Error("O aplicativo Spotify não tem acesso à busca de faixas. Confira as permissões da integração.");
+    if (response.status === 429) throw new Error("O Spotify limitou as consultas. Tente novamente em instantes.");
+    throw new Error("Não consegui consultar o catálogo do Spotify (HTTP " + response.status + ").");
+  }
+  const body = await response.json();
+  return (body.tracks?.items || []).find(track =>
+    normalizeMusicText(track.name) === title &&
+    (!artist || (track.artists || []).some(person => normalizeMusicText(person.name) === artist)) &&
+    /^spotify:track:[A-Za-z0-9]{22}$/.test(track.uri || "")
+  ) || null;
+}
+async function addSpotifyQueueTrack(token, uri) {
+  const endpoint = new URL("https://api.spotify.com/v1/me/player/queue");
+  endpoint.searchParams.set("uri", uri);
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
+  });
+  if (response.ok) return;
+  const body = await response.json().catch(() => ({}));
+  const message = body.error?.message || "";
+  if (response.status === 403) throw new Error("O Spotify recusou a fila. O DJ precisa de Premium e autorizar o controle de reprodução. Reconecte o Spotify.");
+  if (response.status === 404) throw new Error("Nenhum dispositivo Spotify ativo. Abra o Spotify do DJ e inicie a reprodução antes de pedir.");
+  if (response.status === 429) throw new Error("O Spotify limitou os pedidos. Aguarde um pouco.");
+  throw new Error("Não foi possível adicionar à fila do Spotify (HTTP " + response.status + "). " + message.slice(0, 100));
+}
+
 app.get("/api/music/validate-suggestion", async (req, res) => {
   const title = String(req.query.title || "").trim().slice(0, 180);
   if (!title) return res.status(400).json({ valid: false, error: "Digite o nome de uma música." });
@@ -231,6 +272,20 @@ app.get("/api/music/validate-suggestion", async (req, res) => {
     return res.status(503).json({ valid: false, error: "Não foi possível consultar o catálogo de músicas agora. Tente novamente." });
   }
 });
+
+// Guarda-roupa público: só peças comuns entram no perfil da sala.
+// A skin Capitão Pátria permanece restrita ao fluxo de autenticação admin.
+const wardrobeOptions = Object.freeze({
+  hat: ["nenhum", "bone", "gorro", "palha", "branco"],
+  glasses: ["nenhum", "escuros", "redondos"],
+  headphones: ["nenhum", "azul", "rosa"],
+  outfit: ["padrao", "rosa"]
+});
+function cleanWardrobe(input) {
+  const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
+  return Object.fromEntries(Object.entries(wardrobeOptions).map(([key, allowed]) =>
+    [key, allowed.includes(source[key]) ? source[key] : allowed[0]]));
+}
 
 function cleanRoom(value) {
   return String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
@@ -267,7 +322,36 @@ app.get("/api/lyrics", async (req, res) => {
   } catch (_) { return res.status(502).json({ error: "Não foi possível buscar as letras agora." }); }
 });
 
+function isRoomOwner(socket,room){
+  return Boolean(room&&roomOwners.get(room)===socket.id&&socket.data.room===room);
+}
+function releaseRoomOwnership(room,departingId){
+  if(roomOwners.get(room)!==departingId)return;
+  const members=[...(io.sockets.adapter.rooms.get(room)||[])].filter(id=>id!==departingId);
+  if(members.length){
+    roomOwners.set(room,members[0]);
+    io.to(room).emit("room-owner-update",{ownerId:members[0]});
+  }else{
+    roomOwners.delete(room);
+    roomAccess.delete(room);
+    roomTracks.delete(room);
+    roomChatMessages.delete(room);
+  }
+}
 io.on("connection", socket => {
+  socket.data.isAdmin = adminAuth.isAdmin(socket.request);
+  socket.data.avatarSkin = "default";
+  socket.on("avatar-skin-set", payload => {
+    if (!socket.data.room) return;
+    const requested = payload && payload.skin;
+    if (requested !== "default" && requested !== "capitao-patria") return;
+    if (requested === "capitao-patria" && !socket.data.isAdmin) {
+      socket.emit("avatar-skin-error", { message: "Skin exclusiva do administrador." });
+      return;
+    }
+    socket.data.avatarSkin = requested;
+    io.to(socket.data.room).emit("avatar-skin-update", { id: socket.id, skin: requested });
+  });
   socket.on("create-room", payload => {
     if (isRateLimited(socket, "create-room", 5, 60_000)) {
       socket.emit("create-room-error", { message: "Muitas tentativas de criação. Aguarde um minuto e tente novamente." });
@@ -299,7 +383,42 @@ io.on("connection", socket => {
     } else {
       roomAccess.set(room, null);
     }
+    roomOwners.set(room,socket.id);
     socket.emit("room-created", { room });
+  });
+
+  // Expulsão: somente o dono da sala pode remover OUTRA conexão.
+  // Isso remove a pessoa da sala atual, não é banimento permanente.
+  socket.on("room-kick", payload => {
+    const room=socket.data.room;
+    const targetId=typeof payload?.targetId==="string"?payload.targetId:"";
+    if(!room || !isRoomOwner(socket,room)){
+      socket.emit("room-kick-result",{ok:false,message:"Somente o dono da sala pode expulsar participantes."});
+      return;
+    }
+    if(!targetId || targetId===socket.id){
+      socket.emit("room-kick-result",{ok:false,message:"Escolha outro participante."});
+      return;
+    }
+    const target=io.sockets.sockets.get(targetId);
+    if(!target || target.data.room!==room){
+      socket.emit("room-kick-result",{ok:false,message:"Participante não está mais nesta sala."});
+      return;
+    }
+    // Remove primeiro do servidor para evitar que comandos atrasados continuem válidos.
+    target.data.isTransmitting=false;
+    target.data.receiveMusicSuggestions=false;
+    target.data.room=null;
+    target.leave(room);
+    if(roomTransmitters.get(room)?.id===targetId){
+      roomTransmitters.delete(room);
+      io.to(room).emit("transmitter-update",{id:targetId,active:false});
+    }
+    target.emit("room-kicked",{room,message:"O administrador expulsou você desta sala."});
+    io.to(room).emit("peer-left",{id:targetId});
+    const count=io.sockets.adapter.rooms.get(room)?.size||0;
+    io.to(room).emit("room-count",{count});
+    socket.emit("room-kick-result",{ok:true,message:"Participante removido da sala."});
   });
 
   socket.on("friend-request", payload => {
@@ -338,6 +457,7 @@ io.on("connection", socket => {
       io.to(room).emit("transmitter-update", { id: socket.id, active: false });
     }
     socket.data.isTransmitting = false;
+    releaseRoomOwnership(room,socket.id);
     socket.leave(room);
     socket.data.room = null;
     socket.to(room).emit("peer-left", { id: socket.id });
@@ -377,6 +497,7 @@ io.on("connection", socket => {
         io.to(previousRoom).emit("transmitter-update", { id: socket.id, active: false });
       }
       socket.data.isTransmitting = false;
+      releaseRoomOwnership(previousRoom,socket.id);
       socket.leave(previousRoom);
       socket.to(previousRoom).emit("peer-left", { id: socket.id });
     }
@@ -388,7 +509,8 @@ io.on("connection", socket => {
       const peer = io.sockets.sockets.get(id);
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
     }));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, transmitter: roomTransmitters.get(room) || null });
+    const avatarSkins=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.avatarSkin==="capitao-patria"?"capitao-patria":"default"]));
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
@@ -398,12 +520,17 @@ io.on("connection", socket => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room || !payload.to || !payload.data) return;
     const target = io.sockets.sockets.get(payload.to);
     if (!target || target.data.room !== socket.data.room) return;
+    if(payload.data.type==="offer" && (!isRoomOwner(socket,socket.data.room)||!socket.data.isTransmitting))return;
     target.emit("signal", { from: socket.id, data: payload.data });
   });
 
   socket.on("transmission-started", payload => {
     const room = socket.data.room;
     if (!room || !payload || payload.room !== room) return;
+    if(!isRoomOwner(socket,room)){
+      socket.emit("transmission-denied",{message:"Somente o administrador (dono) da sala pode transmitir o Spotify."});
+      return;
+    }
     const profile = socket.data.profile || { name: "DJ ao vivo" };
     const transmitter = { id: socket.id, name: String(profile.name || "DJ ao vivo").slice(0, 24) };
     socket.data.isTransmitting = true;
@@ -423,12 +550,14 @@ io.on("connection", socket => {
 
   socket.on("clear-track", payload => {
     if (!socket.data.room || !payload || payload.room !== socket.data.room) return;
+    if(roomTransmitters.get(socket.data.room)?.id!==socket.id)return;
     roomTracks.delete(socket.data.room);
     socket.to(socket.data.room).emit("track-clear");
   });
 
   socket.on("track-update", payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room || !payload.track) return;
+    if(roomTransmitters.get(socket.data.room)?.id!==socket.id)return;
     const track = payload.track;
     if (typeof track.name !== "string" || typeof track.artists !== "string") return;
     const safeTrack = {
@@ -453,7 +582,7 @@ io.on("connection", socket => {
     const allowedImage = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,", "data:image/gif;base64,"].includes(prefix);
     const safeAvatar = avatar.length <= 220000 && allowedImage && comma < avatar.length - 1 ? avatar : "";
     const motto = String(payload.profile.motto || "").trim().replace(/\s+/g, " ").slice(0, 90);
-    const profile = { name, avatar: safeAvatar, motto };
+    const profile = { name, avatar: safeAvatar, motto, wardrobe: cleanWardrobe(payload.profile.wardrobe) };
     socket.data.profile = profile;
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
     if (socket.data.isTransmitting) {
@@ -478,7 +607,8 @@ io.on("connection", socket => {
       name: String(profile.name || "Ouvinte").slice(0, 24),
       avatar: typeof profile.avatar === "string" && profile.avatar.length <= 220000 ? profile.avatar : "",
       text,
-      time: Date.now()
+      time: Date.now(),
+      senderId:socket.id
     };
     const history = roomChatMessages.get(room) || [];
     history.push(message);
@@ -489,32 +619,64 @@ io.on("connection", socket => {
 
   socket.on("suggestion-settings", payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
-    socket.data.receiveMusicSuggestions = Boolean(payload.enabled);
+    const isRoomDJ = roomTransmitters.get(socket.data.room)?.id === socket.id && socket.data.isTransmitting;
+    const wantsQueue = Boolean(payload.enabled);
+    const session = getSession(socket.request, null);
+    const hasQueueScope = Boolean(session?.scope?.split(" ").includes("user-modify-playback-state"));
+    socket.data.receiveMusicSuggestions = Boolean(isRoomDJ && wantsQueue && session?.refreshToken && hasQueueScope);
+    socket.emit("suggestion-settings-result", {
+      enabled: socket.data.receiveMusicSuggestions,
+      error: wantsQueue && !isRoomDJ ? "Comece a transmitir para ativar a fila automática." :
+        wantsQueue && !session?.refreshToken ? "Conecte sua conta Spotify como DJ e tente novamente." :
+        wantsQueue && !hasQueueScope ? "Desconecte e reconecte o Spotify para autorizar pedidos automáticos." : ""
+    });
   });
 
-  socket.on("music-suggestion", async payload => {
+  socket.on("music-suggestion", payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
     const suggestion = String(payload.suggestion || "").trim().slice(0, 180);
-    if (!suggestion || isRateLimited(socket, "music-suggestion", 5, 60000)) return;
-    try {
-      if (!(await findRealSong(suggestion))) {
-        socket.emit("music-suggestion-error", { error: "Sugestão recusada: não encontrei uma música com esse título exato." });
-        return;
-      }
-    } catch (_) {
-      socket.emit("music-suggestion-error", { error: "Não foi possível verificar a música agora. Tente novamente." });
+    const requestRoom = socket.data.room;
+    if (!suggestion) return;
+    if (isRateLimited(socket, "music-suggestion", 3, 60000)) {
+      socket.emit("music-suggestion-error", { error: "Limite de três pedidos por minuto. Aguarde um pouco." });
       return;
     }
-    const peer = io.sockets.sockets.get(socket.id);
-    const fromName = String(payload.fromName || peer?.data.profile?.name || "Ouvinte").trim().slice(0, 24) || "Ouvinte";
-    const roomMembers = io.sockets.adapter.rooms.get(socket.data.room) || new Set();
-    for (const id of roomMembers) {
-      if (id === socket.id) continue;
-      const recipient = io.sockets.sockets.get(id);
-      if (recipient?.data.receiveMusicSuggestions) {
-        recipient.emit("music-suggestion", { suggestion, fromName });
-      }
+    const active = roomTransmitters.get(requestRoom);
+    const dj = active && io.sockets.sockets.get(active.id);
+    if (!dj || dj.data.room !== requestRoom || !dj.data.isTransmitting || !dj.data.receiveMusicSuggestions) {
+      socket.emit("music-suggestion-error", { error: "O DJ ainda não ativou os pedidos automáticos." });
+      return;
     }
+    const previous = roomQueueJobs.get(requestRoom) || Promise.resolve();
+    const task = previous.catch(() => {}).then(async () => {
+      // Revalida quem controla a transmissão antes de tocar no Spotify.
+      if (roomTransmitters.get(requestRoom)?.id !== dj.id ||
+          !dj.data.isTransmitting || !dj.data.receiveMusicSuggestions) {
+        socket.emit("music-suggestion-error", { error: "A transmissão ou a fila do DJ foi desativada." });
+        return;
+      }
+      try {
+        const session = getSession(dj.request, null);
+        if (!session?.refreshToken) throw new Error("O DJ precisa reconectar o Spotify.");
+        if (session.scope && !session.scope.split(" ").includes("user-modify-playback-state"))
+          throw new Error("O DJ precisa desconectar e reconectar o Spotify para autorizar a fila.");
+        const token = await validSpotifyAccessToken(session);
+        const track = await findSpotifyQueueTrack(token, suggestion);
+        if (!track) throw new Error("Não encontrei a faixa exata no Spotify. Tente 'Música - Artista'.");
+        await addSpotifyQueueTrack(token, track.uri);
+        const fromName = String(socket.data.profile?.name || "Ouvinte").slice(0, 24);
+        io.to(requestRoom).emit("music-queued", {
+          title: track.name.slice(0, 180),
+          artist: (track.artists || []).map(a => a.name).join(", ").slice(0, 120),
+          fromName
+        });
+      } catch (err) {
+        socket.emit("music-suggestion-error", { error: err.message || "Falha ao adicionar a música à fila." });
+        console.warn("Pedido de música não enfileirado:", err.message);
+      }
+    });
+    roomQueueJobs.set(requestRoom, task);
+    task.finally(() => { if (roomQueueJobs.get(requestRoom) === task) roomQueueJobs.delete(requestRoom); });
   });
 
   socket.on("room-command", payload => {
@@ -525,6 +687,7 @@ io.on("connection", socket => {
   socket.on("disconnect", () => {
     const room = socket.data.room;
     if (!room) return;
+    releaseRoomOwnership(room,socket.id);
     if (roomTransmitters.get(room)?.id === socket.id) {
       roomTransmitters.delete(room);
       io.to(room).emit("transmitter-update", { id: socket.id, active: false });

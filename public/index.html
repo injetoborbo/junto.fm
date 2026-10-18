@@ -107,6 +107,12 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 .jf-person:hover .jf-motto,.jf-person:focus-within .jf-motto{display:block}
 .jf-person .jf-person-details{display:flex;flex-direction:column;min-width:0}
 .jf-person .jf-person-details strong{display:block}
+.jf-room-kick{font-size:11px!important;white-space:nowrap;background:#8c2744!important;color:#fff!important;border:1px solid #c95a73!important}
+.jf-room-kick:hover{background:#b73354!important}
+.jf-retro-emoji-title{font-size:11px;font-weight:800;letter-spacing:.04em;margin:8px 3px 5px;color:var(--jf-primary)}
+.jf-retro-emoji-grid{display:flex;flex-wrap:wrap;gap:4px;padding-bottom:6px;border-bottom:1px solid #aab7cf55}
+.jf-retro-emoji-grid .jf-chat-emoji{min-width:32px;min-height:32px;font-size:19px;border-radius:5px}
+.jf-retro-emoji-grid .jf-chat-kaomoji{font-size:12px;min-width:52px;padding:4px 6px}
 @media(prefers-reduced-motion:reduce){.jf-person{transition:none}}
 @media(max-width:520px){.jf-grid{grid-template-columns:1fr}.jf-profile{grid-template-columns:62px minmax(0,1fr);gap:12px}.jf-avatar{width:62px;height:62px}.jf-fields input[type=text]{font-size:16px;padding:13px 10px}.jf-fields input[type=file]{font-size:11px;padding:7px}#jfSaveProfile{width:100%;flex-basis:100%}#jfProfileStatus{flex-basis:100%}}
 
@@ -384,6 +390,14 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 .jf-friends-drawer-footer .jf-friends-tab.active{outline:2px solid #91b8e3;outline-offset:1px}
 .jf-friends-drawer .jf-friend-status{font-size:11px}
 
+.jf-wardrobe-modal{max-width:690px}
+.jf-wardrobe-layout{display:grid;grid-template-columns:minmax(190px,248px) minmax(200px,1fr);gap:18px;align-items:center}
+.jf-wardrobe-preview{height:248px;border-radius:12px;background:linear-gradient(150deg,#e5f2ff,#d2e5f6);display:grid;place-items:center}
+.jf-wardrobe-fields{display:grid;gap:12px}
+.jf-wardrobe-fields label{display:grid;gap:5px;font-weight:700;font-size:13px}
+.jf-wardrobe-fields select{padding:10px;border-radius:7px;border:1px solid #9eb8cf;background:#fff;color:#15283c;min-width:0}
+.jf-member-monkey{width:64px;height:68px;flex:0 0 64px;overflow:hidden;border-radius:8px;background:#e8f1fc}
+@media(max-width:540px){.jf-wardrobe-layout{grid-template-columns:1fr}.jf-wardrobe-preview{width:100%}}
 /* Friends drawer + lyrics */
 .jf-friends-launcher{right:90px}.jf-friends-drawer{right:90px}
 .jf-friends-drawer-content{padding:12px;overflow:auto;min-height:0;flex:1}
@@ -445,11 +459,19 @@ html[data-jf-theme="classic"] .track-times{
 }
 
 </style>
+<style>
+#jfAdminPanel{margin:22px 0;padding:16px;border:1px solid #8b85d0;border-radius:15px;background:#181738;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#jfAdminPanel .jf-admin-info{display:grid;gap:5px}#jfAdminPanel .jf-admin-info small{color:#c4c6ed}
+#jfAdminPanel button{padding:10px 14px;border:1px solid #b9a9fc;border-radius:10px;background:#37316c;color:#fff;font-weight:700;cursor:pointer}
+#jfAdminSkin{accent-color:#eac26d}
+#jfMiniDj.jf-homelander .jf-dj-stage{filter:drop-shadow(0 0 10px #e9bc62)}
+#jfMiniDj.jf-homelander .jf-dj-caption:after{content:"★ CAPITÃO PÁTRIA ★";display:block;color:#f6d781;font-weight:900;font-size:10px;letter-spacing:1px}
+</style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -467,7 +489,7 @@ html[data-jf-theme="classic"] .track-times{
 
   
 <div class="jf-player-layout">
-<section class="panel jf-player-panel">
+<section class="panel jf-player-panel"><p id="jfRoomOwnerStatus" class="small" aria-live="polite">Entre em uma sala</p>
     <div class="player">
       <div class="cover">♫</div>
       <div><h2>Transmissão ao vivo</h2><p id="role">Entre na sala para começar.</p></div>
@@ -532,6 +554,14 @@ html[data-jf-theme="classic"] .track-times{
   <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
   <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">☺ Emojis</button></div>
   <div id="jfChatEmojiTray" class="jf-chat-emoji-tray" aria-label="Escolha um emoji" hidden>
+    <div class="jf-retro-emoji-title">✦ Emojis retrô · MSN / anos 2000</div>
+    <div class="jf-retro-emoji-grid">
+      <button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😎" title="Inserir 😎">😎</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😜" title="Inserir 😜">😜</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😛" title="Inserir 😛">😛</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😂" title="Inserir 😂">😂</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😭" title="Inserir 😭">😭</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🥺" title="Inserir 🥺">🥺</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😍" title="Inserir 😍">😍</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😘" title="Inserir 😘">😘</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😡" title="Inserir 😡">😡</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😈" title="Inserir 😈">😈</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👻" title="Inserir 👻">👻</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👾" title="Inserir 👾">👾</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👽" title="Inserir 👽">👽</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🤖" title="Inserir 🤖">🤖</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💾" title="Inserir 💾">💾</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💿" title="Inserir 💿">💿</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📼" title="Inserir 📼">📼</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📟" title="Inserir 📟">📟</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🕹️" title="Inserir 🕹️">🕹️</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎮" title="Inserir 🎮">🎮</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎧" title="Inserir 🎧">🎧</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📺" title="Inserir 📺">📺</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="☎️" title="Inserir ☎️">☎️</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💌" title="Inserir 💌">💌</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💔" title="Inserir 💔">💔</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💖" title="Inserir 💖">💖</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💘" title="Inserir 💘">💘</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="✨" title="Inserir ✨">✨</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌟" title="Inserir 🌟">🌟</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🔥" title="Inserir 🔥">🔥</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="⚡" title="Inserir ⚡">⚡</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💤" title="Inserir 💤">💤</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎵" title="Inserir 🎵">🎵</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎶" title="Inserir 🎶">🎶</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌈" title="Inserir 🌈">🌈</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍒" title="Inserir 🍒">🍒</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍕" title="Inserir 🍕">🍕</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍦" title="Inserir 🍦">🍦</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="☕" title="Inserir ☕">☕</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌻" title="Inserir 🌻">🌻</button>
+    </div>
+    <div class="jf-retro-emoji-title">✦ Carinhas clássicas</div>
+    <div class="jf-retro-emoji-grid">
+      <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(╯°□°）╯︵ ┻━┻" title="Inserir carinha">(╯°□°）╯︵ ┻━┻</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(づ｡◕‿‿◕｡)づ" title="Inserir carinha">(づ｡◕‿‿◕｡)づ</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(≧◡≦)" title="Inserir carinha">(≧◡≦)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(T_T)" title="Inserir carinha">(T_T)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(¬_¬)" title="Inserir carinha">(¬_¬)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(&gt;_&lt;)" title="Inserir carinha">(&gt;_&lt;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧" title="Inserir carinha">(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="( ͡° ͜ʖ ͡°)" title="Inserir carinha">( ͡° ͜ʖ ͡°)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(｡♥‿♥｡)" title="Inserir carinha">(｡♥‿♥｡)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="ʕ•ᴥ•ʔ" title="Inserir carinha">ʕ•ᴥ•ʔ</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(=^･ω･^=)" title="Inserir carinha">(=^･ω･^=)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="(⌐■_■)" title="Inserir carinha">(⌐■_■)</button>
+    </div>
     <button type="button" class="jf-chat-emoji" data-emoji="☺">☺</button><button type="button" class="jf-chat-emoji" data-emoji="☻">☻</button><button type="button" class="jf-chat-emoji" data-emoji="ツ">ツ</button><button type="button" class="jf-chat-emoji" data-emoji="♥">♥</button><button type="button" class="jf-chat-emoji" data-emoji="♡">♡</button><button type="button" class="jf-chat-emoji" data-emoji="★">★</button><button type="button" class="jf-chat-emoji" data-emoji="☆">☆</button><button type="button" class="jf-chat-emoji" data-emoji="♪">♪</button><button type="button" class="jf-chat-emoji" data-emoji="♫">♫</button><button type="button" class="jf-chat-emoji" data-emoji="☮">☮</button><button type="button" class="jf-chat-emoji" data-emoji="✿">✿</button><button type="button" class="jf-chat-emoji" data-emoji="✧">✧</button>
     <button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":)">:)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=";)">;)</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":D">:D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="xD">xD</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":P">:P</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'(">:'(</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="^_^">^_^</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="-_-">-_-</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="o_O">o_O</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="<3">&lt;3</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji=":'D">:'D</button><button type="button" class="jf-chat-emoji jf-chat-kaomoji" data-emoji="¯\\_(ツ)_/¯">¯\\_(ツ)_/¯</button>
   </div>
@@ -551,12 +581,12 @@ html[data-jf-theme="classic"] .track-times{
     </div>
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
     <div class="jf-suggestion-settings">
-      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Receber sugestões de música nesta transmissão</label>
-      <p class="small">Ative no aparelho que está transmitindo para receber sugestões em um popup no canto inferior direito.</p>
+      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Adicionar pedidos automaticamente à fila do meu Spotify</label>
+      <p class="small">O DJ conecta o Spotify, começa a transmitir e ativa a fila. Pedidos dos ouvintes entram automaticamente na fila real do Spotify (requer Premium e dispositivo ativo).</p>
     </div>
     <div class="jf-suggest-form">
-      <label for="jfSuggestionText">Sugerir uma música</label>
-      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Enviar sugestão</button></div>
+      <label for="jfSuggestionText">Pedir música na fila do DJ</label>
+      <div class="row"><input id="jfSuggestionText" type="text" maxlength="180" placeholder="Nome da música — artista"><button class="btn" id="jfSendSuggestion" type="button" disabled>Pedir música</button></div>
       <p class="small" id="jfSuggestionStatus" aria-live="polite">Entre na sala para sugerir uma música.</p>
     </div>
   </section>
@@ -567,6 +597,22 @@ html[data-jf-theme="classic"] .track-times{
   </div>
 
   
+<div class="jf-modal-backdrop" id="jfWardrobeModal" hidden>
+  <section class="panel jf-modal jf-wardrobe-modal" role="dialog" aria-modal="true" aria-labelledby="jfWardrobeTitle">
+    <div class="jf-modal-head"><h2 id="jfWardrobeTitle">🐒 Trajes do seu macaco</h2><button type="button" class="btn secondary" id="jfCloseWardrobe" aria-label="Fechar trajes">✕</button></div>
+    <p class="small">Todo mundo começa com o macaco original. Arraste para girar. Com chapéu, os fones ficam apoiados no pescoço.</p>
+    <div class="jf-wardrobe-layout">
+      <div><div id="jfWardrobePreview" class="jf-wardrobe-preview" aria-label="Prévia do seu macaco 3D"></div><p id="jfWardrobeAssetStatus" class="small" style="margin:8px 0;color:#914515" role="status" aria-live="polite"></p></div>
+      <div class="jf-wardrobe-fields">
+        <label>Chapéu<select id="jfWardrobeHat"><option value="nenhum">Sem chapéu</option><option value="bone">Boné</option><option value="gorro">Gorro</option><option value="palha">Chapéu de palha (faixa vermelha)</option><option value="branco">Chapéu branco de sol</option></select></label>
+        <label>Óculos<select id="jfWardrobeGlasses"><option value="nenhum">Sem óculos</option><option value="escuros">Escuros</option><option value="redondos">Redondos</option></select></label>
+        <label>Fones<select id="jfWardrobeHeadphones"><option value="nenhum">Sem fones</option><option value="azul">Azuis</option><option value="rosa">Rosas</option></select></label>
+        <label>Roupa<select id="jfWardrobeOutfit"><option value="padrao">Original</option><option value="rosa">Rosa</option></select></label>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px"><button class="btn" type="button" id="jfSaveWardrobe">Salvar traje</button><span class="small">Gratuito, sem precisar criar conta.</span></div>
+  </section>
+</div>
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfProfileHeading">
     <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">✕</button></div>
@@ -626,6 +672,12 @@ html[data-jf-theme="classic"] .track-times{
     <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
     <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
   </section>
+<section id="jfAdminPanel" aria-label="Administração e skin exclusiva">
+  <div class="jf-admin-info"><strong>👑 Guarda-roupa especial</strong><small id="jfAdminStatus">Verificando acesso...</small></div>
+  <div><button id="jfAdminLogin" type="button" hidden>Entrar como administrador</button>
+  <label id="jfAdminSkinWrap" hidden><input id="jfAdminSkin" type="checkbox"> Capitão Pátria ★</label>
+  <button id="jfAdminLogout" type="button" hidden>Sair do admin</button></div>
+</section>
   <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
 </main>
 
@@ -668,6 +720,7 @@ html[data-jf-theme="classic"] .track-times{
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script type="module" src="/wardrobe.js"></script>
 <script>
 (() => {
   const socket = io();
@@ -675,6 +728,22 @@ html[data-jf-theme="classic"] .track-times{
   let room = "noite";
   let joined = false;
   let isSender = false;
+  let jfRoomOwnerId=null;
+  let jfCurrentTransmitter=null;
+  let jfRoomOwner=false;
+  function jfSyncRoomOwnership(){
+    jfRoomOwner=Boolean(joined&&socket.id&&jfRoomOwnerId===socket.id);
+    const role=document.getElementById("jfRoomOwnerStatus");
+    if(role)role.textContent=!joined?"Entre em uma sala":jfRoomOwner?"👑 Você administra esta sala":"🎧 Ouvinte — somente o dono transmite";
+    enableControls();
+  }
+  function jfNotifyTransmitterAppearance(){
+    const id=jfCurrentTransmitter?.active===false?null:jfCurrentTransmitter?.id;
+    const profile=id===socket.id?jfProfile:(jfPeerProfiles.get(id)||null);
+    const detail={id:id||null,wardrobe:profile?.wardrobe||null,skin:id===socket.id&&document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default"};
+    window.jfLastTransmitterAppearance=detail;
+    window.dispatchEvent(new CustomEvent("jf-player-monkey",{detail}));
+  }
   let localStream = null;
   let spotifyConnected = false;
   let spotifyPollTimer = null;
@@ -726,7 +795,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     // O mascote permanece no player; o selo vermelho só aparece durante uma transmissão.
     miniDj.hidden = false;
     liveBadge.hidden = !active;
+    jfCurrentTransmitter=active?transmitter:null;
     $("jfTransmitterName").textContent = transmitterName;
+    jfNotifyTransmitterAppearance();
     miniDj.setAttribute("aria-label", active
       ? "Mascote ao lado do player. Ao vivo: " + transmitterName
       : "Mascote 3D do Junto.fm ao lado do player");
@@ -751,7 +822,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const content=$("jfLyricsContent");if(content.dataset.synced!=="true"||!jfLyricsData||!currentTrack)return;
     const elapsed=Math.max(0,(Number(currentTrack.progress_ms)||0)+(currentTrack.is_playing?Date.now()-trackBaseTime:0))/1000;const lines=JSON.parse(content.dataset.lines||"[]");let active=-1;
     for(let i=0;i<lines.length;i++){if(lines[i].time<=elapsed)active=i;else break;}
-    content.querySelectorAll(".jf-lyrics-line").forEach((line,i)=>{line.classList.toggle("active",i===active);if(i===active&&line.dataset.scrolled!=="true"){line.dataset.scrolled="true";line.scrollIntoView({block:"nearest",behavior:"smooth"});}else if(i!==active)line.dataset.scrolled="false";});
+    content.querySelectorAll(".jf-lyrics-line").forEach((line,i)=>{line.classList.toggle("active",i===active);if(i===active&&line.dataset.scrolled!=="true"){line.dataset.scrolled="true";const lineTop=line.offsetTop-content.offsetTop;const target=Math.max(0,lineTop-content.clientHeight/2+line.offsetHeight/2);content.scrollTo({top:target,behavior:"smooth"});}else if(i!==active)line.dataset.scrolled="false";});
   }
   function renderTrack(track, fromRoom = false) {
     if (!track || !track.name) {
@@ -871,7 +942,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfUpdateRoomView();
     $("join").disabled = !socket.connected;
     $("createRoom").disabled = !socket.connected;
-    $("start").disabled = !joined || isSender;
+    $("start").disabled = !joined || !jfRoomOwner || isSender;
     $("stop").disabled = !joined || !isSender;
     $("pauseCmd").disabled = !joined;
     $("nextCmd").disabled = !joined;
@@ -1126,7 +1197,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -1136,9 +1207,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     setStatus(errorMessage);
     enableControls();
   });
-  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null }) => {
+  socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null,ownerId=null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -1147,6 +1218,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
   socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
+  socket.on("room-owner-update",({ownerId}={})=>{jfRoomOwnerId=ownerId||null;jfSyncRoomOwnership();jfRenderPeople();});
+  socket.on("transmission-denied",({message}={})=>{
+    if(isSender){resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
+    setStatus(message||"Somente o dono da sala pode transmitir.");
+    enableControls();
+  });
   socket.on('track-update', track => renderTrack(track, true));
   socket.on('track-clear', () => renderTrack(null));
   socket.on('room-count', ({count}) => { $("roomCount").textContent = joined ? `Sala: ${room} · participantes conectados: ${count}` : `Participantes na sala: ${count}`; });
@@ -1190,6 +1267,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   $("start").onclick = async () => {
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
+      if (!jfRoomOwner) { setStatus('Somente o dono da sala pode transmitir o Spotify.'); return; }
       if (!navigator.mediaDevices?.getDisplayMedia) { setStatus('A captura exige Chrome/Edge em localhost ou HTTPS.'); return; }
       // Música capturada da aba deve permanecer estéreo, sem tratamento de voz.
       // Alguns navegadores ignoram estas preferências na captura de tela.
@@ -1229,21 +1307,33 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     resetSession(); if (spotifyPollTimer) clearInterval(spotifyPollTimer); setStatus('Transmissão encerrada.');
   }
   $("stop").onclick = stopTransmission;
-  $("jfLeaveRoom").onclick = () => {
-    if (!joined) return;
-    const leavingRoom = room;
-    if (isSender) stopTransmission(); else resetSession();
-    socket.emit("leave-room", { room: leavingRoom });
-    joined = false; room = ""; $("room").value = "";
-    $("remoteAudio").pause(); $("remoteAudio").srcObject = null;
-    jfRenderMiniDj(null); renderTrack(null);
-    $("roomCount").textContent = "Ainda não entrou em uma sala.";
-    $("role").textContent = "Entre na sala para começar.";
-    $("jfChatWindow").hidden = true; $("jfChatLauncher").classList.remove("has-unread");
-    jfPeerProfiles.clear(); jfRenderPeople(); jfRenderChat([]);
-    jfUpdateRoomView(); enableControls(); jfUpdateChatControls(); jfUpdateSuggestionControls();
-    setStatus(socket.connected ? "Você saiu da sala. Crie ou entre em outra sala." : "Desconectado do servidor.");
-  };
+  function jfLeaveCurrentRoom({notifyServer=true,reason=""}={}){
+    if(!joined)return;
+    const leavingRoom=room;
+    if(isSender){
+      if(notifyServer)stopTransmission();
+      else{resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
+    }else resetSession();
+    if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
+    joined=false;room="";jfRoomOwnerId=null;jfRoomOwner=false;
+    $("room").value="";
+    $("remoteAudio").pause();$("remoteAudio").srcObject=null;
+    jfRenderMiniDj(null);renderTrack(null);
+    $("roomCount").textContent="Ainda não entrou em uma sala.";
+    $("role").textContent="Entre na sala para começar.";
+    $("jfChatWindow").hidden=true;$("jfChatLauncher").classList.remove("has-unread");
+    jfPeerProfiles.clear();jfPeerSkins.clear();
+    jfRenderPeople();jfRenderChat([]);
+    jfUpdateRoomView();jfSyncRoomOwnership();jfUpdateChatControls();jfUpdateSuggestionControls();
+    setStatus(reason||(socket.connected?"Você saiu da sala. Crie ou entre em outra sala.":"Desconectado do servidor."));
+  }
+  $("jfLeaveRoom").onclick=()=>jfLeaveCurrentRoom();
+  socket.on("room-kicked",({room:kickedRoom,message}={})=>{
+    if(joined&&room===kickedRoom)jfLeaveCurrentRoom({notifyServer:false,reason:message||"Você foi removido desta sala."});
+  });
+  socket.on("room-kick-result",({ok,message}={})=>{
+    setStatus(message||(ok?"Participante expulso.":"Não foi possível expulsar."));
+  });
   $("spotifyDisconnect").onclick = async () => {
     try { await fetch('/api/spotify/logout', { method: 'POST' }); } catch (_) {}
     spotifyConnected = false; $("spotifyConnect").hidden = false; $("spotifyDisconnect").hidden = true;
@@ -1259,48 +1349,42 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   let jfSuggestionEnabled = false;
   function jfUpdateSuggestionControls(){
     $("jfSendSuggestion").disabled = !joined || !$("jfSuggestionText").value.trim();
-    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative a opção acima para receber sugestões." : "Sugestões serão enviadas a quem estiver transmitindo.");
+    $("jfSuggestionStatus").textContent = !joined ? "Entre na sala para sugerir uma música." : (isSender ? "Você está transmitindo. Ative os pedidos automáticos acima." : "Os pedidos serão enviados à fila real do Spotify se o DJ ativar a opção.");
   }
   $("jfReceiveSuggestions").addEventListener("change",()=>{
     jfSuggestionEnabled=$("jfReceiveSuggestions").checked;
     socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled});
-    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Recebimento de sugestões ativado neste aparelho.":"Recebimento de sugestões desativado.";
+    $("jfSuggestionStatus").textContent=jfSuggestionEnabled?"Solicitando ativação da fila automática...":"Fila automática desativada.";
   });
   $("jfSuggestionText").addEventListener("input",jfUpdateSuggestionControls);
   $("jfSuggestionText").addEventListener("keydown",event=>{if(event.key==="Enter"&&!$("jfSendSuggestion").disabled)$("jfSendSuggestion").click();});
-  $("jfSendSuggestion").addEventListener("click",async()=>{
+  $("jfSendSuggestion").addEventListener("click",()=>{
     const suggestion=$("jfSuggestionText").value.trim().slice(0,180);
     if(!joined||!suggestion)return;
-    const sendButton=$("jfSendSuggestion");
-    sendButton.disabled=true;
-    $("jfSuggestionStatus").textContent="Conferindo se a música existe...";
-    try{
-      const response=await fetch("/api/music/validate-suggestion?title="+encodeURIComponent(suggestion));
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok||!result.valid){
-        $("jfSuggestionStatus").textContent=result.error||"Não encontrei essa música. Tente o título oficial e, se possível, o artista.";
-        return;
-      }
-      socket.emit("music-suggestion",{room,suggestion,fromName:jfProfile.name||"Ouvinte"});
-      $("jfSuggestionText").value="";
-      $("jfSuggestionStatus").textContent="Sugestão enviada para quem estiver recebendo sugestões.";
-    }catch(_){
-      $("jfSuggestionStatus").textContent="Não foi possível verificar a música agora. Tente novamente.";
-    }finally{
-      jfUpdateSuggestionControls();
+    socket.emit("music-suggestion",{room,suggestion});
+    $("jfSuggestionText").value="";
+    jfUpdateSuggestionControls();
+    $("jfSuggestionStatus").textContent="Pedido enviado. Aguardando confirmação do Spotify do DJ...";
+  });
+  // Nunca informar sucesso antes de o Spotify confirmar a inclusão.
+  socket.on("music-queued",({title,artist,fromName}={})=>{
+    const description=String(title||"Música")+" — "+String(artist||"");
+    $("jfSuggestionStatus").textContent="✓ Na fila do Spotify: "+description;
+    if(isSender){
+      $("jfPopupSong").textContent=description.slice(0,180);
+      $("jfPopupFrom").textContent="Adicionada automaticamente · Pedido de "+String(fromName||"Ouvinte").slice(0,24);
+      $("jfSuggestionPopup").hidden=false;
     }
   });
-  function jfShowSuggestion({suggestion,fromName}){
-    if(!isSender||!jfSuggestionEnabled)return;
-    $("jfPopupSong").textContent=String(suggestion||"Sugestão de música").slice(0,180);
-    $("jfPopupFrom").textContent="Sugerida por "+String(fromName||"Ouvinte").slice(0,24);
-    $("jfSuggestionPopup").hidden=false;
-  }
-  function jfHideSuggestion(){$("jfSuggestionPopup").hidden=true;}
-  $("jfCloseSuggestion").addEventListener("click",jfHideSuggestion);
-  $("jfSuggestionDone").addEventListener("click",jfHideSuggestion);
-  socket.on("music-suggestion",jfShowSuggestion);
-  socket.on("music-suggestion-error",({error}={})=>{$("jfSuggestionStatus").textContent=String(error||"Não foi possível enviar a sugestão.");});
+  socket.on("suggestion-settings-result",({enabled,error}={})=>{
+    jfSuggestionEnabled=Boolean(enabled);
+    $("jfReceiveSuggestions").checked=jfSuggestionEnabled;
+    if(error)$("jfSuggestionStatus").textContent=error;
+    else if(jfSuggestionEnabled)$("jfSuggestionStatus").textContent="Fila automática ativada: pedidos entram no Spotify do DJ.";
+  });
+  socket.on("music-suggestion-error",({error}={})=>{
+    $("jfSuggestionStatus").textContent=String(error||"Não foi possível adicionar a música à fila.");
+  });
   // IDs dos participantes da sala são mantidos mesmo antes de começar a transmissão.
   const knownPeers = new Set();
   socket.on('joined-room', ({peers: ids = []}) => { knownPeers.clear(); ids.forEach(id => knownPeers.add(id)); });
@@ -1310,9 +1394,34 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
   const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
-  let jfProfile={name:"Ouvinte",avatar:"",motto:""};
+  let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
-  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);}catch(_){}
+  const jfPeerSkins=new Map();
+  let jfLocalHeroPreview=false;
+  function jfMySkin(){return jfLocalHeroPreview||document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default";}
+  function jfPublishOwnSkin(){
+    if(joined&&!jfLocalHeroPreview)socket.emit("avatar-skin-set",{skin:jfMySkin()});
+    jfRenderPeople();
+  }
+  window.addEventListener("jf-admin-skin-changed",jfPublishOwnSkin);
+  window.addEventListener("jf-local-skin-preview",event=>{
+    jfLocalHeroPreview=Boolean(event.detail?.enabled);
+    jfRenderPeople();
+  });
+  socket.on("avatar-skin-update",({id,skin}={})=>{
+    if(!id)return;
+    jfPeerSkins.set(id,skin==="capitao-patria"?"capitao-patria":"default");
+    jfRenderPeople();
+  });
+  socket.on("avatar-skin-error",({message}={})=>setStatus(message||"Skin não autorizada."));
+  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
+  window.addEventListener("jf-wardrobe-save",event=>{
+    jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
+    try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
+    if(joined)socket.emit("profile-update",{profile:jfProfile});
+    jfNotifyTransmitterAppearance();
+    jfRenderPeople();
+  });
   function jfUpdateFavoriteButton(){
     const button=$("spotifyFavorite");
     if(!button)return;
@@ -1346,13 +1455,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const list=$("jfPeople");list.replaceChildren();
     if(!joined){const p=document.createElement("p");p.className="small";p.textContent="Entre em uma sala para ver os participantes.";list.appendChild(p);return;}
     const all=[...(socket.id?[[socket.id,jfProfile]]:[]),...jfPeerProfiles.entries()];
-    const seen=new Set(), unique=[];
-    for(const [id,p] of all){const key=String(p.name||"Ouvinte").trim().toLocaleLowerCase()+"|"+String(p.avatar||"");if(seen.has(key))continue;seen.add(key);unique.push([id,p]);}
+    // Cada conexão tem seu próprio macaco, mesmo quando os apelidos coincidem.
+    const unique=[...new Map(all).entries()];
     if(!unique.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
     for(const [id,p] of unique){
       const card=document.createElement("div");card.className="jf-person";
-      if(p.avatar){const img=document.createElement("img");img.src=p.avatar;img.alt="";card.appendChild(img);}else{const av=document.createElement("div");av.className="jf-avatar";av.textContent="☺";card.appendChild(av);}
-      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"");details.appendChild(label);
+      card.dataset.jfMonkey="true";
+      card.dataset.wardrobe=JSON.stringify(p.wardrobe||{});
+    card.dataset.skin=id===socket.id?jfMySkin():(jfPeerSkins.get(id)||"default");
+      const monkey=document.createElement("div");monkey.className="jf-member-monkey";card.appendChild(monkey);
+      /* A identidade visual principal do participante é sempre seu macaco 3D. */
+      const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"")+(id===jfRoomOwnerId?" 👑":"");details.appendChild(label);
       if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}
       const status=document.createElement("span");status.className="jf-friend-status online";status.innerHTML="<i></i> Online na sala";details.appendChild(status);card.appendChild(details);
       if(id!==socket.id){
@@ -1365,7 +1478,23 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         else if(already){request.textContent="✓";request.disabled=true;request.title="Já está na sua lista de amigos";}
         else if(pending){request.disabled=true;request.title="Solicitação já enviada ou recebida";}
         request.addEventListener("click",()=>{if(!joined||!room)return;if(String(jfProfile.name||"").trim().toLocaleLowerCase()===String(p.name||"").trim().toLocaleLowerCase()){setStatus("Você não pode adicionar seu próprio perfil.");return;}jfOutgoingRequests.add(id);socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});jfRenderPeople();});
-        actions.appendChild(request);card.appendChild(actions);
+        actions.appendChild(request);
+        if(jfRoomOwner){
+          const kick=document.createElement("button");
+          kick.type="button";
+          kick.className="btn secondary jf-room-kick";
+          kick.textContent="✕ Expulsar";
+          kick.title="Expulsar este participante da sala";
+          kick.setAttribute("aria-label","Expulsar "+String(p.name||"Ouvinte"));
+          kick.addEventListener("click",()=>{
+            if(!joined||!jfRoomOwner||id===socket.id)return;
+            if(confirm("Expulsar "+String(p.name||"Ouvinte")+" desta sala?")){
+              socket.emit("room-kick",{targetId:id});
+            }
+          });
+          actions.appendChild(kick);
+        }
+        card.appendChild(actions);
       }
       card.tabIndex=0;list.appendChild(card);
     }
@@ -1474,11 +1603,18 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     });
     $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
   }
-  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();jfRenderFriends();}});
+  socket.on("profile-update",({id,profile})=>{if(id&&profile){jfPeerProfiles.set(id,profile);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();}});
   socket.on("peer-joined",({id})=>{if(id)jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});jfRenderPeople();jfRenderFriends();});
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfRenderPeople();jfRenderFriends();});
-  socket.on("joined-room",({profiles={}})=>{jfPeerProfiles.clear();for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});});
-  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
+  socket.on("joined-room",({profiles={},avatarSkins={}})=>{
+    jfPeerProfiles.clear();jfPeerSkins.clear();
+    for(const [id,p] of Object.entries(profiles))jfPeerProfiles.set(id,p);
+    for(const [id,skin] of Object.entries(avatarSkins))jfPeerSkins.set(id,skin==="capitao-patria"?"capitao-patria":"default");
+    jfRenderPeople();jfRenderFriends();socket.emit("profile-update",{profile:jfProfile});
+    if(!jfLocalHeroPreview)socket.emit("avatar-skin-set",{skin:jfMySkin()});
+    jfNotifyTransmitterAppearance();
+  });
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
   function jfSetChatOpen(open){
@@ -1540,7 +1676,33 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("chat-history",({messages=[]}={})=>jfRenderChat(Array.isArray(messages)?messages.slice(-50):[]));
   socket.on("chat-rate-limit",()=>{$("jfChatStatus").textContent="Você está enviando mensagens rápido demais. Aguarde alguns segundos.";});
-  socket.on("chat-message",message=>{if(joined&&message&&message.room===room){jfAppendChatMessage(message);if($("jfChatWindow").hidden){$("jfChatLauncher").classList.add("has-unread");$("jfChatUnread").title="Novas mensagens";}}});
+  // Som de mensagem enviado pelo usuário (Habbo). O navegador pode exigir
+  // uma interação anterior para permitir reprodução, por política de autoplay.
+  const jfChatSound=new Audio("/habbo-message-mp.mp3");
+  jfChatSound.preload="auto";
+  jfChatSound.volume=.65;
+  let lastChatSound=0;
+  function jfChatNotificationSound(){
+    if(Date.now()-lastChatSound<650)return;
+    lastChatSound=Date.now();
+    try{
+      jfChatSound.pause();
+      jfChatSound.currentTime=0;
+      jfChatSound.play().catch(error=>console.debug("Som de mensagem bloqueado pelo navegador:",error));
+    }catch(error){console.debug("Falha ao reproduzir notificação:",error);}
+  }
+  socket.on("chat-message",message=>{
+    if(joined&&message&&message.room===room){
+      jfAppendChatMessage(message);
+      if($("jfChatWindow").hidden){
+        $("jfChatLauncher").classList.add("has-unread");
+        $("jfChatUnread").title="Novas mensagens";
+        if(message.senderId!==socket.id){
+          jfChatNotificationSound();
+        }
+      }
+    }
+  });
   socket.on("joined-room",()=>jfUpdateChatControls());
 
   jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();
@@ -1568,11 +1730,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     renderer.domElement.className="jf-glb-canvas";
     renderer.domElement.setAttribute("aria-label","Modelo 3D do macaco DJ");
     stage.appendChild(renderer.domElement);
+    window.dispatchEvent(new Event("jf-player-stage-ready"));
     scene.add(new THREE.HemisphereLight(0xffffff,0x51406b,2.2));
     const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(3,5,4);scene.add(key);
     const rim=new THREE.DirectionalLight(0x9deaff,1.1);rim.position.set(-4,2,-3);scene.add(rim);
     const root=new THREE.Group();scene.add(root);
-    const gltf=await new GLTFLoader().loadAsync("/Meshypint.glb");
+    const gltf=await new GLTFLoader().loadAsync("/macaco.glb");
     const model=gltf.scene;
     root.add(model);
     const box=new THREE.Box3().setFromObject(model);
@@ -1581,6 +1744,121 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     model.position.sub(center);
     const maxDim=Math.max(size.x,size.y,size.z)||1;
     model.scale.setScalar(2.25/maxDim);
+    // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
+    const patriotGltf=await new GLTFLoader().loadAsync("/patrianocape_pose_heroica_final.glb").catch(error=>{
+      console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
+      return null;
+    });
+    const patriot=patriotGltf?.scene||null;
+    const patriotRoot=new THREE.Group();root.add(patriotRoot);
+    if(patriot){
+      patriotRoot.add(patriot);
+      const pb=new THREE.Box3().setFromObject(patriot);
+      const pc=pb.getCenter(new THREE.Vector3());
+      const ps=pb.getSize(new THREE.Vector3());
+      // Enquadramento próprio da skin: centralizar com a escala aplicada.
+      // Altura com margem evita cortar cabeça e botas no mini player.
+      const patriotScale=1.86/(Math.max(ps.x,ps.y,ps.z)||1);
+      patriot.scale.setScalar(patriotScale);
+      patriot.position.copy(pc).multiplyScalar(-patriotScale);
+      // Capa Meshy separada do esqueleto, presa ao mesmo grupo do personagem.
+      // Se o arquivo ainda não estiver em public/, mantém o personagem normal.
+      // Capa independente: normalizada e encaixada atrás dos ombros.
+      // O GLB Meshy tem altura ~1.90; o mascote é normalizado para 1.86.
+      const capeAsset="/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb";
+      let capeMount=null;
+      try{
+        const capeResponse=await fetch(capeAsset,{method:"HEAD"});
+        if(!capeResponse.ok)throw new Error("HTTP "+capeResponse.status+" ao acessar "+capeAsset);
+        const capeGltf=await new GLTFLoader().loadAsync(capeAsset);
+        const cape=capeGltf.scene;
+        const capeBox=new THREE.Box3().setFromObject(cape);
+        const capeSize=capeBox.getSize(new THREE.Vector3());
+        const capeCenter=capeBox.getCenter(new THREE.Vector3());
+        // Encaixe em unidades do player (já normalizadas), sem depender
+        // da escala bruta exportada pelo Meshy.
+        const capeScale=1.32/Math.max(capeSize.y,.001);
+        cape.scale.setScalar(capeScale);
+        cape.position.copy(capeCenter).multiplyScalar(-capeScale);
+        capeMount=new THREE.Group();
+        capeMount.name="jfPatriotCapeMount";
+        // Capa abaixada para encaixar no ombro, mas mantida afastada das pernas.
+        capeMount.position.set(0,-.12,-.56);
+        capeMount.rotation.x=.08;
+        cape.traverse(part=>{
+          if(part.isMesh){
+            part.frustumCulled=false;
+            part.material.side=THREE.DoubleSide;
+            part.castShadow=false;
+            part.receiveShadow=false;
+          }
+        });
+        capeMount.add(cape);
+        patriotRoot.add(capeMount);
+        console.info("Junto.fm: capa 3D carregada",{arquivo:capeAsset,escala:capeScale,tamanho:capeSize.toArray()});
+      }catch(error){
+        console.warn("Junto.fm: CAPA NÃO CARREGOU. Verifique se o arquivo GLB está dentro da pasta public/ com o nome exato.",capeAsset,error);
+      }
+
+      // A pose dos braços e mãos já está salva no GLB novo do AccuRIG.
+      // Ajustar apenas os ossos das pernas e dos pés, sem tocar nos braços.
+      const rigBones=new Map();
+      const boneKey=name=>name.toLowerCase().replace(/[^a-z0-9]/g,"");
+      patriot.traverse(object=>{
+        if(object.isBone)rigBones.set(boneKey(object.name),object);
+      });
+      // Usa um eixo em coordenadas mundiais, convertido para o espaço
+      // do osso pai. Assim a rotação funciona mesmo com o rig importado
+      // do AccuRIG e com a orientação própria de cada osso.
+      const rotateRigBone=(name,worldAxis,radians)=>{
+        const bone=rigBones.get(boneKey(name));
+        if(!bone)return false;
+        bone.updateWorldMatrix(true,false);
+        const parentWorldQ=new THREE.Quaternion();
+        bone.parent.getWorldQuaternion(parentWorldQ);
+        const parentAxis=worldAxis.clone().applyQuaternion(parentWorldQ.invert()).normalize();
+        bone.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(parentAxis,radians));
+        bone.updateMatrixWorld(true);
+        return true;
+      };
+      const upWorld=new THREE.Vector3(0,0,1);
+      const footPitchWorld=new THREE.Vector3(1,0,0);
+      const footPoseResult={
+        leftLeg:rotateRigBone("CC_Base_L_Thigh",upWorld,-.045),
+        rightLeg:rotateRigBone("CC_Base_R_Thigh",upWorld,.045),
+        leftFoot:rotateRigBone("CC_Base_L_Foot",footPitchWorld,.32),
+        rightFoot:rotateRigBone("CC_Base_R_Foot",footPitchWorld,.32),
+        // Descer suavemente ambos os braços, preservando a rotação
+        // dos pulsos e a abertura das palmas já gravadas no GLB.
+        leftArm:rotateRigBone("CC_Base_L_Upperarm",upWorld,-.17),
+        rightArm:rotateRigBone("CC_Base_R_Upperarm",upWorld,.17)
+      };
+      console.info("Junto.fm: pose de levitacao AccuRIG",footPoseResult,
+        "ossos reconhecidos:",rigBones.size);
+      if(Object.values(footPoseResult).some(found=>!found)){
+        console.warn("Junto.fm: um ou mais ossos de pés/pernas não foram encontrados no GLB.");
+      }
+
+      // Pontos pequenos apenas nas pupilas: sem halos grandes ou luz no rosto.
+      const pupilGlowMaterial=new THREE.MeshBasicMaterial({
+        color:0xff3030,transparent:true,opacity:.88,
+        blending:THREE.AdditiveBlending,depthWrite:false,depthTest:true
+      });
+      for(const sign of [-1,1]){
+        const pupil=new THREE.Mesh(new THREE.SphereGeometry(.012,16,12),pupilGlowMaterial);
+        pupil.scale.set(1,1,.45);
+        pupil.position.set(sign*.135,.52,.42);
+        patriotRoot.add(pupil);
+      }
+    }
+    function updateAdminCostume(){
+      const enabled=Boolean(patriot)&&Boolean(document.getElementById("jfMiniDj")?.classList.contains("jf-homelander"));
+      model.visible=!enabled;
+      patriotRoot.visible=enabled;
+    }
+    window.addEventListener("jf-admin-skin-changed",updateAdminCostume);
+    new MutationObserver(updateAdminCostume).observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
+    updateAdminCostume();
     camera.position.set(0,.12,3.65);
     camera.lookAt(0,0,0);
     // Orientação leve de três quartos; movimentos suaves de groove sem rig embutido.
@@ -1598,7 +1876,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const animate=()=>{
       requestAnimationFrame(animate);
       const t=clock.getElapsedTime();
-      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
+      if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=patriotRoot.visible ? .005+Math.sin(t*1.35)*.045 : Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
       renderer.render(scene,camera);
     };
     animate();
@@ -1606,5 +1884,43 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 })();
 </script>
 
+<script>
+(()=> {
+ const login=document.getElementById("jfAdminLogin"),logout=document.getElementById("jfAdminLogout"),wrap=document.getElementById("jfAdminSkinWrap"),check=document.getElementById("jfAdminSkin"),status=document.getElementById("jfAdminStatus");
+ const apply=skin=>document.getElementById("jfMiniDj")?.classList.toggle("jf-homelander",skin==="capitao-patria");
+ // Prévia visual exclusivamente local: não altera permissões nem envia skin pela rede.
+ const isLocal=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+ if(isLocal){
+  const preview=document.createElement("button");
+  preview.type="button";preview.id="jfLocalSkinPreview";
+  preview.textContent="👁 Testar Capitão Pátria (local)";
+  preview.setAttribute("aria-pressed","false");
+  document.getElementById("jfAdminPanel").appendChild(preview);
+  const setPreview=enabled=>{
+   apply(enabled?"capitao-patria":"default");
+   window.dispatchEvent(new CustomEvent("jf-local-skin-preview",{detail:{enabled}}));
+   preview.setAttribute("aria-pressed",String(enabled));
+   preview.textContent=enabled?"↩ Remover skin de teste":"👁 Testar Capitão Pátria (local)";
+   status.textContent=enabled?"Prévia local: uniforme e olhos vermelhos (sem login ou sincronização)":"Prévia disponível somente neste computador";
+  };
+  preview.addEventListener("click",()=>setPreview(preview.getAttribute("aria-pressed")!=="true"));
+ }
+ fetch("/api/admin/status",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
+  status.textContent=data.admin?"Administrador autenticado":data.configured?"Acesso livre — sem login necessário":"Login administrativo ainda não configurado";
+  login.hidden=!data.configured||data.admin;logout.hidden=!data.admin;wrap.hidden=!data.admin;
+  if(data.admin){check.checked=sessionStorage.getItem("jf-admin-skin")==="capitao-patria";apply(check.checked?"capitao-patria":"default");window.dispatchEvent(new CustomEvent("jf-admin-skin-changed",{detail:{skin:check.checked?"capitao-patria":"default"}}));}
+ }).catch(()=>{status.textContent="Não foi possível verificar o administrador";});
+ login.addEventListener("click",()=>{location.href="/auth/github";});
+ logout.addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});sessionStorage.removeItem("jf-admin-skin");location.reload();});
+ check.addEventListener("change",async()=>{
+  const skin=check.checked?"capitao-patria":"default";
+  const r=await fetch("/api/avatar/equip",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({skin})});
+  if(!r.ok){check.checked=false;status.textContent="Skin bloqueada pelo servidor";return;}
+  sessionStorage.setItem("jf-admin-skin",skin);apply(skin);
+  // Evento de sincronização: só funciona quando o cliente Socket.IO da sala estiver disponível.
+  window.dispatchEvent(new CustomEvent("jf-admin-skin-changed",{detail:{skin}}));
+ });
+})();
+</script>
 </body>
 </html>
