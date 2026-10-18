@@ -243,6 +243,7 @@ function updatePlayerMonkey(detail={}){
   }
 }
 window.addEventListener("jf-player-monkey",event=>updatePlayerMonkey(event.detail));
+window.addEventListener("jf-player-stage-ready",()=>updatePlayerMonkey(window.jfLastTransmitterAppearance||{}));
 if(playerStage){
   new MutationObserver(()=>updatePlayerMonkey(window.jfLastTransmitterAppearance||{}))
     .observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
