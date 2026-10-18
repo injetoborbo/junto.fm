@@ -1,7 +1,6 @@
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
-import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 import {createDanceAvatar} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
@@ -412,7 +411,7 @@ function animate(){
       });
     }
   }
-  renderer.render(scene,camera);
+  if(!inspectCleanup)renderer.render(scene,camera);
 }
 function setStatus(message){status.textContent=message;}
 function open(){
@@ -451,89 +450,65 @@ const inspectClose=document.getElementById("jfSeatInspectClose");
 const inspectViewport=document.getElementById("jfSeatInspectViewport");
 let inspectCleanup=null,inspectOpening=false;
 async function openSeatInspect(){
-  if(!active||inspectCleanup||inspectOpening||!inspectModal||!inspectViewport)return;
-  inspectOpening=true;
+  if(!active||inspectCleanup||!inspectModal||!inspectViewport)return;
+  const me=people.get(socket?.id);
+  if(!me?.root||!me.data.seated){
+    setStatus("Sente seu macaco na cadeira da pista antes de abrir a visão ampliada.");
+    return;
+  }
   inspectModal.hidden=false;
-  let miniRenderer=null,avatar=null,raf=0,disposed=false;
-  const clean=()=>{
+  let raf=0,disposed=false,drag=null,yaw=.55,pitch=.23,distance=2.65;
+  // Compartilha o renderer e a cena originais: não clona o rig, os óculos
+  // nem as texturas, e não cria outro contexto WebGL.
+  const inspectCamera=new THREE.PerspectiveCamera(35,1,.05,80);
+  const center=new THREE.Vector3(),bounds=new THREE.Box3();
+  const dispose=()=>{
     if(disposed)return;
     disposed=true;cancelAnimationFrame(raf);
-    miniRenderer?.dispose();miniRenderer?.forceContextLoss();
-    miniRenderer?.domElement.remove();
-    avatar?.dispose?.();
-    inspectViewport.replaceChildren();
+    inspectViewport.removeEventListener("pointerdown",down);
+    inspectViewport.removeEventListener("pointermove",move);
+    inspectViewport.removeEventListener("pointerup",up);
+    inspectViewport.removeEventListener("pointercancel",up);
+    inspectViewport.removeEventListener("wheel",wheel);
+    // Um canvas não pode pertencer a dois elementos: devolve-o à pista.
+    if(renderer?.domElement&&viewport)viewport.appendChild(renderer.domElement);
     inspectModal.hidden=true;
-    inspectCleanup=null;inspectOpening=false;
+    inspectCleanup=null;
   };
-  inspectCleanup=clean;
-  try{
-    // Espelhar a pose e os acessórios do avatar REAL sentado na pista.
-    // Evita diferenças entre dois processos assíncronos de montagem.
-    const live=people.get(socket.id);
-    const useLive=Boolean(live?.root&&live?.data?.seated&&live?.sitRotations?.size);
-    let inspectionGroup;
-    if(useLive){
-      live.root.updateMatrixWorld(true);
-      inspectionGroup=cloneSkeleton(live.root);
-      // A etiqueta original com o nome não pertence à inspeção.
-      const label=inspectionGroup.children.find(o=>o.isSprite);
-      label?.removeFromParent();
-    }else{
-      const pose=await sittingPose();
-      if(disposed)return;
-      avatar=await createDanceAvatar(bridge.getProfile()?.wardrobe||{},"default",()=>{});
-      if(disposed){avatar.dispose();return;}
-      const rig=avatar.rig;
-      if(pose)rig.traverse(bone=>{
-        if(!bone.isBone)return;
-        const correction=pose.get(boneKey(bone.name));
-        if(correction)bone.quaternion.multiply(correction).normalize();
-      });
-      inspectionGroup=avatar.group;
-    }
+  const down=e=>{drag={x:e.clientX,y:e.clientY,yaw,pitch};inspectViewport.setPointerCapture?.(e.pointerId);};
+  const move=e=>{if(!drag)return;yaw=drag.y-(e.clientX-drag.x)*.009;pitch=Math.max(-.1,Math.min(.9,drag.pitch+(e.clientY-drag.y)*.006));};
+  const up=()=>{drag=null;};
+  const wheel=e=>{e.preventDefault();distance=Math.max(1.7,Math.min(6,distance+Math.sign(e.deltaY)*.18));};
+  inspectCleanup=dispose;
+  inspectViewport.addEventListener("pointerdown",down);
+  inspectViewport.addEventListener("pointermove",move);
+  inspectViewport.addEventListener("pointerup",up);
+  inspectViewport.addEventListener("pointercancel",up);
+  inspectViewport.addEventListener("wheel",wheel,{passive:false});
+  inspectViewport.setAttribute("aria-label","Cena real da pista ampliada sobre o macaco sentado, com acessórios originais");
+  inspectViewport.appendChild(renderer.domElement);
+  // A renderização ocorre no loop principal, depois da atualização da pose.
+  // Somente trocamos câmera e viewport, nunca alteramos os ossos.
+  const update=()=>{
     if(disposed)return;
-    inspectViewport.setAttribute("aria-label",useLive?
-      "Cópia do macaco sentado na pista, com acessórios e pose reais":
-      "Simulação ampliada da pose sentada; sente na pista para espelhar o avatar real");
-    const previewScene=new THREE.Scene();
-    previewScene.background=new THREE.Color(0x0b142b);
-    previewScene.add(new THREE.HemisphereLight(0xffffff,0x465474,2.5));
-    const light=new THREE.DirectionalLight(0xffffff,2.6);light.position.set(4,8,6);previewScene.add(light);
-    const floor=new THREE.Mesh(new THREE.CircleGeometry(1.1,40),new THREE.MeshStandardMaterial({color:0x284b7b,roughness:.8}));
-    floor.rotation.x=-Math.PI/2;floor.position.set(1.5,-.16,1.5);previewScene.add(floor);
-    const chair=scene?.userData.seatChair?.clone(true);
-    if(chair)previewScene.add(chair);
-    inspectionGroup.position.set(1.62,.70,1.38);
-    inspectionGroup.rotation.y=0;
-    inspectionGroup.rotation.z=0;
-    previewScene.add(inspectionGroup);
-    miniRenderer=new THREE.WebGLRenderer({antialias:true,powerPreference:"low-power"});
-    miniRenderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
-    inspectViewport.appendChild(miniRenderer.domElement);
-    const previewCamera=new THREE.PerspectiveCamera(37,1,.05,60);
-    const look=new THREE.Vector3(1.5,.75,1.5);
-    let yaw=.7,distance=3.7,pitch=.37,drag=null;
-    const draw=()=>{
-      if(disposed)return;
-      const w=Math.max(1,inspectViewport.clientWidth),h=Math.max(1,inspectViewport.clientHeight);
-      miniRenderer.setSize(w,h,false);previewCamera.aspect=w/h;previewCamera.updateProjectionMatrix();
-      previewCamera.position.set(look.x+distance*Math.sin(yaw)*Math.cos(pitch),look.y+distance*Math.sin(pitch),look.z+distance*Math.cos(yaw)*Math.cos(pitch));
-      previewCamera.lookAt(look);miniRenderer.render(previewScene,previewCamera);
-      raf=requestAnimationFrame(draw);
-    };
-    const down=e=>{drag={x:e.clientX,y:e.clientY,yaw,pitch};inspectViewport.setPointerCapture?.(e.pointerId);};
-    const move=e=>{if(!drag)return;yaw=drag.yaw-(e.clientX-drag.x)*.009;pitch=Math.max(-.1,Math.min(.85,drag.pitch+(e.clientY-drag.y)*.006));};
-    const up=()=>{drag=null;};
-    const wheel=e=>{e.preventDefault();distance=Math.max(2.2,Math.min(7,distance+Math.sign(e.deltaY)*.25));};
-    inspectViewport.addEventListener("pointerdown",down);
-    inspectViewport.addEventListener("pointermove",move);
-    inspectViewport.addEventListener("pointerup",up);
-    inspectViewport.addEventListener("pointercancel",up);
-    inspectViewport.addEventListener("wheel",wheel,{passive:false});
-    const initialCleanup=inspectCleanup;
-    inspectCleanup=()=>{inspectViewport.removeEventListener("pointerdown",down);inspectViewport.removeEventListener("pointermove",move);inspectViewport.removeEventListener("pointerup",up);inspectViewport.removeEventListener("pointercancel",up);inspectViewport.removeEventListener("wheel",wheel);initialCleanup();};
-    inspectOpening=false;draw();
-  }catch(error){console.error("Prévia da cadeira:",error);inspectCleanup?.();}
+    const current=people.get(socket?.id);
+    if(!active||!renderer||!current?.root||!current.data.seated){dispose();return;}
+    current.root.updateWorldMatrix(true,true);
+    bounds.setFromObject(current.root);
+    bounds.getCenter(center);
+    // A cabeça e a cadeira ocupam aproximadamente este espaço.
+    center.y=Math.max(.55,Math.min(1.18,center.y));
+    const w=Math.max(1,inspectViewport.clientWidth),h=Math.max(1,inspectViewport.clientHeight);
+    renderer.setSize(w,h,false);
+    inspectCamera.aspect=w/h;inspectCamera.updateProjectionMatrix();
+    inspectCamera.position.set(center.x+distance*Math.sin(yaw)*Math.cos(pitch),
+      center.y+distance*Math.sin(pitch),
+      center.z+distance*Math.cos(yaw)*Math.cos(pitch));
+    inspectCamera.lookAt(center);
+    renderer.render(scene,inspectCamera);
+    raf=requestAnimationFrame(update);
+  };
+  update();
 }
 inspectButton?.addEventListener("click",openSeatInspect);
 inspectClose?.addEventListener("click",()=>inspectCleanup?.());
