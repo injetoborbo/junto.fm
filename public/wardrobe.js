@@ -28,7 +28,8 @@ const ASSETS={
   escuros:"/oculos_escuros.glb",
   redondos:"/oculos_redondos.glb",
   fone:"/fone_preto.glb",
-  vestido:"/vestido_rosa.glb"
+  vestido:"/vestido_rosa.glb",
+  hero:"/patrianocape_pose_heroica_final.glb"
 };
 const assetCache=new Map(),loader=new GLTFLoader();
 function getAsset(name){
@@ -164,7 +165,7 @@ function dress(root,selection,render,monkey){
     });
   };
 }
-function makeScene(target,wardrobe,{preview=false}={}){
+function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
   if(!base)return null;
   const width=preview?248:64,height=preview?248:68;
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
@@ -186,6 +187,23 @@ function makeScene(target,wardrobe,{preview=false}={}){
   normalized.add(monkey);
   const disposeOutfit=dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera),monkey);
   scene.add(normalized);
+  let active=true;
+  if(skin==="capitao-patria"){
+    // Render independente da mesma skin 3D do player, sem editar o GLB base.
+    getAsset("hero").then(asset=>{
+      if(!asset||!active)return;
+      const hero=asset.clone(true);
+      const bounds=new THREE.Box3().setFromObject(hero);
+      const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
+      const sc=1.78/Math.max(size.x,size.y,size.z,.001);
+      hero.scale.setScalar(sc);
+      hero.position.copy(center).multiplyScalar(-sc);
+      const group=new THREE.Group();group.rotation.y=-.18;group.add(hero);
+      scene.add(group);
+      normalized.visible=false;
+      renderer.render(scene,camera);
+    });
+  }
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
   camera.position.set(0,.04,preview?4.25:4.0);camera.lookAt(0,.035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
@@ -212,6 +230,7 @@ function makeScene(target,wardrobe,{preview=false}={}){
     target.addEventListener("pointercancel",up);
   }
   return {dispose:()=>{
+    active=false;
     if(preview){
       target.removeEventListener("pointerdown",down);
       target.removeEventListener("pointermove",move);
@@ -295,7 +314,7 @@ function refreshPeople(){
     if(!target||cards.has(target))continue;
     let wardrobe=defaults();
     try{wardrobe=sanitize(JSON.parse(row.dataset.wardrobe||"{}"));}catch{}
-    const instance=makeScene(target,wardrobe);
+    const instance=makeScene(target,wardrobe,{skin:row.dataset.skin||"default"});
     if(instance)cards.set(target,instance);
   }
 }
