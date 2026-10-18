@@ -269,7 +269,7 @@ async function putMember(id,details){
   try{
     const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
-    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;
+    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;
     entry.restBones=new Map();
     entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
     sittingPose().then(pose=>{
@@ -414,6 +414,7 @@ function animate(){
     }
     // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
     p.updateAccessories?.(Boolean(d.seated&&!walking));
+    if(id===socket.id&&d.seated&&!walking&&p.setSeatGlassesCalibration) p.setSeatGlassesCalibration(seatGlassesAdjustment);
   }
   if(!inspectCleanup)renderer.render(scene,camera);
 }
@@ -453,6 +454,41 @@ const inspectModal=document.getElementById("jfSeatInspectModal");
 const inspectClose=document.getElementById("jfSeatInspectClose");
 const inspectViewport=document.getElementById("jfSeatInspectViewport");
 let inspectCleanup=null,inspectOpening=false;
+const glassesAxes=["x","y","z"];
+const glassesInputs=Object.fromEntries(glassesAxes.map(axis=>[axis,document.getElementById("jfSeatGlasses"+axis.toUpperCase())]));
+const seatGlassesAdjustment={x:0,y:0,z:0};
+function updateGlassesPreview(){
+  for(const axis of glassesAxes){
+    const input=glassesInputs[axis];
+    if(input)input.value=String(seatGlassesAdjustment[axis]);
+    const output=document.getElementById("jfSeatGlasses"+axis.toUpperCase()+"Value");
+    if(output)output.textContent=seatGlassesAdjustment[axis].toFixed(4);
+  }
+  const member=people.get(socket?.id);
+  member?.setSeatGlassesCalibration?.(seatGlassesAdjustment);
+}
+for(const axis of glassesAxes){
+  glassesInputs[axis]?.addEventListener("input",value=>{
+    // Input is native DOM; read slider value directly.
+    seatGlassesAdjustment[axis]=Number(glassesInputs[axis].value)||0;
+    updateGlassesPreview();
+  });
+}
+document.getElementById("jfSeatGlassesPreset")?.addEventListener("click",()=>{
+  // Deslocamento perceptível e reversível para verificar se o código da
+  // prévia realmente afeta o óculos que está sendo renderizado.
+  Object.assign(seatGlassesAdjustment,{x:.001,y:-.0005,z:.0014});
+  updateGlassesPreview();
+});
+document.getElementById("jfSeatGlassesReset")?.addEventListener("click",()=>{
+  Object.assign(seatGlassesAdjustment,{x:0,y:0,z:0});
+  updateGlassesPreview();
+});
+document.getElementById("jfSeatGlassesCopy")?.addEventListener("click",()=>{
+  const info=JSON.stringify(seatGlassesAdjustment);
+  navigator.clipboard?.writeText(info).catch(()=>{});
+});
+
 async function openSeatInspect(){
   if(!active||inspectCleanup||!inspectModal||!inspectViewport)return;
   const me=people.get(socket?.id);
@@ -461,6 +497,7 @@ async function openSeatInspect(){
     return;
   }
   inspectModal.hidden=false;
+  updateGlassesPreview();
   let raf=0,disposed=false,drag=null,yaw=.55,pitch=.23,distance=2.65;
   // Compartilha o renderer e a cena originais: não clona o rig, os óculos
   // nem as texturas, e não cria outro contexto WebGL.
