@@ -338,6 +338,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
 // O mascote do player representa SEMPRE o usuário deste navegador,
 // nunca o transmissor. Mantém a pose sentada e os acessórios locais.
 let playerInstance=null;
+let currentLocalWardrobe=null;
 const playerStage=document.querySelector("#jfMiniDj .jf-dj-stage");
 const playerHolder=document.createElement("div");
 playerHolder.className="jf-transmitter-wardrobe";
@@ -350,14 +351,14 @@ function updatePlayerMonkey(){
   playerHolder.style.display=shown?"block":"none";
   playerStage?.querySelector("canvas.jf-glb-canvas")?.style.setProperty("visibility",shown?"hidden":"visible");
   if(shown){
-    playerInstance=makeScene(playerHolder,readSaved(),{preview:true,playerSitting:true});
+    playerInstance=makeScene(playerHolder,currentLocalWardrobe||readSaved(),{preview:true,playerSitting:true});
     playerHolder.style.pointerEvents="none";
   }
 }
 window.addEventListener("jf-player-stage-ready",updatePlayerMonkey);
-window.addEventListener("jf-local-profile-updated",updatePlayerMonkey);
-window.addEventListener("jf-wardrobe-save",updatePlayerMonkey);
-window.addEventListener("storage",event=>{if(event.key==="junto_profile")updatePlayerMonkey();});
+window.addEventListener("jf-local-profile-updated",event=>{currentLocalWardrobe=sanitize(event.detail?.wardrobe);updatePlayerMonkey();});
+window.addEventListener("jf-wardrobe-save",event=>{currentLocalWardrobe=sanitize(event.detail?.wardrobe);updatePlayerMonkey();});
+window.addEventListener("storage",event=>{if(event.key==="junto_profile"){currentLocalWardrobe=null;updatePlayerMonkey();}});
 if(playerStage){
   new MutationObserver(updatePlayerMonkey)
     .observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
