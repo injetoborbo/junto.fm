@@ -1625,17 +1625,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         const bone=bones[normalizeBoneName(name)];
         if(bone){bone.rotation.x+=x;bone.rotation.y+=y;bone.rotation.z+=z;}
       };
-      // Braços ligeiramente afastados do tronco e estendidos, mãos relaxadas.
-      poseBone("LeftArm",-.18,0,-.95);
-      poseBone("RightArm",-.18,0,.95);
-      poseBone("LeftForeArm",0,0,-.08);
-      poseBone("RightForeArm",0,0,.08);
-      poseBone("LeftHand",0,.10,-.08);
-      poseBone("RightHand",0,-.10,.08);
-      // Pernas discretamente afastadas, postura de voo estacionário.
-      poseBone("LeftUpLeg",-.06,0,-.055);
-      poseBone("RightUpLeg",-.06,0,.055);
-      poseBone("Spine2",.045,0,0);
+      // Pose Capitão Pátria: braços baixos e abertos (~35°), palmas voltadas
+      // para cima. Evita a pose em T e mantém pernas retas.
+      poseBone("LeftArm",-.07,0,-.48);
+      poseBone("RightArm",-.07,0,.48);
+      poseBone("LeftForeArm",0,0,.04);
+      poseBone("RightForeArm",0,0,-.04);
+      poseBone("LeftHand",0,.24,-.06);
+      poseBone("RightHand",0,-.24,.06);
+      poseBone("LeftUpLeg",0,0,0);
+      poseBone("RightUpLeg",0,0,0);
+      poseBone("Spine2",0,0,0);
       console.info("Junto.fm: pose de voo v2", {totalBones:Object.keys(bones).length,leftArm:!!bones.leftarm,rightArm:!!bones.rightarm,skinnedMeshes:(()=>{let n=0;patriot.traverse(o=>{if(o.isSkinnedMesh)n++;});return n;})()});
 
       // Pontos pequenos apenas nas pupilas: sem halos grandes ou luz no rosto.
