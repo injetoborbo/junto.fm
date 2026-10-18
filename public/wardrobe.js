@@ -463,40 +463,9 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     renderer.dispose();target.replaceChildren();
   },renderer};
 }
-// O mascote do player representa SEMPRE o usuário deste navegador,
-// nunca o transmissor. Mantém a pose sentada e os acessórios locais.
-let playerInstance=null;
-let currentLocalWardrobe=null;
-const playerStage=document.querySelector("#jfMiniDj .jf-dj-stage");
-const playerHolder=document.createElement("div");
-playerHolder.className="jf-transmitter-wardrobe";
-playerHolder.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none;display:none;animation:jf-player-hover 3.2s ease-in-out infinite";
-// Movimento de levitação independente do render 3D, sem modificar o rig sentado.
-if(!document.getElementById("jfPlayerHoverStyle")){
-  const style=document.createElement("style");style.id="jfPlayerHoverStyle";
-  style.textContent="@keyframes jf-player-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@media(prefers-reduced-motion:reduce){.jf-transmitter-wardrobe{animation:none!important}}";
-  document.head.appendChild(style);
-}
-playerStage?.appendChild(playerHolder);
-function updatePlayerMonkey(){
-  const adminCostume=document.getElementById("jfMiniDj")?.classList.contains("jf-homelander");
-  playerInstance?.dispose();playerInstance=null;
-  const shown=Boolean(!adminCostume&&playerStage&&base);
-  playerHolder.style.display=shown?"block":"none";
-  playerStage?.querySelector("canvas.jf-glb-canvas")?.style.setProperty("visibility",shown?"hidden":"visible");
-  if(shown){
-    playerInstance=makeScene(playerHolder,currentLocalWardrobe||readSaved(),{preview:true,playerSitting:true});
-    playerHolder.style.pointerEvents="none";
-  }
-}
-window.addEventListener("jf-player-stage-ready",updatePlayerMonkey);
-window.addEventListener("jf-local-profile-updated",event=>{currentLocalWardrobe=sanitize(event.detail?.wardrobe);updatePlayerMonkey();});
-window.addEventListener("jf-wardrobe-save",event=>{currentLocalWardrobe=sanitize(event.detail?.wardrobe);updatePlayerMonkey();});
-window.addEventListener("storage",event=>{if(event.key==="junto_profile"){currentLocalWardrobe=null;updatePlayerMonkey();}});
-if(playerStage){
-  new MutationObserver(updatePlayerMonkey)
-    .observe(document.getElementById("jfMiniDj"),{attributes:true,attributeFilter:["class"]});
-}
+// Miniplayer: a cena principal em index.html renderiza o GLB Meshypint.
+// Não sobrepor o macaco do guarda-roupa neste palco; os acessórios do
+// guarda-roupa continuam normalmente na prévia e nos participantes.
 function readSaved(){
   try{return sanitize(JSON.parse(localStorage.getItem("junto_profile")||"{}").wardrobe);}catch{return defaults();}
 }
