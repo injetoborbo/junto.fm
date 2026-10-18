@@ -231,12 +231,20 @@ function makeScene(target,wardrobe,{preview=false,skin="default"}={}){
         const capeBox=new THREE.Box3().setFromObject(cape);
         const capeCenter=capeBox.getCenter(new THREE.Vector3());
         const capeSize=capeBox.getSize(new THREE.Vector3());
-        const capeScale=1.32/Math.max(capeSize.y,.001);
+        // Na miniatura, o topo da capa precisa coincidir com os ombros,
+        // não com o quadril. O GLB Meshy tem origem no centro da capa.
+        const heroBox=new THREE.Box3().setFromObject(hero,true);
+        const heroSize=heroBox.getSize(new THREE.Vector3());
+        const capeHeight=heroSize.y*.66;
+        const capeScale=capeHeight/Math.max(capeSize.y,.001);
         cape.scale.setScalar(capeScale);
         cape.position.copy(capeCenter).multiplyScalar(-capeScale);
         const capeMount=new THREE.Group();
-        capeMount.position.set(0,-.12,-.56);
-        capeMount.rotation.x=.08;
+        // Ombros ~17% abaixo da cabeça; capa termina acima das botas.
+        const shoulderY=heroBox.max.y-heroSize.y*.17;
+        capeMount.position.set(heroBox.getCenter(new THREE.Vector3()).x,
+          shoulderY-capeHeight*.5,-.62);
+        capeMount.rotation.x=.12;
         cape.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
         capeMount.add(cape);
         group.add(capeMount);
