@@ -96,7 +96,7 @@ function switchDance(member,style){
 let active=false,room=null,renderer=null,scene=null,camera=null,board=null,frame=0,sequence=0;
 let down=null;
 const people=new Map();
-const tiles=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
@@ -109,13 +109,13 @@ function nameSprite(name){
     const ctx=canvas.getContext("2d");
     ctx.fillStyle="rgba(21,43,74,.86)";ctx.beginPath();ctx.roundRect(4,4,376,78,18);ctx.fill();
     ctx.strokeStyle="#8ad0fb";ctx.lineWidth=4;ctx.stroke();
-    ctx.fillStyle="#ffffff";ctx.font="bold 32px Trebuchet MS, Arial";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillStyle="#ffffff";ctx.font="bold 42px Trebuchet MS, Arial";ctx.textAlign="center";ctx.textBaseline="middle";
     ctx.fillText(safe,192,43,352);
     texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
     nameMaterialCache.set(safe,texture);
   }
   const material=new THREE.SpriteMaterial({map:texture,depthTest:false,transparent:true});
-  const sprite=new THREE.Sprite(material);sprite.scale.set(1.22,.28,1);sprite.position.y=1.82;
+  const sprite=new THREE.Sprite(material);sprite.scale.set(1.65,.39,1);sprite.position.y=1.99;
   sprite.renderOrder=200;
   return sprite;
 }
@@ -146,6 +146,13 @@ function sceneSetup(){
     const trim=cube(.92,.012,.92,trimMat,x-2.5,-.078,z-2.5,board);
     trim.userData.jfDanceGlow={x,z};
   }
+  // Cadeira na casa (4,4), com assento e encosto clicáveis.
+  const chairGroup=new THREE.Group();chairGroup.position.set(1.5,0,1.5);board.add(chairGroup);
+  const chairMat=mat(0x355a89,.42,.37),chairLeg=mat(0x162943,.75,.28);
+  cube(.94,.16,.84,chairMat,0,.35,0,chairGroup);
+  cube(.94,1.13,.15,chairMat,0,.89,-.39,chairGroup);
+  for(const x of [-.36,.36])for(const z of [-.29,.29])cube(.10,.52,.10,chairLeg,x,.02,z,chairGroup);
+  chairGroup.traverse(obj=>{if(obj.isMesh)chairs.push(obj);});
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
   cube(6.7,2.35,.18,wall,0,.96,-3.12);
   cube(.18,2.35,6.7,wall,-3.12,.96,0);
@@ -208,7 +215,7 @@ function sceneSetup(){
     if(!renderer||!active)return;
     const width=Math.max(220,viewport.clientWidth),height=Math.max(220,viewport.clientHeight);
     renderer.setSize(width,height,false);
-    const aspect=width/height,halfH=5.15;
+    const aspect=width/height,halfH=4.55;
     camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;
     camera.updateProjectionMatrix();
   };
@@ -280,7 +287,7 @@ function animate(){
   if(scene.userData.disco)scene.userData.disco.rotation.y+=dt*.34;
   for(const [id,p] of people){
     if(!p.root)continue;
-    const d=p.data,style=d.dance||"idle";
+    const d=p.data,style=d.seated?"idle":d.dance||"idle";
     switchDance(p,style);
     const targetX=d.x-2.5,targetZ=d.z-2.5;
     const dx=targetX-p.root.position.x,dz=targetZ-p.root.position.z;
@@ -301,9 +308,9 @@ function animate(){
     const speeds={shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1};
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
-    p.root.position.y=.77+(walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.position.y=(d.seated&&!walking?.53:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
-    if(!walking)p.root.rotation.y+=Math.atan2(Math.sin(.65-p.root.rotation.y),Math.cos(.65-p.root.rotation.y))*Math.min(1,dt*1.6);
+    if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
     p.mixer?.update(dt);
     if(p.rig&&!p.action){
       p.rig.traverse(obj=>{
@@ -319,7 +326,12 @@ function animate(){
         const upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm;
         const torso=/spine/.test(n);
         let x=rx,y=ry,z=rz;
-        if(walking){
+        if(d.seated&&!walking){
+          if(upperLeg)x+=1.12;
+          if(lowerLeg)x-=1.32;
+          if(upperArm)x+=.15;
+          if(torso)x-=.09;
+        }else if(walking){
           if(upperLeg)x+=side*.36*stride;
           if(lowerLeg)x+=.15*Math.max(0,-side*stride);
           if(upperArm)x-=side*.26*stride;
@@ -383,9 +395,9 @@ function close(){
   scene?.userData.signTexture?.dispose();
   for(const tile of scene?.userData.glowingTiles||[])tile.material.dispose();
   for(const {beam} of scene?.userData.beams||[])beam.material.dispose();
-  renderer?.dispose();renderer?.domElement.remove();
+  renderer?.dispose();renderer?.forceContextLoss();renderer?.domElement.remove();
   for(const t of nameMaterialCache.values())t.dispose();nameMaterialCache.clear();
-  scene=null;camera=null;renderer=null;board=null;tiles.length=0;
+  scene=null;camera=null;renderer=null;board=null;tiles.length=0;chairs.length=0;
   modal.hidden=true;
   if(openButton)openButton.hidden=false;
   if(oldRoom)setStatus("Saiu da pista.");
@@ -402,14 +414,15 @@ viewport?.addEventListener("pointerup",e=>{
   const bounds=renderer.domElement.getBoundingClientRect();
   pointer.set((e.clientX-bounds.left)/bounds.width*2-1,-(e.clientY-bounds.top)/bounds.height*2+1);
   raycaster.setFromCamera(pointer,camera);
+  if(raycaster.intersectObjects(chairs).length){socket.emit("dance-sit");return;}
   const hit=raycaster.intersectObjects(tiles)[0];
-  if(hit)socket.emit("dance-move",hit.object.userData.tile);
+  if(hit){const {x,z}=hit.object.userData.tile;if(x===4&&z===4)socket.emit("dance-sit");else socket.emit("dance-move",{x,z});}
 });
 socket?.on("dance-state",({room:joinedRoom,participants=[]})=>{
   if(!active||joinedRoom!==room)return;
   for(const entry of participants)putMember(entry.id,entry);
   count.textContent=people.size+"/8 macacos";
-  setStatus("Clique num quadrado para andar. Escolha uma dança abaixo!");
+  setStatus("Clique no chão para andar ou na cadeira para sentar.");
   updateChoices();
 });
 socket?.on("dance-updated",entry=>{
