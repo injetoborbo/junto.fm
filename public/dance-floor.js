@@ -36,7 +36,9 @@ function sittingPose(){
       const dot=track.name.lastIndexOf(".");
       if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
       const name=boneKey(track.name.slice(0,dot)),source=sourceBones.get(name);
-      if(!source||name==="head"||name==="neck")continue;
+      // Sitting Idle também anima cabeça e pescoço. Ignorar esses canais
+      // deixa os acessórios acompanhando uma pose de cabeça incompatível.
+      if(!source)continue;
       const value=track.createInterpolant().evaluate(time);
       if(!value||value.length!==4)continue;
       // Rotação relativa à pose original do próprio arquivo Mixamo.
