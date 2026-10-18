@@ -234,7 +234,7 @@ async function findSpotifyQueueTrack(token, suggestion) {
   const title = normalizeMusicText(parts[0]);
   const artist = parts.length > 1 ? normalizeMusicText(parts.slice(1).join(" ")) : "";
   const endpoint = new URL("https://api.spotify.com/v1/search");
-  endpoint.search = new URLSearchParams({ q: suggestion, type: "track", limit: "15", market: "BR" }).toString();
+  endpoint.search = new URLSearchParams({ q: [parts[0],parts.slice(1).join(" ")].filter(Boolean).join(" "), type: "track", limit: "30", market: "BR" }).toString();
   const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
   if (!response.ok) {
     if (response.status === 403) throw new Error("O aplicativo Spotify não tem acesso à busca de faixas. Confira as permissões da integração.");
