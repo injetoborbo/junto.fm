@@ -342,7 +342,13 @@ let currentLocalWardrobe=null;
 const playerStage=document.querySelector("#jfMiniDj .jf-dj-stage");
 const playerHolder=document.createElement("div");
 playerHolder.className="jf-transmitter-wardrobe";
-playerHolder.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none;display:none";
+playerHolder.style.cssText="position:absolute;inset:0;z-index:2;pointer-events:none;display:none;animation:jf-player-hover 3.2s ease-in-out infinite";
+// Movimento de levitação independente do render 3D, sem modificar o rig sentado.
+if(!document.getElementById("jfPlayerHoverStyle")){
+  const style=document.createElement("style");style.id="jfPlayerHoverStyle";
+  style.textContent="@keyframes jf-player-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}@media(prefers-reduced-motion:reduce){.jf-transmitter-wardrobe{animation:none!important}}";
+  document.head.appendChild(style);
+}
 playerStage?.appendChild(playerHolder);
 function updatePlayerMonkey(){
   const adminCostume=document.getElementById("jfMiniDj")?.classList.contains("jf-homelander");
