@@ -415,6 +415,15 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 .jf-friend-request{width:34px!important;height:34px!important;min-width:34px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;border-radius:7px!important}
 .jf-friend-request svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .jf-friend-request:disabled{opacity:.65}
+.jf-friends-guest{padding:16px;border:1px solid #b5c9e0;border-radius:10px;background:#e9f3ff;color:#193d62;margin:12px 0}
+.jf-friends-guest p{font-size:12px;margin:8px 0}
+#jfFriendsList,#jfDrawerFriendsList{display:grid;grid-template-columns:1fr!important;gap:6px!important}
+.jf-friend-compact{display:flex;align-items:center;gap:9px;min-height:56px;padding:6px 9px;border:1px solid #c8d9eb;border-radius:8px;background:#f9fcff;color:#193d62}
+.jf-friend-compact .jf-friend-photo{width:38px;height:38px;flex:0 0 38px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#dceafa;font-weight:800}
+.jf-friend-compact .jf-friend-photo img{width:100%;height:100%;object-fit:cover}
+.jf-friend-compact .jf-friend-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;font-size:12px}
+.jf-friend-compact button{font-size:11px;padding:6px 8px;white-space:nowrap}
+
 
 /* Windows Media Player 9/XP inspired finish for the music player */
 html[data-jf-theme="classic"] .jf-player-panel{
@@ -471,7 +480,7 @@ html[data-jf-theme="classic"] .track-times{
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Entrar com Google</a><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -634,8 +643,9 @@ html[data-jf-theme="classic"] .track-times{
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfFriendsHeading">
     <div class="jf-modal-head"><h2 id="jfFriendsHeading">♧ Amigos</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfFriendsModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-friends-tabs" role="tablist" aria-label="Seções de amigos"><button class="btn secondary jf-friends-tab active" id="jfFriendsTabList" type="button" role="tab" aria-selected="true">Meus amigos</button><button class="btn secondary jf-friends-tab" id="jfRequestsTab" type="button" role="tab" aria-selected="false">Solicitações <span id="jfRequestCount" class="jf-request-count" hidden>0</span></button></div><div id="jfFriendsPane"><p class="small">Seus amigos salvos. Online indica presença na mesma sala.</p>
-    <form id="jfFriendForm"><div class="jf-room-field"><label for="jfFriendName">Nome do amigo</label><input id="jfFriendName" maxlength="24" placeholder="Nome de exibição" required></div><div class="jf-room-field"><label for="jfFriendRoom">Nome da sala do amigo</label><input id="jfFriendRoom" maxlength="40" placeholder="nome-da-sala" required></div><div class="jf-room-modal-actions"><button class="btn" type="submit">＋ Adicionar amigo</button></div></form>
-    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div></div><div id="jfRequestsPane" hidden><p class="small">Aceite ou recuse pedidos recebidos nesta sessão.</p><div id="jfIncomingRequests" class="jf-people"><p class="small">Nenhuma solicitação pendente.</p></div></div>
+    <p class="small">Adicione pessoas cadastradas pelo perfil delas na sala. Visitantes não podem enviar nem receber solicitações.</p>
+    <div id="jfFriendsGuest" class="jf-friends-guest" hidden><strong>🔒 Amizades para contas cadastradas</strong><p>Entre com Google para salvar amigos. Seu nome, e-mail e foto do Google não são exibidos.</p><a class="btn" href="/auth/google">Entrar com Google</a></div>
+    <p class="small" id="jfFriendsStatus" aria-live="polite"></p><div id="jfFriendsList" class="jf-people"><p class="small">Sua lista está vazia por enquanto.</p></div></div><div id="jfRequestsPane" hidden><p class="small">Solicitações vinculadas à sua conta, disponíveis quando você voltar.</p><div id="jfIncomingRequests" class="jf-people"><p class="small">Nenhuma solicitação pendente.</p></div></div>
   </section>
 </div>
 
@@ -1407,6 +1417,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
   const jfPeerClientIds=new Map();
+  const jfPeerRegistered=new Map();
   const jfPeerSkins=new Map();
   let jfLocalHeroPreview=false;
   function jfMySkin(){return jfLocalHeroPreview||document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default";}
@@ -1430,9 +1441,27 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
     try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
     if(joined)socket.emit("profile-update",{profile:jfProfile});
+    if(jfCanUseFriends())jfPersistAccountProfile();
     jfNotifyTransmitterAppearance();
     jfRenderPeople();
   });
+  async function jfPersistAccountProfile(){
+    if(!jfCanUseFriends())return;
+    try{
+      const response=await fetch("/api/account/profile",{
+        method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({profile:jfProfile})
+      });
+      if(!response.ok)throw Error("Não foi possível salvar sua conta.");
+      const data=await response.json();
+      jfAccount=data.profile;
+      const status=document.getElementById("jfProfileStatus");
+      if(status)status.textContent="Perfil salvo na sua conta.";
+    }catch(error){
+      const status=document.getElementById("jfProfileStatus");
+      if(status)status.textContent="Falha ao salvar na conta. Tente novamente.";
+    }
+  }
   function jfUpdateFavoriteButton(){
     const button=$("spotifyFavorite");
     if(!button)return;
@@ -1457,10 +1486,45 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(jfProfile.avatar)$("jfAvatarPreview").src=jfProfile.avatar;
     const topAvatar=$("jfTopAvatar"),topPlaceholder=$("jfTopAvatarPlaceholder");topAvatar.hidden=!jfProfile.avatar;topPlaceholder.hidden=!!jfProfile.avatar;if(jfProfile.avatar)topAvatar.src=jfProfile.avatar;
   }
+  let jfAccount=null;
+  let jfAccountConfigured=false;
   let jfIncomingRequests=[];
-  function jfIsFriendOnline(friend){
-    const key=String(friend.name||"").trim().toLocaleLowerCase();
-    return Boolean(joined&&room&&String(friend.room||"").toLocaleLowerCase()===String(room).toLocaleLowerCase()&&[...jfPeerProfiles.values(),jfProfile].some(p=>String(p.name||"").trim().toLocaleLowerCase()===key));
+  let jfFriends=[];
+  const jfRegisteredPeers=new Map();
+  function jfCanUseFriends(){return Boolean(jfAccount?.id);}
+  async function jfFetchAccount(){
+    try{
+      const res=await fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"});
+      const data=await res.json();
+      jfAccountConfigured=Boolean(data.configured);
+      jfAccount=data.loggedIn?data.profile:null;
+      $("jfGoogleLogin").hidden=!jfAccountConfigured||!!jfAccount;
+      $("jfGoogleLogout").hidden=!jfAccount;
+      if(jfAccount){
+        jfProfile.name=jfAccount.name||"Macaco";
+        jfProfile.avatar=jfAccount.avatar||"";
+        jfProfile.motto=jfAccount.motto||"";
+        jfProfile.wardrobe=jfAccount.wardrobe||jfProfile.wardrobe;
+        $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;
+        jfRenderAvatar();
+        if(joined)socket.emit("profile-update",{profile:jfProfile});
+        socket.emit("friends-list");
+      }
+    }catch(e){jfAccount=null;jfAccountConfigured=false;}
+    jfRenderPeople();jfRenderFriends();
+  }
+  $("jfGoogleLogout").addEventListener("click",async()=>{
+    await fetch("/api/account/logout",{method:"POST"});
+    location.reload();
+  });
+  function jfIsFriendOnline(friend){return Boolean(friend.room);}
+  function jfFriendPhoto(person){
+    const box=document.createElement("div");box.className="jf-friend-photo";
+    // Nunca buscar ou mostrar a foto do Google.
+    if(person.avatar&&/^data:image\/(png|jpeg|webp);base64,/i.test(person.avatar)){
+      const img=document.createElement("img");img.src=person.avatar;img.alt="";box.appendChild(img);
+    }else box.textContent=String(person.name||"?").slice(0,1).toUpperCase();
+    return box;
   }
   function jfRenderPeople(){
     const list=$("jfPeople");list.replaceChildren();
@@ -1490,13 +1554,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(id!==socket.id){
         const actions=document.createElement("div");actions.className="jf-person-actions";
         const request=document.createElement("button");request.type="button";request.className="btn secondary jf-friend-request";request.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg>';request.title="Enviar solicitação de amizade";request.setAttribute("aria-label","Enviar solicitação de amizade para "+(p.name||"Ouvinte"));
-        const sameName=String(jfProfile.name||"").trim().toLocaleLowerCase()===String(p.name||"").trim().toLocaleLowerCase();
-        const already=jfFriends.some(f=>f.name.toLowerCase()===(p.name||"Ouvinte").toLowerCase()&&f.room.toLowerCase()===(room||"").toLowerCase());
-        const pending=jfIncomingRequests.some(r=>r.fromId===id)||jfOutgoingRequests.has(id);
-        if(sameName){request.disabled=true;request.title="Não é possível enviar solicitação para o próprio perfil";}
+        const sameName=false; // Nomes públicos não são identidades.
+        const already=false; // Amizades reais são verificadas pelo servidor.
+        const pending=jfOutgoingRequests.has(id);
+        if(!jfCanUseFriends()||!jfPeerRegistered.get(id)){request.disabled=true;request.title=!jfCanUseFriends()?"Entre com Google para adicionar amigos":"O participante está como visitante";}
         else if(already){request.textContent="✓";request.disabled=true;request.title="Já está na sua lista de amigos";}
         else if(pending){request.disabled=true;request.title="Solicitação já enviada ou recebida";}
-        request.addEventListener("click",()=>{if(!joined||!room)return;if(String(jfProfile.name||"").trim().toLocaleLowerCase()===String(p.name||"").trim().toLocaleLowerCase()){setStatus("Você não pode adicionar seu próprio perfil.");return;}jfOutgoingRequests.add(id);socket.emit("friend-request",{targetId:id,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});jfRenderPeople();});
+        request.addEventListener("click",()=>{if(!joined||!room||!jfCanUseFriends()||!jfPeerRegistered.get(id))return;jfOutgoingRequests.add(id);socket.emit("friend-request",{targetId:id});jfRenderPeople();});
         actions.appendChild(request);
         if(jfRoomOwner){
           const kick=document.createElement("button");
@@ -1519,55 +1583,64 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }
   }
   let jfOutgoingRequests=new Set();
+  function jfFriendCard(person,{request=false,drawer=false}={}){
+    const row=document.createElement("div");row.className="jf-friend-compact";
+    row.appendChild(jfFriendPhoto(person));
+    const name=document.createElement("span");name.className="jf-friend-name";name.textContent=person.name||"Macaco";
+    row.appendChild(name);
+    if(request){
+      const accept=document.createElement("button");accept.className="btn";accept.textContent="✓";accept.title="Aceitar";
+      accept.onclick=()=>socket.emit("friend-request-response",{fromAccountId:person.id,accepted:true});
+      const refuse=document.createElement("button");refuse.className="btn secondary";refuse.textContent="✕";refuse.title="Recusar";
+      refuse.onclick=()=>socket.emit("friend-request-response",{fromAccountId:person.id,accepted:false});
+      row.append(accept,refuse);
+    }else{
+      const follow=document.createElement("button");follow.className="btn";follow.textContent="Seguir";
+      follow.disabled=!person.room;
+      follow.title=person.room?"Seguir para a sala":"Amigo offline";
+      follow.onclick=()=>{
+        if(!person.room)return;
+        if(!drawer)closeFriendsModal();
+        else {$("jfFriendsDrawer").hidden=true;$("jfFriendsLauncher").setAttribute("aria-expanded","false");}
+        openJoinRoomModal();$("jfExistingRoomName").value=person.room;
+        $("jfExistingRoomPassword").value="";
+      };
+      const remove=document.createElement("button");remove.className="btn secondary";remove.textContent="×";
+      remove.title="Remover amigo";remove.setAttribute("aria-label","Remover "+person.name);
+      remove.onclick=()=>{if(confirm("Remover "+person.name+" dos amigos?"))socket.emit("friend-remove",{accountId:person.id});};
+      row.append(follow,remove);
+    }
+    return row;
+  }
   function jfRenderIncomingRequests(){
-    const render=list=>{list.replaceChildren();if(!jfIncomingRequests.length){const p=document.createElement("p");p.className="small";p.textContent="Nenhuma solicitação pendente.";list.appendChild(p);return;}
-      jfIncomingRequests.forEach(req=>{const row=document.createElement("div");row.className="jf-person";const name=document.createElement("strong");name.textContent=req.profile.name||"Ouvinte";row.appendChild(name);
-        const accept=document.createElement("button");accept.type="button";accept.className="btn";accept.textContent="Aceitar";accept.addEventListener("click",()=>jfRespondFriendRequest(req,true));
-        const decline=document.createElement("button");decline.type="button";decline.className="btn secondary";decline.textContent="Recusar";decline.addEventListener("click",()=>jfRespondFriendRequest(req,false));row.append(accept,decline);list.appendChild(row);});};
-    render($("jfIncomingRequests"));render($("jfDrawerRequestsList"));
-    const count=jfIncomingRequests.length;
+    const count=jfCanUseFriends()?jfIncomingRequests.length:0;
     for(const id of ["jfRequestCount","jfDrawerRequestCount"]){const el=$(id);el.textContent=String(count);el.hidden=!count;}
     $("jfFriendsUnread").style.display=count?"block":"none";
-  }
-  function jfRespondFriendRequest(req,accepted){
-    socket.emit("friend-request-response",{targetId:req.fromId,accepted,profile:{name:jfProfile.name,avatar:jfProfile.avatar||"",motto:jfProfile.motto||""},room});
-    if(accepted&&!jfFriends.some(f=>f.name.toLowerCase()===String(req.profile.name||"").toLowerCase()&&f.room.toLowerCase()===String(req.room||"").toLowerCase())){
-      jfFriends.push({name:String(req.profile.name||"Amigo").slice(0,24),room:String(req.room||room||"").slice(0,40)});try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}
+    for(const id of ["jfIncomingRequests","jfDrawerRequestsList"]){
+      const list=$(id);list.replaceChildren();
+      if(!jfCanUseFriends()){const msg=document.createElement("p");msg.className="small";msg.textContent="Entre com Google para receber solicitações.";list.appendChild(msg);continue;}
+      if(!count){const msg=document.createElement("p");msg.className="small";msg.textContent="Nenhuma solicitação pendente.";list.appendChild(msg);}
+      else for(const req of jfIncomingRequests)list.appendChild(jfFriendCard(req,{request:true}));
     }
-    jfIncomingRequests=jfIncomingRequests.filter(r=>r.fromId!==req.fromId);jfRenderIncomingRequests();jfRenderFriends();jfRenderDrawerFriends();
   }
-  socket.on("friend-request-received",({fromId,profile={},room:friendRoom})=>{
-    if(!fromId||!friendRoom||fromId===socket.id)return;
-    if(String(jfProfile.name||"").trim().toLocaleLowerCase()===String(profile.name||"").trim().toLocaleLowerCase())return;
-    if(jfIncomingRequests.some(r=>r.fromId===fromId))return;
-    jfIncomingRequests.push({fromId,profile,room:friendRoom});jfRenderIncomingRequests();jfRenderPeople();
-    $("jfFriendsStatus").textContent="Você recebeu uma solicitação de amizade.";
-  });
-  socket.on("friend-request-result",({accepted,profile={},room:friendRoom,error}={})=>{
-    const name=String(profile.name||"Amigo").slice(0,24);
-    if(error==="not-available"){jfOutgoingRequests.clear();jfRenderPeople();setStatus("Solicitação não enviada: perfil indisponível ou é o seu próprio perfil.");return;}
-    jfOutgoingRequests.clear();
-    if(accepted&&friendRoom&&!jfFriends.some(f=>f.name.toLowerCase()===name.toLowerCase()&&f.room.toLowerCase()===String(friendRoom).toLowerCase())){
-      jfFriends.push({name,room:String(friendRoom).slice(0,40)});jfFriends=jfFriends.slice(-100);try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}jfRenderFriends();setStatus(name+" aceitou sua solicitação de amizade.",true);
-    }else if(!accepted)setStatus(name+" recusou a solicitação de amizade.");
-    jfRenderPeople();jfRenderDrawerFriends();
-  });
-  const jfFriendsKey="junto_friends_v1";
-  function jfLoadFriends(){try{const v=JSON.parse(localStorage.getItem(jfFriendsKey)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.name==="string"&&typeof x.room==="string").slice(0,100):[];}catch(_){return [];}}
-  let jfFriends=jfLoadFriends();
   function jfRenderFriends(){
+    $("jfFriendsGuest").hidden=jfCanUseFriends();
+    const googleGuestLink=$("jfFriendsGuest").querySelector("a");
+    googleGuestLink.hidden=!jfAccountConfigured;
+    $("jfFriendsStatus").textContent=!jfCanUseFriends()?(jfAccountConfigured?"Faça login para desbloquear as amizades.":"Cadastro em preparação: Google e banco de dados ainda não configurados."):"Suas amizades ficam salvas na conta.";
     const list=$("jfFriendsList");list.replaceChildren();
-    if(!jfFriends.length){const empty=document.createElement("p");empty.className="small";empty.textContent="Adicione amigos pelo nome e sala ou envie uma solicitação a alguém da sala.";list.appendChild(empty);jfRenderDrawerFriends();return;}
-    jfFriends.forEach((friend,index)=>{const row=document.createElement("div");row.className="jf-person";row.style.display="flex";row.style.alignItems="center";row.style.justifyContent="space-between";row.style.gap="10px";
-      const info=document.createElement("div");const name=document.createElement("strong");name.textContent=friend.name;const roomLabel=document.createElement("p");roomLabel.className="small";roomLabel.textContent="Sala: "+friend.room;const status=document.createElement("span");const online=jfIsFriendOnline(friend);status.className="jf-friend-status"+(online?" online":"");status.innerHTML="<i></i> "+(online?"Online":"Offline");info.append(name,roomLabel,status);
-      const actions=document.createElement("div");actions.style.display="flex";actions.style.gap="6px";const enter=document.createElement("button");enter.className="btn";enter.type="button";enter.textContent="Entrar";enter.addEventListener("click",()=>{closeFriendsModal();openJoinRoomModal();$("jfExistingRoomName").value=friend.room;$("jfExistingRoomPassword").value="";$("jfFriendsStatus").textContent="Para sala protegida, será necessária uma amizade reconhecida pelo servidor ou a senha.";});
-      const remove=document.createElement("button");remove.className="btn secondary";remove.type="button";remove.textContent="Remover";remove.addEventListener("click",()=>{jfFriends.splice(index,1);try{localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));}catch(_){}jfRenderFriends();});actions.append(enter,remove);row.append(info,actions);list.appendChild(row);
-    });jfRenderDrawerFriends();
+    if(!jfCanUseFriends()){const p=document.createElement("p");p.className="small";p.textContent="Visitantes não podem usar amizades.";list.appendChild(p);}
+    else if(!jfFriends.length){const p=document.createElement("p");p.className="small";p.textContent="Nenhum amigo ainda. Envie uma solicitação na lista de participantes.";list.appendChild(p);}
+    else for(const f of jfFriends)list.appendChild(jfFriendCard(f));
+    jfRenderIncomingRequests();
+    jfRenderDrawerFriends();
   }
   function jfRenderDrawerFriends(){
     const list=$("jfDrawerFriendsList");if(!list)return;list.replaceChildren();
-    if(!jfFriends.length){const p=document.createElement("p");p.className="small";p.textContent="Sua lista de amigos está vazia.";list.appendChild(p);return;}
-    jfFriends.forEach(friend=>{const row=document.createElement("div");row.className="jf-friend-tile";const avatar=document.createElement("div");avatar.className="jf-friend-tile-avatar";const profile=[...jfPeerProfiles.values(),jfProfile].find(p=>String(p.name||"").trim().toLocaleLowerCase()===String(friend.name||"").trim().toLocaleLowerCase()&&p.avatar);if(profile&&profile.avatar){const img=document.createElement("img");img.src=profile.avatar;img.alt="";avatar.appendChild(img);}else{avatar.textContent=String(friend.name||"?").trim().charAt(0).toLocaleUpperCase()||"?";}const info=document.createElement("div");info.className="jf-friend-tile-info";const name=document.createElement("strong");name.textContent=friend.name;name.title=friend.name;const status=document.createElement("span"),online=jfIsFriendOnline(friend);status.className="jf-friend-status"+(online?" online":"");status.innerHTML="<i></i> "+(online?"Online":"Offline");info.append(name,status);row.append(avatar,info);list.appendChild(row);});
+    if(!jfCanUseFriends()||!jfFriends.length){
+      const p=document.createElement("p");p.className="small";
+      p.textContent=jfCanUseFriends()?"Sua lista está vazia.":"Entre com Google para usar Amigos.";list.appendChild(p);
+    }else for(const f of jfFriends)list.appendChild(jfFriendCard(f,{drawer:true}));
   }
   function jfSetFriendsTab(requests,drawer=false){
     const ids=drawer?["jfDrawerFriendsTab","jfDrawerRequestsTab"]:["jfFriendsTabList","jfRequestsTab"];
@@ -1578,7 +1651,19 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(requests)jfRenderIncomingRequests();else jfRenderDrawerFriends();
   }
   function closeFriendsModal(){$("jfFriendsModal").hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";}
-  $("jfFriendForm").addEventListener("submit",event=>{event.preventDefault();const name=$("jfFriendName").value.trim().slice(0,24),friendRoom=cleanRoomName($("jfFriendRoom").value);if(!name||!friendRoom){$("jfFriendsStatus").textContent="Informe o nome e o nome válido da sala.";return;}if(jfFriends.some(x=>x.room.toLowerCase()===friendRoom.toLowerCase())){$("jfFriendsStatus").textContent="Essa sala já está na sua lista.";return;}jfFriends.push({name,room:friendRoom});localStorage.setItem(jfFriendsKey,JSON.stringify(jfFriends));$("jfFriendName").value="";$("jfFriendRoom").value="";$("jfFriendsStatus").textContent="Amigo salvo neste navegador.";jfRenderFriends();});
+  socket.on("friends-state",({friends=[],requests=[]}={})=>{
+    if(!jfCanUseFriends())return;
+    jfFriends=Array.isArray(friends)?friends:[];
+    jfIncomingRequests=Array.isArray(requests)?requests:[];
+    jfOutgoingRequests.clear();
+    jfRenderFriends();
+  });
+  socket.on("friends-error",({message}={})=>{
+    jfOutgoingRequests.clear();jfRenderPeople();
+    $("jfFriendsStatus").textContent=message||"Falha no serviço de amizades.";
+    setStatus(message||"Falha em amizades.");
+  });
+  socket.on("friends-notice",({message}={})=>{$("jfFriendsStatus").textContent=message||"Solicitação enviada.";});
   function jfInit(){
     $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";jfRenderAvatar();
     const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
@@ -1620,22 +1705,24 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
       const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
     });
-    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo. Entre na sala para compartilhar.";});
+    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo neste navegador.";if(jfCanUseFriends())jfPersistAccountProfile();});
   }
   socket.on("profile-update",({id,profile})=>{
     if(!id||id===socket.id||!profile)return;
     jfPeerProfiles.set(id,profile);
     jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();
   });
-  socket.on("peer-joined",({id,clientId}={})=>{
+  socket.on("peer-joined",({id,clientId,registered=false}={})=>{
     if(!id||id===socket.id)return;
     if(clientId)jfPeerClientIds.set(id,clientId);
+    jfPeerRegistered.set(id,Boolean(registered));
     jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});
     jfRenderPeople();jfRenderFriends();
   });
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerClientIds.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
-  socket.on("joined-room",({profiles={},avatarSkins={},clientIds={}})=>{
-    jfPeerProfiles.clear();jfPeerSkins.clear();jfPeerClientIds.clear();
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerClientIds.delete(id);jfPeerRegistered.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
+  socket.on("joined-room",({profiles={},avatarSkins={},clientIds={},registeredPeers={}})=>{
+    jfPeerProfiles.clear();jfPeerSkins.clear();jfPeerClientIds.clear();jfPeerRegistered.clear();
+    for(const [id,value] of Object.entries(registeredPeers))jfPeerRegistered.set(id,Boolean(value));
     for(const [id,p] of Object.entries(profiles))if(id!==socket.id)jfPeerProfiles.set(id,p);
     for(const [id,clientId] of Object.entries(clientIds))if(id!==socket.id&&clientId)jfPeerClientIds.set(id,clientId);
     for(const [id,skin] of Object.entries(avatarSkins))jfPeerSkins.set(id,skin==="capitao-patria"?"capitao-patria":"default");
@@ -1643,7 +1730,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(!jfLocalHeroPreview)socket.emit("avatar-skin-set",{skin:jfMySkin()});
     jfNotifyTransmitterAppearance();
   });
-  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerClientIds.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
+  socket.on("disconnect",()=>{jfPeerProfiles.clear();jfPeerRegistered.clear();jfPeerClientIds.clear();jfPeerSkins.clear();jfRenderPeople();jfRenderChat([]);jfUpdateChatControls();});
 
   // Chat em tempo real da sala; textContent impede interpretar mensagens como HTML.
   function jfSetChatOpen(open){
@@ -1734,7 +1821,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("joined-room",()=>jfUpdateChatControls());
 
-  jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();
+  jfInit();jfRenderPeople();jfUpdateSuggestionControls();jfUpdateChatControls();jfFetchAccount();
   enableControls();
   refreshSpotifyStatus();
   setInterval(updateTrackProgress, 1000);
