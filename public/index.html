@@ -1687,6 +1687,22 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 (()=> {
  const login=document.getElementById("jfAdminLogin"),logout=document.getElementById("jfAdminLogout"),wrap=document.getElementById("jfAdminSkinWrap"),check=document.getElementById("jfAdminSkin"),status=document.getElementById("jfAdminStatus");
  const apply=skin=>document.getElementById("jfMiniDj")?.classList.toggle("jf-homelander",skin==="capitao-patria");
+ // Prévia visual exclusivamente local: não altera permissões nem envia skin pela rede.
+ const isLocal=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+ if(isLocal){
+  const preview=document.createElement("button");
+  preview.type="button";preview.id="jfLocalSkinPreview";
+  preview.textContent="👁 Testar Capitão Pátria (local)";
+  preview.setAttribute("aria-pressed","false");
+  document.getElementById("jfAdminPanel").appendChild(preview);
+  const setPreview=enabled=>{
+   apply(enabled?"capitao-patria":"default");
+   preview.setAttribute("aria-pressed",String(enabled));
+   preview.textContent=enabled?"↩ Remover skin de teste":"👁 Testar Capitão Pátria (local)";
+   status.textContent=enabled?"Prévia local: uniforme e olhos vermelhos (sem login ou sincronização)":"Prévia disponível somente neste computador";
+  };
+  preview.addEventListener("click",()=>setPreview(preview.getAttribute("aria-pressed")!=="true"));
+ }
  fetch("/api/admin/status",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
   status.textContent=data.admin?"Administrador autenticado":data.configured?"Acesso livre — sem login necessário":"Login administrativo ainda não configurado";
   login.hidden=!data.configured||data.admin;logout.hidden=!data.admin;wrap.hidden=!data.admin;
