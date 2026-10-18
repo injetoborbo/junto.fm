@@ -269,7 +269,7 @@ async function putMember(id,details){
   try{
     const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
-    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;
+    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;entry.getGlassesDiagnostics=avatar.getGlassesDiagnostics;
     entry.setSeatGlassesCalibration?.(seatGlassesAdjustment);
     entry.restBones=new Map();
     entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
@@ -414,7 +414,7 @@ function animate(){
       });
     }
     // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
-    p.updateAccessories?.(Boolean(d.seated&&!walking));
+    p.updateAccessories?.(Boolean(d.seated));
   }
   if(!inspectCleanup)renderer.render(scene,camera);
 }
@@ -457,6 +457,23 @@ let inspectCleanup=null,inspectOpening=false;
 const glassesAxes=["x","y","z"];
 const glassesInputs=Object.fromEntries(glassesAxes.map(axis=>[axis,document.getElementById("jfSeatGlasses"+axis.toUpperCase())]));
 const seatGlassesAdjustment={x:0,y:0,z:0};
+const eyewearDiagnostics=document.getElementById("jfSeatGlassesDiagnostics");
+function displayEyewearDiagnostics(){
+  if(!eyewearDiagnostics)return;
+  const member=people.get(socket?.id);
+  if(!member){eyewearDiagnostics.textContent="Aguardando seu avatar entrar na pista.";return;}
+  const check=member.getGlassesDiagnostics?.();
+  if(!check?.loaded){
+    eyewearDiagnostics.textContent="Óculos 3D não encontrados no avatar. Selecionado: "+
+      (check?.requested||"desconhecido")+".";
+    return;
+  }
+  eyewearDiagnostics.textContent="Óculos detectados: "+check.requested+
+    " | osso: "+check.bone+
+    " | pose sentada: "+(check.seated?"SIM":"NÃO")+
+    " | posição real: "+check.coordinates.join(", ")+
+    " | ajuste: "+glassesAxes.map(axis=>seatGlassesAdjustment[axis].toFixed(4)).join(", ");
+}
 function updateGlassesPreview(){
   for(const axis of glassesAxes){
     const input=glassesInputs[axis];
@@ -466,6 +483,7 @@ function updateGlassesPreview(){
   }
   const member=people.get(socket?.id);
   member?.setSeatGlassesCalibration?.(seatGlassesAdjustment);
+  displayEyewearDiagnostics();
 }
 for(const axis of glassesAxes){
   glassesInputs[axis]?.addEventListener("input",value=>{
@@ -555,6 +573,7 @@ async function openSeatInspect(){
       center.z+distance*Math.cos(yaw)*Math.cos(pitch));
     inspectCamera.lookAt(center);
     renderer.render(scene,inspectCamera);
+    displayEyewearDiagnostics();
     raf=requestAnimationFrame(update);
   };
   update();
