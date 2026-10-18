@@ -317,6 +317,17 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 .jf-room-entry-panel{width:min(100%,680px);margin:0 auto 24px}
 .jf-room-entry-actions[hidden],#jfLeaveRoom[hidden]{display:none!important}
 body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
+.jf-dance-launch{width:100%;margin:0 0 12px;font-size:12px}
+.jf-dance-modal{width:min(960px,100%);max-width:960px;max-height:94vh;overflow:auto;padding:16px!important}
+.jf-dance-modal .jf-modal-head{margin-bottom:9px}
+.jf-dance-toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 10px 10px}
+.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:60vh;min-height:290px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
+.jf-dance-viewport,.jf-dance-viewport canvas{width:100%;height:100%;display:block;touch-action:manipulation}
+.jf-dance-actions{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0 4px}
+.jf-dance-actions button{font-size:12px;padding:8px 11px}
+.jf-dance-actions button.active{outline:2px solid #185bb3;outline-offset:2px}
+.jf-dance-help{text-align:center;margin:10px auto 0;max-width:620px}
+@media(max-width:600px){.jf-dance-modal{padding:10px!important}.jf-dance-stage{min-height:260px;aspect-ratio:4/5}.jf-dance-toolbar{font-size:11px}}
 body:not(.jf-in-room) .jf-topbar{justify-content:center}
 body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
 /* Na tela de entrada, exibir apenas Perfil e Trajes no canto superior direito. */
@@ -563,6 +574,7 @@ html[data-jf-theme="classic"] .track-times{
   </section>
   <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
     <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
+    <button type="button" class="btn jf-dance-launch" id="jfOpenDance">🪩 Abrir pista de dança</button>
     <p class="small" style="margin-top:0">Participantes conectados agora.</p>
     <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
   </aside>
@@ -640,6 +652,20 @@ html[data-jf-theme="classic"] .track-times{
       </div>
     </div>
     <div class="row" style="margin-top:14px"><button class="btn" type="button" id="jfSaveWardrobe">Salvar traje</button><span class="small">Gratuito, sem precisar criar conta.</span></div>
+  </section>
+</div>
+<div class="jf-modal-backdrop" id="jfDanceModal" hidden>
+  <section class="panel jf-dance-modal" role="dialog" aria-modal="true" aria-labelledby="jfDanceTitle">
+    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 Junto Club</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
+    <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
+    <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
+    <div class="jf-dance-actions" aria-label="Escolha sua dança">
+      <button class="btn secondary active" data-jf-dance="idle" aria-pressed="true" type="button">🧍 Parado</button>
+      <button class="btn secondary" data-jf-dance="disco" aria-pressed="false" type="button">🕺 Disco</button>
+      <button class="btn secondary" data-jf-dance="swing" aria-pressed="false" type="button">🐒 Balanço</button>
+      <button class="btn secondary" data-jf-dance="bounce" aria-pressed="false" type="button">🎉 Pular</button>
+    </div>
+    <p class="small jf-dance-help">Clique em um quadrado vazio para o macaco andar até lá. Cada pessoa escolhe sua própria dança, que aparece para todos na mesma sala.</p>
   </section>
 </div>
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
@@ -751,6 +777,7 @@ html[data-jf-theme="classic"] .track-times{
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
+<script type="module" src="/dance-floor.js"></script>
 <script>
 (() => {
   // Stable identity for one browser tab across a reload or reconnect.
@@ -1237,7 +1264,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -1355,6 +1382,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       else{resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
     }else resetSession();
     if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
+    window.dispatchEvent(new Event("jf-dance-room-left"));
     joined=false;room="";jfRoomOwnerId=null;jfRoomOwner=false;
     $("room").value="";
     $("remoteAudio").pause();$("remoteAudio").srcObject=null;
@@ -1439,6 +1467,14 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   const jfPeerClientIds=new Map();
   const jfPeerRegistered=new Map();
   const jfPeerSkins=new Map();
+  window.jfDanceBridge={
+    socket,
+    getRoom:()=>joined?room:null,
+    getProfile:()=>jfProfile,
+    getPeerProfile:id=>jfPeerProfiles.get(id),
+    getSkin:()=>jfMySkin(),
+    getPeerSkin:id=>jfPeerSkins.get(id)||"default"
+  };
   let jfLocalHeroPreview=false;
   function jfMySkin(){return jfLocalHeroPreview||document.getElementById("jfMiniDj")?.classList.contains("jf-homelander")?"capitao-patria":"default";}
   function jfPublishOwnSkin(){
