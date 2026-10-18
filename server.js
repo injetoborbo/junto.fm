@@ -406,7 +406,7 @@ io.on("connection", socket => {
         if(Math.abs(ix-2.5)+Math.abs(iz-2.5)>r+2)continue;
         if(!taken.has(ix+","+iz)){x=ix;z=iz;break outer;}
       }
-      const data={x,z,dance:"idle"};
+      const data={x,z,dance:"idle",seated:false};
       floor.set(socket.id,data);
       io.to(room).emit("dance-updated",{id:socket.id,...data});
     }
@@ -422,7 +422,7 @@ io.on("connection", socket => {
     if([...floor].some(([id,p])=>id!==socket.id&&p.x===x&&p.z===z))
       return socket.emit("dance-error",{message:"Esse quadradinho já está ocupado."});
     const member=floor.get(socket.id);
-    member.x=x;member.z=z;
+    member.x=x;member.z=z;member.seated=false;
     io.to(room).emit("dance-updated",{id:socket.id,...member});
   });
   socket.on("dance-style",payload=>{
@@ -431,8 +431,30 @@ io.on("connection", socket => {
     if(!floor?.has(socket.id))return;
     const dance=String(payload?.dance||"");
     if(!["idle","shake","macarena","party","capoeira","groove"].includes(dance))return;
-    floor.get(socket.id).dance=dance;
-    io.to(room).emit("dance-updated",{id:socket.id,...floor.get(socket.id)});
+    const member=floor.get(socket.id);
+    member.dance=dance;
+    if(dance!=="idle")member.seated=false;
+    io.to(room).emit("dance-updated",{id:socket.id,...member});
+  });
+  // Cadeira fixa na casa (4,4): a ocupação e a pose são públicas na sala.
+  socket.on("dance-sit",()=>{
+    const room=socket.data.room;
+    const floor=room&&danceFloors.get(room);
+    if(!floor?.has(socket.id))return;
+    if(isRateLimited(socket,"dance-sit",5,1000))return;
+    const seatX=4,seatZ=4;
+    if([...floor].some(([id,p])=>id!==socket.id&&p.x===seatX&&p.z===seatZ))
+      return socket.emit("dance-error",{message:"A cadeira está ocupada."});
+    const member=floor.get(socket.id);
+    member.x=seatX;member.z=seatZ;member.seated=true;member.dance="idle";
+    io.to(room).emit("dance-updated",{id:socket.id,...member});
+  });
+  socket.on("dance-stand",()=>{
+    const room=socket.data.room,floor=room&&danceFloors.get(room);
+    if(!floor?.has(socket.id))return;
+    const member=floor.get(socket.id);
+    member.seated=false;
+    io.to(room).emit("dance-updated",{id:socket.id,...member});
   });
   socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
 
