@@ -58,7 +58,7 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey){
+function dress(root,selection,render,monkey,{seated=false}={}){
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
   const headBone=getBone(monkey,"Head");
   const topBone=getBone(monkey,"HeadTop_End");
@@ -70,6 +70,9 @@ function dress(root,selection,render,monkey){
   if(headBone)headBone.getWorldPosition(worldHead);
   if(topBone)topBone.getWorldPosition(worldTop);
   if(neckBone)neckBone.getWorldPosition(worldNeck);
+  const headSpan=headBone&&topBone
+    ?headBone.worldToLocal(worldTop.clone()).length()
+    :0;
   // Corrige o desvio lateral do GLB antigo: a cabeça NÃO fica em X=0.
   const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
   const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
@@ -83,7 +86,17 @@ function dress(root,selection,render,monkey){
       configure(part,measure);
       monkey.add(part);
       monkey.updateMatrixWorld(true);
-      if(followHead&&headBone)headBone.attach(part);
+      if(followHead&&headBone){
+        headBone.attach(part);
+        if(seated&&file===selection.glasses){
+          // Calibrar óculos no rosto inclinado, só no miniplayer.
+          part.position.y-=headSpan*.19;
+          part.position.z+=headSpan*.045;
+        }
+      }else if(seated&&file==="fone"&&neckBone){
+        // Fones que ficam no pescoço devem seguir o osso do pescoço.
+        neckBone.attach(part);
+      }
       render();
     });
   };
@@ -106,6 +119,7 @@ function dress(root,selection,render,monkey){
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
       state.updateWorldMatrix(true,true);
       if(headBone)headBone.attach(hat);
+      if(seated&&headBone)hat.position.y-=headSpan*.025;
       render();
     });
   }else if(selection.hat==="bone"||selection.hat==="gorro"){
@@ -233,7 +247,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   // preservando os encaixes corretos da prévia de trajes.
   const dressNow=()=>{
     if(!active)return;
-    disposeOutfit=dress(normalized,sanitize(wardrobe),()=>{if(active)renderer.render(scene,camera);},monkey);
+    disposeOutfit=dress(normalized,sanitize(wardrobe),()=>{if(active)renderer.render(scene,camera);},monkey,{seated:playerSitting});
     renderer.render(scene,camera);
   };
   if(playerSitting){
