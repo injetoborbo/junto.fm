@@ -73,15 +73,17 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   const torsoBone=getBone(monkey,"Spine2")||getBone(monkey,"Spine");
   const hipBone=getBone(monkey,"Hips");
   const bindMatrices=new Map(),followers=[];
+  let isSeated=false;
   for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
   const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
-  const updateAccessories=()=>{
+  const updateAccessories=(seated=isSeated)=>{
+    isSeated=Boolean(seated);
     if(!animated||!state.userData.active||!followers.length)return;
     // Garantir osso atualizado APÓS mixer/pose, inclusive no modo sentado.
     monkey.updateMatrixWorld(true);
-    for(const {part,bone,bindLocal} of followers){
+    for(const {part,bone,bindLocal,seatedLocal} of followers){
       if(!part.parent)continue;
-      correctionWorld.multiplyMatrices(bone.matrixWorld,bindLocal);
+      correctionWorld.multiplyMatrices(bone.matrixWorld,isSeated?seatedLocal:bindLocal);
       part.parent.updateWorldMatrix(true,false);
       parentInverse.copy(part.parent.matrixWorld).invert();
       localMatrix.multiplyMatrices(parentInverse,correctionWorld);
@@ -91,7 +93,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   };
   // Converter do espaço ORIGINAL do acessório para o local do osso na pose
   // inicial; nunca usar a matriz atual (que pode ser de uma dança).
-  const attachAtBind=(part,bone,sourceBindWorld,offset={})=>{
+  const attachAtBind=(part,bone,sourceBindWorld,offset={},seatedOffset={})=>{
     if(!bone)return;
     const boneBind=bindMatrices.get(bone);
     if(!boneBind)return;
@@ -107,7 +109,9 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     atBone.y+=offset.y||0;
     atBone.z+=offset.z||0;
     const bindLocal=new THREE.Matrix4().compose(atBone,rotation,scale);
-    followers.push({part,bone,bindLocal});
+    const seatPosition=atBone.clone().add(new THREE.Vector3(seatedOffset.x||0,seatedOffset.y||0,seatedOffset.z||0));
+    const seatedLocal=new THREE.Matrix4().compose(seatPosition,rotation,scale);
+    followers.push({part,bone,bindLocal,seatedLocal});
     updateAccessories();
   };
   const worldHead=new THREE.Vector3(-.13,.28,-.05);
@@ -121,7 +125,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
   const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
   const rawNeckZ=(worldNeck.z-monkey.position.z)/monkey.scale.z;
-  const attachFitted=(file,configure,followHead=false,animatedAnchor=null,animatedOffset=null)=>{
+  const attachFitted=(file,configure,followHead=false,animatedAnchor=null,animatedOffset=null,seatedOffset=null)=>{
     getAsset(file).then(asset=>{
       if(!asset||!state.userData.active)return;
       const part=asset.clone(true);
@@ -130,12 +134,12 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       configure(part,measure);
       monkey.add(part);
       if(animated){
-        if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{});
+        if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{},seatedOffset||{});
       }else{
         monkey.updateMatrixWorld(true);
         if(followHead&&headBone)headBone.attach(part);
       }
-      updateAccessories();
+      updateAccessories(isSeated);
       render();
     });
   };
@@ -157,7 +161,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       state.add(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
       if(animated){
-        attachAtBind(hat,headBone,rootBindWorld,{y:-.00020,z:-.00004});
+        attachAtBind(hat,headBone,rootBindWorld,{y:-.00020,z:-.00004},{y:-.0010,z:.0001});
       }else{
         state.updateWorldMatrix(true,true);
         if(headBone)headBone.attach(hat);
@@ -168,7 +172,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   }else if(selection.hat==="bone"||selection.hat==="gorro"){
     attachFitted(selection.hat,part=>{
       part.position.x=rawX;
-    },true,headBone);
+    },true,headBone,null,{y:-.0004});
   }
   if(selection.glasses!=="nenhum"){
     attachFitted(selection.glasses,(part,measure)=>{
@@ -179,7 +183,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
         (1-s)*measure.center.y-.00018,
         (1-s)*measure.center.z+.00012);
     // O Head usa a escala NAtiva (~milésimos de unidade no GLB).\n    // Ajuste pequeno na coordenada do osso, preservado por toda animação.
-    },true,headBone,animated?{y:-.00008,z:.00050}:null);
+    },true,headBone,animated?{y:-.00008,z:.00050}:null,{y:-.00022,z:.0011});
   }
   if(selection.headphones!=="nenhum"){
     const wearingHat=selection.hat!=="nenhum";
@@ -207,13 +211,13 @@ function dress(root,selection,render,monkey,{animated=false}={}){
           (1-sc)*measure.center.y-.00005,
           (1-sc)*measure.center.z);
       }
-    },!wearingHat,wearingHat?neckBone:headBone);
+    },!wearingHat,wearingHat?neckBone:headBone,null,{y:-.0004,z:.00015});
   }
   if(selection.outfit==="rosa"){
     attachFitted("vestido",(part)=>{
       // Vestido modelado em coordenadas do corpo do macaco, sem escala arbitrária.
       part.position.x=rawX;
-    },false,hipBone||torsoBone);
+    },false,hipBone||torsoBone,null,{y:.0002});
   }
   return Object.assign(()=>{
     state.userData.active=false;
