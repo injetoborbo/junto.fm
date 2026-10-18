@@ -54,7 +54,7 @@ function material(color,options={}){return new THREE.MeshStandardMaterial({color
 function addPart(parent,geo,mat,x,y,z,sx=1,sy=1,sz=1){
   const mesh=new THREE.Mesh(geo,mat);mesh.userData.jfWardrobeGenerated=true;mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;
 }
-function dress(model,selection,render){
+function dress(model,selection,render,monkey){
   const parts=new THREE.Group();
   parts.name="jfWardrobeParts";parts.userData.active=true;
   model.add(parts);
@@ -73,13 +73,15 @@ function dress(model,selection,render){
       const box=new THREE.Box3().setFromObject(hat);
       const extent=box.getSize(new THREE.Vector3());
       const center=box.getCenter(new THREE.Vector3());
-      const width=accessory==="palha"?.79:.77;
+      const width=accessory==="palha"?.82:.79;
       const scale=width/Math.max(extent.x,extent.z,.0001);
       hat.scale.setScalar(scale);
       // Apoiar a ABA (e não o topo do chapéu) na cabeça.
       // O centro do modelo Meshy é aproximadamente o plano da aba.
-      const brimY=H.headTop-.015;
-      hat.position.set(-center.x*scale,brimY-center.y*scale,-center.z*scale-.015);
+      const brimY=H.headTop+.16;
+      // A aba está na metade inferior do Meshy GLB (e não no centro).
+      const brimSurface=box.min.y+(extent.y*.13);
+      hat.position.set(-center.x*scale,brimY-brimSurface*scale,-center.z*scale-.025);
       hat.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
       parts.add(hat);
       render();
@@ -96,31 +98,36 @@ function dress(model,selection,render){
   }
   if(selection.glasses!=="nenhum"){
     const accessory=selection.glasses;
-    // Óculos de verdade, já modelados para o macaco, em vez de esferas na frente dos olhos.
     getGlassesAsset(accessory).then(asset=>{
       if(!asset||!parts.parent||!parts.userData.active)return;
+      // Os óculos GLB foram modelados no espaço original de macaco.glb.
+      // Nunca re-normalizar: herdam automaticamente a mesma escala do macaco.
       const glasses=asset.clone(true);
       glasses.name="jfRealGlasses_"+accessory;
-      const box=new THREE.Box3().setFromObject(glasses);
-      const size=box.getSize(new THREE.Vector3());
-      const center=box.getCenter(new THREE.Vector3());
-      const scale=.34/Math.max(size.x,.00001);
-      glasses.scale.setScalar(scale);
-      glasses.position.set(-center.x*scale,.442-center.y*scale,.278-center.z*scale);
       glasses.traverse(node=>{if(node.isMesh)node.frustumCulled=false;});
-      parts.add(glasses);
+      monkey.add(glasses);
       render();
     });
   }
   if(selection.headphones!=="nenhum"){
     const shell=selection.headphones==="rosa"?pink:navy;
     const padding=mat(0x252833,{roughness:.88});
-    // Arco sobre a cabeça e almofadas FORA das orelhas.
-    const band=addPart(parts,new THREE.TorusGeometry(.32,.012,10,48,Math.PI),shell,0,.65,-.035);
-    band.rotation.z=0;
-    for(const sign of [-1,1]){
-      sphere(shell,sign*.356,.48,-.018,.044,.078,.071);
-      sphere(padding,sign*.337,.48,-.018,.014,.066,.060);
+    const wearingHat=selection.hat!=="nenhum";
+    if(wearingHat){
+      // Se já usa chapéu, os fones ficam apoiados NO PESCOÇO.
+      // Evita arco atravessando a copa e almofadas flutuando nas orelhas.
+      const band=addPart(parts,new THREE.TorusGeometry(.24,.013,10,40,Math.PI),shell,0,.15,-.055);
+      band.rotation.x=-.22;
+      for(const sign of [-1,1]){
+        sphere(shell,sign*.255,.08,.055,.048,.068,.063);
+        sphere(padding,sign*.234,.08,.072,.018,.055,.052);
+      }
+    }else{
+      const band=addPart(parts,new THREE.TorusGeometry(.35,.016,10,44,Math.PI),shell,0,.66,-.05);
+      for(const sign of [-1,1]){
+        sphere(shell,sign*.38,.48,-.05,.052,.09,.085);
+        sphere(padding,sign*.347,.48,-.05,.018,.074,.068);
+      }
     }
   }
   if(selection.outfit==="rosa"){
@@ -171,7 +178,7 @@ function makeScene(target,wardrobe,{preview=false}={}){
   const normalized=new THREE.Group();
   monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
   normalized.add(monkey);
-  dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera));
+  dress(normalized,sanitize(wardrobe),()=>renderer.render(scene,camera),monkey);
   scene.add(normalized);
   const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
   camera.position.set(0,.04,preview?4.25:4.0);camera.lookAt(0,.035,0);
