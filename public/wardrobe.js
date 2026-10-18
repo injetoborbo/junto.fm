@@ -92,7 +92,7 @@ function dress(root,selection,render,monkey){
       const hat=asset.clone(true);
       const measure=getBounds(hat);
       // Meshy: aba = Y mínimo + cerca de 12% da altura. Apoio = topo - 17 cm visuais.
-      const width=type==="palha"?.83:.81;
+      const width=type==="palha"?.94:.92;
       const scale=width/Math.max(measure.size.x,measure.size.z,1e-6);
       const brim=measure.box.min.y+measure.size.y*.12;
       hat.scale.setScalar(scale);
