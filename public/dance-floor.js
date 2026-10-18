@@ -410,7 +410,8 @@ function animate(){
         obj.rotation.set(x,y,z);
       });
     }
-    p.updateAccessories?.();
+    // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
+    p.updateAccessories?.(Boolean(d.seated&&!walking));
   }
   if(!inspectCleanup)renderer.render(scene,camera);
 }
