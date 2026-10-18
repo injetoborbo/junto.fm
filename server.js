@@ -29,6 +29,7 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomTransmitters = new Map();
+const roomOwners = new Map(); // room -> socket ID do criador / sucessor
 const roomChatMessages = new Map();
 const roomAccess = new Map();
 const roomQueueJobs = new Map(); // Serializa pedidos por sala; respeita a ordem de chegada.
@@ -321,6 +322,22 @@ app.get("/api/lyrics", async (req, res) => {
   } catch (_) { return res.status(502).json({ error: "Não foi possível buscar as letras agora." }); }
 });
 
+function isRoomOwner(socket,room){
+  return Boolean(room&&roomOwners.get(room)===socket.id&&socket.data.room===room);
+}
+function releaseRoomOwnership(room,departingId){
+  if(roomOwners.get(room)!==departingId)return;
+  const members=[...(io.sockets.adapter.rooms.get(room)||[])].filter(id=>id!==departingId);
+  if(members.length){
+    roomOwners.set(room,members[0]);
+    io.to(room).emit("room-owner-update",{ownerId:members[0]});
+  }else{
+    roomOwners.delete(room);
+    roomAccess.delete(room);
+    roomTracks.delete(room);
+    roomChatMessages.delete(room);
+  }
+}
 io.on("connection", socket => {
   socket.data.isAdmin = adminAuth.isAdmin(socket.request);
   socket.data.avatarSkin = "default";
@@ -366,6 +383,7 @@ io.on("connection", socket => {
     } else {
       roomAccess.set(room, null);
     }
+    roomOwners.set(room,socket.id);
     socket.emit("room-created", { room });
   });
 
@@ -405,6 +423,7 @@ io.on("connection", socket => {
       io.to(room).emit("transmitter-update", { id: socket.id, active: false });
     }
     socket.data.isTransmitting = false;
+    releaseRoomOwnership(room,socket.id);
     socket.leave(room);
     socket.data.room = null;
     socket.to(room).emit("peer-left", { id: socket.id });
@@ -444,6 +463,7 @@ io.on("connection", socket => {
         io.to(previousRoom).emit("transmitter-update", { id: socket.id, active: false });
       }
       socket.data.isTransmitting = false;
+      releaseRoomOwnership(previousRoom,socket.id);
       socket.leave(previousRoom);
       socket.to(previousRoom).emit("peer-left", { id: socket.id });
     }
@@ -455,7 +475,7 @@ io.on("connection", socket => {
       const peer = io.sockets.sockets.get(id);
       return [id, peer?.data.profile || { name: "Ouvinte", avatar: "" }];
     }));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, transmitter: roomTransmitters.get(room) || null });
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id });
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
@@ -471,6 +491,10 @@ io.on("connection", socket => {
   socket.on("transmission-started", payload => {
     const room = socket.data.room;
     if (!room || !payload || payload.room !== room) return;
+    if(!isRoomOwner(socket,room)){
+      socket.emit("transmission-denied",{message:"Somente o administrador (dono) da sala pode transmitir o Spotify."});
+      return;
+    }
     const profile = socket.data.profile || { name: "DJ ao vivo" };
     const transmitter = { id: socket.id, name: String(profile.name || "DJ ao vivo").slice(0, 24) };
     socket.data.isTransmitting = true;
@@ -490,12 +514,14 @@ io.on("connection", socket => {
 
   socket.on("clear-track", payload => {
     if (!socket.data.room || !payload || payload.room !== socket.data.room) return;
+    if(roomTransmitters.get(socket.data.room)?.id!==socket.id)return;
     roomTracks.delete(socket.data.room);
     socket.to(socket.data.room).emit("track-clear");
   });
 
   socket.on("track-update", payload => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room || !payload.track) return;
+    if(roomTransmitters.get(socket.data.room)?.id!==socket.id)return;
     const track = payload.track;
     if (typeof track.name !== "string" || typeof track.artists !== "string") return;
     const safeTrack = {
@@ -624,6 +650,7 @@ io.on("connection", socket => {
   socket.on("disconnect", () => {
     const room = socket.data.room;
     if (!room) return;
+    releaseRoomOwnership(room,socket.id);
     if (roomTransmitters.get(room)?.id === socket.id) {
       roomTransmitters.delete(room);
       io.to(room).emit("transmitter-update", { id: socket.id, active: false });
