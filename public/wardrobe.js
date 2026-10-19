@@ -41,8 +41,8 @@ const ASSETS={
 const FIT_DEFAULTS=Object.freeze({
   caveira:{width:.65,offset:[0,.35,.05]},
   sem_aro:{width:.56,offset:[0,.16,.06]},
-  escuros:{width:.56,offset:[0,.16,.06]},
-  redondos:{width:.56,offset:[0,.16,.06]},
+  escuros:{width:.56,offset:[0,.16,.32]},
+  redondos:{width:.56,offset:[0,.16,.29]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
   vestido_novo:{width:.70,offset:[0,-.24,0]}
 });
