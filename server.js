@@ -376,6 +376,7 @@ function releaseRoomOwnership(room,departingId){
     roomAccess.delete(room);
     roomTracks.delete(room);
     roomChatMessages.delete(room);
+    roomTomatoImpacts.delete(room);
   }
 }
 io.use(async (socket,next)=>{
@@ -390,6 +391,8 @@ const CLUB_TABLE=Object.freeze({x:1,z:1});
 const isClubFurnitureTile=(x,z)=>
   CLUB_SEATS.some(seat=>seat.x===x&&seat.z===z)||
   (x===CLUB_TABLE.x&&z===CLUB_TABLE.z);
+// Impactos recentes por sala, para evitar sobreposicao das explosoes.
+const roomTomatoImpacts=new Map();
 function danceSnapshot(room){
   return [...(danceFloors.get(room)||new Map()).entries()].map(([id,data])=>({id,...data}));
 }
@@ -469,6 +472,35 @@ io.on("connection", socket => {
     const member=floor.get(socket.id);
     member.seated=false;
     io.to(room).emit("dance-updated",{id:socket.id,...member});
+  });
+  // Tomates são brincadeira visual: somente o transmissor atual pode ser alvo.
+  // Nada de alvo arbitrário; o servidor valida sala, transmissão e cooldown.
+  socket.on("club-tomato",()=>{
+    const room=socket.data.room;
+    const dj=room&&roomTransmitters.get(room);
+    const targetId=dj?.id;
+    if(!room||!targetId)return socket.emit("club-tomato-error",{message:"Aguarde um DJ transmitir."});
+    if(targetId===socket.id)return socket.emit("club-tomato-error",{message:"Você não pode jogar tomate em si mesmo."});
+    if(!io.sockets.sockets.get(targetId)||io.sockets.sockets.get(targetId).data.room!==room)
+      return socket.emit("club-tomato-error",{message:"O DJ saiu da sala."});
+    if(isRateLimited(socket,"club-tomato",1,5000))
+      return socket.emit("club-tomato-error",{message:"Espere 5 segundos para jogar outro tomate."});
+    // O servidor sorteia a posição para todos verem exatamente o mesmo acerto.
+    // Evita que arremessos seguidos acertem quase o mesmo pixel.
+    const latest=roomTomatoImpacts.get(room)||[];
+    const now=Date.now();
+    const nearby=latest.filter(v=>now-v.time<3500).slice(-4);
+    let hit;
+    let bestDistance=-1;
+    for(let attempt=0;attempt<24;attempt++){
+      const candidate={x:.28+Math.random()*.44,y:.24+Math.random()*.48};
+      const closest=nearby.length?Math.min(...nearby.map(v=>Math.hypot(candidate.x-v.x,candidate.y-v.y))):1;
+      if(closest>bestDistance){hit=candidate;bestDistance=closest;}
+      if(closest>=.18)break;
+    }
+    hit={x:Number(hit.x.toFixed(4)),y:Number(hit.y.toFixed(4))};
+    roomTomatoImpacts.set(room,[...nearby,{...hit,time:now}].slice(-4));
+    io.to(room).emit("club-tomato-fired",{from:socket.id,to:targetId,hit});
   });
   socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
 
