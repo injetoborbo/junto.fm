@@ -222,11 +222,36 @@ const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vecto
 const clock=new THREE.Clock();
 const sittingFrameQuaternion=new THREE.Quaternion();
 const seatedHipDelta=new THREE.Vector3();
-// Encaixe visual da pose sentada na cadeira, independente do rig dos braços.
-const SEATED_VISUAL_X=0.06;
-const SEATED_VISUAL_Z=-0.03;
-const SEATED_BASE_Y=0.84;
-const SEATED_HIP_SCALE=0.55;
+// Encaixe da cadeira, separado dos acessórios. Valores privados não são
+// enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
+const SEATED_DEFAULTS=Object.freeze({x:.06,y:.84,z:-.03,yaw:0,lean:0,hip:.55});
+const SEAT_MONKEY_STORAGE="jf_club_seated_monkey_fit_v1";
+const seatMonkeyRanges={
+  x:[-.5,.5],y:[.30,1.50],z:[-.5,.5],
+  yaw:[-180,180],lean:[-35,35],hip:[0,1.50]
+};
+const seatMonkeyIsLocal=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+let seatMonkeyAccess=seatMonkeyIsLocal;
+const seatMonkeyValues={...SEATED_DEFAULTS};
+function normaliseSeatMonkey(saved){
+  const result={...SEATED_DEFAULTS};
+  if(!saved||typeof saved!=="object"||Array.isArray(saved))return result;
+  for(const [key,[min,max]] of Object.entries(seatMonkeyRanges)){
+    if(saved[key]===undefined||saved[key]===null)continue;
+    const number=Number(saved[key]);
+    if(Number.isFinite(number))result[key]=THREE.MathUtils.clamp(number,min,max);
+  }
+  return result;
+}
+function loadSeatMonkeyFit(){
+  if(!seatMonkeyAccess)return;
+  try{Object.assign(seatMonkeyValues,normaliseSeatMonkey(
+    JSON.parse(localStorage.getItem(SEAT_MONKEY_STORAGE)||"{}")
+  ));}
+  catch(error){console.warn("Junto Club: encaixe local da cadeira inválido.",error);}
+}
+if(seatMonkeyAccess)loadSeatMonkeyFit();
+const seatSettingsFor=id=>seatMonkeyAccess&&id===socket?.id?seatMonkeyValues:SEATED_DEFAULTS;
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
@@ -476,7 +501,9 @@ function animate(){
     const targetX=d.x-2.5,targetZ=d.z-2.5;
     // A cadeira usa um deslocamento visual. O destino da caminhada
     // precisa ser o mesmo para não provocar oscilação infinita.
-    const seatedOffsetX=d.seated?SEATED_VISUAL_X:0,seatedOffsetZ=d.seated?SEATED_VISUAL_Z:0;
+    const seatedSettings=seatSettingsFor(id);
+    const seatedOffsetX=d.seated?seatedSettings.x:0;
+    const seatedOffsetZ=d.seated?seatedSettings.z:0;
     const poseX=targetX+seatedOffsetX,poseZ=targetZ+seatedOffsetZ;
     const dx=poseX-p.root.position.x,dz=poseZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
@@ -497,10 +524,14 @@ function animate(){
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
     // A pose altera as articulações, não enterra o grupo inteiro no chão.
-    p.root.position.y=(d.seated&&!walking?SEATED_BASE_Y:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.position.y=(d.seated&&!walking?seatedSettings.y:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
 
+    p.root.rotation.x=d.seated&&!walking?THREE.MathUtils.degToRad(seatedSettings.lean):0;
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
-    if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
+    if(!walking){
+      const targetYaw=d.seated?THREE.MathUtils.degToRad(seatedSettings.yaw):.65;
+      p.root.rotation.y+=Math.atan2(Math.sin(targetYaw-p.root.rotation.y),Math.cos(targetYaw-p.root.rotation.y))*Math.min(1,dt*1.6);
+    }
     p.mixer?.update(dt);
     if(p.sitHips){
       const hip=p.sitHips;
@@ -511,7 +542,7 @@ function animate(){
         if(sample?.length===3){
           seatedHipDelta.set(sample[0]-hip.initial.x,
             sample[1]-hip.initial.y,sample[2]-hip.initial.z)
-            .applyQuaternion(hip.alignment).multiplyScalar(hip.scale*SEATED_HIP_SCALE);
+            .applyQuaternion(hip.alignment).multiplyScalar(hip.scale*seatedSettings.hip);
           hip.bone.position.add(seatedHipDelta);
         }
       }
