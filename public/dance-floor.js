@@ -666,6 +666,86 @@ const inspectModal=document.getElementById("jfSeatInspectModal");
 const inspectClose=document.getElementById("jfSeatInspectClose");
 const inspectViewport=document.getElementById("jfSeatInspectViewport");
 let inspectCleanup=null,inspectOpening=false;
+// Ajuste da posicao do macaquinho SENTADO - independente dos oculos.
+const seatMonkeyPanel=document.getElementById("jfSeatMonkeyCalibration");
+const seatMonkeyStatus=document.getElementById("jfSeatMonkeyStatus");
+const seatMonkeyAxes=["x","y","z","yaw","lean","hip"];
+const seatMonkeyInputs=Object.fromEntries(seatMonkeyAxes.map(key=>[
+  key,document.getElementById("jfSeatMonkey"+key[0].toUpperCase()+key.slice(1))
+]));
+function setSeatMonkeyStatus(message){
+  if(seatMonkeyStatus)seatMonkeyStatus.textContent=message;
+}
+function displaySeatMonkeyFit(){
+  for(const key of seatMonkeyAxes){
+    const number=seatMonkeyValues[key],input=seatMonkeyInputs[key];
+    if(input)input.value=String(number);
+    const output=document.getElementById("jfSeatMonkey"+key[0].toUpperCase()+key.slice(1)+"Value");
+    if(output)output.textContent=(key==="yaw"||key==="lean"?number.toFixed(0)+"°":number.toFixed(2));
+  }
+}
+function repositionSeatMonkeyNow(){
+  // Sem caminhar um passo a cada pequeno arrasto de slider.
+  // Mover só o nosso próprio avatar se ele já estiver sentado.
+  if(!seatMonkeyAccess)return;
+  const me=people.get(socket?.id);
+  if(!me?.root||!me.data?.seated)return;
+  me.root.position.x=me.data.x-2.5+seatMonkeyValues.x;
+  me.root.position.z=me.data.z-2.5+seatMonkeyValues.z;
+  me.root.position.y=seatMonkeyValues.y;
+  me.root.rotation.y=THREE.MathUtils.degToRad(seatMonkeyValues.yaw);
+  me.root.rotation.x=THREE.MathUtils.degToRad(seatMonkeyValues.lean);
+}
+function storeSeatMonkeyFit(){
+  try{
+    localStorage.setItem(SEAT_MONKEY_STORAGE,JSON.stringify(seatMonkeyValues));
+    setSeatMonkeyStatus("Ajustes aplicados ao vivo e salvos neste navegador. Outros macacos não mudam.");
+  }catch(error){
+    setSeatMonkeyStatus("Ajuste aplicado, mas este navegador não permitiu salvar.");
+  }
+}
+for(const key of seatMonkeyAxes){
+  seatMonkeyInputs[key]?.addEventListener("input",()=>{
+    if(!seatMonkeyAccess)return;
+    const val=Number(seatMonkeyInputs[key].value);
+    if(!Number.isFinite(val))return;
+    const [min,max]=seatMonkeyRanges[key];
+    seatMonkeyValues[key]=THREE.MathUtils.clamp(val,min,max);
+    displaySeatMonkeyFit();
+    repositionSeatMonkeyNow();
+    storeSeatMonkeyFit();
+  });
+}
+document.getElementById("jfSeatMonkeyReset")?.addEventListener("click",()=>{
+  if(!seatMonkeyAccess)return;
+  Object.assign(seatMonkeyValues,SEATED_DEFAULTS);
+  displaySeatMonkeyFit();repositionSeatMonkeyNow();storeSeatMonkeyFit();
+  setSeatMonkeyStatus("Posição original da cadeira restaurada.");
+});
+document.getElementById("jfSeatMonkeyCopy")?.addEventListener("click",async()=>{
+  if(!seatMonkeyAccess)return;
+  const value=JSON.stringify(seatMonkeyValues);
+  try{
+    if(!navigator.clipboard?.writeText)throw Error("Área de transferência indisponível");
+    await navigator.clipboard.writeText(value);
+    setSeatMonkeyStatus("Valores copiados para colar aqui no chat.");
+  }catch(error){
+    setSeatMonkeyStatus("Não foi possível copiar automaticamente. Valores: "+value);
+  }
+});
+function seatMonkeyPermission(enabled){
+  const wasAllowed=seatMonkeyAccess;
+  seatMonkeyAccess=Boolean(enabled);
+  if(seatMonkeyPanel)seatMonkeyPanel.hidden=!seatMonkeyAccess;
+  if(seatMonkeyAccess&&!wasAllowed)loadSeatMonkeyFit();
+  displaySeatMonkeyFit();
+}
+seatMonkeyPermission(seatMonkeyAccess);
+fetch("/api/admin/status",{credentials:"same-origin",cache:"no-store"})
+  .then(response=>response.ok?response.json():{admin:false})
+  .then(data=>seatMonkeyPermission(seatMonkeyIsLocal||data.admin===true))
+  .catch(()=>seatMonkeyPermission(seatMonkeyIsLocal));
+
 const glassesAxes=["x","y","z"];
 const glassesInputs=Object.fromEntries(glassesAxes.map(axis=>[axis,document.getElementById("jfSeatGlasses"+axis.toUpperCase())]));
 const savedSeatGlassesAdjustment=Object.freeze({x:-.0002,y:-.0011,z:-.0024});
@@ -731,6 +811,7 @@ async function openSeatInspect(){
     return;
   }
   inspectModal.hidden=false;
+  if(seatMonkeyAccess)displaySeatMonkeyFit();
   updateGlassesPreview();
   let raf=0,disposed=false,drag=null,yaw=.55,pitch=.23,distance=2.65;
   // Compartilha o renderer e a cena originais: não clona o rig, os óculos
