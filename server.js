@@ -179,6 +179,16 @@ app.post("/api/spotify/logout", (req, res) => {
   res.setHeader("Set-Cookie", "junto_spotify_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
   res.json({ ok: true });
 });
+app.post("/api/spotify/skip",async(req,res)=>{
+  try{
+    const account=await accountAuth.accountFromRequest(req);
+    // O comando só é disparado pelo navegador DJ ao alcançar o quórum no servidor.
+    const token=await validSpotifyAccessToken(getSession(req,res));
+    const response=await fetch("https://api.spotify.com/v1/me/player/next",{method:"POST",headers:{Authorization:"Bearer "+token}});
+    if(!response.ok)return res.status(response.status).json({error:"Spotify não autorizou pular a faixa."});
+    return res.json({ok:true});
+  }catch(error){return res.status(401).json({error:"Conecte o Spotify para pular a faixa."});}
+});
 app.post("/api/spotify/save-track", async (req, res) => {
   try {
     if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
