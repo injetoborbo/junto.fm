@@ -529,15 +529,15 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
   will-change:transform;user-select:none
 }
 .jf-tomato-splash{
-  position:absolute;left:50%;top:46%;width:116%;height:116%;object-fit:contain;
-  z-index:35;pointer-events:none;transform:translate(-50%,-50%) scale(.25);
-  opacity:0;animation:jfTomatoSplatter 1.25s both
+  position:absolute;left:50%;top:46%;width:48%;height:48%;object-fit:contain;
+  z-index:35;pointer-events:none;transform:translate(-50%,-50%) scale(.22);
+  opacity:0;animation:jfTomatoSplatter .95s both
 }
 .jf-dj-stage.jf-tomato-hit{animation:jfTomatoMonkeyHit .27s ease-in-out}
 @keyframes jfTomatoSplatter{
-  0%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(-15deg)}
-  15%{opacity:1;transform:translate(-50%,-50%) scale(1.22) rotate(4deg)}
-  30%,75%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-15deg)}
+  16%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(4deg)}
+  32%,76%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}
   100%{opacity:0;transform:translate(-50%,-50%) scale(1.04)}
 }
 @keyframes jfTomatoMonkeyHit{
