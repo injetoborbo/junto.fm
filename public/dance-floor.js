@@ -267,7 +267,7 @@ async function putMember(id,details){
   const entry={data:{...details},root:null,rig:null,dispose:null,name:null};
   people.set(id,entry);
   try{
-    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{});
+    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{local:id===socket.id});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;entry.getGlassesDiagnostics=avatar.getGlassesDiagnostics;
     // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
