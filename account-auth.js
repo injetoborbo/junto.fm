@@ -112,7 +112,7 @@ module.exports=function setupAccounts(app){
         const digest=await passwordDigest(password,salt);
         const token=crypto.randomBytes(32).toString("hex");
         const result=await pool.query(`INSERT INTO junto_accounts(id,email,password_hash,username,nickname,email_verified,email_verify_hash,email_verify_expires)
-          VALUES($1,$2,$3,$4,$4,FALSE,$5,NOW()+INTERVAL '24 hours') ON CONFLICT DO NOTHING RETURNING id`,
+          VALUES($1,$2,$3,$4::text,$4::text,FALSE,$5,NOW()+INTERVAL '24 hours') ON CONFLICT DO NOTHING RETURNING id`,
           [crypto.randomUUID(),email,"scrypt:"+salt+":"+digest,username,hash(token)]);
         if(!result.rowCount)return res.status(409).json({error:"E-mail ou nome de usuário já cadastrado."});
         try{await sendVerification(email,username,token);}
