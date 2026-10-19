@@ -751,11 +751,113 @@ function showPreview(){
   previewRenderer?.dispose();
   previewRenderer=makeScene(preview,editing,{preview:true});
 }
+
+const fitPanel=$("jfWardrobeFitEditor"),fitItem=$("jfFitItem"),fitStatus=$("jfFitStatus");
+const fitInputNames=["Width","X","Y","Z"];
+const fitInputs=Object.fromEntries(fitInputNames.map(name=>[name,$("jfFit"+name)]));
+const fitOptions={
+  caveira:["hat","caveira"],
+  sem_aro:["glasses","sem_aro"],
+  fone_novo:["headphones","preto"],
+  vestido_novo:["outfit","rosa_novo"]
+};
+function setFitStatus(message){if(fitStatus)fitStatus.textContent=message;}
+function showFitValues(){
+  if(!fitItem||!fitAccess)return;
+  const file=fitItem.value;
+  const params=fittedItem(file,true);
+  if(!params)return;
+  const values={Width:params.width,X:params.offset[0],Y:params.offset[1],Z:params.offset[2]};
+  for(const name of fitInputNames){
+    if(fitInputs[name])fitInputs[name].value=String(values[name]);
+    const output=$("jfFit"+name+"Value");
+    if(output)output.textContent=Number(values[name]).toFixed(2);
+  }
+}
+function focusFitItem(file,{equip=false}={}){
+  if(!fitAccess||!fitItem||!fitOptions[file])return;
+  fitItem.value=file;
+  showFitValues();
+  if(equip){
+    const [slot,value]=fitOptions[file];
+    if(editing[slot]!==value){
+      editing[slot]=value;
+      if(selectors[slot])selectors[slot].value=value;
+      showPreview();
+    }
+  }
+}
+function preferredFitItem(){
+  // Priorizar o último item selecionado no guarda-roupa.
+  if(editing.headphones==="preto")return "fone_novo";
+  if(editing.outfit==="rosa_novo")return "vestido_novo";
+  if(editing.glasses==="sem_aro")return "sem_aro";
+  if(editing.hat==="caveira")return "caveira";
+  return "fone_novo";
+}
+function persistPrivateFit(file,data){
+  if(!fitAccess||!FIT_DEFAULTS[file])return;
+  privateFits[file]=cleanFit(file,data);
+  try{localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));}
+  catch(error){setFitStatus("Não consegui salvar os ajustes neste navegador.");}
+  window.dispatchEvent(new CustomEvent("jf-private-fit-updated",{detail:{file}}));
+}
+function editSelectedFit(){
+  if(!fitAccess||!fitItem)return;
+  const file=fitItem.value;
+  const data={width:Number(fitInputs.Width?.value),
+    offset:["X","Y","Z"].map(axis=>Number(fitInputs[axis]?.value))};
+  persistPrivateFit(file,data);
+  showFitValues();
+  setFitStatus("Ajuste aplicado ao vivo e salvo neste navegador. Os outros jogadores não recebem essas mudanças.");
+}
+for(const name of fitInputNames)
+  fitInputs[name]?.addEventListener("input",editSelectedFit);
+fitItem?.addEventListener("change",()=>focusFitItem(fitItem.value,{equip:true}));
+$("jfFitReset")?.addEventListener("click",()=>{
+  if(!fitAccess||!fitItem)return;
+  delete privateFits[fitItem.value];
+  try{localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));}
+  catch(error){setFitStatus("Não consegui salvar neste navegador.");}
+  window.dispatchEvent(new CustomEvent("jf-private-fit-updated",{detail:{file:fitItem.value}}));
+  showFitValues();
+  setFitStatus("Encaixe padrão restaurado para esta peça.");
+});
+$("jfFitCopy")?.addEventListener("click",async()=>{
+  if(!fitAccess||!fitItem)return;
+  const file=fitItem.value,fit=fittedItem(file,true);
+  const value=file+": width:"+fit.width.toFixed(2)+", offset:["+
+    fit.offset.map(n=>n.toFixed(2)).join(",")+"]";
+  try{await navigator.clipboard.writeText(value);setFitStatus("Valores copiados!");}
+  catch(error){setFitStatus("Cópia não autorizada pelo navegador: "+value);}
+});
+function updateEditorAccess(allowed){
+  const wasAllowed=fitAccess;
+  fitAccess=Boolean(allowed);
+  if(fitPanel)fitPanel.hidden=!fitAccess;
+  if(fitAccess){
+    if(!wasAllowed)loadPrivateFits();
+    focusFitItem(preferredFitItem());
+    if(!wasAllowed&&!modal?.hidden)showPreview();
+  }else if(wasAllowed&&!modal?.hidden)showPreview();
+}
+updateEditorAccess(fitAccess);
+// No domínio público, a ferramenta exige a sessão OAuth administrativa
+// validada em /api/admin/status. Localhost é permitido só para desenvolvimento.
+fetch("/api/admin/status",{credentials:"same-origin",cache:"no-store"})
+  .then(response=>response.ok?response.json():{admin:false})
+  .then(data=>updateEditorAccess(localDevelopment||data.admin===true))
+  .catch(()=>updateEditorAccess(localDevelopment));
+
 for(const [key,element] of Object.entries(selectors)){
   if(!element)continue;
   element.value=editing[key];
   element.addEventListener("change",()=>{
     editing[key]=element.value;showPreview();
+    if(fitAccess){
+      for(const [file,[slot,value]] of Object.entries(fitOptions))
+        if(slot===key&&value===editing[key]){focusFitItem(file);break;}
+    }
   });
 }
 const modal=$("jfWardrobeModal");
@@ -763,6 +865,7 @@ $("jfOpenWardrobe")?.addEventListener("click",()=>{
   editing={...selection};
   for(const [k,e] of Object.entries(selectors))if(e)e.value=editing[k];
   modal.hidden=false;document.body.style.overflow="hidden";showPreview();
+  if(fitAccess)focusFitItem(preferredFitItem());
 });
 function close(){
   modal.hidden=true;document.body.style.overflow="";
