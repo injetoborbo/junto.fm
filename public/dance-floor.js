@@ -229,10 +229,10 @@ const SEATED_DEFAULTS=Object.freeze({x:.10,y:.85,z:.28,yaw:0,lean:0,hip:0});
 // uma mesa centralizada e folga para os macacos sentados.
 // IDs lógicos seguem idênticos aos validados pelo servidor.
 const CLUB_SEATS=Object.freeze([
-  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2,wx:-2.5,wz:-1.5}),
-  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2,wx:-.5,wz:-1.5})
+  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2,wx:-2.5,wz:-2.18}),
+  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2,wx:-.5,wz:-2.18})
 ]);
-const CLUB_TABLE=Object.freeze({x:1,z:1,wx:-1.5,wz:-1.5});
+const CLUB_TABLE=Object.freeze({x:1,z:1,wx:-1.5,wz:-2.18});
 const clubSeatAt=(x,z)=>CLUB_SEATS.find(seat=>seat.x===x&&seat.z===z)||null;
 // A calibração X/Z pertence à orientação do assento: acompanhá-la
 // quando a cadeira gira, para o macaco continuar encaixado.
