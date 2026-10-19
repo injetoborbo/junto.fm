@@ -68,6 +68,8 @@ module.exports=function installSocialFeatures(app,io,roomTransmitters,accountsRe
     io.to(room).emit("banana-progress",{count:bananas.get(room)||0,goal:20});
   }
   io.on("connection",socket=>{
+    // O cadastro confirmado desbloqueia a conquista mesmo antes de entrar numa sala.
+    if(socket.data.account?.id)void unlock(socket,"welcome");
     const roomNow=()=>socket.data.room;
     socket.on("social-join",()=>{
       const room=roomNow();if(!room)return;
