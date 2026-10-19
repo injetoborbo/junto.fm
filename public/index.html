@@ -11,8 +11,7 @@ if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add
 <style>
 :root{color-scheme:dark;--ink:#f7f4ff;--muted:#c4c6ed;--pink:#ff78d2;--cyan:#70f4ff;--blue:#7997ff;--line:#7678d8;--panel:#171638}
 *{box-sizing:border-box}
-/* Zoom visual no Android; largura compensada para preservar o viewport. */
-html.jf-android-scale body{zoom:.75;width:133.333333%;}
+/* Layout responsivo real: não ampliar o body nem forçar zoom no Android. */
 
 html{min-height:100%;background:#090b22}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:var(--jf-font-family,"Trebuchet MS"),Verdana,Arial,sans-serif;background:radial-gradient(ellipse at 50% -10%,#5656a8 0,#20245c 30%,#101333 63%,#080a1e 100%);background-attachment:fixed;position:relative;overflow-x:hidden}
@@ -635,6 +634,39 @@ html[data-jf-theme="classic"] .jf-audio-source{background:linear-gradient(#fff,#
 html[data-jf-theme="classic"] .jf-audio-source option{background:#f0f6ff;color:#173a65}
 html[data-jf-theme="aero"] .jf-audio-source{background:linear-gradient(#174e70,#092c47);color:#efffff;border:1px solid #65d9ed;box-shadow:inset 0 1px 0 #9defff48,0 2px 8px #00274070}
 html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#efffff}
+</style>
+<style>
+/* O Social só existe no hall; dentro da sala permanece a aba Amigos. */
+body.jf-in-room #jfHomeSocial{display:none!important}
+/* Ajustes exclusivos para telas estreitas, preservando a versão desktop. */
+@media(max-width:760px){
+  html.jf-android-scale body{zoom:1;width:100%}
+  body{overflow-x:hidden}
+  main{width:100%;max-width:100%;padding:14px 12px 96px}
+  .jf-topbar{display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:9px;padding:0!important;margin:0 auto 12px;max-width:100%}
+  .jf-topbar .brand{order:0;display:flex;width:100%;min-width:0;justify-content:center;gap:7px;font-size:21px;letter-spacing:0;flex-wrap:wrap}
+  .jf-topbar .brand .logo{width:36px;height:36px;flex:0 0 36px;font-size:21px}
+  .jf-topbar .brand .tag{margin-left:0;font-size:8px;letter-spacing:.25px;padding:5px 7px}
+  .jf-community-top-dock{position:static!important;inset:auto!important;transform:none!important;order:1;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;width:100%;max-width:100%;gap:8px;margin:0!important;z-index:3}
+  .jf-community-top-dock .btn{flex:1 1 135px;min-width:0;max-width:190px;min-height:36px;padding:7px 8px;font-size:11px;white-space:nowrap}
+  .jf-top-actions,body:not(.jf-in-room) .jf-top-actions{position:static!important;top:auto!important;right:auto!important;left:auto!important;order:2;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;max-width:100%;justify-content:stretch;gap:6px;margin:0!important}
+  .jf-top-actions>.btn,body:not(.jf-in-room) .jf-top-actions>.btn{display:inline-flex;justify-content:center;align-items:center;width:100%!important;min-width:0!important;min-height:38px!important;height:38px;padding:5px 5px!important;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .jf-top-actions>[hidden]{display:none!important}
+  body:not(.jf-in-room) .jf-topbar{padding-top:0!important}
+  body.jf-in-room #jfHomeSocial{display:none!important}
+  main>h1{font-size:clamp(29px,9vw,43px);margin:16px 0 8px}
+  main>.jf-hero-description{margin:0 0 10px;line-height:1.5}
+  .panel{max-width:100%;margin-top:14px}
+  body.jf-in-room #jfRoomEntryPanel{margin-bottom:10px;padding:12px}
+  body.jf-in-room #jfRoomEntryPanel #help{display:none}
+  .jf-player-layout{margin-top:14px;gap:14px}
+  .jf-player-panel{padding:12px;min-width:0}
+  .track-card{min-width:0}
+}
+@media(max-width:370px){
+  .jf-top-actions,body:not(.jf-in-room) .jf-top-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .jf-community-top-dock .btn{flex-basis:45%}
+}
 </style>
 <!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
 <link rel="stylesheet" href="/kodoku.css">
