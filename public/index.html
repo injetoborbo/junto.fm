@@ -376,11 +376,11 @@ body:not(.jf-in-room) .jf-topbar{justify-content:center}
 body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
 /* Na tela de entrada, exibir apenas Perfil e Trajes no canto superior direito. */
 body:not(.jf-in-room) .jf-top-actions{display:flex!important;position:fixed;top:16px;right:20px;z-index:20;gap:8px;margin:0}
-body:not(.jf-in-room) .jf-top-actions > :not(#jfOpenWardrobe):not(#jfOpenProfile){display:none!important}
-body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{display:inline-flex!important;min-height:40px;width:auto;min-width:92px;padding:7px 10px}
+body:not(.jf-in-room) .jf-top-actions > :not(#jfHomeSocial):not(#jfOpenWardrobe):not(#jfOpenProfile){display:none!important}
+body:not(.jf-in-room) #jfHomeSocial,body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{display:inline-flex!important;min-height:40px;width:auto;min-width:92px;padding:7px 10px}
 @media(max-width:600px){
  body:not(.jf-in-room) .jf-top-actions{top:10px;right:10px;gap:5px}
- body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{min-width:0;min-height:36px;padding:5px 7px;font-size:11px}
+ body:not(.jf-in-room) #jfHomeSocial,body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{min-width:0;min-height:36px;padding:5px 7px;font-size:11px}
  body:not(.jf-in-room) .jf-topbar{padding-top:58px}
 }
 
@@ -623,7 +623,7 @@ html[data-jf-theme="classic"] .track-times{
 <div id="jfRankDialog" hidden role="dialog" aria-modal="true" aria-labelledby="jfRankHeading"><div class="jf-rank-body"><div style="display:flex;justify-content:space-between;align-items:center"><h2 id="jfRankHeading">🏆 Ranking de horas</h2><button type="button" class="btn secondary" id="jfCloseRank">Fechar</button></div><p class="small">Tempo de DJ e ouvintes com conta Google durante transmissão com áudio.</p><div id="jfRankContent">Carregando...</div></div></div>
 <div id="jfWelcomeToast" role="status" hidden><svg viewBox="0 0 96 96" role="img" aria-label="Navio de madeira entalhada"><defs><linearGradient id="jfWoodShip"><stop stop-color="#f5d09a"/><stop offset=".5" stop-color="#c18a4f"/><stop offset="1" stop-color="#86502b"/></linearGradient></defs><circle cx="48" cy="48" r="42" fill="#57321e" stroke="#edc78b" stroke-width="5"/><path d="M49 18v43M49 24l-24 32h24zm4 7 20 25H53zM17 62h63L67 77H30Z" fill="url(#jfWoodShip)" stroke="#3b2116" stroke-width="3" stroke-linejoin="round"/><path d="M24 83q7-5 13 0t12 0t12 0t12 0" fill="none" stroke="#efc28a" stroke-width="3"/></svg><div><small>🏆 CONQUISTA DESBLOQUEADA</small><strong>Bem-vindo a bordo</strong><span>Seu primeiro embarque no Junto.fm!</span></div></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -2047,6 +2047,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
     $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
     $("jfOpenFriends").addEventListener("click",()=>{jfRenderFriends();openModal("jfFriendsModal");});
+    $("jfHomeSocial").addEventListener("click",()=>{jfRenderFriends();openModal("jfFriendsModal");});
     $("jfFriendsTabList").addEventListener("click",()=>jfSetFriendsTab(false));
     $("jfRequestsTab").addEventListener("click",()=>jfSetFriendsTab(true));
     $("jfFriendsLauncher").addEventListener("click",()=>{const open=$("jfFriendsDrawer").hidden;$("jfFriendsDrawer").hidden=!open;$("jfFriendsLauncher").setAttribute("aria-expanded",String(open));if(open){$("jfChatWindow").hidden=true;$("jfChatLauncher").setAttribute("aria-expanded","false");jfRenderDrawerFriends();}});
