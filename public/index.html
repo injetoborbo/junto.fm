@@ -619,6 +619,11 @@ html[data-jf-theme="classic"] .track-times{
 /* Fonte de áudio: herda aparência, cores e fontes do tema ativo */
 .jf-audio-source{display:block;width:100%;max-width:380px;min-height:44px;padding:10px 34px 10px 12px;border:1px solid var(--jf-secondary,var(--line,#777be9));border-radius:9px;background:var(--jf-panel,var(--panel,#202043));color:var(--ink,#fff);font:inherit;font-weight:600;cursor:pointer;box-shadow:inset 0 1px 2px #0002;transition:border-color .2s,box-shadow .2s}
 .jf-audio-source:focus-visible{outline:2px solid var(--jf-primary,#7997ff);outline-offset:2px}
+.jf-cable-picker{margin-top:12px;padding:12px;border:1px solid var(--jf-secondary,var(--line,#777be9));border-radius:9px}
+.jf-cable-picker[hidden]{display:none!important}
+.jf-cable-picker .jf-audio-source{max-width:340px;flex:1;min-width:160px}
+.jf-cable-picker .btn{min-height:42px}
+.jf-audio-source:disabled{opacity:.6;cursor:not-allowed}
 .jf-audio-source option{background:var(--jf-panel,var(--panel,#202043));color:var(--ink,#fff)}
 html[data-jf-theme="classic"] .jf-audio-source{background:linear-gradient(#fff,#e4efff);color:#173a65;border:1px solid #6597d3;box-shadow:inset 0 1px 0 #fff,0 2px 3px #254b7b30}
 html[data-jf-theme="classic"] .jf-audio-source option{background:#f0f6ff;color:#173a65}
@@ -691,8 +696,16 @@ html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#eff
     <label for="jfAudioSource" class="small" style="display:block;margin-top:18px;margin-bottom:6px">Fonte do áudio</label>
     <select id="jfAudioSource" class="jf-audio-source">
       <option value="tab">Transmitir áudio da aba (web)</option>
-      <option value="system">Transmitir áudio de app externo (sistema)</option>
+      <option value="system">Transmitir áudio de app externo (VB-CABLE)</option>
     </select>
+    <div id="jfCablePicker" class="jf-cable-picker" hidden>
+      <label for="jfCableDevice" class="small">Entrada virtual (CABLE Output)</label>
+      <div class="row" style="margin-top:6px;gap:8px;align-items:center">
+        <select id="jfCableDevice" class="jf-audio-source" disabled><option value="">Detecte o VB-CABLE primeiro</option></select>
+        <button id="jfCableDetect" type="button" class="btn secondary">Detectar VB-CABLE</button>
+      </div>
+      <p id="jfCableHelp" class="small" aria-live="polite">No Mixer de volume do Windows, escolha CABLE Input como saída do Spotifast. Clique em Detectar VB-CABLE, permita o acesso ao microfone e selecione CABLE Output.</p>
+    </div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="start" disabled>Transmitir áudio da aba (web)</button>
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
@@ -702,7 +715,7 @@ html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#eff
   Diagnóstico do áudio: aguardando conexão...
 </p>
     
-    <p class="small" id="jfCaptureHelp">Modo web: escolha a aba com a música e marque “Compartilhar áudio”. No modo externo, escolha a tela inteira e ative “Compartilhar áudio do sistema” quando disponível. O áudio de aplicativos como Spotifast depende do navegador e do Windows; alguns apps protegidos podem não ser capturados.</p>
+    <p class="small" id="jfCaptureHelp">Modo web: escolha a aba da música e marque “Compartilhar áudio”. Modo externo: use o VB-CABLE instalado no Windows, sem compartilhar a tela.</p>
   </section>
   <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
     <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
