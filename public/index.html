@@ -1231,6 +1231,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     liveBadge.hidden = !active;
     jfCurrentTransmitter=active?transmitter:null;
     $("jfTransmitterName").textContent = transmitterName;
+    $("role").textContent=active
+      ?(isSender?"Você está transmitindo ao vivo.":"Ouvindo a transmissão de "+transmitterName+".")
+      :(joined?"Aguardando o DJ começar a música.":"Entre na sala para começar.");
     jfNotifyTransmitterAppearance();
     miniDj.setAttribute("aria-label", active
       ? "Mascote ao lado do player. Ao vivo: " + transmitterName
