@@ -52,18 +52,13 @@
     new MutationObserver(refreshChat).observe(document.documentElement,{attributes:true,attributeFilter:["data-jf-theme"]});
     refreshChat();
   }
-  function decorateChatCorners(){
+  function decorateChatFrame(){
     const win=document.getElementById("jfChatWindow");
-    if(!win||win.querySelector(".jf-kodoku-frame-corners"))return;
-    const ornaments=document.createElement("div");
-    ornaments.className="jf-kodoku-frame-corners";
-    ornaments.setAttribute("aria-hidden","true");
-    for(const corner of ["tl","tr","bl","br"]){
-      const item=document.createElement("span");
-      item.className="jf-kodoku-frame-corner jf-kodoku-corner-"+corner;
-      ornaments.appendChild(item);
-    }
-    win.appendChild(ornaments);
+    if(!win||win.querySelector(".jf-kodoku-chat-frame"))return;
+    const frame=document.createElement("div");
+    frame.className="jf-kodoku-chat-frame";
+    frame.setAttribute("aria-hidden","true");
+    win.appendChild(frame);
   }
   const makeFeature=()=>{
     const feature=document.createElement("div");
@@ -76,6 +71,6 @@
     const player=document.querySelector(".jf-player-panel");
     if(player&&!player.querySelector(".jf-kodoku-feature"))player.prepend(makeFeature());
   };
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{place();watchChat();decorateChatCorners()},{once:true});
-  else {place();watchChat();decorateChatCorners()}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{place();watchChat();decorateChatFrame()},{once:true});
+  else {place();watchChat();decorateChatFrame()}
 })();
