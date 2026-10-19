@@ -600,10 +600,26 @@ function loadWardrobeSittingPose(){
   return wardrobeSittingPosePromise;
 }
 function applyPlayerSittingPose(monkey,source){
-  const clip=[...(source?.animations||[])].sort((a,b)=>
-    b.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length-
-    a.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length
-  )[0];
+  // FBX com duas tomadas: preferir a que tem variacao real,
+  // nao a tomada estatica exportada junto com o Mixamo.
+  const movementScore=take=>{
+    let score=0;
+    for(const track of take.tracks){
+      if(!track.name.endsWith(".quaternion")||!/mixamorig/i.test(track.name))continue;
+      const values=track.values;
+      if(!values||values.length<4)continue;
+      let moving=false;
+      for(let i=4;i+3<values.length;i+=4){
+        let difference=0;
+        for(let axis=0;axis<4;axis++)
+          difference+=Math.abs(values[i+axis]-values[axis]);
+        if(difference>.005){moving=true;break;}
+      }
+      score+=(moving?1000:0)+Math.min(track.times?.length||0,120);
+    }
+    return score;
+  };
+  const clip=[...(source?.animations||[])].sort((a,b)=>movementScore(b)-movementScore(a))[0];
   if(!clip){console.warn("Pose sentada: GLB sem animação utilizável.");return false;}
   const targets=new Map();
   const clean=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
