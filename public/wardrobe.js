@@ -39,11 +39,11 @@ const ASSETS={
 // Encaixes dos GLBs recentes. O vestido usa a profundidade (Z=0)
 // calibrada manualmente pelo criador, não a antiga posição .06.
 const FIT_DEFAULTS=Object.freeze({
-  caveira:{width:.66,offset:[0,.35,0]},
+  caveira:{width:.65,offset:[0,.35,.05]},
   sem_aro:{width:.56,offset:[0,.16,.06]},
   escuros:{width:.56,offset:[0,.16,.06]},
   redondos:{width:.56,offset:[0,.16,.06]},
-  fone_novo:{width:.58,offset:[0,.34,0]},
+  fone_novo:{width:.66,offset:[0,.40,.10]},
   vestido_novo:{width:.70,offset:[0,-.24,0]}
 });
 const FIT_STORAGE="jf_wardrobe_private_fit_v1";
