@@ -1,0 +1,39 @@
+/* KODOKU — composição autoral monocromática, manuscrito sombrio.
+   A tipografia permanece branca, superfícies pretas, sem texturas externas pesadas. */
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=New+Rocker&display=swap');
+html[data-jf-theme="kodoku"]{color-scheme:dark;--ink:#fff;--muted:#ddd;--panel:#070707;--line:#fff;--pink:#fff;--cyan:#fff;--blue:#fff;--jf-primary:#fff;--jf-secondary:#d8d8d8;--jf-glow:#777;--jf-font-family:"IM Fell English SC",Georgia,serif;background:#000!important}
+html[data-jf-theme="kodoku"] body{background:#000!important;color:#fff!important;font-family:"IM Fell English SC",Georgia,serif}
+html[data-jf-theme="kodoku"] body:before{background-image:repeating-linear-gradient(0deg,transparent 0 5px,#ffffff05 6px 7px);opacity:.18;z-index:0}
+html[data-jf-theme="kodoku"] body:after{content:none!important}
+html[data-jf-theme="kodoku"] #jfAeroBackground{opacity:0!important}
+html[data-jf-theme="kodoku"] :is(h1,h2,h3,.brand,.jf-chat-heading,.jf-modal-head h2){font-family:"New Rocker","IM Fell English SC",Georgia,serif;letter-spacing:1.1px;color:#fff!important;text-shadow:0 1px 1px #000,0 0 7px #ffffff50!important}
+html[data-jf-theme="kodoku"] :is(.panel,.jf-modal,.jf-chat-window,.jf-friends-drawer,.jf-suggestion-popup,.jf-room-modal,.jf-rank-body,.jf-dance-modal){background:#030303!important;color:#fff!important;border:1px solid #ededed!important;border-radius:2px!important;box-shadow:inset 0 0 0 4px #000,inset 0 0 0 5px #777,0 10px 38px #000b!important}
+html[data-jf-theme="kodoku"] .panel:before{background:linear-gradient(90deg,transparent,#fff,transparent)!important}
+html[data-jf-theme="kodoku"] :is(.small,label,.status,.jf-chat-subheading,.jf-chat-meta,.jf-person-details,.jf-motto,.jf-friend-status,.track-artist,.track-album,.track-times,.track-kicker,.track-empty,.jf-dance-help,.jf-dance-toolbar,.jf-social-count,footer,main>p){color:#eaeaea!important;text-shadow:none!important}
+html[data-jf-theme="kodoku"] :is(.btn,.btn.secondary,.jf-chat-launcher,.jf-tomato-launcher,.jf-modal-close,.jf-chat-close){color:#fff!important;background:#050505!important;border:1px solid #efefef!important;border-radius:2px!important;box-shadow:inset 0 0 0 1px #555!important;text-shadow:none!important;font-family:"IM Fell English SC",Georgia,serif}
+html[data-jf-theme="kodoku"] :is(.btn,.btn.secondary,.jf-chat-launcher,.jf-chat-close):hover:not(:disabled){color:#000!important;background:#fff!important;filter:none!important}
+html[data-jf-theme="kodoku"] :is(input,textarea,select,.jf-grid select,.jf-chat-form input){background:#000!important;color:#fff!important;border:1px solid #d4d4d4!important;border-radius:2px!important;box-shadow:none!important}
+html[data-jf-theme="kodoku"] :is(input,textarea)::placeholder{color:#bbb!important}
+html[data-jf-theme="kodoku"] :is(.track-card,.jf-person,.jf-room-people .jf-person,.jf-friend-photo,.jf-chat-bubble,.jf-chat-log,.jf-chat-tools,.jf-chat-form,.jf-chat-header,.jf-friends-drawer-content,.jf-suggestion-settings,.jf-song-result,.jf-song-confirmation){background:#080808!important;color:#fff!important;border-color:#ddd!important;border-radius:2px!important;box-shadow:none!important}
+html[data-jf-theme="kodoku"] :is(.track-card,.jf-person,.jf-chat-bubble) strong{color:#fff!important}
+html[data-jf-theme="kodoku"] :is(.track-art,.cover,.jf-avatar,.jf-member-monkey){border-color:#eee!important;box-shadow:none!important}
+html[data-jf-theme="kodoku"] .progress-wrap{background:#252525!important;border-color:#fff!important}
+html[data-jf-theme="kodoku"] .progress-fill{background:#fff!important;box-shadow:0 0 4px #fff7!important}
+html[data-jf-theme="kodoku"] .tag{color:#fff!important;background:#000!important;border:1px solid #fff!important;text-shadow:none!important;animation:none!important}
+html[data-jf-theme="kodoku"] .jf-chat-heading,html[data-jf-theme="kodoku"] .jf-chat-subheading{color:#fff!important}
+html[data-jf-theme="kodoku"] .jf-chat-bubble :is(.jf-chat-text,.jf-chat-meta strong,.jf-chat-meta time){color:#fff!important}
+html[data-jf-theme="kodoku"] #jfDanceModal .jf-modal-head{background:#000!important;color:#fff!important;border:1px solid #fff!important}
+html[data-jf-theme="kodoku"] #jfDanceModal .jf-modal-head h2{color:#fff!important}
+html[data-jf-theme="kodoku"] :is(#jfDanceStatus,#jfDanceCount,.jf-dance-help){color:#fff!important}
+html[data-jf-theme="kodoku"] .jf-social-dialog{background:#000!important;color:#fff!important;border:1px solid #fff!important}
+html[data-jf-theme="kodoku"] .jf-social-dialog input{background:#000!important;color:#fff!important}
+html[data-jf-theme="kodoku"] .jf-social-actions{background:#000!important;border-color:#ddd!important}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal{display:grid;place-items:center;position:relative;width:104px;height:104px;margin:0 auto 12px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 5px #000,0 0 0 6px #fff,0 0 25px #ffffff38}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal:before{content:"";position:absolute;inset:-20px;border-radius:50%;background:repeating-conic-gradient(#ffffff9c 0deg 1deg,transparent 1deg 9deg);mask:radial-gradient(circle,transparent 0 53px,#000 54px 68px,transparent 69px);pointer-events:none}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal svg{width:74px;height:74px;fill:none;stroke:#fff;stroke-width:3.1;stroke-linecap:round;stroke-linejoin:round}
+html[data-jf-theme="kodoku"] .jf-kodoku-ornament{display:block;text-align:center;letter-spacing:.45em;color:#fff;font-size:13px;padding:3px 0 9px}
+html[data-jf-theme="kodoku"] .jf-kodoku-feature{border:1px solid #fff;padding:18px 20px 11px;margin-bottom:18px;background:#000;box-shadow:inset 0 0 0 5px #000,inset 0 0 0 6px #666}
+html[data-jf-theme="kodoku"] .jf-kodoku-feature strong{display:block;text-align:center;font:clamp(23px,5vw,38px) "New Rocker",Georgia,serif!important;letter-spacing:4px;color:#fff!important}
+html[data-jf-theme="kodoku"] .jf-kodoku-feature p{text-align:center;color:#fff!important;font:15px "IM Fell English SC",Georgia,serif;margin:8px 0 2px}
+html:not([data-jf-theme="kodoku"]) .jf-kodoku-feature{display:none!important}
+@media(max-width:520px){html[data-jf-theme="kodoku"] .jf-kodoku-feature{padding:14px 10px}html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:82px;height:82px}html[data-jf-theme="kodoku"] .jf-kodoku-seal svg{width:58px;height:58px}}
