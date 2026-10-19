@@ -952,6 +952,7 @@ html[data-jf-theme="classic"] .track-times{
     }
   }catch(_){jfClientId="tab_"+Math.random().toString(36).slice(2)+Date.now().toString(36);}
   const socket = io({auth:{clientId:jfClientId}});
+  window.jfBananaSocket=socket;
   const $ = id => document.getElementById(id);
   const shareWrap=document.getElementById("jfShareRoom");
   const rankingDialog=document.getElementById("jfRankDialog");
@@ -2423,5 +2424,6 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 })();
 </script>
 <script defer src="/kodoku.js"></script>
+<script defer src="/banana-barrel.js"></script>
 </body>
 </html>
