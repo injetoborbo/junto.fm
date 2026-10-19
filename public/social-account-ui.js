@@ -66,7 +66,8 @@
  const achievementsButton=document.getElementById("jfAchievementsOpen");
  if(rankButton)dock.append(rankButton);
  if(achievementsButton)dock.append(achievementsButton);
- document.body.appendChild(dock);
+ // Mantém o dock fixo no desktop; em celular ele aparece abaixo da marca.
+ (document.querySelector(".jf-topbar")||document.body).appendChild(dock);
  fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json()).then(data=>{
   const registered=Boolean(data.loggedIn);
   document.getElementById("jfLocalRegisterOpen").hidden=registered;
