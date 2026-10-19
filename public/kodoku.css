@@ -202,3 +202,62 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-chat-o{
  html[data-jf-theme="kodoku"] #jfChatWindow::after{width:47px!important;height:47px!important}
  html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:38px!important}
 }
+
+/* Revisão de fidelidade: preservar detalhes da arte e manter o chat funcional. */
+html[data-jf-theme="kodoku"] #jfChatWindow{
+  display:flex!important;flex-direction:column!important;position:fixed!important;
+  width:min(360px,calc(100vw - 28px))!important;
+  height:min(480px,calc(100dvh - 120px))!important;
+  min-height:0!important;right:24px!important;bottom:92px!important;
+  overflow:hidden!important;border-radius:3px!important;
+  border:1px solid #fff!important;background:#000!important;
+  box-shadow:inset 0 0 0 1px #595959,0 12px 36px #000c!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow[hidden]{display:none!important}
+html[data-jf-theme="kodoku"] #jfChatWindow::before,
+html[data-jf-theme="kodoku"] #jfChatWindow::after{
+  content:""!important;display:block!important;position:absolute!important;
+  width:65px!important;height:65px!important;z-index:3!important;
+  pointer-events:none!important;opacity:.95!important;
+  background:url("/kodoku-corner.svg") center/contain no-repeat!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow::before{top:3px!important;left:3px!important;transform:none!important}
+html[data-jf-theme="kodoku"] #jfChatWindow::after{right:3px!important;bottom:3px!important;transform:rotate(180deg)!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
+  flex:0 0 auto!important;min-height:54px!important;padding:10px 40px 10px 52px!important;
+  background:#040404!important;border-bottom:1px solid #ddd!important
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-log{
+  flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;
+  padding:12px 11px!important;background:#040404!important
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-tools{flex:0 0 auto!important;background:#040404!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form{
+  flex:0 0 auto!important;display:flex!important;align-items:center!important;
+  gap:8px!important;padding:10px!important;background:#040404!important;
+  border-top:1px solid #ddd!important
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form input{flex:1 1 auto!important;min-width:0!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-bubble{width:fit-content!important;max-width:100%!important;min-width:0!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-chat-o{
+  vertical-align:-.14em!important;transform:translateY(.02em)!important
+}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal{
+  width:162px!important;height:158px!important;background:none!important;
+  border:0!important;box-shadow:none!important;overflow:visible!important;margin:0 auto 10px!important
+}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal::before{display:none!important}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal-image{
+  width:100%!important;height:100%!important;object-fit:contain!important;
+  image-rendering:auto!important;filter:none!important
+}
+@media(max-width:520px){
+ html[data-jf-theme="kodoku"] #jfChatWindow{
+  right:12px!important;bottom:78px!important;width:calc(100vw - 24px)!important;
+  height:min(470px,calc(100dvh - 96px))!important
+ }
+ html[data-jf-theme="kodoku"] #jfChatWindow::before,
+ html[data-jf-theme="kodoku"] #jfChatWindow::after{width:46px!important;height:46px!important}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:42px!important}
+ html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:130px!important;height:130px!important}
+}
