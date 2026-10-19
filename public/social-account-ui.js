@@ -37,6 +37,15 @@
   const registered=Boolean(data.loggedIn);
   document.getElementById("jfLocalRegisterOpen").hidden=registered;
   document.getElementById("jfLocalLoginOpen").hidden=registered;
+  if(new URLSearchParams(location.search).get("email_verified")==="1" && registered){
+   const clean=new URL(location.href);clean.searchParams.delete("email_verified");
+   history.replaceState(history.state,"",clean.pathname+clean.search+clean.hash);
+   const popup=document.createElement("div");
+   popup.className="jf-social-overlay";
+   popup.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfVerifiedTitle" style="text-align:center"><div style="font-size:50px;margin:0 0 10px">🎧</div><h2 id="jfVerifiedTitle">E-mail confirmado!</h2><p>Sua conta está pronta e você já está conectado.</p><p><strong>Agora coloque os fones e aproveite!</strong> 🎶</p><button class="btn" type="button" id="jfVerifiedContinue">Bora ouvir música!</button></section>';
+   document.body.appendChild(popup);
+   popup.querySelector("#jfVerifiedContinue").onclick=()=>popup.remove();
+  }
  }).catch(()=>{});
  const $=id=>document.getElementById(id);
  const overlay=document.createElement("div");overlay.id="jfSocialDialog";overlay.className="jf-social-overlay";overlay.hidden=true;
