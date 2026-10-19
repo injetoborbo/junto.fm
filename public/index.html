@@ -1025,11 +1025,8 @@ html[data-jf-theme="classic"] .track-times{
     try{await navigator.clipboard.writeText(link);document.getElementById("jfRoomLinkInfo").textContent="Link copiado!";}
     catch(_){document.getElementById("jfRoomLinkInfo").textContent=link;}
   };
-  try{if(!localStorage.getItem("jf-welcome-v1")){
-    const toast=document.getElementById("jfWelcomeToast");
-    toast.hidden=false;localStorage.setItem("jf-welcome-v1","1");
-    setTimeout(()=>toast.hidden=true,6500);toast.onclick=()=>toast.hidden=true;
-  }}catch(_){}
+  // Conquistas são exclusivas de contas autenticadas e persistidas no servidor.
+  document.getElementById("jfWelcomeToast").hidden=true;
   let pendingDeepLink=/^[a-zA-Z0-9_-]{1,40}$/.test(location.pathname.slice(1))?location.pathname.slice(1):null;
   function handleDeepLink(){
     if(!pendingDeepLink||!socket.connected)return;
@@ -1856,7 +1853,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const data=await res.json();
       jfAccountConfigured=Boolean(data.configured);
       jfAccount=data.loggedIn?data.profile:null;
-      $("jfGoogleLogin").hidden=!jfAccountConfigured||!!jfAccount;
+      $("jfGoogleLogin").hidden=!data.googleConfigured||!!jfAccount;
       $("jfGoogleLogout").hidden=!jfAccount;
       $("jfEntryAccountLoggedIn").hidden=!jfAccount;
       $("jfEntryAccountHint").hidden=!!jfAccount;
@@ -2419,5 +2416,6 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 })();
 </script>
 <script defer src="/social-features.js"></script>
+<script defer src="/social-account-ui.js"></script>
 </body>
 </html>
