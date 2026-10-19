@@ -222,6 +222,11 @@ const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vecto
 const clock=new THREE.Clock();
 const sittingFrameQuaternion=new THREE.Quaternion();
 const seatedHipDelta=new THREE.Vector3();
+// Encaixe visual da pose sentada na cadeira, independente do rig dos braços.
+const SEATED_VISUAL_X=0.06;
+const SEATED_VISUAL_Z=-0.03;
+const SEATED_BASE_Y=0.84;
+const SEATED_HIP_SCALE=0.55;
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
@@ -471,7 +476,7 @@ function animate(){
     const targetX=d.x-2.5,targetZ=d.z-2.5;
     // A cadeira usa um deslocamento visual. O destino da caminhada
     // precisa ser o mesmo para não provocar oscilação infinita.
-    const seatedOffsetX=d.seated?.12:0,seatedOffsetZ=d.seated?-.12:0;
+    const seatedOffsetX=d.seated?SEATED_VISUAL_X:0,seatedOffsetZ=d.seated?SEATED_VISUAL_Z:0;
     const poseX=targetX+seatedOffsetX,poseZ=targetZ+seatedOffsetZ;
     const dx=poseX-p.root.position.x,dz=poseZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
@@ -492,7 +497,7 @@ function animate(){
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
     // A pose altera as articulações, não enterra o grupo inteiro no chão.
-    p.root.position.y=(d.seated&&!walking?.70:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.position.y=(d.seated&&!walking?SEATED_BASE_Y:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
 
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
@@ -506,7 +511,7 @@ function animate(){
         if(sample?.length===3){
           seatedHipDelta.set(sample[0]-hip.initial.x,
             sample[1]-hip.initial.y,sample[2]-hip.initial.z)
-            .applyQuaternion(hip.alignment).multiplyScalar(hip.scale);
+            .applyQuaternion(hip.alignment).multiplyScalar(hip.scale*SEATED_HIP_SCALE);
           hip.bone.position.add(seatedHipDelta);
         }
       }
