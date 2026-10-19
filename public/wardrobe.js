@@ -139,7 +139,16 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       // A calibração é aplicada ANTES da matriz local do acessório,
       // portanto os eixos continuam relativos ao osso Head animado.
       if((part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos")&&isSeated){
-        seatShift.makeTranslation(glassesCalibration.x,glassesCalibration.y,glassesCalibration.z);
+        // O modelo sem aro veio de um GLB novo e foi encaixado por largura e
+        // ossatura; NÃO herdar o ajuste absoluto salvo para os óculos antigos.
+        // O slider continua funcionando usando o deslocamento RELATIVO ao
+        // preset antigo, sem estragar a posição neutra do novo modelo.
+        const newModel=part.name==="jfWardrobe_sem_aro";
+        seatShift.makeTranslation(
+          glassesCalibration.x-(newModel?-.0002:0),
+          glassesCalibration.y-(newModel?-.0011:0),
+          glassesCalibration.z-(newModel?-.0024:0)
+        );
         correctionWorld.multiplyMatrices(bone.matrixWorld,seatShift).multiply(seatedLocal);
       }else{
         correctionWorld.multiplyMatrices(bone.matrixWorld,isSeated?seatedLocal:bindLocal);
