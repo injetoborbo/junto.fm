@@ -497,6 +497,12 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 .jf-fit-grid output{font-size:12px;font-family:monospace;font-variant-numeric:tabular-nums}
 .jf-fit-actions{margin:12px 0 3px;gap:8px;flex-wrap:wrap}
 .jf-fit-actions button{padding:7px 10px;font-size:12px}
+.jf-fit-pose{display:grid;gap:7px;margin:12px 0 14px}
+.jf-fit-pose[hidden],#jfFitTiltWrap[hidden]{display:none!important}
+.jf-fit-pose>div{display:flex;gap:6px;flex-wrap:wrap}
+.jf-fit-pose button{padding:7px 11px;font-size:12px}
+.jf-fit-pose button[aria-pressed="true"]{outline:2px solid var(--jf-secondary,#437aa8);outline-offset:0;font-weight:800}
+
 @media(max-width:540px){.jf-fit-grid{grid-template-columns:1fr}}
 
 .jf-member-monkey{width:64px;height:68px;flex:0 0 64px;overflow:hidden;border-radius:8px;background:#e8f1fc}
@@ -746,11 +752,20 @@ html[data-jf-theme="classic"] .track-times{
           <option value="caveira">🧢 Touca Caveira</option>
         </select>
       </label>
+      <div id="jfFitPosePicker" class="jf-fit-pose" hidden>
+        <span class="small">Pose do vestido</span>
+        <div role="group" aria-label="Selecionar pose para ajustar o vestido">
+          <button type="button" id="jfFitStanding" class="btn secondary" aria-pressed="true">🧍 Em pé</button>
+          <button type="button" id="jfFitSitting" class="btn secondary" aria-pressed="false">🪑 Sentado</button>
+        </div>
+        <span class="small">Cada pose tem ajustes independentes. A prévia muda junto com a seleção.</span>
+      </div>
       <div class="jf-fit-grid">
         <label>Tamanho <input id="jfFitWidth" type="range" min=".20" max="1.30" step=".01"><output id="jfFitWidthValue"></output></label>
         <label>Esquerda / direita (X) <input id="jfFitX" type="range" min="-.60" max=".60" step=".01"><output id="jfFitXValue"></output></label>
         <label>Altura (Y) <input id="jfFitY" type="range" min="-.60" max=".60" step=".01"><output id="jfFitYValue"></output></label>
         <label>Frente / trás (Z) <input id="jfFitZ" type="range" min="-.60" max=".60" step=".01"><output id="jfFitZValue"></output></label>
+        <label id="jfFitTiltWrap" hidden>Inclinação (°) <input id="jfFitTilt" type="range" min="-80" max="80" step="1"><output id="jfFitTiltValue"></output></label>
       </div>
       <div class="row jf-fit-actions">
         <button type="button" class="btn secondary" id="jfFitReset">Restaurar valores de fábrica</button>
