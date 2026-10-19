@@ -14,6 +14,9 @@ const count=document.getElementById("jfDanceCount");
 const openButton=document.getElementById("jfOpenDance");
 const closeButton=document.getElementById("jfCloseDance");
 const choices=[...document.querySelectorAll("[data-jf-dance]")];
+const tomatoButton=document.getElementById("jfClubTomato");
+let djTargetId=null,tomatoCooldown=0;
+const tomatoShots=[];
 const animationFiles={
   shake:"/dance/macacochaqualha.glb",
   macarena:"/dance/macacomacarena.glb",
@@ -581,11 +584,51 @@ function updateChoices(){
   const selected=people.get(socket.id)?.data.dance||"idle";
   for(const b of choices){b.setAttribute("aria-pressed",String(b.dataset.jfDance===selected));b.classList.toggle("active",b.dataset.jfDance===selected);}
 }
+function spawnTomato({from,to}){
+  if(!active||!scene||!people.has(from)||!people.has(to))return;
+  const source=people.get(from).root,target=people.get(to).root;
+  if(!source||!target)return;
+  const geometry=new THREE.SphereGeometry(.13,12,10);
+  const material=new THREE.MeshStandardMaterial({color:0xe72d20,roughness:.54});
+  const fruit=new THREE.Mesh(geometry,material);
+  const crown=new THREE.Mesh(new THREE.ConeGeometry(.09,.10,5),new THREE.MeshStandardMaterial({color:0x287c35}));
+  crown.position.y=.13;fruit.add(crown);scene.add(fruit);
+  tomatoShots.push({fruit,geometry,material,crown,target,
+    start:source.position.clone().add(new THREE.Vector3(0,1.1,0)),
+    age:0,duration:.85});
+}
+function updateTomatoes(dt){
+  for(let i=tomatoShots.length-1;i>=0;i--){
+    const shot=tomatoShots[i];shot.age+=dt;
+    const t=Math.min(1,shot.age/shot.duration);
+    const end=shot.target.position.clone().add(new THREE.Vector3(0,1.05,0));
+    shot.fruit.position.lerpVectors(shot.start,end,t);
+    shot.fruit.position.y+=1.05*4*t*(1-t);
+    shot.fruit.rotation.z+=dt*8;
+    if(t>=1){
+      const impact=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),
+        new THREE.MeshBasicMaterial({color:0xfc5136,transparent:true,opacity:.8,depthWrite:false}));
+      impact.position.copy(end);
+      scene.add(impact);
+      setTimeout(()=>{scene?.remove(impact);impact.geometry.dispose();impact.material.dispose();},370);
+      scene.remove(shot.fruit);shot.crown.geometry.dispose();shot.crown.material.dispose();
+      shot.geometry.dispose();shot.material.dispose();tomatoShots.splice(i,1);
+    }
+  }
+}
+function refreshTomatoButton(){
+  if(!tomatoButton)return;
+  const ready=active&&Boolean(djTargetId)&&djTargetId!==socket?.id&&people.has(djTargetId)&&Date.now()>=tomatoCooldown;
+  tomatoButton.disabled=!ready;
+  tomatoButton.title=!djTargetId?"Aguarde alguém transmitir":djTargetId===socket?.id?"O DJ não pode jogar tomate em si mesmo":!people.has(djTargetId)?"O DJ precisa entrar na pista":"Jogue um tomate no DJ atual";
+}
 function animate(){
   if(!active||!renderer)return;
   frame=requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),.065);
   const time=clock.elapsedTime;
+  updateTomatoes(dt);
+  refreshTomatoButton();
   for(const {beam,phase} of scene.userData.beams||[]){
     beam.rotation.z=.16*Math.sin(time*.55+phase);
     beam.rotation.x=.16*Math.cos(time*.43+phase);
@@ -755,6 +798,11 @@ function close(){
   inspectCleanup?.();
   if(!active)return;
   const oldRoom=room;active=false;room=null;sequence++;
+  for(const shot of tomatoShots){
+    scene?.remove(shot.fruit);shot.crown.geometry.dispose();shot.crown.material.dispose();
+    shot.geometry.dispose();shot.material.dispose();
+  }
+  tomatoShots.length=0;refreshTomatoButton();
   cancelAnimationFrame(frame);
   socket.emit("dance-exit");
   for(const id of [...people.keys()])removeMember(id);
@@ -1046,6 +1094,19 @@ socket?.on("avatar-skin-update",({id})=>{if(id)setTimeout(()=>refreshDancer(id),
 window.addEventListener("jf-wardrobe-save",()=>refreshDancer(socket.id));
 window.addEventListener("jf-admin-skin-changed",()=>refreshDancer(socket.id));
 
+tomatoButton?.addEventListener("click",()=>{
+  refreshTomatoButton();
+  if(tomatoButton.disabled)return;
+  tomatoCooldown=Date.now()+5000;
+  refreshTomatoButton();
+  socket.emit("club-tomato");
+});
+window.addEventListener("jf-player-monkey",event=>{
+  djTargetId=event.detail?.id||null;
+  refreshTomatoButton();
+});
+djTargetId=window.jfLastTransmitterAppearance?.id||null;
+socket?.on("club-tomato-fired",shot=>spawnTomato(shot));
 socket?.on("dance-error",({message})=>{if(active)setStatus(message||"Não foi possível mover.");});
 socket?.on("room-kicked",close);
 socket?.on("left-room",close);
