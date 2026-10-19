@@ -1613,12 +1613,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       // Alguns navegadores ignoram estas preferências na captura de tela.
       const musicAudio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
       const external=$("jfAudioSource").value==="system";
-      // Capture somente com gesto do usuário. Áudio do sistema não é garantido pelo navegador.
-      // Preferências de música são aplicadas depois, pois alguns navegadores recusam
-      // getDisplayMedia({audio: {...constraints}}) ou deixam de oferecer compartilhamento.
+      // WEB: preservar a chamada de captura original, usada antes da regressão.
+      // EXTERNO: solicitar áudio do sistema em separado, sem interferir no modo web.
       const captured = await navigator.mediaDevices.getDisplayMedia(external
-        ? {video:{displaySurface:"monitor"},audio:true,systemAudio:"include",selfBrowserSurface:"exclude"}
-        : {video:true,audio:true,systemAudio:"exclude",surfaceSwitching:"include"});
+        ? {video:{displaySurface:"monitor"},audio:true,systemAudio:"include"}
+        : {video:true,audio:musicAudio});
       const audioTracks = captured.getAudioTracks();
       if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'Sem áudio do sistema: escolha Tela inteira e marque compartilhar áudio do sistema. Se a opção não aparecer, Chrome/Windows não oferece captura desse aplicativo.':'Sem áudio da aba: escolha Aba do Chrome/Edge e marque Compartilhar áudio da aba.'); return; }
       for (const track of audioTracks) {
@@ -1627,22 +1626,21 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         try { await track.applyConstraints({ echoCancellation: false, noiseSuppression: false, autoGainControl: false }); }
         catch (error) { console.info('Captura não aceita todas as preferências de música:', error); }
       }
-      // Não encerrar a trilha de vídeo aqui! Em alguns navegadores isso
-      // encerra também a fonte de áudio da captura. O vídeo permanece local,
-      // mas apenas as trilhas de áudio são adicionadas aos peers WebRTC.
-      captured.getVideoTracks().forEach(track => { track.enabled = false; });
+      // Captura web volta ao ciclo original; na captura do sistema, conservar
+      // o vídeo localmente porque sua interrupção pode finalizar a sessão.
+      // Em ambos os casos SOMENTE as faixas de áudio são enviadas por WebRTC.
+      if(!external)captured.getVideoTracks().forEach(track=>track.stop());
       resetSession();
       localStream = captured; isSender = true; socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
       // serão conectados pelo evento peer-joined do servidor.
-      const roomInfo = await new Promise(resolve => {
-        // O servidor informa participantes ao entrar; guardamos os IDs atuais localmente.
-        resolve([]);
-      });
       enableControls();
       // Se ouvintes já estavam na sala, IDs são guardados no conjunto abaixo.
       for (const id of knownPeers) await createSenderOffer(id);
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
+      audioTracks[0].addEventListener('mute', ()=>{
+        if(isSender)setStatus('A fonte do áudio foi silenciada pelo navegador. Verifique a aba escolhida ou o compartilhamento de áudio.');
+      });
       setStatus(external?'Áudio do sistema capturado. Conectando ouvintes…':'Áudio da aba capturado. Conectando ouvintes…', true);
       if (spotifyConnected) startSpotifyPolling();
     } catch (error) {
