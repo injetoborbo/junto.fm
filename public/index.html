@@ -485,6 +485,20 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 .jf-wardrobe-fields{display:grid;gap:12px}
 .jf-wardrobe-fields label{display:grid;gap:5px;font-weight:700;font-size:13px}
 .jf-wardrobe-fields select{padding:10px;border-radius:7px;border:1px solid #9eb8cf;background:#fff;color:#15283c;min-width:0}
+.jf-fit-editor{margin-top:14px;padding:12px;border:1px solid var(--jf-secondary,#729bc7);border-radius:10px;background:var(--jf-glow,#dfeafa);color:var(--ink,#163456)}
+.jf-fit-editor[hidden]{display:none!important}
+.jf-fit-editor summary{cursor:pointer;font-weight:800}
+.jf-fit-editor>.small{margin:8px 0}
+.jf-fit-item-label{display:grid;gap:5px;font-weight:700;font-size:12px;margin:12px 0}
+.jf-fit-item-label select{padding:8px;border:1px solid #9eb8cf;border-radius:7px;max-width:100%}
+.jf-fit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.jf-fit-grid label{display:grid;gap:5px;font-size:12px;font-weight:700;min-width:0}
+.jf-fit-grid input{width:100%;accent-color:var(--jf-secondary,#3268a6)}
+.jf-fit-grid output{font-size:12px;font-family:monospace;font-variant-numeric:tabular-nums}
+.jf-fit-actions{margin:12px 0 3px;gap:8px;flex-wrap:wrap}
+.jf-fit-actions button{padding:7px 10px;font-size:12px}
+@media(max-width:540px){.jf-fit-grid{grid-template-columns:1fr}}
+
 .jf-member-monkey{width:64px;height:68px;flex:0 0 64px;overflow:hidden;border-radius:8px;background:#e8f1fc}
 @media(max-width:540px){.jf-wardrobe-layout{grid-template-columns:1fr}.jf-wardrobe-preview{width:100%}}
 /* Friends drawer + lyrics */
@@ -719,6 +733,29 @@ html[data-jf-theme="classic"] .track-times{
         <label>Roupa<select id="jfWardrobeOutfit"><option value="padrao">Original</option><option value="rosa">Rosa</option><option value="rosa_novo">Vestido rosa 3D (novo)</option></select></label>
       </div>
     </div>
+    <details id="jfWardrobeFitEditor" class="jf-fit-editor" hidden>
+      <summary>🛠 Ajustar trajes 3D <span class="small">· ferramenta privada</span></summary>
+      <p class="small">Ajuste ao vivo na prévia. Os valores ficam salvos somente neste navegador, sem mudar os trajes dos outros jogadores.</p>
+      <label class="jf-fit-item-label" for="jfFitItem">Peça a ajustar
+        <select id="jfFitItem">
+          <option value="fone_novo">🎧 Fone preto 3D</option>
+          <option value="vestido_novo">👗 Vestido rosa 3D</option>
+          <option value="sem_aro">🕶 Óculos 3D novo</option>
+          <option value="caveira">🧢 Touca Caveira</option>
+        </select>
+      </label>
+      <div class="jf-fit-grid">
+        <label>Tamanho <input id="jfFitWidth" type="range" min=".20" max="1.30" step=".01"><output id="jfFitWidthValue"></output></label>
+        <label>Esquerda / direita (X) <input id="jfFitX" type="range" min="-.60" max=".60" step=".01"><output id="jfFitXValue"></output></label>
+        <label>Altura (Y) <input id="jfFitY" type="range" min="-.60" max=".60" step=".01"><output id="jfFitYValue"></output></label>
+        <label>Frente / trás (Z) <input id="jfFitZ" type="range" min="-.60" max=".60" step=".01"><output id="jfFitZValue"></output></label>
+      </div>
+      <div class="row jf-fit-actions">
+        <button type="button" class="btn secondary" id="jfFitReset">Restaurar valores de fábrica</button>
+        <button type="button" class="btn secondary" id="jfFitCopy">Copiar ajustes</button>
+      </div>
+      <p class="small" id="jfFitStatus" role="status" aria-live="polite"></p>
+    </details>
     <div class="row" style="margin-top:14px"><button class="btn" type="button" id="jfSaveWardrobe">Salvar traje</button><span class="small">Gratuito, sem precisar criar conta.</span></div>
   </section>
 </div>
