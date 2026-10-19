@@ -224,7 +224,7 @@ const sittingFrameQuaternion=new THREE.Quaternion();
 const seatedHipDelta=new THREE.Vector3();
 // Encaixe da cadeira, separado dos acessórios. Valores privados não são
 // enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
-const SEATED_DEFAULTS=Object.freeze({x:.12,y:.46,z:.25,yaw:0,lean:0,hip:0});
+const SEATED_DEFAULTS=Object.freeze({x:.10,y:.85,z:.28,yaw:0,lean:0,hip:0});
 // Canto entre as duas paredes: cadeiras nas casas (0,1) e (2,1),
 // viradas uma para outra (+X e -X); mesa ocupa a casa (1,1).
 // Os mesmos endereços são validados no servidor.
