@@ -1,6 +1,7 @@
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
 import {createDanceAvatar} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
@@ -24,6 +25,127 @@ const animationFiles={
 // em vez de copiar diretamente quaternions locais entre rigs diferentes.
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
 const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+// Animacao sentadobalanca.fbx (enviada pelo criador).
+// O FBX fica fora do GitHub ate instalar o pacote de teste em public/poses.
+// A pose anterior e mantida como fallback para nao quebrar o deploy.
+const seatedFBXLoader=new FBXLoader();
+let sittingPosePromise=null;
+function sittingPose(){
+  if(!sittingPosePromise)sittingPosePromise=(async()=>{
+    let source;
+    try{
+      // sentadotryfix: FBX somente de esqueleto, 49 nós Mixamo e 64 quadros.
+      // Mesma hierarquia do arquivo original, sem malha/câmera extra.
+      const scene=await seatedFBXLoader.loadAsync("/poses/sentadotryfix.fbx");
+      source={scene,animations:scene.animations,filename:"sentadotryfix.fbx"};
+    }catch(error){
+      console.warn("Nova animação sentadotryfix indisponível; tentando versões anteriores.");
+      try{
+        const scene=await seatedFBXLoader.loadAsync("/poses/sentadobalanca.fbx");
+        source={scene,animations:scene.animations,filename:"sentadobalanca.fbx"};
+      }catch(previousError){
+        try{
+          const gltf=await gltfLoader.loadAsync("/poses/sitting-idle.glb");
+          source={scene:gltf.scene,animations:gltf.animations,filename:"sitting-idle.glb"};
+        }catch(fallbackError){
+          console.warn("Nenhuma animação sentada disponível.",fallbackError);
+          return null;
+        }
+      }
+    }
+    const clips=source.animations||[];
+    // O FBX do Mixamo contem DUAS tomadas: RootNode|mixamo.com
+    // (transforms estaticos) e mixamo.com (64 quadros de movimento).
+    // Contar somente ossos empatava as tomadas e podia escolher a estatica.
+    // Preferir a que tem rotacoes REALMENTE variando no tempo.
+    const clipScore=take=>{
+      let score=0;
+      for(const track of take.tracks){
+        if(!track.name.endsWith(".quaternion")||!/mixamorig/i.test(track.name))continue;
+        const values=track.values;
+        if(!values||values.length<4)continue;
+        let moving=false;
+        for(let i=4;i+3<values.length;i+=4){
+          let difference=0;
+          for(let axis=0;axis<4;axis++)
+            difference+=Math.abs(values[i+axis]-values[axis]);
+          if(difference>.005){moving=true;break;}
+        }
+        score+=(moving?1000:0)+Math.min(track.times?.length||0,120);
+      }
+      return score;
+    };
+    const clip=[...clips].sort((a,b)=>clipScore(b)-clipScore(a))[0];
+    if(source.filename==="sentadobalanca.fbx"||source.filename==="sentadotryfix.fbx")
+      console.info("Tomadas no FBX:",clips.map(c=>({
+        name:c.name,seconds:c.duration.toFixed(2),motionScore:clipScore(c)
+      })),"Selecionada:",clip?.name);
+    if(!clip?.tracks?.length)return null;
+    source.scene.updateMatrixWorld(true);
+    const sourceBones=new Map();
+    source.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
+    // Registrar orientação GLOBAL de repouso do esqueleto de origem.
+    // Ombros/antebraços não podem usar o delta local de um outro bind pose:
+    // ele gira em eixos incompatíveis e abre os braços em posições estranhas.
+    const sourceWorldBones=new Map();
+    const byObject=new Map();
+    source.scene.traverse(node=>{
+      if(!node.isBone)return;
+      const key=boneKey(node.name);
+      if(!key)return;
+      const info={
+        key,node,
+        localRest:node.quaternion.clone(),
+        worldRest:node.getWorldQuaternion(new THREE.Quaternion()),
+        parent:null,track:null,
+        parentWorldRest:node.parent.getWorldQuaternion(new THREE.Quaternion())
+      };
+      sourceWorldBones.set(key,info);
+      byObject.set(node,info);
+    });
+    for(const info of sourceWorldBones.values())
+      info.parent=byObject.get(info.node.parent)||null;
+    const hipBone=sourceBones.get("hips");
+    const hipPositionTrack=/^sentado(?:balanca|tryfix)\.fbx$/.test(source.filename)?
+      clip.tracks.find(track=>track.name.endsWith(".position")&&
+        boneKey(track.name.slice(0,track.name.lastIndexOf(".")))==="hips"):null;
+    const hipInterpolant=hipPositionTrack?.createInterpolant();
+    const initialHipPosition=hipInterpolant?.evaluate(0);
+    const hipPosition=initialHipPosition?.length===3&&hipBone?{
+      interpolant:hipInterpolant,
+      initial:new THREE.Vector3().fromArray(initialHipPosition),
+      sourceRest:hipBone.position.clone(),
+      sourceParentQuaternion:hipBone.parent.getWorldQuaternion(new THREE.Quaternion())
+    }:null;
+    const time=Math.min(.5,clip.duration*.5);
+    const changes=new Map(),animatedTracks=new Map();
+    for(const track of clip.tracks){
+      const dot=track.name.lastIndexOf(".");
+      if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+      const name=boneKey(track.name.slice(0,dot)),bone=sourceBones.get(name);
+      if(!bone)continue;
+      const interpolant=track.createInterpolant();
+      const value=interpolant.evaluate(time);
+      if(!value||value.length!==4)continue;
+      const sourceInverse=bone.quaternion.clone().invert();
+      const correction=sourceInverse.clone().multiply(new THREE.Quaternion().fromArray(value));
+      changes.set(name,correction);
+      if(source.filename==="sentadobalanca.fbx"||source.filename==="sentadotryfix.fbx"){
+        animatedTracks.set(name,{sourceInverse,interpolant});
+        const info=sourceWorldBones.get(name);
+        if(info)info.track=interpolant;
+      }
+    }
+    console.info("Junto Club sentado:",source.filename,changes.size,
+      "ossos; translacao do quadril:",Boolean(hipPosition),
+      "duracao:",clip.duration.toFixed(2),"s");
+    return changes.size>=5?{
+      changes,animatedTracks,sourceWorldBones,hipPosition,
+      duration:clip.duration,filename:source.filename
+    }:null;
+  })();
+  return sittingPosePromise;
+}
 function loadClip(style){
   if(!animationFiles[style])return Promise.resolve(null);
   if(!clipPromises.has(style)){
@@ -98,6 +220,71 @@ let down=null;
 const people=new Map();
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
+const sittingFrameQuaternion=new THREE.Quaternion();
+const seatedHipDelta=new THREE.Vector3();
+const PUBLISHED_SEAT_GLASSES_FIT=Object.freeze({x:-.0002,y:-.0011,z:-.0024});
+// Encaixe da cadeira, separado dos acessórios. Valores privados não são
+// enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
+const SEATED_DEFAULTS=Object.freeze({x:.10,y:.85,z:.28,yaw:0,lean:0,hip:0});
+// Restaurar o espaçamento original do lounge: 2 casas entre as cadeiras,
+// uma mesa centralizada e folga para os macacos sentados.
+// IDs lógicos seguem idênticos aos validados pelo servidor.
+const CLUB_SEATS=Object.freeze([
+  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2,wx:-2.5,wz:-2.18}),
+  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2,wx:-.5,wz:-2.18})
+]);
+const CLUB_TABLE=Object.freeze({x:1,z:1,wx:-1.5,wz:-2.18});
+const clubSeatAt=(x,z)=>CLUB_SEATS.find(seat=>seat.x===x&&seat.z===z)||null;
+// A calibração X/Z pertence à orientação do assento: acompanhá-la
+// quando a cadeira gira, para o macaco continuar encaixado.
+function chairRelativeOffset(settings,seat){
+  const angle=seat?.yaw||0,c=Math.cos(angle),s=Math.sin(angle);
+  return {x:settings.x*c+settings.z*s,z:settings.z*c-settings.x*s};
+}
+// Publicação: calibração fixa aprovada; ferramentas ficam na branch de dev.
+const seatSettingsFor=()=>SEATED_DEFAULTS;
+// Os modelos novos sao assets independentes. O clone protege o cache ao
+// reabrir a Junto Club; descartamos carregamentos de cenas ja fechadas.
+const furnitureAssets=new Map();
+function getClubFurniture(file){
+  if(!furnitureAssets.has(file)){
+    const loading=gltfLoader.loadAsync("/club/"+file).catch(error=>{
+      furnitureAssets.delete(file);
+      throw error;
+    });
+    furnitureAssets.set(file,loading);
+  }
+  return furnitureAssets.get(file);
+}
+function installClubFurniture({file,sceneBoard,worldScene,x,z,height,rotation=0,seatId=null}){
+  getClubFurniture(file).then(gltf=>{
+    if(!active||scene!==worldScene||board!==sceneBoard)return;
+    const item=gltf.scene.clone(true);
+    const bounds=new THREE.Box3().setFromObject(item);
+    if(bounds.isEmpty())throw Error("Modelo sem geometria: "+file);
+    const extent=bounds.getSize(new THREE.Vector3());
+    const center=bounds.getCenter(new THREE.Vector3());
+    const scale=height/Math.max(extent.y,.0001);
+    // Centralizar no pivô ANTES de rotacionar. Assim, girar 180° a segunda
+    // cadeira não faz o GLB deslocar lateralmente pela origem da exportação.
+    const anchor=new THREE.Group();
+    anchor.name=seatId===null?"jfClubTable":"jfClubChair"+seatId;
+    anchor.position.set(x,0,z);
+    anchor.rotation.y=rotation;
+    item.scale.setScalar(scale);
+    item.position.set(-center.x*scale,-.08-bounds.min.y*scale,-center.z*scale);
+    anchor.add(item);
+    sceneBoard.add(anchor);
+    if(seatId!==null)item.traverse(node=>{
+      if(!node.isMesh)return;
+      node.userData.jfClubSeatId=seatId;
+      chairs.push(node);
+    });
+  }).catch(error=>{
+    console.warn("Junto Club: nao foi possivel carregar "+file,error);
+    if(active&&scene===worldScene)setStatus("Móvel 3D ausente: public/club/"+file+". Extraia o pacote de móveis no projeto.");
+  });
+}
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
@@ -146,13 +333,17 @@ function sceneSetup(){
     const trim=cube(.92,.012,.92,trimMat,x-2.5,-.078,z-2.5,board);
     trim.userData.jfDanceGlow={x,z};
   }
-  // Cadeira na casa (4,4), com assento e encosto clicáveis.
-  const chairGroup=new THREE.Group();chairGroup.position.set(1.5,-.04,1.5);chairGroup.scale.setScalar(.68);board.add(chairGroup);
-  const chairMat=mat(0x355a89,.42,.37),chairLeg=mat(0x162943,.75,.28);
-  cube(.94,.16,.84,chairMat,0,.35,0,chairGroup);
-  cube(.94,1.13,.15,chairMat,0,.89,-.39,chairGroup);
-  for(const x of [-.36,.36])for(const z of [-.29,.29])cube(.10,.52,.10,chairLeg,x,.02,z,chairGroup);
-  chairGroup.traverse(obj=>{if(obj.isMesh)chairs.push(obj);});
+  // Lounge no canto: duas cópias da cadeira original, uma de frente para
+  // a outra, com a mesinha no quadrado central. Sem cadeira em cubos.
+  const furnitureScene=scene,furnitureBoard=board;
+  for(const seat of CLUB_SEATS)installClubFurniture({
+    file:"cadeirabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
+    x:seat.wx,z:seat.wz,height:1.16,rotation:seat.yaw,seatId:seat.id
+  });
+  installClubFurniture({
+    file:"mesabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
+    x:CLUB_TABLE.wx,z:CLUB_TABLE.wz,height:.78
+  });
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
   cube(6.7,2.35,.18,wall,0,.96,-3.12);
   cube(.18,2.35,6.7,wall,-3.12,.96,0);
@@ -196,15 +387,56 @@ function sceneSetup(){
   }
   scene.userData.beams=beams;
   scene.userData.glowingTiles=board.children.filter(o=>o.userData?.jfDanceGlow);
-  // Faixa decorativa com nome do club.
-  const canvas=document.createElement("canvas");canvas.width=512;canvas.height=160;
+  // Letreiro neon: moldura rosa e letras azul-claro iluminadas.
+  // Uma segunda textura SEM fundo, com composicao aditiva, cria o halo
+  // visível para além do retângulo sem esconder o texto nitido.
+  const canvas=document.createElement("canvas");canvas.width=1024;canvas.height=320;
   const ctx=canvas.getContext("2d");
-  ctx.fillStyle="#100e2b";ctx.fillRect(0,0,512,160);
-  ctx.strokeStyle="#ff55c6";ctx.lineWidth=12;ctx.strokeRect(7,7,498,146);
-  ctx.fillStyle="#e8faff";ctx.textAlign="center";ctx.font="bold 70px Trebuchet MS";ctx.fillText("JUNTO CLUB",256,102);
+  ctx.fillStyle="#0c102a";ctx.fillRect(0,0,1024,320);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.strokeStyle="#ff70d5";ctx.lineWidth=14;
+  ctx.shadowColor="#ff3cba";ctx.shadowBlur=24;
+  ctx.strokeRect(34,32,956,256);
+  ctx.shadowColor="#5cecff";ctx.shadowBlur=22;
+  ctx.fillStyle="#f3ffff";ctx.font="bold 125px Trebuchet MS, Arial, sans-serif";
+  ctx.fillText("JUNTO CLUB",512,163,888);
+  ctx.shadowBlur=0;
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
-  const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.84),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false}));
-  sign.position.set(-1.25,1.3,-2.99);scene.add(sign);scene.userData.signTexture=texture;
+  const signGeometry=new THREE.PlaneGeometry(2.7,.84);
+  const sign=new THREE.Mesh(signGeometry,new THREE.MeshBasicMaterial({
+    map:texture,side:THREE.DoubleSide,toneMapped:false
+  }));
+  sign.position.set(-1.25,1.3,-2.99);
+  scene.add(sign);
+  scene.userData.signTexture=texture;
+
+  // Brilho exterior na moldura e ao redor das letras (não é apenas cor forte).
+  const haloCanvas=document.createElement("canvas");
+  haloCanvas.width=1024;haloCanvas.height=320;
+  const haloCtx=haloCanvas.getContext("2d");
+  haloCtx.textAlign="center";haloCtx.textBaseline="middle";
+  haloCtx.strokeStyle="rgba(255,87,203,.78)";
+  haloCtx.lineWidth=15;
+  haloCtx.shadowColor="#ff36ad";haloCtx.shadowBlur=55;
+  haloCtx.strokeRect(34,32,956,256);
+  haloCtx.fillStyle="rgba(119,237,255,.58)";
+  haloCtx.font="bold 125px Trebuchet MS, Arial, sans-serif";
+  haloCtx.shadowColor="#5cecff";haloCtx.shadowBlur=50;
+  haloCtx.fillText("JUNTO CLUB",512,163,888);
+  const haloTexture=new THREE.CanvasTexture(haloCanvas);
+  haloTexture.colorSpace=THREE.SRGBColorSpace;
+  const haloMaterial=new THREE.MeshBasicMaterial({
+    map:haloTexture,transparent:true,depthWrite:false,
+    blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+    toneMapped:false,opacity:.77
+  });
+  const halo=new THREE.Mesh(new THREE.PlaneGeometry(2.85,.89),haloMaterial);
+  halo.position.set(-1.25,1.3,-2.963);
+  scene.add(halo);
+  const signLight=new THREE.PointLight(0xff55c1,3.5,2.8,2);
+  signLight.position.set(-1.25,1.3,-2.67);
+  scene.add(signLight);
+  scene.userData.signNeon={halo,haloTexture,signLight};
   camera=new THREE.OrthographicCamera(-6.35,6.35,4.25,-4.25,.1,100);
   camera.position.set(9,12,9);camera.lookAt(0,.55,0);
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
@@ -241,11 +473,65 @@ async function putMember(id,details){
   const entry={data:{...details},root:null,rig:null,dispose:null,name:null};
   people.set(id,entry);
   try{
-    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{});
+    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{local:id===socket.id});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
-    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;entry.getGlassesDiagnostics=avatar.getGlassesDiagnostics;
+    // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
+    if(id===socket.id)entry.setSeatGlassesCalibration?.(PUBLISHED_SEAT_GLASSES_FIT);
     entry.restBones=new Map();
-    entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
+    entry.rig.traverse(obj=>{
+      if(!obj.isBone)return;
+      entry.restBones.set(obj.uuid,obj.quaternion.clone());
+      // Memorizar a pose natural ANTES da primeira animacao.
+      // Se a pessoa sentar antes de dancar, nao capturar a pose deformada
+      // como repouso ao se levantar da cadeira.
+      obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
+    });
+    sittingPose().then(pose=>{
+      if(!pose||!active||people.get(id)!==entry)return;
+      entry.sitRotations=new Map();
+      entry.sitTracks=new Map();
+      entry.sitDuration=pose.duration;
+      entry.sitSourceWorld=pose.sourceWorldBones;
+      entry.sitTargetRestWorld=new Map();
+      // Quaternions de repouso relativos à raiz do macaco, sem a rotação
+      // do avatar sobre a pista nem o giro da câmera.
+      const invRigRest=entry.rig.getWorldQuaternion(new THREE.Quaternion()).invert();
+      entry.rig.updateMatrixWorld(true);
+      entry.rig.traverse(bone=>{
+        if(!bone.isBone)return;
+        const q=bone.getWorldQuaternion(new THREE.Quaternion());
+        entry.sitTargetRestWorld.set(bone.uuid,q.premultiply(invRigRest));
+      });
+      entry.rig.updateMatrixWorld(true);
+      // O FBX move tambem o quadril: nao descartar essa faixa como antes.
+      // Transferir deslocamento RELATIVO ao primeiro quadro, jamais a posicao
+      // absoluta do Mixamo (evita jogar o macaco para fora da cadeira).
+      const targetHips=(()=>{let found=null;entry.rig.traverse(obj=>{
+        if(!found&&obj.isBone&&boneKey(obj.name)==="hips")found=obj;
+      });return found;})();
+      if(targetHips&&pose.hipPosition){
+        const sourceHip=pose.hipPosition;
+        const scale=THREE.MathUtils.clamp(
+          targetHips.position.length()/Math.max(sourceHip.sourceRest.length(),1e-6),.25,4);
+        const targetParentRotation=targetHips.parent.getWorldQuaternion(new THREE.Quaternion());
+        entry.sitHips={
+          bone:targetHips,rest:targetHips.position.clone(),
+          interpolant:sourceHip.interpolant,initial:sourceHip.initial,
+          scale,
+          alignment:targetParentRotation.invert().multiply(sourceHip.sourceParentQuaternion)
+        };
+      }
+      entry.rig.traverse(bone=>{
+        if(!bone.isBone)return;
+        const name=boneKey(bone.name);
+        const correction=pose.changes.get(name);
+        const rest=entry.restBones.get(bone.uuid);
+        if(correction&&rest)entry.sitRotations.set(bone.uuid,rest.clone().multiply(correction));
+        const track=pose.animatedTracks.get(name);
+        if(track&&rest)entry.sitTracks.set(bone.uuid,{...track,rest});
+      });
+    });
     for(const key of Object.keys(animationFiles))loadClip(key).then(clip=>{
       // Só reiniciar a ação quando a animação atualmente escolhida terminar de carregar.
       if(clip&&active&&people.get(id)===entry&&entry.data.dance===key&&entry.currentDance===key&&!entry.action)entry.currentDance=null;
@@ -285,12 +571,26 @@ function animate(){
     tile.material.emissiveIntensity=.19+.45*(.5+.5*Math.sin(time*1.85+(x+z)*.63));
   }
   if(scene.userData.disco)scene.userData.disco.rotation.y+=dt*.34;
+  // Suave pulsação de LED sem piscar agressivamente.
+  if(scene.userData.signNeon){
+    const neon=scene.userData.signNeon;
+    neon.halo.material.opacity=.77+.09*Math.sin(time*1.3);
+    neon.signLight.intensity=3.5+.6*Math.sin(time*1.3);
+  }
   for(const [id,p] of people){
     if(!p.root)continue;
     const d=p.data,style=d.seated?"idle":d.dance||"idle";
     switchDance(p,style);
     const targetX=d.x-2.5,targetZ=d.z-2.5;
-    const dx=targetX-p.root.position.x,dz=targetZ-p.root.position.z;
+    // A cadeira usa um deslocamento visual. O destino da caminhada
+    // precisa ser o mesmo para não provocar oscilação infinita.
+    const seatedSettings=seatSettingsFor(id);
+    const seat=d.seated?clubSeatAt(d.x,d.z):null;
+    const offset=d.seated?chairRelativeOffset(seatedSettings,seat):{x:0,z:0};
+    const seatBaseX=d.seated&&seat?seat.wx:targetX;
+    const seatBaseZ=d.seated&&seat?seat.wz:targetZ;
+    const poseX=seatBaseX+offset.x,poseZ=seatBaseZ+offset.z;
+    const dx=poseX-p.root.position.x,dz=poseZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
     const walking=distance>.025;
     // 0.7 casa por segundo: um caminhar leve, sem teleportar.
@@ -308,13 +608,57 @@ function animate(){
     const speeds={shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1};
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
-    p.root.position.y=(d.seated&&!walking?.67:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    // A pose altera as articulações, não enterra o grupo inteiro no chão.
+    p.root.position.y=(d.seated&&!walking?seatedSettings.y:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+
+    p.root.rotation.x=d.seated&&!walking?THREE.MathUtils.degToRad(seatedSettings.lean):0;
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
-    if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
+    if(!walking){
+      const targetYaw=d.seated?(seat?.yaw||0)+THREE.MathUtils.degToRad(seatedSettings.yaw):.65;
+      p.root.rotation.y+=Math.atan2(Math.sin(targetYaw-p.root.rotation.y),Math.cos(targetYaw-p.root.rotation.y))*Math.min(1,dt*1.6);
+    }
     p.mixer?.update(dt);
+    if(p.sitHips){
+      const hip=p.sitHips;
+      hip.bone.position.copy(hip.rest);
+      if(d.seated&&!walking&&!p.action&&p.sitDuration>0){
+        const t=((time%p.sitDuration)+p.sitDuration)%p.sitDuration;
+        const sample=hip.interpolant.evaluate(t);
+        if(sample?.length===3){
+          seatedHipDelta.set(sample[0]-hip.initial.x,
+            sample[1]-hip.initial.y,sample[2]-hip.initial.z)
+            .applyQuaternion(hip.alignment).multiplyScalar(hip.scale*seatedSettings.hip);
+          hip.bone.position.add(seatedHipDelta);
+        }
+      }
+    }
     if(p.rig&&!p.action){
+      const seatedTime=p.sitDuration>0?
+        ((time%p.sitDuration)+p.sitDuration)%p.sitDuration:0;
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
+        // Retarget Mixamo nao garante os MESMOS eixos de ombro e cotovelo.
+        // Nesta versao de teste, preserve inteiramente o bind pose dos
+        // bracos/maos e da cabeca durante a animacao sentada. Assim nao ha
+        // rotacoes FBX deformando os bracos nem saltos na pose de repouso.
+        if(d.seated&&!walking&&/^(?:left|right)(?:shoulder|arm|forearm|hand)|^(?:head|neck)$/.test(boneKey(obj.name))){
+          const rest=p.restBones?.get(obj.uuid);
+          if(rest)obj.quaternion.copy(rest);
+          return;
+        }
+        if(d.seated&&!walking&&p.sitTracks?.has(obj.uuid)&&p.sitDuration>0){
+          const {rest,sourceInverse,interpolant}=p.sitTracks.get(obj.uuid);
+          const value=interpolant.evaluate(seatedTime);
+          if(value?.length===4){
+            obj.quaternion.copy(rest).multiply(sourceInverse)
+              .multiply(sittingFrameQuaternion.fromArray(value)).normalize();
+            return;
+          }
+        }
+        if(d.seated&&!walking&&p.sitRotations?.has(obj.uuid)){
+          obj.quaternion.copy(p.sitRotations.get(obj.uuid));
+          return;
+        }
         if(!obj.userData.jfDanceRest)obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
         const [rx,ry,rz]=obj.userData.jfDanceRest;
         const n=obj.name.toLowerCase();
@@ -326,12 +670,7 @@ function animate(){
         const upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm;
         const torso=/spine/.test(n);
         let x=rx,y=ry,z=rz;
-        if(d.seated&&!walking){
-          if(upperLeg)x+=1.30;
-          if(lowerLeg)x-=1.55;
-          if(upperArm)x+=.15;
-          if(torso)x-=.09;
-        }else if(walking){
+        if(walking){
           if(upperLeg)x+=side*.36*stride;
           if(lowerLeg)x+=.15*Math.max(0,-side*stride);
           if(upperArm)x-=side*.26*stride;
@@ -371,6 +710,8 @@ function animate(){
         obj.rotation.set(x,y,z);
       });
     }
+    // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
+    p.updateAccessories?.(Boolean(d.seated));
   }
   renderer.render(scene,camera);
 }
@@ -380,6 +721,7 @@ function open(){
   if(!room){setStatus("Entre em uma sala para usar a pista.");return;}
   if(active)return;
   active=true;sequence++;people.clear();
+  void sittingPose();
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
   try{sceneSetup();clock.start();animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
@@ -393,6 +735,11 @@ function close(){
   for(const id of [...people.keys()])removeMember(id);
   scene?.userData.cleanup?.();
   scene?.userData.signTexture?.dispose();
+  if(scene?.userData.signNeon){
+    const {halo,haloTexture,signLight}=scene.userData.signNeon;
+    halo.geometry.dispose();halo.material.dispose();haloTexture.dispose();
+    signLight.dispose?.();
+  }
   for(const tile of scene?.userData.glowingTiles||[])tile.material.dispose();
   for(const {beam} of scene?.userData.beams||[])beam.material.dispose();
   renderer?.dispose();renderer?.forceContextLoss();renderer?.domElement.remove();
@@ -414,9 +761,20 @@ viewport?.addEventListener("pointerup",e=>{
   const bounds=renderer.domElement.getBoundingClientRect();
   pointer.set((e.clientX-bounds.left)/bounds.width*2-1,-(e.clientY-bounds.top)/bounds.height*2+1);
   raycaster.setFromCamera(pointer,camera);
-  if(raycaster.intersectObjects(chairs).length){socket.emit("dance-sit");return;}
+  const chairHit=raycaster.intersectObjects(chairs)[0];
+  if(chairHit){
+    socket.emit("dance-sit",{seat:chairHit.object.userData.jfClubSeatId});
+    return;
+  }
   const hit=raycaster.intersectObjects(tiles)[0];
-  if(hit){const {x,z}=hit.object.userData.tile;if(x===4&&z===4)socket.emit("dance-sit");else socket.emit("dance-move",{x,z});}
+  if(hit){
+    const {x,z}=hit.object.userData.tile;
+    const seat=clubSeatAt(x,z);
+    if(seat)socket.emit("dance-sit",{seat:seat.id});
+    else if(x===CLUB_TABLE.x&&z===CLUB_TABLE.z)
+      setStatus("Essa casa está ocupada pela mesinha da balada.");
+    else socket.emit("dance-move",{x,z});
+  }
 });
 socket?.on("dance-state",({room:joinedRoom,participants=[]})=>{
   if(!active||joinedRoom!==room)return;

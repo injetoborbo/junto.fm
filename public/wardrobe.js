@@ -1,13 +1,14 @@
 /* Guarda-roupa 3D público. Cada participante possui seu próprio macaco. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
 import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 
 const OPTIONS={
-  hat:["nenhum","bone","gorro","palha","branco"],
-  glasses:["nenhum","escuros","redondos"],
-  headphones:["nenhum","azul","rosa"],
-  outfit:["padrao","rosa"]
+  hat:["nenhum","bone","gorro","palha","branco","caveira"],
+  glasses:["nenhum","escuros","redondos","sem_aro"],
+  headphones:["nenhum","azul","rosa","preto"],
+  outfit:["padrao","rosa","rosa_novo"]
 };
 const defaults=()=>({hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"});
 const sanitize=x=>Object.fromEntries(Object.entries(OPTIONS).map(([key,list])=>[key,list.includes(x?.[key])?x[key]:defaults()[key]]));
@@ -29,8 +30,61 @@ const ASSETS={
   redondos:"/oculos_redondos.glb",
   fone:"/fone_preto.glb",
   vestido:"/vestido_rosa.glb",
+  caveira:"/toucaveira.glb",
+  sem_aro:"/oculossemolo.glb",
+  fone_novo:"/fonepreto.glb",
+  vestido_novo:"/vestidorosa.glb",
   hero:"/patrianocape_pose_heroica_final.glb",
   heroCape:"/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb"
+};
+// Encaixes dos GLBs recentes. O vestido usa a profundidade (Z=0)
+// calibrada manualmente pelo criador, não a antiga posição .06.
+const FIT_DEFAULTS=Object.freeze({
+  caveira:{width:.65,offset:[0,.35,.05]},
+  sem_aro:{width:.56,offset:[0,.16,.06]},
+  escuros:{width:.56,offset:[0,.16,.32]},
+  redondos:{width:.56,offset:[0,.16,.29]},
+  fone_novo:{width:.66,offset:[0,.40,.10]},
+  vestido_novo:{width:.70,offset:[0,-.24,0]}
+});
+const FIT_STORAGE="jf_wardrobe_private_fit_v1";
+const FIT_SEATED_STORAGE="jf_wardrobe_private_fit_seated_v1";
+const localDevelopment=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+let fitAccess=localDevelopment;
+let privateFits={},privateSeatFits={};
+function cleanFit(file,value){
+  const base=FIT_DEFAULTS[file];
+  if(!base)return null;
+  const n=(v,fallback,min,max)=>Number.isFinite(Number(v))?THREE.MathUtils.clamp(Number(v),min,max):fallback;
+  const offset=Array.isArray(value?.offset)?value.offset:base.offset;
+  return {width:n(value?.width,base.width,.20,1.30),
+    offset:base.offset.map((v,i)=>n(offset[i],v,-.60,.60))};
+}
+function cleanSeatedFit(file,value){
+  const fit=cleanFit(file,value);
+  if(!fit)return null;
+  const pitch=Number(value?.pitch);
+  return {...fit,pitch:Number.isFinite(pitch)?THREE.MathUtils.clamp(pitch,-80,80):0};
+}
+function loadPrivateFits(){
+  if(!fitAccess)return;
+  try{
+    const data=JSON.parse(localStorage.getItem(FIT_STORAGE)||"{}");
+    if(data&&typeof data==="object"&&!Array.isArray(data))
+      for(const file of Object.keys(FIT_DEFAULTS))
+        if(data[file])privateFits[file]=cleanFit(file,data[file]);
+  }catch(error){console.warn("Editor de trajes: calibração local inválida.",error);}
+  try{
+    const data=JSON.parse(localStorage.getItem(FIT_SEATED_STORAGE)||"{}");
+    if(data?.vestido_novo)privateSeatFits.vestido_novo=cleanSeatedFit("vestido_novo",data.vestido_novo);
+  }catch(error){console.warn("Editor de trajes: ajuste sentado inválido.",error);}
+}
+if(fitAccess)loadPrivateFits();
+const fittedItem=(file,enabled,seated=false)=>{
+  const standing=enabled&&fitAccess?(privateFits[file]||FIT_DEFAULTS[file]):FIT_DEFAULTS[file];
+  if(seated&&file==="vestido_novo"&&enabled&&fitAccess)
+    return privateSeatFits.vestido_novo||{...standing,offset:[...standing.offset],pitch:0};
+  return standing;
 };
 const assetCache=new Map(),loader=new GLTFLoader();
 function getAsset(name){
@@ -54,16 +108,131 @@ function getBone(root,part){
   });
   return bone;
 }
+// O GLTFLoader normaliza nomes (por exemplo, "mixamorig:Head" pode
+// virar "mixamorigHead"). O resolvedor legado exige ":" e falha,
+// deixando os acessórios soltos no grupo do macaco.
+// Usar identificação canônica APENAS nos avatares animados por ora.
+function getAnimatedBone(root,part){
+  const expected=String(part).replace(/[^a-z0-9]/gi,"").toLowerCase();
+  let result=null;
+  root.traverse(obj=>{
+    if(result||!obj.isBone)return;
+    const basename=String(obj.name||"").split(/[|/:]/).pop();
+    const canonical=basename.replace(/^mixamorig\d*/i,"")
+      .replace(/[^a-z0-9]/gi,"").toLowerCase();
+    if(canonical===expected)result=obj;
+  });
+  return result;
+}
 function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey){
-  const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
-  const headBone=getBone(monkey,"Head");
-  const topBone=getBone(monkey,"HeadTop_End");
-  const neckBone=getBone(monkey,"Neck");
+function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false}={}){
+  // Capturar o bind pose ANTES das animações. As promessas de GLB podem
+  // resolver com o avatar andando/sentado; nesse caso attach() simples
+  // preservaria uma posição antiga num esqueleto já animado.
+  root.updateMatrixWorld(true);
   monkey.updateMatrixWorld(true);
+  const monkeyBindWorld=monkey.matrixWorld.clone();
+  const rootBindWorld=root.matrixWorld.clone();
+  const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
+  const findBone=animated?getAnimatedBone:getBone;
+  const headBone=findBone(monkey,"Head");
+  const topBone=findBone(monkey,"HeadTop_End");
+  const neckBone=findBone(monkey,"Neck");
+  const torsoBone=findBone(monkey,"Spine2")||findBone(monkey,"Spine");
+  const hipBone=findBone(monkey,"Hips");
+  // Novas peças de geometria livre: buscar os ossos também quando GLTFLoader
+  // converte "mixamorig:Head" para "mixamorigHead".
+  const newHeadBone=getAnimatedBone(monkey,"Head")||headBone;
+  const newTopBone=getAnimatedBone(monkey,"HeadTop_End")||topBone;
+  const newTorsoBone=getAnimatedBone(monkey,"Spine2")||torsoBone;
+  if(animated&&!headBone)console.error("Guarda-roupa 3D: osso Head ausente.",monkey.name);
+  const bindMatrices=new Map(),followers=[];
+  let isSeated=Boolean(previewSeated);
+  // Calibração feita na Junto Club (18/10): encaixe da armação
+  // na pose Sitting Idle, relativo ao osso Head. Apenas avatares animados.
+  const glassesCalibration={x:-.0002,y:-.0011,z:-.0024};
+  const seatShift=new THREE.Matrix4();
+  const setSeatGlassesCalibration=(values={})=>{
+    for(const axis of ["x","y","z"]){
+      const number=Number(values[axis]);
+      if(Number.isFinite(number))glassesCalibration[axis]=THREE.MathUtils.clamp(number,-.004,.004);
+    }
+    // No controle de inspeção, a pose sentada é a referência obrigatória:
+    // o slider não depende do critério de parada da animação.
+    updateAccessories(true);
+  };
+  const getGlassesDiagnostics=()=>{
+    const eyewear=followers.find(({part})=>part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos"||part.name==="jfWardrobe_sem_aro");
+    if(!eyewear)return {loaded:false,requested:selection.glasses,seated:isSeated,
+      headBone:headBone?.name||null,attached:followers.map(({part})=>part.name)};
+    monkey.updateMatrixWorld(true);
+    const world=eyewear.part.getWorldPosition(new THREE.Vector3());
+    const center=eyewear.bone.getWorldPosition(new THREE.Vector3());
+    return {loaded:true,requested:selection.glasses,seated:isSeated,
+      bone:eyewear.bone.name,
+      coordinates:world.toArray().map(v=>Number(v.toFixed(4))),
+      boneCoordinates:center.toArray().map(v=>Number(v.toFixed(4))),
+      calibration:{...glassesCalibration}};
+  };
+  for(const bone of [headBone,neckBone,torsoBone,hipBone,newHeadBone,newTopBone,newTorsoBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
+  const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
+  const updateAccessories=(seated=isSeated)=>{
+    isSeated=Boolean(seated);
+    if(!animated||!state.userData.active||!followers.length)return;
+    // Garantir osso atualizado APÓS mixer/pose, inclusive no modo sentado.
+    monkey.updateMatrixWorld(true);
+    for(const {part,bone,bindLocal,seatedLocal} of followers){
+      if(!part.parent)continue;
+      // A calibração é aplicada ANTES da matriz local do acessório,
+      // portanto os eixos continuam relativos ao osso Head animado.
+      if((part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos")&&isSeated){
+        // O modelo sem aro veio de um GLB novo e foi encaixado por largura e
+        // ossatura; NÃO herdar o ajuste absoluto salvo para os óculos antigos.
+        // O slider continua funcionando usando o deslocamento RELATIVO ao
+        // preset antigo, sem estragar a posição neutra do novo modelo.
+        const newModel=part.name==="jfWardrobe_sem_aro";
+        seatShift.makeTranslation(
+          glassesCalibration.x-(newModel?-.0002:0),
+          glassesCalibration.y-(newModel?-.0011:0),
+          glassesCalibration.z-(newModel?-.0024:0)
+        );
+        correctionWorld.multiplyMatrices(bone.matrixWorld,seatShift).multiply(seatedLocal);
+      }else{
+        correctionWorld.multiplyMatrices(bone.matrixWorld,isSeated?seatedLocal:bindLocal);
+      }
+      part.parent.updateWorldMatrix(true,false);
+      parentInverse.copy(part.parent.matrixWorld).invert();
+      localMatrix.multiplyMatrices(parentInverse,correctionWorld);
+      localMatrix.decompose(part.position,part.quaternion,part.scale);
+      part.updateMatrix();
+    }
+  };
+  // Converter do espaço ORIGINAL do acessório para o local do osso na pose
+  // inicial; nunca usar a matriz atual (que pode ser de uma dança).
+  const attachAtBind=(part,bone,sourceBindWorld,offset={},seatedOffset={})=>{
+    if(!bone)return;
+    const boneBind=bindMatrices.get(bone);
+    if(!boneBind)return;
+    part.updateMatrix();
+    const local=new THREE.Matrix4().copy(boneBind).invert()
+      .multiply(sourceBindWorld).multiply(part.matrix);
+    // Armazenar a relação com o osso na pose original. No modo animado,
+    // o acessório continua sob o grupo do avatar; a matriz é sincronizada
+    // explicitamente com o Head/Neck/Hips após cada frame.
+    const atBone=new THREE.Vector3(),rotation=new THREE.Quaternion(),scale=new THREE.Vector3();
+    local.decompose(atBone,rotation,scale);
+    atBone.x+=offset.x||0;
+    atBone.y+=offset.y||0;
+    atBone.z+=offset.z||0;
+    const bindLocal=new THREE.Matrix4().compose(atBone,rotation,scale);
+    const seatPosition=atBone.clone().add(new THREE.Vector3(seatedOffset.x||0,seatedOffset.y||0,seatedOffset.z||0));
+    const seatedLocal=new THREE.Matrix4().compose(seatPosition,rotation,scale);
+    followers.push({part,bone,bindLocal,seatedLocal});
+    updateAccessories();
+  };
   const worldHead=new THREE.Vector3(-.13,.28,-.05);
   const worldTop=new THREE.Vector3(-.13,.9,0);
   const worldNeck=new THREE.Vector3(-.13,.18,-.05);
@@ -75,7 +244,7 @@ function dress(root,selection,render,monkey){
   const rawX=(worldHead.x-monkey.position.x)/monkey.scale.x;
   const rawNeckY=(worldNeck.y-monkey.position.y)/monkey.scale.y;
   const rawNeckZ=(worldNeck.z-monkey.position.z)/monkey.scale.z;
-  const attachFitted=(file,configure,followHead=false)=>{
+  const attachFitted=(file,configure,followHead=false,animatedAnchor=null,animatedOffset=null,seatedOffset=null)=>{
     getAsset(file).then(asset=>{
       if(!asset||!state.userData.active)return;
       const part=asset.clone(true);
@@ -83,11 +252,134 @@ function dress(root,selection,render,monkey){
       const measure=getBounds(part);
       configure(part,measure);
       monkey.add(part);
-      monkey.updateMatrixWorld(true);
-      if(followHead&&headBone)headBone.attach(part);
+      if(animated){
+        if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{},seatedOffset||{});
+        // Os óculos clássicos usam um encaixe próprio calibrado para a pose
+        // Sitting Idle. Aplicar somente DIFERENÇAS do editor privado sobre
+        // essas matrizes: defaults não mudam o que já funciona na pista.
+        if(privateFit&&(file==="escuros"||file==="redondos")){
+          const follower=followers.find(item=>item.part===part);
+          const bind=bindMatrices.get(animatedAnchor);
+          if(follower&&bind){
+            const originalBind=follower.bindLocal.clone();
+            const originalSeated=follower.seatedLocal.clone();
+            const boneFromRoot=bind.clone().invert().multiply(rootBindWorld);
+            const rootOrigin=new THREE.Vector3().setFromMatrixPosition(boneFromRoot);
+            const delta=new THREE.Vector3();
+            const move=new THREE.Matrix4(),resize=new THREE.Matrix4();
+            const update=()=>{
+              if(!state.userData.active||!part.parent)return;
+              const def=FIT_DEFAULTS[file],fit=fittedItem(file,true);
+              delta.set(
+                fit.offset[0]-def.offset[0],
+                fit.offset[1]-def.offset[1],
+                fit.offset[2]-def.offset[2]
+              ).applyMatrix4(boneFromRoot).sub(rootOrigin);
+              move.makeTranslation(delta.x,delta.y,delta.z);
+              const ratio=fit.width/def.width;
+              resize.makeScale(ratio,ratio,ratio);
+              follower.bindLocal.copy(move).multiply(originalBind).multiply(resize);
+              follower.seatedLocal.copy(move).multiply(originalSeated).multiply(resize);
+              updateAccessories(isSeated);
+              render();
+            };
+            adjustableParts.push({file,update});
+            update();
+          }
+        }
+      }else{
+        monkey.updateMatrixWorld(true);
+        if(followHead&&headBone)headBone.attach(part);
+      }
+      updateAccessories(isSeated);
       render();
     });
   };
+  // Os novos arquivos têm largura ~2, diferente dos acessórios originais.
+  // Usa o centro do osso no bind pose e escala por largura em unidades de palco.
+  const rootBindInverse=rootBindWorld.clone().invert();
+  const restInRoot=bone=>{
+    const mat=bindMatrices.get(bone);
+    return mat?new THREE.Vector3().setFromMatrixPosition(mat).applyMatrix4(rootBindInverse):new THREE.Vector3();
+  };
+  const adjustableParts=[];
+  const onFitUpdated=event=>{
+    const file=event.detail?.file;
+    for(const binding of adjustableParts)
+      if(!file||file===binding.file)binding.update();
+  };
+  if(privateFit&&fitAccess)window.addEventListener("jf-private-fit-updated",onFitUpdated);
+  const installNewWearable=(file,bone,{seatedOffset={}}={})=>{
+    getAsset(file).then(asset=>{
+      if(!asset||!state.userData.active||!bone)return;
+      const part=asset.clone(true);
+      part.name="jfWardrobe_"+file;
+      const measure=getBounds(part);
+      state.add(part);
+      // A peça fica no espaço do osso; ao editar, recalculamos o encaixe
+      // sem recriar o renderer ou fazer um novo download do GLB.
+      if(animated)attachAtBind(part,bone,rootBindWorld,{},seatedOffset);
+      else bone.add(part);
+      const boneBind=bindMatrices.get(bone);
+      const rootPart=new THREE.Matrix4(),seatPart=new THREE.Matrix4(),toBone=new THREE.Matrix4();
+      const tmpPosition=new THREE.Vector3(),tmpScale=new THREE.Vector3();
+      const tmpRotation=new THREE.Quaternion(),centerOffset=new THREE.Vector3();
+      const buildMatrix=(params,matrix)=>{
+        const sc=params.width/Math.max(measure.size.x,1e-6);
+        const target=restInRoot(bone).add(new THREE.Vector3(...params.offset));
+        tmpRotation.setFromAxisAngle(new THREE.Vector3(1,0,0),
+          THREE.MathUtils.degToRad(file==="vestido_novo"?(params.pitch||0):0));
+        centerOffset.copy(measure.center).multiplyScalar(sc).applyQuaternion(tmpRotation);
+        tmpPosition.copy(target).sub(centerOffset);
+        tmpScale.setScalar(sc);
+        matrix.compose(tmpPosition,tmpRotation,tmpScale);
+      };
+      const update=()=>{
+        if(!state.userData.active||!part.parent)return;
+        buildMatrix(fittedItem(file,privateFit),rootPart);
+        if(animated){
+          const follower=followers.find(item=>item.part===part);
+          if(!follower||!boneBind)return;
+          toBone.copy(boneBind).invert().multiply(rootBindWorld).multiply(rootPart);
+          follower.bindLocal.copy(toBone);
+          // O vestido sentado usa um preset privado INDEPENDENTE.
+          // As outras peças continuam usando o ajuste original sentado.
+          buildMatrix(fittedItem(file,privateFit,file==="vestido_novo"),seatPart);
+          toBone.copy(boneBind).invert().multiply(rootBindWorld).multiply(seatPart);
+          toBone.decompose(tmpPosition,tmpRotation,tmpScale);
+          tmpPosition.x+=seatedOffset.x||0;
+          tmpPosition.y+=seatedOffset.y||0;
+          tmpPosition.z+=seatedOffset.z||0;
+          follower.seatedLocal.compose(tmpPosition,tmpRotation,tmpScale);
+          updateAccessories(isSeated);
+        }else{
+          root.updateMatrixWorld(true);
+          bone.updateWorldMatrix(true,false);
+          toBone.copy(bone.matrixWorld).invert()
+            .multiply(root.matrixWorld).multiply(rootPart);
+          toBone.decompose(part.position,part.quaternion,part.scale);
+          part.updateMatrix();
+        }
+        render();
+      };
+      adjustableParts.push({file,update});
+      update();
+    });
+  };
+  if(selection.hat==="caveira")installNewWearable("caveira",newHeadBone,{
+    seatedOffset:{y:-.00015}
+  });
+  if(selection.glasses==="sem_aro"||
+     (!animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
+    installNewWearable(selection.glasses,newHeadBone,{
+      seatedOffset:{z:.00015}
+    });
+  if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
+    seatedOffset:{y:-.00010}
+  });
+  if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
+    seatedOffset:{y:.00010}
+  });
   if(selection.hat==="palha"||selection.hat==="branco"){
     const type=selection.hat;
     getAsset(type).then(asset=>{
@@ -105,16 +397,21 @@ function dress(root,selection,render,monkey){
       hat.name="jfWardrobeHat_"+type;
       state.add(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
-      state.updateWorldMatrix(true,true);
-      if(headBone)headBone.attach(hat);
+      if(animated){
+        attachAtBind(hat,headBone,rootBindWorld,{y:-.00020,z:-.00004},{y:-.0010,z:.0001});
+      }else{
+        state.updateWorldMatrix(true,true);
+        if(headBone)headBone.attach(hat);
+      }
+      updateAccessories();
       render();
     });
   }else if(selection.hat==="bone"||selection.hat==="gorro"){
     attachFitted(selection.hat,part=>{
       part.position.x=rawX;
-    },true);
+    },true,headBone,null,{y:-.0004});
   }
-  if(selection.glasses!=="nenhum"){
+  if(animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")){
     attachFitted(selection.glasses,(part,measure)=>{
       const s=.88;
       part.scale.setScalar(s);
@@ -122,9 +419,10 @@ function dress(root,selection,render,monkey){
       part.position.set(rawX+(1-s)*measure.center.x,
         (1-s)*measure.center.y-.00018,
         (1-s)*measure.center.z+.00012);
-    },true);
+    // O Head usa a escala NAtiva (~milésimos de unidade no GLB).\n    // Ajuste pequeno na coordenada do osso, preservado por toda animação.
+    },true,headBone,animated?{x:.00010,y:-.00008,z:.00072}:null,{x:.00026,y:-.00022,z:.00185});
   }
-  if(selection.headphones!=="nenhum"){
+  if(selection.headphones!=="nenhum"&&selection.headphones!=="preto"){
     const wearingHat=selection.hat!=="nenhum";
     attachFitted("fone",(part,measure)=>{
       part.traverse(node=>{
@@ -150,22 +448,23 @@ function dress(root,selection,render,monkey){
           (1-sc)*measure.center.y-.00005,
           (1-sc)*measure.center.z);
       }
-    },!wearingHat);
+    },!wearingHat,wearingHat?neckBone:headBone,null,{y:-.0004,z:.00015});
   }
   if(selection.outfit==="rosa"){
     attachFitted("vestido",(part)=>{
       // Vestido modelado em coordenadas do corpo do macaco, sem escala arbitrária.
       part.position.x=rawX;
-    },false);
+    },false,hipBone||torsoBone,null,{y:.0002});
   }
-  return ()=>{
+  return Object.assign(()=>{
     state.userData.active=false;
+    if(privateFit)window.removeEventListener("jf-private-fit-updated",onFitUpdated);
     // As geometrias GLB são compartilhadas com os outros usuários;
     // descarte apenas os materiais clonados dos fones.
     monkey.traverse(obj=>{
       if(obj.isMesh&&obj.userData.jfWardrobeOwnMaterial)obj.material?.dispose();
     });
-  };
+  },{updateAccessories,setSeatGlassesCalibration,getGlassesDiagnostics});
 }
 // Encaixe INDEPENDENTE para o mascote sentado do miniplayer.
 // Cada GLB é clonado de forma exclusiva; offsets nunca alteram dress() usado
@@ -286,8 +585,43 @@ function loadPlayerSittingPose(){
   }
   return playerSittingPosePromise;
 }
+// Usar a mesma animacao sentadobalanca.fbx da Junto Club quando instalada.
+// Se nao houver arquivo local, manter a pose antiga e depois female-sitting.
+let wardrobeSittingPosePromise=null;
+function loadWardrobeSittingPose(){
+  if(!wardrobeSittingPosePromise){
+    const converter=new FBXLoader();
+    wardrobeSittingPosePromise=converter.loadAsync("/poses/sentadotryfix.fbx")
+      .then(scene=>({gltf:{scene,animations:scene.animations},matchingClub:true}))
+      .catch(()=>converter.loadAsync("/poses/sentadobalanca.fbx")
+        .then(scene=>({gltf:{scene,animations:scene.animations},matchingClub:false}))
+        .catch(()=>new GLTFLoader().loadAsync("/poses/sitting-idle.glb")
+          .then(gltf=>({gltf,matchingClub:false}))
+          .catch(()=>loadPlayerSittingPose().then(gltf=>({gltf,matchingClub:false})))));
+  }
+  return wardrobeSittingPosePromise;
+}
 function applyPlayerSittingPose(monkey,source){
-  const clip=source?.animations?.find(anim=>anim.tracks?.length);
+  // FBX com duas tomadas: preferir a que tem variacao real,
+  // nao a tomada estatica exportada junto com o Mixamo.
+  const movementScore=take=>{
+    let score=0;
+    for(const track of take.tracks){
+      if(!track.name.endsWith(".quaternion")||!/mixamorig/i.test(track.name))continue;
+      const values=track.values;
+      if(!values||values.length<4)continue;
+      let moving=false;
+      for(let i=4;i+3<values.length;i+=4){
+        let difference=0;
+        for(let axis=0;axis<4;axis++)
+          difference+=Math.abs(values[i+axis]-values[axis]);
+        if(difference>.005){moving=true;break;}
+      }
+      score+=(moving?1000:0)+Math.min(track.times?.length||0,120);
+    }
+    return score;
+  };
+  const clip=[...(source?.animations||[])].sort((a,b)=>movementScore(b)-movementScore(a))[0];
   if(!clip){console.warn("Pose sentada: GLB sem animação utilizável.");return false;}
   const targets=new Map();
   const clean=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
@@ -317,7 +651,7 @@ function applyPlayerSittingPose(monkey,source){
   console.info("Pose sentada Mixamo: ossos aplicados",applied,"de",clip.tracks.length,"canais");
   return applied>=5;
 }
-function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false}={}){
+function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false}={}){
   if(!base)return null;
   const width=preview?248:64,height=preview?248:68;
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
@@ -429,7 +763,29 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
   // A câmera precisa existir antes que dress() possa solicitar um render.
-  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey);
+  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey,{
+    animated:Boolean(preview&&previewSeated),
+    privateFit:Boolean(preview&&fitAccess),
+    previewSeated:Boolean(preview&&previewSeated)
+  });
+  if(preview&&previewSeated){
+    loadWardrobeSittingPose().then(({gltf,matchingClub})=>{
+      if(!active)return;
+      const applied=gltf&&applyPlayerSittingPose(monkey,gltf);
+      if(applied){
+        normalized.updateMatrixWorld(true);
+        disposeOutfit.updateAccessories?.(true);
+        const box=new THREE.Box3().setFromObject(monkey,true);
+        const focus=box.getCenter(new THREE.Vector3());
+        camera.position.set(focus.x,focus.y+.08,focus.z+3.7);
+        camera.lookAt(focus);
+        renderOutfit();
+      }
+      window.dispatchEvent(new CustomEvent("jf-wardrobe-seat-preview",{
+        detail:{applied:Boolean(applied),matchingClub:Boolean(matchingClub&&applied)}
+      }));
+    }).catch(error=>{if(active)console.warn("Prévia sentada indisponível",error);});
+  }
   let dragStart=null;
   const down=event=>{
     if(!preview)return;
@@ -485,8 +841,8 @@ function prefetchWardrobeAssets(){
   const preferred=[
     selection.hat,
     selection.glasses,
-    selection.headphones!=="nenhum"?"fone":null,
-    selection.outfit==="rosa"?"vestido":null
+    selection.headphones==="preto"?"fone_novo":selection.headphones!=="nenhum"?"fone":null,
+    selection.outfit==="rosa_novo"?"vestido_novo":selection.outfit==="rosa"?"vestido":null
   ].filter(name=>ASSETS[name]);
   const queue=[...new Set([...preferred,...wardrobePrefetchKeys])];
   let next=0;
@@ -506,15 +862,162 @@ if(document.readyState==="complete"){
 }
 const selectors=Object.fromEntries(Object.keys(OPTIONS).map(k=>[k,$("jfWardrobe"+k[0].toUpperCase()+k.slice(1))]));
 const preview=$("jfWardrobePreview");
+let fitPose="standing";
 function showPreview(){
   previewRenderer?.dispose();
-  previewRenderer=makeScene(preview,editing,{preview:true});
+  previewRenderer=makeScene(preview,editing,{preview:true,previewSeated:fitAccess&&fitPose==="seated"&&editing.outfit==="rosa_novo"});
 }
+
+const fitPanel=$("jfWardrobeFitEditor"),fitItem=$("jfFitItem"),fitStatus=$("jfFitStatus");
+const fitPosePicker=$("jfFitPosePicker"),fitTiltWrap=$("jfFitTiltWrap");
+const fitTilt=$("jfFitTilt"),fitTiltValue=$("jfFitTiltValue");
+const fitStandingButton=$("jfFitStanding"),fitSittingButton=$("jfFitSitting");
+const sittingDressSelected=()=>fitItem?.value==="vestido_novo";
+const isEditingSittingDress=()=>fitPose==="seated"&&sittingDressSelected();
+function setFitPose(next){
+  const pose=next==="seated"&&sittingDressSelected()?"seated":"standing";
+  const changed=fitPose!==pose;
+  fitPose=pose;
+  if(fitStandingButton)fitStandingButton.setAttribute("aria-pressed",String(pose==="standing"));
+  if(fitSittingButton)fitSittingButton.setAttribute("aria-pressed",String(pose==="seated"));
+  if(fitTiltWrap)fitTiltWrap.hidden=pose!=="seated";
+  if(changed&&fitAccess)showPreview();
+  showFitValues();
+  if(changed&&pose==="seated")setFitStatus("Carregando a pose sentada na prévia...");
+}
+fitStandingButton?.addEventListener("click",()=>setFitPose("standing"));
+fitSittingButton?.addEventListener("click",()=>setFitPose("seated"));
+window.addEventListener("jf-wardrobe-seat-preview",event=>{
+  if(fitPose!=="seated"||!fitAccess)return;
+  const {applied,matchingClub}=event.detail||{};
+  if(!applied)setFitStatus("Não foi possível carregar a pose sentada nesta versão.");
+  else if(!matchingClub)setFitStatus("Prévia sentada alternativa: instale sentadotryfix.fbx em public/poses para testar a nova pose.");
+  else setFitStatus("Prévia sentadotryfix (quadro de referência). O balanço completo aparece na Junto Club.");
+});
+const fitInputNames=["Width","X","Y","Z"];
+const fitInputs=Object.fromEntries(fitInputNames.map(name=>[name,$("jfFit"+name)]));
+const fitOptions={
+  caveira:["hat","caveira"],
+  sem_aro:["glasses","sem_aro"],
+  escuros:["glasses","escuros"],
+  redondos:["glasses","redondos"],
+  fone_novo:["headphones","preto"],
+  vestido_novo:["outfit","rosa_novo"]
+};
+function setFitStatus(message){if(fitStatus)fitStatus.textContent=message;}
+function showFitValues(){
+  if(!fitItem||!fitAccess)return;
+  const file=fitItem.value;
+  const params=fittedItem(file,true,isEditingSittingDress());
+  if(!params)return;
+  const values={Width:params.width,X:params.offset[0],Y:params.offset[1],Z:params.offset[2]};
+  if(fitTilt)fitTilt.value=String(params.pitch||0);
+  if(fitTiltValue)fitTiltValue.textContent=String(params.pitch||0)+"°";
+  for(const name of fitInputNames){
+    if(fitInputs[name])fitInputs[name].value=String(values[name]);
+    const output=$("jfFit"+name+"Value");
+    if(output)output.textContent=Number(values[name]).toFixed(2);
+  }
+}
+function focusFitItem(file,{equip=false}={}){
+  if(!fitAccess||!fitItem||!fitOptions[file])return;
+  fitItem.value=file;
+  if(fitPosePicker)fitPosePicker.hidden=file!=="vestido_novo";
+  if(file!=="vestido_novo"&&fitPose==="seated")setFitPose("standing");
+  else showFitValues();
+  if(equip){
+    const [slot,value]=fitOptions[file];
+    if(editing[slot]!==value){
+      editing[slot]=value;
+      if(selectors[slot])selectors[slot].value=value;
+      showPreview();
+    }
+  }
+}
+function preferredFitItem(){
+  // Priorizar o último item selecionado no guarda-roupa.
+  if(editing.headphones==="preto")return "fone_novo";
+  if(editing.outfit==="rosa_novo")return "vestido_novo";
+  if(["sem_aro","escuros","redondos"].includes(editing.glasses))return editing.glasses;
+  if(editing.hat==="caveira")return "caveira";
+  return "fone_novo";
+}
+function persistPrivateFit(file,data){
+  if(!fitAccess||!FIT_DEFAULTS[file])return;
+  try{
+    if(file==="vestido_novo"&&isEditingSittingDress()){
+      privateSeatFits.vestido_novo=cleanSeatedFit(file,data);
+      localStorage.setItem(FIT_SEATED_STORAGE,JSON.stringify(privateSeatFits));
+    }else{
+      privateFits[file]=cleanFit(file,data);
+      localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));
+    }
+  }catch(error){setFitStatus("Não consegui salvar os ajustes neste navegador.");}
+  window.dispatchEvent(new CustomEvent("jf-private-fit-updated",{detail:{file}}));
+}
+function editSelectedFit(){
+  if(!fitAccess||!fitItem)return;
+  const file=fitItem.value;
+  const data={width:Number(fitInputs.Width?.value),
+    offset:["X","Y","Z"].map(axis=>Number(fitInputs[axis]?.value)),
+    pitch:isEditingSittingDress()?Number(fitTilt?.value):0};
+  persistPrivateFit(file,data);
+  showFitValues();
+  setFitStatus("Ajuste aplicado ao vivo e salvo neste navegador. Os outros jogadores não recebem essas mudanças.");
+}
+for(const name of fitInputNames)
+  fitInputs[name]?.addEventListener("input",editSelectedFit);
+fitTilt?.addEventListener("input",editSelectedFit);
+fitItem?.addEventListener("change",()=>focusFitItem(fitItem.value,{equip:true}));
+$("jfFitReset")?.addEventListener("click",()=>{
+  if(!fitAccess||!fitItem)return;
+  if(isEditingSittingDress())delete privateSeatFits.vestido_novo;
+  else delete privateFits[fitItem.value];
+  try{
+    if(isEditingSittingDress())localStorage.setItem(FIT_SEATED_STORAGE,JSON.stringify(privateSeatFits));
+    else localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));
+  }
+  catch(error){setFitStatus("Não consegui salvar neste navegador.");}
+  window.dispatchEvent(new CustomEvent("jf-private-fit-updated",{detail:{file:fitItem.value}}));
+  showFitValues();
+  setFitStatus("Encaixe padrão restaurado para esta peça.");
+});
+$("jfFitCopy")?.addEventListener("click",async()=>{
+  if(!fitAccess||!fitItem)return;
+  const file=fitItem.value,fit=fittedItem(file,true,isEditingSittingDress());
+  const value=file+(isEditingSittingDress()?" sentado":" em pé")+": width:"+fit.width.toFixed(2)+", offset:["+
+    fit.offset.map(n=>n.toFixed(2)).join(",")+"]"+
+    (isEditingSittingDress()?", inclinação:"+Number(fit.pitch||0).toFixed(0)+"°":"");
+  try{await navigator.clipboard.writeText(value);setFitStatus("Valores copiados!");}
+  catch(error){setFitStatus("Cópia não autorizada pelo navegador: "+value);}
+});
+function updateEditorAccess(allowed){
+  const wasAllowed=fitAccess;
+  fitAccess=Boolean(allowed);
+  if(fitPanel)fitPanel.hidden=!fitAccess;
+  if(fitAccess){
+    if(!wasAllowed)loadPrivateFits();
+    focusFitItem(preferredFitItem());
+    if(!wasAllowed&&!modal?.hidden)showPreview();
+  }else if(wasAllowed&&!modal?.hidden)showPreview();
+}
+updateEditorAccess(fitAccess);
+// No domínio público, a ferramenta exige a sessão OAuth administrativa
+// validada em /api/admin/status. Localhost é permitido só para desenvolvimento.
+fetch("/api/admin/status",{credentials:"same-origin",cache:"no-store"})
+  .then(response=>response.ok?response.json():{admin:false})
+  .then(data=>updateEditorAccess(localDevelopment||data.admin===true))
+  .catch(()=>updateEditorAccess(localDevelopment));
+
 for(const [key,element] of Object.entries(selectors)){
   if(!element)continue;
   element.value=editing[key];
   element.addEventListener("change",()=>{
     editing[key]=element.value;showPreview();
+    if(fitAccess){
+      for(const [file,[slot,value]] of Object.entries(fitOptions))
+        if(slot===key&&value===editing[key]){focusFitItem(file);break;}
+    }
   });
 }
 const modal=$("jfWardrobeModal");
@@ -522,6 +1025,7 @@ $("jfOpenWardrobe")?.addEventListener("click",()=>{
   editing={...selection};
   for(const [k,e] of Object.entries(selectors))if(e)e.value=editing[k];
   modal.hidden=false;document.body.style.overflow="hidden";showPreview();
+  if(fitAccess)focusFitItem(preferredFitItem());
 });
 function close(){
   modal.hidden=true;document.body.style.overflow="";
@@ -558,7 +1062,7 @@ refreshPeople();
 
 /* API reaproveitável da pista isométrica: usa a mesma rigagem e os mesmos GLBs.
    A pista é pequena e evita criar WebGLRenderers por participante. */
-export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{}){
+export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{},options={}){
   if(!base)throw Error("Modelo macaco.glb indisponível.");
   const root=new THREE.Group();
   const monkey=cloneSkeleton(base.scene);
@@ -569,7 +1073,7 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   monkey.position.copy(center).multiplyScalar(-scale);
   root.add(monkey);
   let stillActive=true;
-  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey);
+  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey,{animated:true,privateFit:Boolean(options.local&&fitAccess)});
   if(skin==="capitao-patria"){
     const asset=await getAsset("hero");
     if(asset&&stillActive){
@@ -590,5 +1094,5 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
       });
     }
   }
-  return {group:root,rig:monkey,dispose:()=>{stillActive=false;disposeClothes();}};
+  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }

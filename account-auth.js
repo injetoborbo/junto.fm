@@ -114,7 +114,7 @@ module.exports=function setupAccounts(app){
     const avatar=String(input.avatar||"");
     // Somente foto enviada e compactada pelo usuário. Nunca usar foto do Google.
     const valid=/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(avatar)&&avatar.length<=220000;
-    const allowed={hat:["nenhum","bone","gorro","palha","branco"],glasses:["nenhum","escuros","redondos"],headphones:["nenhum","azul","rosa"],outfit:["padrao","rosa"]};
+    const allowed={hat:["nenhum","bone","gorro","palha","branco","caveira"],glasses:["nenhum","escuros","redondos","sem_aro"],headphones:["nenhum","azul","rosa","preto"],outfit:["padrao","rosa","rosa_novo"]};
     const wardrobe=Object.fromEntries(Object.entries(allowed).map(([k,values])=>[k,values.includes(input.wardrobe?.[k])?input.wardrobe[k]:values[0]]));
     return {name,motto,avatar:valid?avatar:"",wardrobe};
   }

@@ -316,10 +316,10 @@ app.get("/api/music/validate-suggestion", async (req, res) => {
 // Guarda-roupa público: só peças comuns entram no perfil da sala.
 // A skin Capitão Pátria permanece restrita ao fluxo de autenticação admin.
 const wardrobeOptions = Object.freeze({
-  hat: ["nenhum", "bone", "gorro", "palha", "branco"],
-  glasses: ["nenhum", "escuros", "redondos"],
-  headphones: ["nenhum", "azul", "rosa"],
-  outfit: ["padrao", "rosa"]
+  hat: ["nenhum", "bone", "gorro", "palha", "branco", "caveira"],
+  glasses: ["nenhum", "escuros", "redondos", "sem_aro"],
+  headphones: ["nenhum", "azul", "rosa", "preto"],
+  outfit: ["padrao", "rosa", "rosa_novo"]
 });
 function cleanWardrobe(input) {
   const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
@@ -383,6 +383,13 @@ io.use(async (socket,next)=>{
   catch(error){ console.warn("Conta na conexão:",error.message); socket.data.account=null; }
   next();
 });
+// Lounge no canto posterior da Junto Club: duas cadeiras frente a frente,
+// mesinha no centro. Nunca gerar avatares ou permitir caminhada nos móveis.
+const CLUB_SEATS=Object.freeze([{x:0,z:1},{x:2,z:1}]);
+const CLUB_TABLE=Object.freeze({x:1,z:1});
+const isClubFurnitureTile=(x,z)=>
+  CLUB_SEATS.some(seat=>seat.x===x&&seat.z===z)||
+  (x===CLUB_TABLE.x&&z===CLUB_TABLE.z);
 function danceSnapshot(room){
   return [...(danceFloors.get(room)||new Map()).entries()].map(([id,data])=>({id,...data}));
 }
@@ -401,6 +408,8 @@ io.on("connection", socket => {
     if(!floor.has(socket.id)&&floor.size>=8)return socket.emit("dance-error",{message:"Pista lotada! Máximo de 8 macacos dançando."});
     if(!floor.has(socket.id)){
       const taken=new Set([...floor.values()].map(v=>v.x+","+v.z));
+      for(const seat of CLUB_SEATS)taken.add(seat.x+","+seat.z);
+      taken.add(CLUB_TABLE.x+","+CLUB_TABLE.z);
       let x=0,z=0;
       outer:for(let r=0;r<5;r++)for(let ix=0;ix<6;ix++)for(let iz=0;iz<6;iz++){
         if(Math.abs(ix-2.5)+Math.abs(iz-2.5)>r+2)continue;
@@ -419,6 +428,8 @@ io.on("connection", socket => {
     if(isRateLimited(socket,"dance-move",12,1000))return;
     const x=Number(payload?.x),z=Number(payload?.z);
     if(!Number.isInteger(x)||!Number.isInteger(z)||x<0||x>5||z<0||z>5)return;
+    if(isClubFurnitureTile(x,z))
+      return socket.emit("dance-error",{message:"Espaço do lounge: clique numa cadeira para sentar."});
     if([...floor].some(([id,p])=>id!==socket.id&&p.x===x&&p.z===z))
       return socket.emit("dance-error",{message:"Esse quadradinho já está ocupado."});
     const member=floor.get(socket.id);
@@ -436,15 +447,18 @@ io.on("connection", socket => {
     if(dance!=="idle")member.seated=false;
     io.to(room).emit("dance-updated",{id:socket.id,...member});
   });
-  // Cadeira fixa na casa (4,4): a ocupação e a pose são públicas na sala.
-  socket.on("dance-sit",()=>{
+  // Duas cadeiras no lounge; a escolha e a ocupação são validadas no servidor.
+  socket.on("dance-sit",payload=>{
     const room=socket.data.room;
     const floor=room&&danceFloors.get(room);
     if(!floor?.has(socket.id))return;
     if(isRateLimited(socket,"dance-sit",5,1000))return;
-    const seatX=4,seatZ=4;
+    // Cliente anterior sem ID continua usando a primeira cadeira.
+    const seatId=payload?.seat??0;
+    if(!Number.isInteger(seatId)||seatId<0||seatId>=CLUB_SEATS.length)return;
+    const {x:seatX,z:seatZ}=CLUB_SEATS[seatId];
     if([...floor].some(([id,p])=>id!==socket.id&&p.x===seatX&&p.z===seatZ))
-      return socket.emit("dance-error",{message:"A cadeira está ocupada."});
+      return socket.emit("dance-error",{message:"Essa cadeira já está ocupada."});
     const member=floor.get(socket.id);
     member.x=seatX;member.z=seatZ;member.seated=true;member.dance="idle";
     io.to(room).emit("dance-updated",{id:socket.id,...member});
