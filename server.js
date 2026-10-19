@@ -855,6 +855,18 @@ io.on("connection", socket => {
     const transmitter = { id: socket.id, name: String(profile.name || "DJ ao vivo").slice(0, 24) };
     socket.data.isTransmitting = true;
     roomTransmitters.set(room, transmitter);
+    // A fila começa habilitada para DJs com Spotify autorizado, mas o próprio
+    // DJ pode desativá-la. Não concedemos acesso a tokens de outros participantes.
+    const spotifySession=getSession(socket.request,null);
+    const wantsSuggestions=socket.data.wantsMusicSuggestions!==false;
+    const hasScope=Boolean(spotifySession?.scope?.split(" ").includes("user-modify-playback-state"));
+    socket.data.receiveMusicSuggestions=Boolean(wantsSuggestions&&spotifySession?.refreshToken&&hasScope);
+    socket.emit("suggestion-settings-result",{
+      enabled:socket.data.receiveMusicSuggestions,
+      error:!wantsSuggestions?"":!spotifySession?.refreshToken
+        ?"Conecte seu Spotify para receber pedidos automaticamente."
+        :!hasScope?"Reconecte o Spotify para autorizar pedidos automáticos.":""
+    });
     io.to(room).emit("transmitter-update", { ...transmitter, active: true });
   });
 
@@ -862,6 +874,7 @@ io.on("connection", socket => {
     const room = socket.data.room;
     if (!room || !payload || payload.room !== room) return;
     socket.data.isTransmitting = false;
+    socket.data.receiveMusicSuggestions=false;
     if (roomTransmitters.get(room)?.id === socket.id) {
       roomTransmitters.delete(room);
       io.to(room).emit("transmitter-update", { id: socket.id, active: false });
@@ -946,6 +959,7 @@ io.on("connection", socket => {
     if (!payload || !socket.data.room || payload.room !== socket.data.room) return;
     const isRoomDJ = roomTransmitters.get(socket.data.room)?.id === socket.id && socket.data.isTransmitting;
     const wantsQueue = Boolean(payload.enabled);
+    socket.data.wantsMusicSuggestions=wantsQueue;
     const session = getSession(socket.request, null);
     const hasQueueScope = Boolean(session?.scope?.split(" ").includes("user-modify-playback-state"));
     socket.data.receiveMusicSuggestions = Boolean(isRoomDJ && wantsQueue && session?.refreshToken && hasQueueScope);
