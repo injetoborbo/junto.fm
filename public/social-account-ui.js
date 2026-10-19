@@ -54,13 +54,13 @@
  const actions=document.createElement("div");actions.className="jf-social-account-actions";
  actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen">Criar conta Junto.fm</button><div class="jf-have-account"><button class="jf-have-account-link" type="button" id="jfHaveAccountToggle" aria-expanded="false" aria-controls="jfLoginChoice">Já tem uma conta? Aperte aqui.</button><div class="jf-login-choice" id="jfLoginChoice" hidden><a class="btn secondary" href="/auth/google">Entrar com Google</a><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button></div></div><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
  if(entry)entry.appendChild(actions);
+ else document.querySelector("main")?.appendChild(actions);
  const loginToggle=document.getElementById("jfHaveAccountToggle");
  const loginChoice=document.getElementById("jfLoginChoice");
  loginToggle.addEventListener("click",()=>{
   loginChoice.hidden=!loginChoice.hidden;
   loginToggle.setAttribute("aria-expanded",String(!loginChoice.hidden));
  });
- else document.querySelector("main")?.appendChild(actions);
  const dock=document.createElement("nav");dock.className="jf-community-top-dock";dock.setAttribute("aria-label","Ranking e conquistas");
  const rankButton=document.getElementById("jfOpenRank");
  const achievementsButton=document.getElementById("jfAchievementsOpen");
