@@ -32,6 +32,7 @@ const roomTransmitters = new Map();
 const roomSkipVotes=new Map();
 const skipTickets=new Map();
 const roomBananaCounts = new Map(); // 0 a 15 por sala
+const roomBananaResetTimers = new Map();
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
 const roomChatMessages = new Map();
@@ -409,7 +410,8 @@ function releaseRoomOwnership(room,departingId){
     roomAccess.delete(room);
     roomTracks.delete(room);
     roomChatMessages.delete(room);
-    roomTomatoImpacts.delete(room);roomBananaCounts.delete(room);roomSkipVotes.delete(room);skipTickets.delete(room);
+    roomTomatoImpacts.delete(room);roomBananaCounts.delete(room);
+    if(roomBananaResetTimers.has(room)){clearTimeout(roomBananaResetTimers.get(room));roomBananaResetTimers.delete(room);}roomSkipVotes.delete(room);skipTickets.delete(room);
   }
 }
 io.use(async (socket,next)=>{
@@ -546,6 +548,15 @@ io.on("connection", socket => {
     if(old>=15)return socket.emit("banana-error",{message:"Barril cheio!"});
     const count=old+1;roomBananaCounts.set(room,count);
     io.to(room).emit("banana-thrown",{room,count,from:socket.id});
+    if(count===15){
+      const timer=setTimeout(()=>{
+        roomBananaResetTimers.delete(room);
+        if(roomBananaCounts.get(room)!==15)return;
+        roomBananaCounts.set(room,0);
+        io.to(room).emit("banana-reset",{room,count:0});
+      },15000);
+      roomBananaResetTimers.set(room,timer);
+    }
   });
   socket.on("club-tomato",()=>{
     const room=socket.data.room;
