@@ -151,6 +151,7 @@ let down=null;
 const people=new Map();
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
+const sittingFrameQuaternion=new THREE.Quaternion();
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
@@ -398,7 +399,7 @@ function animate(){
           const value=interpolant.evaluate(phase);
           if(value?.length===4){
             obj.quaternion.copy(rest).multiply(sourceInverse)
-              .multiply(new THREE.Quaternion().fromArray(value)).normalize();
+              .multiply(sittingFrameQuaternion.fromArray(value)).normalize();
             return;
           }
         }
