@@ -385,8 +385,8 @@ io.use(async (socket,next)=>{
 });
 // Lounge no canto posterior da Junto Club: duas cadeiras frente a frente,
 // mesinha no centro. Nunca gerar avatares ou permitir caminhada nos móveis.
-const CLUB_SEATS=Object.freeze([{x:0,z:0},{x:2,z:0}]);
-const CLUB_TABLE=Object.freeze({x:1,z:0});
+const CLUB_SEATS=Object.freeze([{x:0,z:1},{x:2,z:1}]);
+const CLUB_TABLE=Object.freeze({x:1,z:1});
 const isClubFurnitureTile=(x,z)=>
   CLUB_SEATS.some(seat=>seat.x===x&&seat.z===z)||
   (x===CLUB_TABLE.x&&z===CLUB_TABLE.z);
