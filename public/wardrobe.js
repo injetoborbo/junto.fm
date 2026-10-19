@@ -584,6 +584,16 @@ function loadPlayerSittingPose(){
   }
   return playerSittingPosePromise;
 }
+// A Junto Club usa sitting-idle; quando o GLB não estiver instalado,
+// a prévia recorre ao female-sitting existente, sinalizando a diferença.
+let wardrobeSittingPosePromise=null;
+function loadWardrobeSittingPose(){
+  if(!wardrobeSittingPosePromise)
+    wardrobeSittingPosePromise=new GLTFLoader().loadAsync("/poses/sitting-idle.glb")
+      .then(gltf=>({gltf,matchingClub:true}))
+      .catch(()=>loadPlayerSittingPose().then(gltf=>({gltf,matchingClub:false})));
+  return wardrobeSittingPosePromise;
+}
 function applyPlayerSittingPose(monkey,source){
   const clip=source?.animations?.find(anim=>anim.tracks?.length);
   if(!clip){console.warn("Pose sentada: GLB sem animação utilizável.");return false;}
@@ -615,7 +625,7 @@ function applyPlayerSittingPose(monkey,source){
   console.info("Pose sentada Mixamo: ossos aplicados",applied,"de",clip.tracks.length,"canais");
   return applied>=5;
 }
-function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false}={}){
+function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false}={}){
   if(!base)return null;
   const width=preview?248:64,height=preview?248:68;
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
@@ -727,7 +737,29 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
   // A câmera precisa existir antes que dress() possa solicitar um render.
-  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey,{privateFit:preview&&fitAccess});
+  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey,{
+    animated:Boolean(preview&&previewSeated),
+    privateFit:Boolean(preview&&fitAccess),
+    previewSeated:Boolean(preview&&previewSeated)
+  });
+  if(preview&&previewSeated){
+    loadWardrobeSittingPose().then(({gltf,matchingClub})=>{
+      if(!active)return;
+      const applied=gltf&&applyPlayerSittingPose(monkey,gltf);
+      if(applied){
+        normalized.updateMatrixWorld(true);
+        disposeOutfit.updateAccessories?.(true);
+        const box=new THREE.Box3().setFromObject(monkey,true);
+        const focus=box.getCenter(new THREE.Vector3());
+        camera.position.set(focus.x,focus.y+.08,focus.z+3.7);
+        camera.lookAt(focus);
+        renderOutfit();
+      }
+      window.dispatchEvent(new CustomEvent("jf-wardrobe-seat-preview",{
+        detail:{applied:Boolean(applied),matchingClub:Boolean(matchingClub&&applied)}
+      }));
+    }).catch(error=>{if(active)console.warn("Prévia sentada indisponível",error);});
+  }
   let dragStart=null;
   const down=event=>{
     if(!preview)return;
