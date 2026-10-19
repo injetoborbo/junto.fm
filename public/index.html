@@ -599,6 +599,31 @@ html[data-jf-theme="classic"] .track-times{
   font-variant-numeric:tabular-nums;
 }
 
+/* Votos, bananas e medalhas. */
+.jf-community-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:13px}
+.jf-community-controls #jfSkipVote{font-size:12px;padding:8px 10px}
+.jf-banana-meter{display:flex;align-items:center;gap:7px;font-size:11px;margin-left:auto;flex-wrap:wrap}
+.jf-banana-meter progress{width:92px;height:12px;accent-color:#f1c83c}
+.jf-banana-launcher,.jf-achievement-launcher{position:fixed;bottom:18px;z-index:10022;width:49px;height:49px;
+  border:1px solid var(--jf-secondary,#9fa8ec);border-radius:50%;background:var(--jf-primary,#383875);
+  box-shadow:0 5px 14px #0008;cursor:pointer;font-size:27px;display:grid;place-items:center}
+.jf-banana-launcher{left:86px}
+.jf-achievement-launcher{left:146px;font-size:25px}
+.jf-banana-medal{position:absolute;font-size:13px;top:20px;left:18px}
+.jf-achievements-panel{position:fixed;bottom:83px;left:12px;z-index:10023;
+  width:min(360px,calc(100vw - 24px));max-height:65dvh;overflow:auto;padding:15px;
+  background:var(--jf-panel,#25264d);color:var(--ink,#fff);border:1px solid var(--jf-secondary,#bbc);
+  border-radius:12px;box-shadow:0 15px 40px #000a}
+.jf-achievements-panel[hidden]{display:none!important}
+.jf-achievements-panel header{display:flex;align-items:center;justify-content:space-between}
+.jf-achievements-panel header button{border:0;background:transparent;color:inherit;font-size:23px;cursor:pointer}
+.jf-achievement-item{display:flex;gap:11px;padding:10px 0;border-top:1px solid #9ab4d455}
+.jf-achievement-item:not(.unlocked){opacity:.65}
+.jf-achievement-icon{display:grid;place-items:center;width:40px;height:40px;min-width:40px;border-radius:50%;
+  background:linear-gradient(130deg,#ffef9f,#b77b2f);font-size:23px}
+.jf-achievement-item p{margin:3px 0;font-size:12px}.jf-achievement-item small{font-size:11px}
+.jf-banana-fly{position:fixed;z-index:12001;pointer-events:none;font-size:36px;transition:transform .54s cubic-bezier(.25,.6,.55,1),opacity .15s}
+@media(max-width:600px){.jf-banana-launcher{left:72px;bottom:14px;width:44px;height:44px}.jf-achievement-launcher{left:125px;bottom:14px;width:44px;height:44px}.jf-dance-launch{bottom:75px;left:12px}}
 </style>
 <style>
 #jfAdminPanel{margin:22px 0;padding:16px;border:1px solid #8b85d0;border-radius:15px;background:#181738;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
@@ -667,6 +692,12 @@ html[data-jf-theme="classic"] .track-times{
         </div>
       </div>
     </div>
+    <div class="jf-community-controls">
+      <button type="button" class="btn secondary" id="jfSkipVote">⏭ Pedir para pular</button>
+      <span id="jfSkipStatus" class="small" role="status">Votação disponível durante a música.</span>
+      <div class="jf-banana-meter"><span>🍌 Barril <strong id="jfBananaCount">0/20</strong></span>
+        <progress id="jfBananaProgress" max="20" value="0"></progress></div>
+    </div>
     <div class="spotify-actions">
       <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Conectar Spotify</a>
       <button class="btn secondary" id="spotifyDisconnect" type="button" hidden>Desconectar Spotify</button>
@@ -701,7 +732,14 @@ html[data-jf-theme="classic"] .track-times{
   <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
 </button>
 <button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
+<button type="button" id="jfBananaThrow" class="jf-banana-launcher" aria-label="Jogar banana porque gostou da música" title="Jogar banana no barril">🍌</button>
+<button type="button" id="jfAchievementsOpen" class="jf-achievement-launcher" aria-label="Abrir conquistas" title="Conquistas">🏅<span class="jf-banana-medal">🍌</span></button>
 <button type="button" id="jfFriendsLauncher" class="jf-chat-launcher jf-friends-launcher" aria-label="Abrir amigos" aria-expanded="false" aria-controls="jfFriendsDrawer" title="Amigos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg><span id="jfFriendsUnread" class="jf-chat-unread" aria-label="Solicitações pendentes"></span></button>
+<section id="jfAchievementsPanel" class="jf-achievements-panel" hidden aria-label="Conquistas">
+  <header><strong>🏅 Conquistas</strong><button type="button" id="jfAchievementsClose" aria-label="Fechar conquistas">×</button></header>
+  <p id="jfAchievementsNote" class="small">Conquistas são exclusivas para contas cadastradas.</p>
+  <div id="jfAchievementsList"></div>
+</section>
 <section id="jfFriendsDrawer" class="jf-chat-window jf-friends-drawer" aria-labelledby="jfFriendsDrawerHeading" hidden><header class="jf-chat-header"><div><h2 id="jfFriendsDrawerHeading" class="jf-chat-heading">Amigos</h2><div class="jf-chat-subheading">Online e solicitações</div></div><button type="button" id="jfFriendsDrawerClose" class="jf-chat-close" aria-label="Fechar amigos">×</button></header><div class="jf-friends-drawer-content"><button type="button" id="jfDrawerFriendsTab" hidden>Amigos</button><div id="jfDrawerFriendsList" class="jf-people"></div><div id="jfDrawerRequestsList" class="jf-people" hidden></div><div class="jf-friends-drawer-footer"><button class="btn secondary jf-friends-tab" id="jfDrawerRequestsTab" type="button">Pedidos <span id="jfDrawerRequestCount" class="jf-request-count" hidden>0</span></button></div><button type="button" id="jfManageFriends" hidden>Gerenciar amigos</button></div></section>
 <section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
   <header class="jf-chat-header">
@@ -936,6 +974,7 @@ html[data-jf-theme="classic"] .track-times{
 <script type="module" src="/wardrobe.js"></script>
 <script type="module" src="/dance-floor.js"></script>
 <script type="module" src="/tomato-throw.js"></script>
+<script type="module" src="/social-ui.js"></script>
 <script>
 (() => {
   // Stable identity for one browser tab across a reload or reconnect.
