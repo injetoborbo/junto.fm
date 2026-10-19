@@ -84,6 +84,27 @@ function sittingPose(){
     source.scene.updateMatrixWorld(true);
     const sourceBones=new Map();
     source.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
+    // Registrar orientação GLOBAL de repouso do esqueleto de origem.
+    // Ombros/antebraços não podem usar o delta local de um outro bind pose:
+    // ele gira em eixos incompatíveis e abre os braços em posições estranhas.
+    const sourceWorldBones=new Map();
+    const byObject=new Map();
+    source.scene.traverse(node=>{
+      if(!node.isBone)return;
+      const key=boneKey(node.name);
+      if(!key)return;
+      const info={
+        key,node,
+        localRest:node.quaternion.clone(),
+        worldRest:node.getWorldQuaternion(new THREE.Quaternion()),
+        parent:null,track:null,
+        parentWorldRest:node.parent.getWorldQuaternion(new THREE.Quaternion())
+      };
+      sourceWorldBones.set(key,info);
+      byObject.set(node,info);
+    });
+    for(const info of sourceWorldBones.values())
+      info.parent=byObject.get(info.node.parent)||null;
     const hipBone=sourceBones.get("hips");
     const hipPositionTrack=/^sentado(?:balanca|tryfix)\.fbx$/.test(source.filename)?
       clip.tracks.find(track=>track.name.endsWith(".position")&&
@@ -109,13 +130,19 @@ function sittingPose(){
       const sourceInverse=bone.quaternion.clone().invert();
       const correction=sourceInverse.clone().multiply(new THREE.Quaternion().fromArray(value));
       changes.set(name,correction);
-      if(source.filename==="sentadobalanca.fbx"||source.filename==="sentadotryfix.fbx")
+      if(source.filename==="sentadobalanca.fbx"||source.filename==="sentadotryfix.fbx"){
         animatedTracks.set(name,{sourceInverse,interpolant});
+        const info=sourceWorldBones.get(name);
+        if(info)info.track=interpolant;
+      }
     }
     console.info("Junto Club sentado:",source.filename,changes.size,
       "ossos; translacao do quadril:",Boolean(hipPosition),
       "duracao:",clip.duration.toFixed(2),"s");
-    return changes.size>=5?{changes,animatedTracks,hipPosition,duration:clip.duration,filename:source.filename}:null;
+    return changes.size>=5?{
+      changes,animatedTracks,sourceWorldBones,hipPosition,
+      duration:clip.duration,filename:source.filename
+    }:null;
   })();
   return sittingPosePromise;
 }
@@ -351,6 +378,17 @@ async function putMember(id,details){
       entry.sitRotations=new Map();
       entry.sitTracks=new Map();
       entry.sitDuration=pose.duration;
+      entry.sitSourceWorld=pose.sourceWorldBones;
+      entry.sitTargetRestWorld=new Map();
+      // Quaternions de repouso relativos à raiz do macaco, sem a rotação
+      // do avatar sobre a pista nem o giro da câmera.
+      const invRigRest=entry.rig.getWorldQuaternion(new THREE.Quaternion()).invert();
+      entry.rig.updateMatrixWorld(true);
+      entry.rig.traverse(bone=>{
+        if(!bone.isBone)return;
+        const q=bone.getWorldQuaternion(new THREE.Quaternion());
+        entry.sitTargetRestWorld.set(bone.uuid,q.premultiply(invRigRest));
+      });
       entry.rig.updateMatrixWorld(true);
       // O FBX move tambem o quadril: nao descartar essa faixa como antes.
       // Transferir deslocamento RELATIVO ao primeiro quadro, jamais a posicao
@@ -467,12 +505,49 @@ function animate(){
       }
     }
     if(p.rig&&!p.action){
+      // Retarget em espaço GLOBAL somente para o conjunto de braços.
+      // No FBX as bases locais de clavículas e ombros podem ser diferentes
+      // das do macaco. A matriz mundial relativa à raiz preserva os eixos.
+      const sourcePoseWorld=new Map();
+      const seatedTime=p.sitDuration>0?
+        ((time%p.sitDuration)+p.sitDuration)%p.sitDuration:0;
+      const animatedSourceWorld=(info)=>{
+        if(sourcePoseWorld.has(info.key))return sourcePoseWorld.get(info.key);
+        const parentWorld=info.parent?
+          animatedSourceWorld(info.parent):
+          info.parentWorldRest.clone();
+        const values=info.track?.evaluate(seatedTime);
+        const local=values?.length===4?
+          sittingFrameQuaternion.fromArray(values).clone():info.localRest;
+        const world=parentWorld.multiply(local).normalize();
+        sourcePoseWorld.set(info.key,world);
+        return world;
+      };
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
         if(d.seated&&!walking&&p.sitTracks?.has(obj.uuid)&&p.sitDuration>0){
+          const key=boneKey(obj.name);
+          // Omoplatas, braços e antebraços recebem rotação GLOBAL relativa
+          // ao rig original. O restante continua com a transferência antiga.
+          const isArm=/^(left|right)(shoulder|arm|forearm|hand)$/.test(key);
+          const sourceInfo=isArm?p.sitSourceWorld?.get(key):null;
+          const targetRest=isArm?p.sitTargetRestWorld?.get(obj.uuid):null;
+          if(sourceInfo&&targetRest){
+            const sourceRotation=animatedSourceWorld(sourceInfo);
+            const desiredWorld=sourceRotation.clone()
+              .multiply(sourceInfo.worldRest.clone().invert())
+              .multiply(targetRest);
+            p.rig.updateWorldMatrix(true,false);
+            obj.parent.updateWorldMatrix(true,false);
+            const rigWorld=p.rig.getWorldQuaternion(new THREE.Quaternion());
+            const parentWorld=obj.parent.getWorldQuaternion(new THREE.Quaternion());
+            const parentInRig=rigWorld.invert().multiply(parentWorld);
+            obj.quaternion.copy(parentInRig.invert().multiply(desiredWorld)).normalize();
+            obj.updateMatrix();
+            return;
+          }
           const {rest,sourceInverse,interpolant}=p.sitTracks.get(obj.uuid);
-          const phase=((time%p.sitDuration)+p.sitDuration)%p.sitDuration;
-          const value=interpolant.evaluate(phase);
+          const value=interpolant.evaluate(seatedTime);
           if(value?.length===4){
             obj.quaternion.copy(rest).multiply(sourceInverse)
               .multiply(sittingFrameQuaternion.fromArray(value)).normalize();
