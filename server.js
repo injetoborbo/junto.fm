@@ -390,12 +390,27 @@ const CLUB_TABLE=Object.freeze({x:1,z:1});
 const isClubFurnitureTile=(x,z)=>
   CLUB_SEATS.some(seat=>seat.x===x&&seat.z===z)||
   (x===CLUB_TABLE.x&&z===CLUB_TABLE.z);
+// Simulação de DJ exclusivamente para testes locais, sem transmitir áudio.
+const localClubDjs=new Map();
+function isLocalClubTester(socket){
+  const address=String(socket.handshake.address||socket.request.socket?.remoteAddress||"");
+  const host=String(socket.handshake.headers?.host||"").split(":")[0].toLowerCase();
+  return ["127.0.0.1","::1","::ffff:127.0.0.1"].includes(address)&&
+    ["localhost","127.0.0.1","[::1]"].includes(host);
+}
+function clearLocalClubDj(room,id){
+  if(room&&localClubDjs.get(room)===id){
+    localClubDjs.delete(room);
+    io.to(room).emit("club-test-dj-update",{id:null});
+  }
+}
 function danceSnapshot(room){
   return [...(danceFloors.get(room)||new Map()).entries()].map(([id,data])=>({id,...data}));
 }
 function danceLeave(room,id){
   const floor=danceFloors.get(room);
   if(!floor||!floor.delete(id))return;
+  clearLocalClubDj(room,id);
   io.to(room).emit("dance-left",{id});
   if(!floor.size)danceFloors.delete(room);
 }
@@ -420,6 +435,7 @@ io.on("connection", socket => {
       io.to(room).emit("dance-updated",{id:socket.id,...data});
     }
     socket.emit("dance-state",{room,participants:danceSnapshot(room)});
+    if(isLocalClubTester(socket))socket.emit("club-test-dj-update",{id:localClubDjs.get(room)||null});
   });
   socket.on("dance-move",payload=>{
     const room=socket.data.room;
@@ -470,17 +486,30 @@ io.on("connection", socket => {
     member.seated=false;
     io.to(room).emit("dance-updated",{id:socket.id,...member});
   });
+  socket.on("club-test-dj-toggle",()=>{
+    if(!isLocalClubTester(socket))return;
+    const room=socket.data.room;
+    const floor=room&&danceFloors.get(room);
+    if(!floor?.has(socket.id))return;
+    const current=localClubDjs.get(room);
+    if(current===socket.id)clearLocalClubDj(room,socket.id);
+    else if(!roomTransmitters.get(room)?.id){
+      localClubDjs.set(room,socket.id);
+      io.to(room).emit("club-test-dj-update",{id:socket.id});
+    }
+  });
   // Tomates são brincadeira visual: somente o transmissor atual pode ser alvo.
   // Nada de alvo arbitrário; o servidor valida sala, transmissão e cooldown.
   socket.on("club-tomato",()=>{
     const room=socket.data.room;
     const floor=room&&danceFloors.get(room);
     const dj=room&&roomTransmitters.get(room);
-    if(!floor?.has(socket.id)||!dj?.id||dj.id===socket.id)return;
-    if(!floor.has(dj.id))return socket.emit("dance-error",{message:"O DJ precisa estar na Junto Club para receber tomates."});
+    const targetId=dj?.id||(isLocalClubTester(socket)?localClubDjs.get(room):null);
+    if(!floor?.has(socket.id)||!targetId||targetId===socket.id)return;
+    if(!floor.has(targetId))return socket.emit("dance-error",{message:"O DJ precisa estar na Junto Club para receber tomates."});
     if(isRateLimited(socket,"club-tomato",1,5000))
       return socket.emit("dance-error",{message:"Espere 5 segundos para jogar outro tomate."});
-    io.to(room).emit("club-tomato-fired",{from:socket.id,to:dj.id});
+    io.to(room).emit("club-tomato-fired",{from:socket.id,to:targetId});
   });
   socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
 
