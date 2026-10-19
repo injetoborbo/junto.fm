@@ -692,7 +692,14 @@ html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#eff
     <select id="jfAudioSource" class="jf-audio-source">
       <option value="tab">Transmitir áudio da aba (web)</option>
       <option value="system">Transmitir áudio de app externo (sistema)</option>
+      <option value="cable">Transmitir pelo VB-Cable (CABLE Output)</option>
     </select>
+    <div id="jfCableSetup" hidden style="margin-top:8px">
+      <label for="jfCableDevice" class="small">Entrada virtual para a música</label>
+      <select id="jfCableDevice" class="jf-audio-source" style="margin-top:5px"><option value="">Clique em Detectar dispositivos</option></select>
+      <button id="jfCableDetect" class="btn secondary" type="button" style="margin-top:8px">Detectar dispositivos de áudio</button>
+      <p class="small" style="margin:6px 0">Selecione CABLE Output. Não selecione seu microfone, para não transmitir sua voz ou os sons do ambiente.</p>
+    </div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="start" disabled>Transmitir áudio da aba (web)</button>
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
@@ -1601,21 +1608,70 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
 
   $("jfAudioSource").addEventListener("change",()=>{
-    const external=$("jfAudioSource").value==="system";
-    $("start").textContent=external?"Transmitir áudio de app externo":"Transmitir áudio da aba (web)";
+    const source=$("jfAudioSource").value;
+    $("jfCableSetup").hidden=source!=="cable";
+    $("start").textContent=source==="cable"?"Transmitir pelo VB-Cable":source==="system"?"Transmitir áudio de app externo":"Transmitir áudio da aba (web)";
+  });
+  $("jfCableDetect").addEventListener("click", async ()=>{
+    if (!navigator.mediaDevices?.enumerateDevices || !navigator.mediaDevices?.getUserMedia) {
+      setStatus("O navegador não permite escolher entradas de áudio neste endereço. Use localhost ou HTTPS."); return;
+    }
+    const button=$("jfCableDetect");
+    button.disabled=true;
+    try {
+      // Solicitação temporária: serve apenas para revelar os nomes dos dispositivos ao navegador.
+      // Nunca é usada como fonte da transmissão.
+      const probe=await navigator.mediaDevices.getUserMedia({audio:true});
+      probe.getTracks().forEach(track=>track.stop());
+      const inputs=(await navigator.mediaDevices.enumerateDevices()).filter(device=>device.kind==="audioinput");
+      const select=$("jfCableDevice");
+      select.replaceChildren();
+      const placeholder=document.createElement("option");
+      placeholder.value="";placeholder.textContent="Selecione CABLE Output";select.appendChild(placeholder);
+      for (const device of inputs) {
+        const option=document.createElement("option");
+        option.value=device.deviceId;
+        option.textContent=device.label||"Entrada de áudio sem nome";
+        select.appendChild(option);
+      }
+      const match=inputs.find(device=>/CABLE Output|VB-Audio|VB-Cable/i.test(device.label));
+      if(match) {select.value=match.deviceId;setStatus("VB-Cable detectado. Confirme CABLE Output e clique em Transmitir.",true);}
+      else setStatus("Não encontrei CABLE Output. Verifique a instalação do VB-Cable e a permissão de microfone do navegador.");
+    } catch(error) {
+      console.error("Falha ao listar dispositivos de áudio:",error);
+      setStatus("Não foi possível listar entradas. Autorize o microfone para este site: a permissão é necessária para acessar o CABLE Output.");
+    } finally {button.disabled=false;}
   });
   $("start").onclick = async () => {
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
       if (!jfRoomOwner) { setStatus('Somente o dono da sala pode transmitir o Spotify.'); return; }
-      if (!navigator.mediaDevices?.getDisplayMedia) { setStatus('A captura exige Chrome/Edge em localhost ou HTTPS.'); return; }
+      const source=$("jfAudioSource").value;
+      if (!navigator.mediaDevices || (source==="cable" ? !navigator.mediaDevices.getUserMedia : !navigator.mediaDevices.getDisplayMedia)) {
+        setStatus("A captura exige Chrome/Edge em localhost ou HTTPS."); return;
+      }
       // Música capturada da aba deve permanecer estéreo, sem tratamento de voz.
       // Alguns navegadores ignoram estas preferências na captura de tela.
       const musicAudio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
-      const external=$("jfAudioSource").value==="system";
-      const captured = await navigator.mediaDevices.getDisplayMedia(external
-        ? {video:{displaySurface:"monitor"},audio:musicAudio,systemAudio:"include",surfaceSwitching:"exclude",selfBrowserSurface:"exclude"}
-        : {video:true,audio:musicAudio});
+      const external=source==="system";
+      let captured;
+      if(source==="cable"){
+        const deviceId=$("jfCableDevice").value;
+        if(!deviceId){setStatus("Antes de transmitir, clique em Detectar dispositivos e selecione CABLE Output.");return;}
+        const chosen=$("jfCableDevice").selectedOptions[0]?.textContent||"";
+        if(!/CABLE Output|VB-Audio|VB-Cable/i.test(chosen)){
+          setStatus("Selecione CABLE Output (VB-Audio Virtual Cable), não o microfone.");return;
+        }
+        captured=await navigator.mediaDevices.getUserMedia({audio:{
+          deviceId:{exact:deviceId},
+          echoCancellation:false,noiseSuppression:false,autoGainControl:false,
+          channelCount:{ideal:2},sampleRate:{ideal:48000}
+        },video:false});
+      } else {
+        captured=await navigator.mediaDevices.getDisplayMedia(external
+          ? {video:{displaySurface:"monitor"},audio:musicAudio,systemAudio:"include",surfaceSwitching:"exclude",selfBrowserSurface:"exclude"}
+          : {video:true,audio:musicAudio});
+      }
       const audioTracks = captured.getAudioTracks();
       if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'Nenhum áudio do sistema disponível. Escolha a tela inteira e habilite o compartilhamento de áudio; nem todo navegador ou aplicativo permite essa captura.':'A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
       for (const track of audioTracks) {
@@ -1637,7 +1693,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       // Se ouvintes já estavam na sala, IDs são guardados no conjunto abaixo.
       for (const id of knownPeers) await createSenderOffer(id);
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
-      setStatus(external?'Áudio do sistema capturado. Conectando ouvintes…':'Áudio da aba capturado. Conectando ouvintes…', true);
+      setStatus(source==="cable"?"VB-Cable capturado. Conectando ouvintes…":external?"Áudio do sistema capturado. Conectando ouvintes…":"Áudio da aba capturado. Conectando ouvintes…", true);
       if (spotifyConnected) startSpotifyPolling();
     } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('Transmissão cancelada ou não permitida pelo navegador.'); }
   };
