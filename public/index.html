@@ -2476,6 +2476,17 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 (async()=>{
   const stage=document.querySelector("#jfMiniDj .jf-dj-stage");
   if(!stage)return;
+  // O palco não é exibido no hall. Adia Three.js e o GLB principal até
+  // entrar na sala, acelerando o primeiro acesso sem alterar o modelo.
+  if(!document.body.classList.contains("jf-in-room")){
+    await new Promise(resolve=>{
+      const observer=new MutationObserver(()=>{
+        if(!document.body.classList.contains("jf-in-room"))return;
+        observer.disconnect();resolve();
+      });
+      observer.observe(document.body,{attributes:true,attributeFilter:["class"]});
+    });
+  }
   try{
     const THREE = await import("https://esm.sh/three@0.170.0");
     const { GLTFLoader } = await import("https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
@@ -2483,7 +2494,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const camera=new THREE.PerspectiveCamera(32,1,.01,100);
     camera.position.set(0,1.1,4.5);
     const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+    // Reduz uso de GPU no celular; desktop mantém a nitidez anterior.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.matchMedia("(max-width:760px)").matches?1:1.5));
     renderer.outputColorSpace=THREE.SRGBColorSpace;
     renderer.setClearColor(0x000000,0);
     renderer.domElement.className="jf-glb-canvas";
