@@ -124,7 +124,7 @@ module.exports=function setupAccounts(app){
     try{
       const account=await accountFromRequest(req);
       res.set("Cache-Control","no-store");
-      res.json({configured:enabled && await ready,loggedIn:!!account,profile:account?safeAccount(account):null});
+      res.json({configured:await ready,googleConfigured:enabled&&await ready,loggedIn:!!account,profile:account?safeAccount(account):null});
     }catch(e){res.status(503).json({configured:false,loggedIn:false,error:"Serviço de contas indisponível."});}
   });
   app.get("/auth/google",async(req,res)=>{
