@@ -71,9 +71,16 @@ try{
    iconRenderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});iconRenderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));iconRenderer.setSize(76,76,false);iconRenderer.setClearColor(0,0);button.textContent="";button.appendChild(iconRenderer.domElement);
  }).catch(err=>console.warn("Banana GLB não disponível:",err));
  const clock=new THREE.Clock();
- function render(){
+ let lastRender=0;
+ function render(now=performance.now()){
   requestAnimationFrame(render);
-  const dt=Math.min(.05,clock.getDelta());
+  // Não consumir GPU na home, em outra aba ou sem sala.
+  if(!joined||document.hidden||!holder.isConnected){clock.getDelta();lastRender=now;return;}
+  // 20 fps para o barril e ícone: preserva a animação sem disputar CPU/GPU
+  // com codificação e reprodução de áudio WebRTC.
+  if(now-lastRender<50)return;
+  lastRender=now;
+  const dt=Math.min(.08,clock.getDelta());
   level+=(target-level)*Math.min(1,dt*4);
   ripple*=Math.exp(-dt*6);
   const amount=Math.max(.0001,maxHeight*level);
@@ -82,7 +89,7 @@ try{
   surface.scale.setScalar(1+Math.sin(performance.now()*.015)*ripple*.045);
   surface.rotation.z=Math.sin(performance.now()*.008)*ripple*.045;
   liquid.visible=level>.002;
-  renderer.render(scene,camera);if(iconRenderer&&iconModel){iconModel.rotation.y+=dt*.7;iconModel.rotation.z=-.25;iconRenderer.render(iconScene,iconCamera);}
+  renderer.render(scene,camera);if(iconRenderer&&iconModel&&!button.hidden){iconModel.rotation.y+=dt*.7;iconModel.rotation.z=-.25;iconRenderer.render(iconScene,iconCamera);}
  }
  render();
 }catch(err){console.warn("Barril 3D aguardando GLB:",err);holder.textContent="🛢️";}
