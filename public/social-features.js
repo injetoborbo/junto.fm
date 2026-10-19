@@ -54,12 +54,12 @@
     $("jfSkipProgress").textContent=approved?"✓ Skip aprovado":votes+"/"+required+" votos";
     $("jfSkipVote").disabled=!joined||approved;
   });
-  socket.on("skip-approved",async()=>{
+  socket.on("skip-approved",async({ticket,room:approvedRoom})=>{
     // Apenas o transmissor possui a sessão Spotify utilizada neste pedido.
     const transmitting=window.jfSocialTransmitting?.();
     if(!transmitting)return;
     try{
-      const r=await fetch("/api/spotify/skip",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"}});
+      const r=await fetch("/api/spotify/skip",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({ticket,room:approvedRoom})});
       if(!r.ok)throw Error("Não foi possível pular a música pelo Spotify.");
     }catch(e){console.warn("Junto.fm skip:",e)}
   });
