@@ -1613,18 +1613,24 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       // Alguns navegadores ignoram estas preferências na captura de tela.
       const musicAudio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
       const external=$("jfAudioSource").value==="system";
+      // Capture somente com gesto do usuário. Áudio do sistema não é garantido pelo navegador.
+      // Preferências de música são aplicadas depois, pois alguns navegadores recusam
+      // getDisplayMedia({audio: {...constraints}}) ou deixam de oferecer compartilhamento.
       const captured = await navigator.mediaDevices.getDisplayMedia(external
-        ? {video:{displaySurface:"monitor"},audio:musicAudio,systemAudio:"include",surfaceSwitching:"exclude",selfBrowserSurface:"exclude"}
-        : {video:true,audio:musicAudio});
+        ? {video:{displaySurface:"monitor"},audio:true,systemAudio:"include",selfBrowserSurface:"exclude"}
+        : {video:true,audio:true,systemAudio:"exclude",surfaceSwitching:"include"});
       const audioTracks = captured.getAudioTracks();
-      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'Nenhum áudio do sistema disponível. Escolha a tela inteira e habilite o compartilhamento de áudio; nem todo navegador ou aplicativo permite essa captura.':'A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
+      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'Sem áudio do sistema: escolha Tela inteira e marque compartilhar áudio do sistema. Se a opção não aparecer, Chrome/Windows não oferece captura desse aplicativo.':'Sem áudio da aba: escolha Aba do Chrome/Edge e marque Compartilhar áudio da aba.'); return; }
       for (const track of audioTracks) {
         try { track.contentHint = 'music'; } catch (_) {}
         // applyConstraints é best-effort: não interrompe a transmissão caso falhe.
         try { await track.applyConstraints({ echoCancellation: false, noiseSuppression: false, autoGainControl: false }); }
         catch (error) { console.info('Captura não aceita todas as preferências de música:', error); }
       }
-      captured.getVideoTracks().forEach(track => track.stop());
+      // Não encerrar a trilha de vídeo aqui! Em alguns navegadores isso
+      // encerra também a fonte de áudio da captura. O vídeo permanece local,
+      // mas apenas as trilhas de áudio são adicionadas aos peers WebRTC.
+      captured.getVideoTracks().forEach(track => { track.enabled = false; });
       resetSession();
       localStream = captured; isSender = true; socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
@@ -1639,7 +1645,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
       setStatus(external?'Áudio do sistema capturado. Conectando ouvintes…':'Áudio da aba capturado. Conectando ouvintes…', true);
       if (spotifyConnected) startSpotifyPolling();
-    } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('Transmissão cancelada ou não permitida pelo navegador.'); }
+    } catch (error) {
+      console.error('Captura cancelada ou bloqueada:', error);
+      resetSession();
+      const reason=error?.name==="NotAllowedError"?"Permissão de compartilhamento negada ou cancelada.":error?.name==="NotSupportedError"?"Este navegador não oferece esse modo de captura.":error?.name==="NotFoundError"?"Nenhuma fonte de compartilhamento disponível.":"Não foi possível iniciar a captura ("+(error?.name||"erro desconhecido")+").";
+      setStatus(reason);
+    }
   };
   async function stopTransmission() {
     // Notifica cada ouvinte de forma direcionada.
