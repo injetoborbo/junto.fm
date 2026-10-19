@@ -1322,6 +1322,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     closeAllPeers();
     if (stopLocal) stopLocalStream();
     isSender = false;
+    // Liberar fonte e dispositivo após parar, sair da sala ou desconectar.
+    const sourceSelect=$("jfAudioSource"),cableSelect=$("jfCableDevice"),cableDetect=$("jfCableDetect");
+    if(sourceSelect)sourceSelect.disabled=false;
+    if(cableDetect)cableDetect.disabled=false;
+    if(cableSelect)cableSelect.disabled=!cableSelect.value;
     if(typeof jfUpdateSuggestionControls==="function")jfUpdateSuggestionControls();
     $("remoteAudio").pause();
     $("remoteAudio").srcObject = null;
@@ -1713,7 +1718,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(isSender){socket.emit("transmission-stopped",{room});socket.emit("clear-track",{room});}
       resetSession();
       jfAudioMode.disabled=false;$("jfCableDetect").disabled=false;jfCableSelect.disabled=!jfCableSelect.value;
-      const reason=error?.name==="NotAllowedError"?"Permissão de compartilhamento negada ou cancelada.":error?.name==="NotSupportedError"?"Este navegador não oferece esse modo de captura.":error?.name==="NotFoundError"?"Nenhuma fonte de compartilhamento disponível.":"Não foi possível iniciar a captura ("+(error?.name||"erro desconhecido")+").";
+      const reason=error?.name==="NotAllowedError"?(jfAudioMode.value==="system"?"Acesso ao VB-CABLE negado. Permita o microfone no navegador.":"Permissão de compartilhamento negada ou cancelada."):error?.name==="OverconstrainedError"||error?.name==="NotFoundError"?(jfAudioMode.value==="system"?"VB-CABLE indisponível. Clique em Detectar VB-CABLE novamente.":"Nenhuma fonte de compartilhamento disponível."):error?.name==="NotReadableError"?"Dispositivo de áudio ocupado ou inacessível.":error?.name==="NotSupportedError"?"Este navegador não oferece esse modo de captura.":"Não foi possível iniciar a captura ("+(error?.name||"erro desconhecido")+").";
       setStatus(reason);
     }
   };
