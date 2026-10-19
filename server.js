@@ -31,7 +31,7 @@ const roomTracks = new Map();
 const roomTransmitters = new Map();
 const roomSkipVotes=new Map();
 const skipTickets=new Map();
-const roomBananaCounts = new Map(); // 0 a 19 por sala
+const roomBananaCounts = new Map(); // 0 a 15 por sala
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
 const roomChatMessages = new Map();
@@ -543,7 +543,7 @@ io.on("connection", socket => {
     if(!room)return socket.emit("banana-error",{message:"Entre em uma sala primeiro."});
     if(isRateLimited(socket,"banana-throw",1,1200))return socket.emit("banana-error",{message:"Aguarde um pouco."});
     const old=roomBananaCounts.get(room)||0;
-    if(old>=19)return socket.emit("banana-error",{message:"Barril cheio!"});
+    if(old>=15)return socket.emit("banana-error",{message:"Barril cheio!"});
     const count=old+1;roomBananaCounts.set(room,count);
     io.to(room).emit("banana-thrown",{room,count,from:socket.id});
   });
