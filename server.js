@@ -88,6 +88,8 @@ async function validSpotifyAccessToken(session) {
 app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
+app.locals.jfAccountFromRequest=accountAuth.accountFromRequest;
+require("./social-features")(app,io,roomTransmitters,accountAuth.ready);
 require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready);
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
@@ -197,6 +199,20 @@ app.post("/api/spotify/save-track", async (req, res) => {
   }
 });
 
+// Spotify Premium + aparelho ativo são necessários para um pulo real.
+app.post("/api/spotify/skip",async(req,res)=>{
+  try{
+    if(!SPOTIFY_CLIENT_ID)return res.status(503).json({error:"Spotify não configurado."});
+    const token=await validSpotifyAccessToken(getSession(req,res));
+    const response=await fetch("https://api.spotify.com/v1/me/player/next",{
+      method:"POST",headers:{Authorization:"Bearer "+token}
+    });
+    if(!response.ok)return res.status(response.status).json({error:response.status===403
+      ?"Spotify Premium necessário para pular músicas."
+      :response.status===404?"Nenhum dispositivo Spotify ativo.":"Spotify não autorizou pular esta música."});
+    res.json({ok:true});
+  }catch(error){res.status(401).json({error:error.message||"Spotify não conectado."});}
+});
 app.get("/api/spotify/now-playing", async (req, res) => {
   try {
     if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
