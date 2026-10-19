@@ -254,10 +254,11 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       width:.56,offset:[0,.16,.06],seatedOffset:{z:.00015}
     });
   if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
-    width:.58,offset:[0,.22,0],seatedOffset:{y:-.00010}
+    width:.58,offset:[0,.34,0],seatedOffset:{y:-.00010}
   });
+  // Neste GLB, mover no sentido +Z recua o vestido em relação ao macaco.
   if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
-    width:.70,offset:[0,-.24,.01],seatedOffset:{y:.00010}
+    width:.70,offset:[0,-.24,.06],seatedOffset:{y:.00010}
   });
   if(selection.hat==="palha"||selection.hat==="branco"){
     const type=selection.hat;
