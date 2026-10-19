@@ -678,8 +678,13 @@ html[data-jf-theme="classic"] .track-times{
     <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte sua conta para favoritar a faixa atual na sua biblioteca. Cada pessoa precisa conectar o próprio Spotify; os metadados da música são compartilhados pela sala.</p>
     <p class="small" id="spotifyFavoriteStatus" aria-live="polite"></p>
     <section class="jf-lyrics" aria-labelledby="jfLyricsHeading"><div class="jf-lyrics-head"><h3 id="jfLyricsHeading">♫ Letra da música</h3><span id="jfLyricsMode" class="small">Sincronizada quando disponível</span></div><div id="jfLyricsContent" class="jf-lyrics-content" aria-live="polite"><p class="small">A letra aparecerá aqui quando disponível.</p></div></section>
-    <div class="row" style="margin-top:18px">
-      <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
+    <label for="jfAudioSource" class="small" style="display:block;margin-top:18px;margin-bottom:6px">Fonte do áudio</label>
+    <select id="jfAudioSource" style="width:100%;max-width:380px;padding:10px;border-radius:8px;background:var(--jf-panel,#202043);color:var(--ink,#fff);border:1px solid var(--jf-secondary,#777be9)">
+      <option value="tab">Transmitir áudio da aba (web)</option>
+      <option value="system">Transmitir áudio de app externo (sistema)</option>
+    </select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="start" disabled>Transmitir áudio da aba (web)</button>
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
     </div>
     <audio id="remoteAudio" autoplay playsinline></audio>
@@ -687,7 +692,7 @@ html[data-jf-theme="classic"] .track-times{
   Diagnóstico do áudio: aguardando conexão...
 </p>
     
-    <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
+    <p class="small" id="jfCaptureHelp">Modo web: escolha a aba com a música e marque “Compartilhar áudio”. No modo externo, escolha a tela inteira e ative “Compartilhar áudio do sistema” quando disponível. O áudio de aplicativos como Spotifast depende do navegador e do Windows; alguns apps protegidos podem não ser capturados.</p>
   </section>
   <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
     <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
@@ -1585,6 +1590,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     } catch (error) { console.error('Falha na sinalização WebRTC:', error); setStatus('Falha ao conectar o áudio. Tente entrar novamente na sala.'); }
   });
 
+  $("jfAudioSource").addEventListener("change",()=>{
+    const external=$("jfAudioSource").value==="system";
+    $("start").textContent=external?"Transmitir áudio de app externo":"Transmitir áudio da aba (web)";
+  });
   $("start").onclick = async () => {
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
@@ -1593,9 +1602,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       // Música capturada da aba deve permanecer estéreo, sem tratamento de voz.
       // Alguns navegadores ignoram estas preferências na captura de tela.
       const musicAudio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
-      const captured = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: musicAudio });
+      const external=$("jfAudioSource").value==="system";
+      const captured = await navigator.mediaDevices.getDisplayMedia(external
+        ? {video:{displaySurface:"monitor"},audio:musicAudio,systemAudio:"include",surfaceSwitching:"exclude",selfBrowserSurface:"exclude"}
+        : {video:true,audio:musicAudio});
       const audioTracks = captured.getAudioTracks();
-      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus('A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
+      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'Nenhum áudio do sistema disponível. Escolha a tela inteira e habilite o compartilhamento de áudio; nem todo navegador ou aplicativo permite essa captura.':'A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
       for (const track of audioTracks) {
         try { track.contentHint = 'music'; } catch (_) {}
         // applyConstraints é best-effort: não interrompe a transmissão caso falhe.
@@ -1615,7 +1627,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       // Se ouvintes já estavam na sala, IDs são guardados no conjunto abaixo.
       for (const id of knownPeers) await createSenderOffer(id);
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
-      setStatus('Captura de áudio ativa. Aguardando/conectando ouvintes…', true);
+      setStatus(external?'Áudio do sistema capturado. Conectando ouvintes…':'Áudio da aba capturado. Conectando ouvintes…', true);
       if (spotifyConnected) startSpotifyPolling();
     } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('Transmissão cancelada ou não permitida pelo navegador.'); }
   };
