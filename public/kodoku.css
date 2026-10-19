@@ -274,3 +274,33 @@ html[data-jf-theme="kodoku"] #jfChatWindow::after{
   background-size:contain!important;
   background-repeat:no-repeat!important;
 }
+
+/* Moldura conectada nos quatro cantos, sem interferir nos controles. */
+html[data-jf-theme="kodoku"] #jfChatWindow::before,
+html[data-jf-theme="kodoku"] #jfChatWindow::after{content:none!important;display:none!important}
+#jfChatWindow .jf-kodoku-frame-corners{display:none!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corners{
+  position:absolute!important;inset:0!important;z-index:2!important;
+  display:block!important;pointer-events:none!important;border:1px solid #fff!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{
+  display:block;position:absolute;width:55px;height:55px;
+  background:url("/kodoku_corner_hq3.png") left top/contain no-repeat;
+  opacity:.95;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tl{left:0;top:0;transform:none}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tr{right:0;top:0;transform:scaleX(-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-bl{left:0;bottom:0;transform:scaleY(-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-br{right:0;bottom:0;transform:scale(-1,-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:56px!important;padding-right:34px!important;min-height:56px!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form{padding-bottom:14px!important}
+html[data-jf-theme="kodoku"] .jf-kodoku-wordmark-png{
+  display:block;width:min(290px,84%);height:auto;margin:0 auto 5px;object-fit:contain;
+  mix-blend-mode:screen;image-rendering:auto
+}
+html[data-jf-theme="kodoku"] .jf-kodoku-wordmark{display:none!important}
+@media(max-width:520px){
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{width:40px;height:40px}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:43px!important}
+ html[data-jf-theme="kodoku"] .jf-kodoku-wordmark-png{width:min(250px,84%)}
+}
