@@ -22,7 +22,22 @@
  .jf-achievement-row strong{display:block;margin-bottom:4px}
  .jf-achievement-row p{margin:0 0 4px;font-size:12px;line-height:1.5}
  .jf-social-toast{position:fixed;right:14px;bottom:84px;z-index:19001;background:#52341f;color:#ffebbb;border:2px ridge #dca753;border-radius:10px;padding:10px 15px;max-width:310px;box-shadow:0 5px 22px #0008}
- .jf-social-account-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+ .jf-social-account-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(420px,100%);margin:3px auto 0}
+ .jf-social-account-actions .btn{min-width:0!important;width:100%;min-height:43px}
+ .jf-wooden-ship{width:58px;height:64px;display:grid;place-items:center;flex:none;background:transparent;border:0;clip-path:none;filter:drop-shadow(0 3px 3px #0005)}
+ .jf-wooden-ship svg{width:58px;height:58px;display:block}
+ body:not(.jf-in-room) #jfRoomEntryPanel{max-width:680px;padding:24px 26px}
+ body:not(.jf-in-room) .jf-entry-account{margin-top:18px;padding-top:19px;gap:12px}
+ body:not(.jf-in-room) #jfEntryAccountHint{max-width:420px;line-height:1.5;font-size:13px;opacity:.9}
+ body:not(.jf-in-room) #jfGoogleLogin{min-width:220px}
+ body:not(.jf-in-room) #jfRoomEntryPanel>.status{margin-top:20px;padding:11px 13px;border-radius:9px;background:color-mix(in srgb,var(--jf-secondary,#73b8ff) 13%,transparent);border:1px solid color-mix(in srgb,var(--jf-secondary,#73b8ff) 32%,transparent)}
+ body:not(.jf-in-room) #jfRoomEntryPanel>#roomCount,body:not(.jf-in-room) #jfRoomEntryPanel>#help{font-size:12px;line-height:1.5;margin:10px 0 0;opacity:.85}
+ body:not(.jf-in-room) #jfRoomEntryPanel>#help{border-top:1px solid color-mix(in srgb,var(--jf-secondary,#73b8ff) 28%,transparent);padding-top:11px}
+ html[data-jf-theme="classic"] body:not(.jf-in-room) #jfRoomEntryPanel #jfEntryAccountHint,
+ html[data-jf-theme="classic"] body:not(.jf-in-room) #jfRoomEntryPanel #roomCount,
+ html[data-jf-theme="classic"] body:not(.jf-in-room) #jfRoomEntryPanel #help{color:#24466e!important;text-shadow:none!important}
+ @media(max-width:520px){body:not(.jf-in-room) #jfRoomEntryPanel{padding:18px 14px}.jf-social-account-actions{grid-template-columns:1fr 1fr;gap:7px}.jf-social-account-actions .btn{font-size:12px;padding:8px 4px}}
+
  .jf-community-top-dock{position:fixed;top:16px;left:20px;z-index:10016;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 40px)}
  .jf-community-top-dock .btn{margin:0!important;padding:8px 10px;font-size:12px;min-height:36px;box-shadow:0 3px 10px #0003;white-space:nowrap}
  @media(max-width:600px){.jf-community-top-dock{top:10px;left:10px;gap:5px}.jf-community-top-dock .btn{font-size:11px;padding:7px 8px}}
@@ -85,7 +100,14 @@
    if(!data.configured){list.textContent="Conquistas indisponíveis sem banco de dados.";return;}
    for(const item of data.achievements){
     const row=document.createElement("div");row.className="jf-achievement-row"+(item.unlocked?"":" locked");
-    const medal=document.createElement("div");medal.className="jf-medal";medal.textContent="🍌";
+    const medal=document.createElement("div");
+    if(item.id==="welcome"){
+      medal.className="jf-wooden-ship";
+      const ship=document.querySelector("#jfWelcomeToast svg");
+      if(ship)medal.appendChild(ship.cloneNode(true));
+      else medal.textContent="⛵";
+    }else{medal.className="jf-medal";medal.textContent=item.symbol||"🏅";}
+
     const details=document.createElement("div"),title=document.createElement("strong"),description=document.createElement("p"),percent=document.createElement("small");
     title.textContent=item.title+(item.unlocked?" ✓":" 🔒");
     description.textContent=item.description;percent.textContent=item.percent+"% dos usuários cadastrados desbloquearam";
@@ -114,7 +136,13 @@
  socket?.on("joined-room",()=>visited.clear());
  socket?.on("achievement-unlocked",data=>{
   const names={welcome:"Bem-vindo a bordo",jorge:"Jorge, ô curioso"};
-  const toast=document.createElement("div");toast.className="jf-social-toast";toast.textContent="🏅 Conquista desbloqueada: "+(names[data.id]||data.id);
+  const toast=document.createElement("div");toast.className="jf-social-toast";
+  if(data.id==="welcome"){
+   toast.style.display="flex";toast.style.alignItems="center";toast.style.gap="10px";
+   const ship=document.querySelector("#jfWelcomeToast svg");
+   if(ship){const icon=ship.cloneNode(true);icon.style.width="42px";icon.style.height="42px";toast.appendChild(icon);}
+  }
+  const label=document.createElement("span");label.textContent="🏆 Conquista desbloqueada: "+(names[data.id]||data.id);toast.appendChild(label);
   document.body.appendChild(toast);setTimeout(()=>toast.remove(),6000);
  });
  window.addEventListener("keydown",e=>{if(e.key==="Escape"){overlay.hidden=true;achievements.hidden=true}});
