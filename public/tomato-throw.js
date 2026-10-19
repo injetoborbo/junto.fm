@@ -105,8 +105,8 @@ function launch(){
   const begun=performance.now();
   const size=72;
   function next(now){
-    if(!element.isConnected || !bridge?.getRoom?.()){
-      element.remove();livingShots.delete(shot);return;
+    if(!shot.element.isConnected || !bridge?.getRoom?.()){
+      shot.element.remove();livingShots.delete(shot);return;
     }
     const t=Math.min(1,(now-begun)/flightMs);
     // Arrancada rápida, aproximação veloz com desaceleração curta no impacto.
