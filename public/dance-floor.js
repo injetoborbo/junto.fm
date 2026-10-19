@@ -1,6 +1,7 @@
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
 import {createDanceAvatar} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
@@ -24,29 +25,56 @@ const animationFiles={
 // em vez de copiar diretamente quaternions locais entre rigs diferentes.
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
 const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+// Animacao sentadobalanca.fbx (enviada pelo criador).
+// O FBX fica fora do GitHub ate instalar o pacote de teste em public/poses.
+// A pose anterior e mantida como fallback para nao quebrar o deploy.
+const seatedFBXLoader=new FBXLoader();
 let sittingPosePromise=null;
 function sittingPose(){
-  if(!sittingPosePromise)sittingPosePromise=gltfLoader.loadAsync("/poses/sitting-idle.glb").then(gltf=>{
-    const clip=gltf.animations?.find(c=>c.tracks?.length);
-    if(!clip)return null;
+  if(!sittingPosePromise)sittingPosePromise=(async()=>{
+    let source;
+    try{
+      const scene=await seatedFBXLoader.loadAsync("/poses/sentadobalanca.fbx");
+      source={scene,animations:scene.animations,filename:"sentadobalanca.fbx"};
+    }catch(error){
+      console.warn("Animacao de balanco nao instalada; usando pose anterior da cadeira.");
+      try{
+        const gltf=await gltfLoader.loadAsync("/poses/sitting-idle.glb");
+        source={scene:gltf.scene,animations:gltf.animations,filename:"sitting-idle.glb"};
+      }catch(fallbackError){
+        console.warn("Nenhuma animacao sentada disponivel.",fallbackError);
+        return null;
+      }
+    }
+    const clips=source.animations||[];
+    // Arquivos FBX podem conter uma animacao de Camera alem do corpo.
+    // Selecionar o clipe que mais anima os ossos da rig Mixamo.
+    const clip=[...clips].sort((a,b)=>
+      b.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length-
+      a.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length
+    )[0];
+    if(!clip?.tracks?.length)return null;
     const sourceBones=new Map();
-    gltf.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
-    const changes=new Map(),time=Math.min(.5,clip.duration*.5);
+    source.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
+    const time=Math.min(.5,clip.duration*.5);
+    const changes=new Map(),animatedTracks=new Map();
     for(const track of clip.tracks){
       const dot=track.name.lastIndexOf(".");
       if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
-      const name=boneKey(track.name.slice(0,dot)),source=sourceBones.get(name);
-      // Sitting Idle também anima cabeça e pescoço. Ignorar esses canais
-      // deixa os acessórios acompanhando uma pose de cabeça incompatível.
-      if(!source)continue;
-      const value=track.createInterpolant().evaluate(time);
+      const name=boneKey(track.name.slice(0,dot)),bone=sourceBones.get(name);
+      if(!bone)continue;
+      const interpolant=track.createInterpolant();
+      const value=interpolant.evaluate(time);
       if(!value||value.length!==4)continue;
-      // Rotação relativa à pose original do próprio arquivo Mixamo.
-      const correction=source.quaternion.clone().invert().multiply(new THREE.Quaternion().fromArray(value));
+      const sourceInverse=bone.quaternion.clone().invert();
+      const correction=sourceInverse.clone().multiply(new THREE.Quaternion().fromArray(value));
       changes.set(name,correction);
+      if(source.filename==="sentadobalanca.fbx")
+        animatedTracks.set(name,{sourceInverse,interpolant});
     }
-    return changes.size>=5?changes:null;
-  }).catch(error=>{console.warn("Pose sentada indisponível",error);return null;});
+    console.info("Junto Club sentado:",source.filename,changes.size,"ossos; duracao:",clip.duration.toFixed(2),"s");
+    return changes.size>=5?{changes,animatedTracks,duration:clip.duration,filename:source.filename}:null;
+  })();
   return sittingPosePromise;
 }
 function loadClip(style){
@@ -277,11 +305,16 @@ async function putMember(id,details){
     sittingPose().then(pose=>{
       if(!pose||!active||people.get(id)!==entry)return;
       entry.sitRotations=new Map();
+      entry.sitTracks=new Map();
+      entry.sitDuration=pose.duration;
       entry.rig.traverse(bone=>{
         if(!bone.isBone)return;
-        const correction=pose.get(boneKey(bone.name));
+        const name=boneKey(bone.name);
+        const correction=pose.changes.get(name);
         const rest=entry.restBones.get(bone.uuid);
         if(correction&&rest)entry.sitRotations.set(bone.uuid,rest.clone().multiply(correction));
+        const track=pose.animatedTracks.get(name);
+        if(track&&rest)entry.sitTracks.set(bone.uuid,{...track,rest});
       });
     });
     for(const key of Object.keys(animationFiles))loadClip(key).then(clip=>{
@@ -359,6 +392,16 @@ function animate(){
     if(p.rig&&!p.action){
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
+        if(d.seated&&!walking&&p.sitTracks?.has(obj.uuid)&&p.sitDuration>0){
+          const {rest,sourceInverse,interpolant}=p.sitTracks.get(obj.uuid);
+          const phase=((time%p.sitDuration)+p.sitDuration)%p.sitDuration;
+          const value=interpolant.evaluate(phase);
+          if(value?.length===4){
+            obj.quaternion.copy(rest).multiply(sourceInverse)
+              .multiply(new THREE.Quaternion().fromArray(value)).normalize();
+            return;
+          }
+        }
         if(d.seated&&!walking&&p.sitRotations?.has(obj.uuid)){
           obj.quaternion.copy(p.sitRotations.get(obj.uuid));
           return;
