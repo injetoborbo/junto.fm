@@ -10,10 +10,23 @@ const testButton=document.getElementById("jfClubTestDj");
 const localTest=["localhost","127.0.0.1","::1","[::1]"].includes(location.hostname);
 const IMAGE_FLY="/tomato/tomate-inteiro.png";
 const IMAGE_SPLASH="/tomato/tomate-impacto.png";
-const IMPACT_SFX="/sfx/cartoonsplash.mp3";
-const splashSound=new Audio(IMPACT_SFX);
+// O efeito enviado foi incorporado como texto base64 ao projeto de teste.
+// Reconstrói o MP3 na página, sem depender de upload manual de arquivo binário.
+const IMPACT_SFX="/sfx/cartoonsplash.b64";
+const splashSound=new Audio();
 splashSound.preload="auto";
+fetch(IMPACT_SFX)
+  .then(response=>{
+    if(!response.ok)throw new Error("Arquivo do som do tomate não encontrado");
+    return response.text();
+  })
+  .then(base64=>{
+    splashSound.src="data:audio/mpeg;base64,"+base64.trim();
+    splashSound.load();
+  })
+  .catch(error=>console.warn("Efeito de tomate indisponível:",error));
 function playImpact(){
+  if(!splashSound.src)return;
   // Cópias independentes permitem impactos simultâneos de vários ouvintes.
   try{
     const sound=splashSound.cloneNode();
