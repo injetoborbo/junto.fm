@@ -39,6 +39,7 @@ module.exports=function setupAchievements(app,io,accountAuth){
   const interactions=new Map();
   const allowed=new Set(["tomato","chat","emojis","friends","skip"]);
   io.on("connection",socket=>{
+    if(socket.data.account?.id)void unlock(socket.data.account.id,"welcome",socket).catch(()=>{});
     socket.on("achievement-interaction",async({button}={})=>{
       if(!socket.data.room||!socket.data.account?.id||!allowed.has(button))return;
       const room=socket.data.room;
