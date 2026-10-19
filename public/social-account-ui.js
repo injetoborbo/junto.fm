@@ -40,13 +40,13 @@
  }).catch(()=>{});
  const $=id=>document.getElementById(id);
  const overlay=document.createElement("div");overlay.id="jfSocialDialog";overlay.className="jf-social-overlay";overlay.hidden=true;
- overlay.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfLocalTitle"><header><h2 id="jfLocalTitle">Criar conta</h2><button type="button" class="btn secondary" id="jfLocalClose">✕</button></header><form id="jfLocalForm"><label for="jfLocalEmail">E-mail</label><input id="jfLocalEmail" type="email" autocomplete="email" required maxlength="254"><label for="jfLocalPassword">Senha (mínimo de 8 caracteres)</label><input id="jfLocalPassword" type="password" autocomplete="new-password" minlength="8" maxlength="256" required><button class="btn" type="submit" id="jfLocalSubmit">Criar conta</button><p id="jfLocalMessage" role="status"></p></form></section>';
+ overlay.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfLocalTitle"><header><h2 id="jfLocalTitle">Criar conta</h2><button type="button" class="btn secondary" id="jfLocalClose">✕</button></header><form id="jfLocalForm"><label for="jfLocalUsername" id="jfLocalUsernameLabel">Nome de usuário único (@)</label><input id="jfLocalUsername" type="text" autocomplete="username" minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]{3,20}" placeholder="seu_usuario" required><label for="jfLocalEmail">E-mail</label><input id="jfLocalEmail" type="email" autocomplete="email" required maxlength="254"><label for="jfLocalPassword">Senha (mínimo de 8 caracteres)</label><input id="jfLocalPassword" type="password" autocomplete="new-password" minlength="8" maxlength="256" required><button class="btn" type="submit" id="jfLocalSubmit">Criar conta</button><p id="jfLocalMessage" role="status"></p></form></section>';
  document.body.appendChild(overlay);
  const achievements=document.createElement("div");achievements.id="jfAchievementsDialog";achievements.className="jf-social-overlay";achievements.hidden=true;
  achievements.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfAchievementsTitle"><header><h2 id="jfAchievementsTitle">🏅 Conquistas</h2><button type="button" class="btn secondary" id="jfAchievementsClose">✕</button></header><p class="small">Conquistas desbloqueadas ficam salvas na sua conta. As porcentagens mostram quantos usuários cadastrados conseguiram cada medalha.</p><div id="jfAchievementsList">Carregando...</div></section>';
  document.body.appendChild(achievements);
  let register=true;
- function showAuth(create){register=create;$("jfLocalTitle").textContent=create?"Criar conta Junto.fm":"Entrar na Junto.fm";$("jfLocalSubmit").textContent=create?"Criar conta":"Entrar";$("jfLocalPassword").setAttribute("autocomplete",create?"new-password":"current-password");$("jfLocalMessage").textContent="";overlay.hidden=false;$("jfLocalEmail").focus()}
+ function showAuth(create){register=create;$("jfLocalUsername").hidden=!create;$("jfLocalUsername").required=create;$("jfLocalUsernameLabel").hidden=!create;$("jfLocalTitle").textContent=create?"Criar conta Junto.fm":"Entrar na Junto.fm";$("jfLocalSubmit").textContent=create?"Criar conta":"Entrar";$("jfLocalPassword").setAttribute("autocomplete",create?"new-password":"current-password");$("jfLocalMessage").textContent="";overlay.hidden=false;$("jfLocalEmail").focus()}
  $("jfLocalRegisterOpen").onclick=()=>showAuth(true);
  $("jfLocalLoginOpen").onclick=()=>showAuth(false);
  $("jfLocalClose").onclick=()=>overlay.hidden=true;
@@ -55,8 +55,9 @@
   e.preventDefault();
   const button=$("jfLocalSubmit");button.disabled=true;$("jfLocalMessage").textContent="Verificando...";
   try{
-   const response=await fetch(register?"/api/account/register":"/api/account/login",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:$("jfLocalEmail").value,password:$("jfLocalPassword").value})});
+   const response=await fetch(register?"/api/account/register":"/api/account/login",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:$("jfLocalUsername").value,email:$("jfLocalEmail").value,password:$("jfLocalPassword").value})});
    const body=await response.json();if(!response.ok)throw Error(body.error||"Falha ao autenticar.");
+   if(body.verificationPending){$("jfLocalMessage").textContent=body.message||"Confira seu e-mail para confirmar a conta.";button.disabled=false;return;}
    location.reload();
   }catch(err){$("jfLocalMessage").textContent=err.message;}finally{button.disabled=false}
  };
