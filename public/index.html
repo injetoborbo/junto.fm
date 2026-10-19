@@ -8,7 +8,6 @@
 if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('jf-android-scale');
 </script>
 <title>Junto.fm — ouvir junto</title>
-<link rel="stylesheet" href="/kodoku.css">
 <style>
 :root{color-scheme:dark;--ink:#f7f4ff;--muted:#c4c6ed;--pink:#ff78d2;--cyan:#70f4ff;--blue:#7997ff;--line:#7678d8;--panel:#171638}
 *{box-sizing:border-box}
@@ -616,6 +615,8 @@ html[data-jf-theme="classic"] .track-times{
 .jf-rank-body{width:min(450px,100%);max-height:80dvh;overflow:auto;background:var(--jf-panel,#f4e4fa);color:var(--ink,#29213a);border:2px solid #c6a6d1;border-radius:15px;padding:20px;box-shadow:0 18px 65px #0008}
 .jf-rank-row{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #a990af66}
 </style>
+<!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
+<link rel="stylesheet" href="/kodoku.css">
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
