@@ -54,8 +54,21 @@ function sittingPose(){
       a.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length
     )[0];
     if(!clip?.tracks?.length)return null;
+    source.scene.updateMatrixWorld(true);
     const sourceBones=new Map();
     source.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
+    const hipBone=sourceBones.get("hips");
+    const hipPositionTrack=source.filename==="sentadobalanca.fbx"?
+      clip.tracks.find(track=>track.name.endsWith(".position")&&
+        boneKey(track.name.slice(0,track.name.lastIndexOf(".")))==="hips"):null;
+    const hipInterpolant=hipPositionTrack?.createInterpolant();
+    const initialHipPosition=hipInterpolant?.evaluate(0);
+    const hipPosition=initialHipPosition?.length===3&&hipBone?{
+      interpolant:hipInterpolant,
+      initial:new THREE.Vector3().fromArray(initialHipPosition),
+      sourceRest:hipBone.position.clone(),
+      sourceParentQuaternion:hipBone.parent.getWorldQuaternion(new THREE.Quaternion())
+    }:null;
     const time=Math.min(.5,clip.duration*.5);
     const changes=new Map(),animatedTracks=new Map();
     for(const track of clip.tracks){
@@ -72,8 +85,10 @@ function sittingPose(){
       if(source.filename==="sentadobalanca.fbx")
         animatedTracks.set(name,{sourceInverse,interpolant});
     }
-    console.info("Junto Club sentado:",source.filename,changes.size,"ossos; duracao:",clip.duration.toFixed(2),"s");
-    return changes.size>=5?{changes,animatedTracks,duration:clip.duration,filename:source.filename}:null;
+    console.info("Junto Club sentado:",source.filename,changes.size,
+      "ossos; translacao do quadril:",Boolean(hipPosition),
+      "duracao:",clip.duration.toFixed(2),"s");
+    return changes.size>=5?{changes,animatedTracks,hipPosition,duration:clip.duration,filename:source.filename}:null;
   })();
   return sittingPosePromise;
 }
@@ -152,6 +167,7 @@ const people=new Map();
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
 const sittingFrameQuaternion=new THREE.Quaternion();
+const seatedHipDelta=new THREE.Vector3();
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
@@ -308,6 +324,25 @@ async function putMember(id,details){
       entry.sitRotations=new Map();
       entry.sitTracks=new Map();
       entry.sitDuration=pose.duration;
+      entry.rig.updateMatrixWorld(true);
+      // O FBX move tambem o quadril: nao descartar essa faixa como antes.
+      // Transferir deslocamento RELATIVO ao primeiro quadro, jamais a posicao
+      // absoluta do Mixamo (evita jogar o macaco para fora da cadeira).
+      const targetHips=(()=>{let found=null;entry.rig.traverse(obj=>{
+        if(!found&&obj.isBone&&boneKey(obj.name)==="hips")found=obj;
+      });return found;})();
+      if(targetHips&&pose.hipPosition){
+        const sourceHip=pose.hipPosition;
+        const scale=THREE.MathUtils.clamp(
+          targetHips.position.length()/Math.max(sourceHip.sourceRest.length(),1e-6),.25,4);
+        const targetParentRotation=targetHips.parent.getWorldQuaternion(new THREE.Quaternion());
+        entry.sitHips={
+          bone:targetHips,rest:targetHips.position.clone(),
+          interpolant:sourceHip.interpolant,initial:sourceHip.initial,
+          scale,
+          alignment:targetParentRotation.invert().multiply(sourceHip.sourceParentQuaternion)
+        };
+      }
       entry.rig.traverse(bone=>{
         if(!bone.isBone)return;
         const name=boneKey(bone.name);
@@ -390,6 +425,20 @@ function animate(){
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking)p.root.rotation.y+=Math.atan2(Math.sin((d.seated?0:.65)-p.root.rotation.y),Math.cos((d.seated?0:.65)-p.root.rotation.y))*Math.min(1,dt*1.6);
     p.mixer?.update(dt);
+    if(p.sitHips){
+      const hip=p.sitHips;
+      hip.bone.position.copy(hip.rest);
+      if(d.seated&&!walking&&!p.action&&p.sitDuration>0){
+        const t=((time%p.sitDuration)+p.sitDuration)%p.sitDuration;
+        const sample=hip.interpolant.evaluate(t);
+        if(sample?.length===3){
+          seatedHipDelta.set(sample[0]-hip.initial.x,
+            sample[1]-hip.initial.y,sample[2]-hip.initial.z)
+            .applyQuaternion(hip.alignment).multiplyScalar(hip.scale);
+          hip.bone.position.add(seatedHipDelta);
+        }
+      }
+    }
     if(p.rig&&!p.action){
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
