@@ -509,28 +509,51 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 @media(max-width:540px){.jf-wardrobe-layout{grid-template-columns:1fr}.jf-wardrobe-preview{width:100%}}
 /* Friends drawer + lyrics */
 .jf-friends-launcher{right:90px}.jf-friends-drawer{right:90px}
-/* 🍅 para todos: launcher independente da pista e da área do admin. */
+/* Arremesso do canto inferior esquerdo para o mini-macaco do player. */
 #jfClubTomato.jf-tomato-launcher{
-  position:fixed;left:16px;right:auto;bottom:16px;
-  width:56px;height:56px;display:grid!important;place-items:center;
-  visibility:visible!important;opacity:1!important;
-  z-index:10021;font-size:30px;line-height:1;cursor:pointer;
-  background:var(--jf-primary);filter:none!important;
+  position:fixed;left:16px;right:auto;bottom:16px;z-index:10021;
+  width:60px;height:60px;padding:0;border:0;border-radius:0;
+  display:grid;place-items:center;cursor:pointer;background:none;
+  box-shadow:none;filter:drop-shadow(0 3px 5px #0009);
+  transition:transform .14s ease,filter .14s ease;
 }
-#jfClubTomato.jf-tomato-launcher[aria-disabled="true"]{opacity:.88!important}
-#jfClubTomato.jf-tomato-launcher:hover{transform:translateY(-2px)}
+#jfClubTomato.jf-tomato-launcher img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+#jfClubTomato.jf-tomato-launcher img[hidden],
+#jfClubTomato .jf-tomato-fallback[hidden]{display:none!important}
+#jfClubTomato .jf-tomato-fallback{font-size:42px;line-height:1}
+#jfClubTomato.jf-tomato-launcher:hover{transform:scale(1.12) rotate(-8deg);filter:drop-shadow(0 5px 10px #000a)}
+#jfClubTomato.jf-tomato-launcher:active{transform:scale(.92)}
+.jf-tomato-projectile{
+  position:fixed;left:0;top:0;width:72px;height:72px;z-index:12000;pointer-events:none;
+  object-fit:contain;filter:drop-shadow(-7px 3px 4px #21132477);
+  will-change:transform;user-select:none
+}
+.jf-tomato-splash{
+  position:absolute;left:50%;top:46%;width:116%;height:116%;object-fit:contain;
+  z-index:35;pointer-events:none;transform:translate(-50%,-50%) scale(.25);
+  opacity:0;animation:jfTomatoSplatter 1.25s both
+}
+.jf-dj-stage.jf-tomato-hit{animation:jfTomatoMonkeyHit .27s ease-in-out}
+@keyframes jfTomatoSplatter{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(-15deg)}
+  15%{opacity:1;transform:translate(-50%,-50%) scale(1.22) rotate(4deg)}
+  30%,75%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(1.04)}
+}
+@keyframes jfTomatoMonkeyHit{
+  0%,100%{translate:0 0}25%{translate:-5px 1px}55%{translate:5px -1px}80%{translate:-2px 0}
+}
+.jf-test-dj-btn{font-size:10px;padding:4px 6px;border:1px solid var(--jf-secondary,#9eb8ee);border-radius:5px;
+  color:var(--ink);background:var(--jf-panel,#293258);cursor:pointer;white-space:nowrap}
+.jf-test-dj-btn[hidden]{display:none!important}
 .jf-tomato-hint{
-  position:fixed;left:16px;bottom:83px;z-index:10022;max-width:min(290px,calc(100vw - 32px));
+  position:fixed;left:16px;bottom:83px;z-index:12002;max-width:min(290px,calc(100vw - 32px));
   padding:9px 12px;border-radius:9px;border:1px solid var(--jf-secondary,#8a9cea);
   background:#202044;color:#fff;font-size:12px;line-height:1.4;
   box-shadow:0 5px 17px #0006;pointer-events:none
 }
 .jf-tomato-hint[hidden]{display:none!important}
-@media(max-width:520px){
-  #jfClubTomato.jf-tomato-launcher{
-    left:16px;right:auto;bottom:16px;width:52px;height:52px;font-size:26px
-  }
-}
+@media(max-width:520px){#jfClubTomato.jf-tomato-launcher{left:12px;bottom:12px;width:52px;height:52px}.jf-tomato-projectile{width:62px;height:62px}}
 .jf-friends-drawer-content{padding:12px;overflow:auto;min-height:0;flex:1}
 .jf-friends-tabs{display:flex;gap:8px;margin:8px 0 12px;flex-wrap:wrap}
 .jf-friends-tab{padding:8px 12px!important;font-size:12px}.jf-friends-tab.active{outline:2px solid var(--jf-secondary);outline-offset:1px}
@@ -653,7 +676,7 @@ html[data-jf-theme="classic"] .track-times{
         </div>
         <div class="jf-mini-dj" id="jfMiniDj" hidden aria-label="Mini DJ de quem está transmitindo">
           <div class="jf-dj-stage" aria-hidden="true"></div>
-          <div class="jf-dj-caption"><span id="jfLiveBadge" hidden>AO VIVO</span><strong id="jfTransmitterName">Mascote Junto.fm</strong></div>
+          <div class="jf-dj-caption"><span id="jfLiveBadge" hidden>AO VIVO</span><strong id="jfTransmitterName">Mascote Junto.fm</strong><button type="button" id="jfClubTestDj" class="jf-test-dj-btn" hidden>🎧 Simular DJ</button></div>
         </div>
       </div>
     </div>
@@ -690,7 +713,7 @@ html[data-jf-theme="classic"] .track-times{
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8.3 8.3 0 0 1-3.3-.7L4 20l1.3-4.1a7.5 7.5 0 1 1 14.7-4.4Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
   <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
 </button>
-<button type="button" id="jfClubTomato" class="jf-chat-launcher jf-tomato-launcher" aria-label="Jogar tomate no DJ" aria-disabled="true" title="Jogar tomate no DJ">🍅</button>
+<button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
 <button type="button" id="jfFriendsLauncher" class="jf-chat-launcher jf-friends-launcher" aria-label="Abrir amigos" aria-expanded="false" aria-controls="jfFriendsDrawer" title="Amigos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg><span id="jfFriendsUnread" class="jf-chat-unread" aria-label="Solicitações pendentes"></span></button>
 <section id="jfFriendsDrawer" class="jf-chat-window jf-friends-drawer" aria-labelledby="jfFriendsDrawerHeading" hidden><header class="jf-chat-header"><div><h2 id="jfFriendsDrawerHeading" class="jf-chat-heading">Amigos</h2><div class="jf-chat-subheading">Online e solicitações</div></div><button type="button" id="jfFriendsDrawerClose" class="jf-chat-close" aria-label="Fechar amigos">×</button></header><div class="jf-friends-drawer-content"><button type="button" id="jfDrawerFriendsTab" hidden>Amigos</button><div id="jfDrawerFriendsList" class="jf-people"></div><div id="jfDrawerRequestsList" class="jf-people" hidden></div><div class="jf-friends-drawer-footer"><button class="btn secondary jf-friends-tab" id="jfDrawerRequestsTab" type="button">Pedidos <span id="jfDrawerRequestCount" class="jf-request-count" hidden>0</span></button></div><button type="button" id="jfManageFriends" hidden>Gerenciar amigos</button></div></section>
 <section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
@@ -805,7 +828,6 @@ html[data-jf-theme="classic"] .track-times{
     <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
     <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
     <div class="jf-dance-actions"><button type="button" class="btn secondary" id="jfSeatInspect">🔎 Ver cadeira ampliada</button></div>
-    <div class="jf-dance-actions" id="jfClubTestDjRow" hidden><button type="button" class="btn secondary" id="jfClubTestDj">🎧 Simular DJ (localhost)</button></div>
     <div class="jf-dance-actions" aria-label="Escolha sua dança">
       <button class="btn secondary active" data-jf-dance="idle" aria-pressed="true" type="button">🧍 Parado</button>
       <button class="btn secondary" data-jf-dance="shake" aria-pressed="false" type="button">🐒 Chacoalhar</button>
@@ -962,6 +984,7 @@ html[data-jf-theme="classic"] .track-times{
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
 <script type="module" src="/dance-floor.js"></script>
+<script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
   // Stable identity for one browser tab across a reload or reconnect.
@@ -1045,7 +1068,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       : "Mascote Junto.fm";
     // O mascote permanece no player; o selo vermelho só aparece durante uma transmissão.
     miniDj.hidden = false;
-    liveBadge.hidden = !active;
+    liveBadge.hidden = !active || Boolean(transmitter?.simulated);
     jfCurrentTransmitter=active?transmitter:null;
     $("jfTransmitterName").textContent = transmitterName;
     jfNotifyTransmitterAppearance();
