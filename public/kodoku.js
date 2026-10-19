@@ -77,5 +77,5 @@
     if(player&&!player.querySelector(".jf-kodoku-feature"))player.prepend(makeFeature());
   };
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{place();watchChat();decorateChatCorners()},{once:true});
-  else {place();watchChat()}
+  else {place();watchChat();decorateChatCorners()}
 })();
