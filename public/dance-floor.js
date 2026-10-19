@@ -15,7 +15,19 @@ const openButton=document.getElementById("jfOpenDance");
 const closeButton=document.getElementById("jfCloseDance");
 const choices=[...document.querySelectorAll("[data-jf-dance]")];
 const tomatoButton=document.getElementById("jfClubTomato");
-let djTargetId=null,tomatoCooldown=0;
+let djTargetId=null,tomatoCooldown=0,localTestDjId=null,realDjId=null;
+const testDjButton=document.getElementById("jfClubTestDj");
+const testDjRow=document.getElementById("jfClubTestDjRow");
+const localClubMode=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+if(testDjRow)testDjRow.hidden=!localClubMode;
+function updateDjTarget(){
+  djTargetId=realDjId||(localClubMode?localTestDjId:null);
+  if(testDjButton){
+    testDjButton.disabled=!active||Boolean(realDjId);
+    testDjButton.textContent=localTestDjId===socket?.id?"🎧 Desativar DJ simulado":"🎧 Simular DJ (localhost)";
+  }
+  refreshTomatoButton();
+}
 const tomatoShots=[];
 const animationFiles={
   shake:"/dance/macacochaqualha.glb",
@@ -791,7 +803,7 @@ function open(){
   void sittingPose();
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
-  try{sceneSetup();clock.start();animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
+  try{sceneSetup();clock.start();animate();socket.emit("dance-enter");updateDjTarget();setStatus("Entrando na pista...");}
   catch(error){console.error(error);setStatus("Não foi possível abrir a pista 3D.");close();}
 }
 function close(){
@@ -802,7 +814,7 @@ function close(){
     scene?.remove(shot.fruit);shot.crown.geometry.dispose();shot.crown.material.dispose();
     shot.geometry.dispose();shot.material.dispose();
   }
-  tomatoShots.length=0;refreshTomatoButton();
+  tomatoShots.length=0;localTestDjId=null;updateDjTarget();
   cancelAnimationFrame(frame);
   socket.emit("dance-exit");
   for(const id of [...people.keys()])removeMember(id);
@@ -1101,11 +1113,21 @@ tomatoButton?.addEventListener("click",()=>{
   refreshTomatoButton();
   socket.emit("club-tomato");
 });
-window.addEventListener("jf-player-monkey",event=>{
-  djTargetId=event.detail?.id||null;
-  refreshTomatoButton();
+testDjButton?.addEventListener("click",()=>{
+  if(!active||!localClubMode||realDjId)return;
+  socket.emit("club-test-dj-toggle");
 });
-djTargetId=window.jfLastTransmitterAppearance?.id||null;
+socket?.on("club-test-dj-update",({id})=>{
+  if(!localClubMode)return;
+  localTestDjId=id||null;
+  updateDjTarget();
+});
+window.addEventListener("jf-player-monkey",event=>{
+  realDjId=event.detail?.id||null;
+  updateDjTarget();
+});
+realDjId=window.jfLastTransmitterAppearance?.id||null;
+updateDjTarget();
 socket?.on("club-tomato-fired",shot=>spawnTomato(shot));
 socket?.on("dance-error",({message})=>{if(active)setStatus(message||"Não foi possível mover.");});
 socket?.on("room-kicked",close);
