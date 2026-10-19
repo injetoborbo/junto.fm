@@ -224,7 +224,7 @@ const sittingFrameQuaternion=new THREE.Quaternion();
 const seatedHipDelta=new THREE.Vector3();
 // Encaixe da cadeira, separado dos acessórios. Valores privados não são
 // enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
-const SEATED_DEFAULTS=Object.freeze({x:.12,y:.46,z:.13,yaw:0,lean:0,hip:0});
+const SEATED_DEFAULTS=Object.freeze({x:.12,y:.46,z:.25,yaw:0,lean:0,hip:0});
 const SEAT_MONKEY_STORAGE="jf_club_seated_monkey_fit_v1";
 const seatMonkeyRanges={
   x:[-.5,.5],y:[.30,1.50],z:[-.5,.5],
