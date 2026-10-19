@@ -28,6 +28,8 @@ const PORT = process.env.PORT || 3000;
 const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
+const roomSkipVotes = new Map();
+const roomBananas = new Map();
 const roomTransmitters = new Map();
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
@@ -388,6 +390,8 @@ function releaseRoomOwnership(room,departingId){
     roomOwners.delete(room);
     roomAccess.delete(room);
     roomTracks.delete(room);
+    roomSkipVotes.delete(room);
+    roomBananas.delete(room);
     roomChatMessages.delete(room);
     roomTomatoImpacts.delete(room);
   }
@@ -488,6 +492,42 @@ io.on("connection", socket => {
   });
   // Tomates são brincadeira visual: somente o transmissor atual pode ser alvo.
   // Nada de alvo arbitrário; o servidor valida sala, transmissão e cooldown.
+  // Uma votação por música. Em salas de duas pessoas ambos precisam votar.
+  function emitSkip(room){
+    const ids=io.sockets.adapter.rooms.get(room)||new Set();
+    const state=roomSkipVotes.get(room)||{key:"",voters:new Set()};
+    for(const id of state.voters)if(!ids.has(id))state.voters.delete(id);
+    const total=ids.size,required=total===2?2:Math.max(2,Math.ceil(total/2));
+    io.to(room).emit("skip-state",{votes:state.voters.size,total,required,approved:Boolean(state.approved)});
+  }
+  socket.on("skip-vote",()=>{
+    const room=socket.data.room;if(!room)return;
+    const track=roomTracks.get(room);
+    if(!track?.is_playing||!roomTransmitters.has(room))return socket.emit("skip-error",{message:"Não há música tocando."});
+    const key=track.id||track.uri||track.name+"|"+track.artists;
+    const state=roomSkipVotes.get(room);
+    if(!state||state.key!==key)roomSkipVotes.set(room,{key,voters:new Set(),approved:false});
+    const current=roomSkipVotes.get(room);
+    if(current.approved||current.voters.has(socket.id))return;
+    current.voters.add(socket.id);
+    const members=io.sockets.adapter.rooms.get(room)||new Set();
+    const needed=members.size===2?2:Math.max(2,Math.ceil(members.size/2));
+    if(current.voters.size>=needed){
+      current.approved=true;
+      const dj=roomTransmitters.get(room);
+      if(dj?.id)io.to(dj.id).emit("skip-approved",{key});
+    }
+    emitSkip(room);
+  });
+  socket.on("banana-throw",()=>{
+    const room=socket.data.room;if(!room)return;
+    if(isRateLimited(socket,"banana-throw",1,1200))return;
+    const old=roomBananas.get(room)||0;
+    if(old>=20)return;
+    const count=old+1;roomBananas.set(room,count);
+    io.to(room).emit("banana-thrown",{room,count,from:socket.id});
+    if(count===20)io.to(room).emit("banana-barrel-full",{room});
+  });
   socket.on("club-tomato",()=>{
     const room=socket.data.room;
     const dj=room&&roomTransmitters.get(room);
@@ -750,7 +790,8 @@ io.on("connection", socket => {
     const avatarSkins=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.avatarSkin==="capitao-patria"?"capitao-patria":"default"]));
     const clientIds=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.clientId||null]));
     const registeredPeers=Object.fromEntries(peers.map(id=>[id,Boolean(io.sockets.sockets.get(id)?.data.account)]));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null,bananaCount:roomBananas.get(room)||0 });
+    emitSkip(room);
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id, clientId:socket.data.clientId, registered:Boolean(socket.data.account) });
     notifyPresence();
@@ -793,6 +834,8 @@ io.on("connection", socket => {
     if (!socket.data.room || !payload || payload.room !== socket.data.room) return;
     if(roomTransmitters.get(socket.data.room)?.id!==socket.id)return;
     roomTracks.delete(socket.data.room);
+    roomSkipVotes.delete(socket.data.room);
+    io.to(socket.data.room).emit("skip-state",{votes:0,total:(io.sockets.adapter.rooms.get(socket.data.room)||new Set()).size,required:2});
     socket.to(socket.data.room).emit("track-clear");
   });
 
@@ -810,6 +853,8 @@ io.on("connection", socket => {
       progress_ms: Math.max(0, Math.min(Number(track.progress_ms) || 0, 24 * 60 * 60 * 1000)),
       is_playing: Boolean(track.is_playing), updated_at: Date.now()
     };
+    const previous=roomTracks.get(socket.data.room);
+    if((previous?.id||previous?.name)!==(safeTrack.id||safeTrack.name)){roomSkipVotes.delete(socket.data.room);emitSkip(socket.data.room);}
     roomTracks.set(socket.data.room, safeTrack);
     socket.to(socket.data.room).emit("track-update", safeTrack);
   });
@@ -939,6 +984,7 @@ io.on("connection", socket => {
     socket.to(room).emit("peer-left", { id: socket.id });
     const roomSet = io.sockets.adapter.rooms.get(room);
     io.to(room).emit("room-count", { count: roomSet ? roomSet.size : 0 });
+    emitSkip(room);
   });
 });
 
