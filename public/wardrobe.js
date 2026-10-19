@@ -245,14 +245,19 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   if(selection.hat==="caveira")installNewWearable("caveira",newHeadBone,{
     width:.66,offset:[0,.35,0],seatedOffset:{y:-.00015}
   });
-  if(selection.glasses==="sem_aro")installNewWearable("sem_aro",newHeadBone,{
-    width:.56,offset:[0,.16,.06],seatedOffset:{z:.00015}
-  });
+  // Na prévia do guarda-roupa, usar o MESMO ponto do Head, largura e
+  // alinhamento do óculos 3D novo também para os óculos antigos.
+  // No avatar animado, preservar a calibração sentada já aprovada.
+  if(selection.glasses==="sem_aro"||
+     (!animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
+    installNewWearable(selection.glasses,newHeadBone,{
+      width:.56,offset:[0,.16,.06],seatedOffset:{z:.00015}
+    });
   if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
     width:.58,offset:[0,.22,0],seatedOffset:{y:-.00010}
   });
   if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
-    width:.70,offset:[0,-.19,.01],seatedOffset:{y:.00010}
+    width:.70,offset:[0,-.24,.01],seatedOffset:{y:.00010}
   });
   if(selection.hat==="palha"||selection.hat==="branco"){
     const type=selection.hat;
@@ -285,7 +290,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       part.position.x=rawX;
     },true,headBone,null,{y:-.0004});
   }
-  if(selection.glasses!=="nenhum"&&selection.glasses!=="sem_aro"){
+  if(animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")){
     attachFitted(selection.glasses,(part,measure)=>{
       const s=.88;
       part.scale.setScalar(s);
