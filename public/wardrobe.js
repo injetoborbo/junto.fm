@@ -237,6 +237,39 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false}={}
       monkey.add(part);
       if(animated){
         if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{},seatedOffset||{});
+        // Os óculos clássicos usam um encaixe próprio calibrado para a pose
+        // Sitting Idle. Aplicar somente DIFERENÇAS do editor privado sobre
+        // essas matrizes: defaults não mudam o que já funciona na pista.
+        if(privateFit&&(file==="escuros"||file==="redondos")){
+          const follower=followers.find(item=>item.part===part);
+          const bind=bindMatrices.get(animatedAnchor);
+          if(follower&&bind){
+            const originalBind=follower.bindLocal.clone();
+            const originalSeated=follower.seatedLocal.clone();
+            const boneFromRoot=bind.clone().invert().multiply(rootBindWorld);
+            const rootOrigin=new THREE.Vector3().setFromMatrixPosition(boneFromRoot);
+            const delta=new THREE.Vector3();
+            const move=new THREE.Matrix4(),resize=new THREE.Matrix4();
+            const update=()=>{
+              if(!state.userData.active||!part.parent)return;
+              const def=FIT_DEFAULTS[file],fit=fittedItem(file,true);
+              delta.set(
+                fit.offset[0]-def.offset[0],
+                fit.offset[1]-def.offset[1],
+                fit.offset[2]-def.offset[2]
+              ).applyMatrix4(boneFromRoot).sub(rootOrigin);
+              move.makeTranslation(delta.x,delta.y,delta.z);
+              const ratio=fit.width/def.width;
+              resize.makeScale(ratio,ratio,ratio);
+              follower.bindLocal.copy(move).multiply(originalBind).multiply(resize);
+              follower.seatedLocal.copy(move).multiply(originalSeated).multiply(resize);
+              updateAccessories(isSeated);
+              render();
+            };
+            adjustableParts.push({file,update});
+            update();
+          }
+        }
       }else{
         monkey.updateMatrixWorld(true);
         if(followHead&&headBone)headBone.attach(part);
