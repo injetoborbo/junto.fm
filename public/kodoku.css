@@ -60,10 +60,10 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{
   position:absolute;display:block;width:53px;height:53px;opacity:.95;
   background-image:url("/kodoku_corner_hq3.png");background-size:contain;background-repeat:no-repeat;
 }
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tl{top:0;left:0}
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tr{top:0;right:0;transform:scaleX(-1)}
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-bl{bottom:0;left:0;transform:scaleY(-1)}
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-br{bottom:0;right:0;transform:scale(-1,-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tl{top:4px;left:4px}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tr{top:4px;right:4px;transform:scaleX(-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-bl{bottom:4px;left:4px;transform:scaleY(-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-br{bottom:4px;right:4px;transform:scale(-1,-1)}
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
   flex:0 0 auto;min-height:62px;padding:10px 62px;
   background:#030303!important;border-bottom:1px solid #777!important;
