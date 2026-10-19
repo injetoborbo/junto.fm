@@ -225,14 +225,14 @@ const seatedHipDelta=new THREE.Vector3();
 // Encaixe da cadeira, separado dos acessórios. Valores privados não são
 // enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
 const SEATED_DEFAULTS=Object.freeze({x:.10,y:.85,z:.28,yaw:0,lean:0,hip:0});
-// As casas lógicas continuam como identificadores sincronizados com o
-// servidor. wx/wz são coordenadas VISUAIS independentes: o lounge fica
-// encostado no canto sem trocar a ocupação de cada cadeira.
+// Restaurar o espaçamento original do lounge: 2 casas entre as cadeiras,
+// uma mesa centralizada e folga para os macacos sentados.
+// IDs lógicos seguem idênticos aos validados pelo servidor.
 const CLUB_SEATS=Object.freeze([
-  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2,wx:-2.18,wz:-2.18}),
-  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2,wx:-1.02,wz:-2.18})
+  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2,wx:-2.5,wz:-1.5}),
+  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2,wx:-.5,wz:-1.5})
 ]);
-const CLUB_TABLE=Object.freeze({x:1,z:1,wx:-1.60,wz:-2.18});
+const CLUB_TABLE=Object.freeze({x:1,z:1,wx:-1.5,wz:-1.5});
 const clubSeatAt=(x,z)=>CLUB_SEATS.find(seat=>seat.x===x&&seat.z===z)||null;
 // A calibração X/Z pertence à orientação do assento: acompanhá-la
 // quando a cadeira gira, para o macaco continuar encaixado.
