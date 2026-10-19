@@ -16,7 +16,7 @@
  .jf-achievement-row strong{display:block;margin-bottom:4px}
  .jf-achievement-row p{margin:0 0 4px;font-size:12px;line-height:1.5}
  .jf-social-toast{position:fixed;right:14px;bottom:84px;z-index:19001;background:#52341f;color:#ffebbb;border:2px ridge #dca753;border-radius:10px;padding:10px 15px;max-width:310px;box-shadow:0 5px 22px #0008}
- .jf-social-account-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+ .jf-social-account-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}\n .jf-community-top-dock{position:fixed;top:85px;left:16px;z-index:10016;display:flex;align-items:center;gap:7px;flex-wrap:wrap;max-width:calc(100vw - 32px)}\n .jf-community-top-dock .btn{margin:0!important;padding:8px 12px;font-size:12px;min-height:35px;box-shadow:0 3px 10px #0003}\n @media(max-width:600px){.jf-community-top-dock{top:72px;left:9px;gap:5px}.jf-community-top-dock .btn{font-size:11px;padding:7px 8px}}
  `;
  document.head.appendChild(style);
  const entry=document.getElementById("jfEntryAccount");
@@ -24,8 +24,12 @@
  actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen">Criar conta Junto.fm</button><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
  if(entry)entry.appendChild(actions);
  else document.querySelector("main")?.appendChild(actions);
- const inRoomButton=document.createElement("button");inRoomButton.type="button";inRoomButton.className="btn secondary";inRoomButton.id="jfAchievementsRoomOpen";inRoomButton.textContent="🏅 Conquistas";
- document.getElementById("jfOpenRank")?.insertAdjacentElement("afterend",inRoomButton);
+ const dock=document.createElement("nav");dock.className="jf-community-top-dock";dock.setAttribute("aria-label","Ranking e conquistas");
+ const rankButton=document.getElementById("jfOpenRank");
+ const achievementsButton=document.getElementById("jfAchievementsOpen");
+ if(rankButton)dock.append(rankButton);
+ if(achievementsButton)dock.append(achievementsButton);
+ document.body.appendChild(dock);
  fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json()).then(data=>{
   const registered=Boolean(data.loggedIn);
   document.getElementById("jfLocalRegisterOpen").hidden=registered;
@@ -71,7 +75,7 @@
   }catch(err){list.textContent=err.message}
  }
  $("jfAchievementsOpen").onclick=openAchievements;
- inRoomButton.onclick=openAchievements;
+
  $("jfAchievementsClose").onclick=()=>achievements.hidden=true;
  achievements.onclick=e=>{if(e.target===achievements)achievements.hidden=true};
  // O visitante pode ver a lista, mas somente contas autenticadas desbloqueiam.
