@@ -371,25 +371,6 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 .jf-dance-actions button{font-size:12px;padding:8px 11px}
 .jf-dance-actions button.active{outline:2px solid #185bb3;outline-offset:2px}
 .jf-dance-help{text-align:center;margin:10px auto 0;max-width:620px}
-.jf-seat-inspect-overlay{position:fixed;inset:0;display:grid;place-items:center;background:#000b;z-index:1300;padding:16px}
-.jf-seat-inspect-overlay[hidden]{display:none!important}
-.jf-seat-inspect-panel{width:min(650px,96vw);max-height:94dvh;overflow:auto;background:var(--jf-panel,#e6eff9);border:2px solid var(--jf-secondary,#5f90c8);border-radius:12px;padding:12px;box-shadow:0 20px 65px #0009;color:var(--ink)}
-.jf-seat-inspect-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
-.jf-seat-inspect-viewport{height:min(68dvh,570px);min-height:300px;overflow:hidden;background:#0b142b;border-radius:9px;touch-action:none}
-.jf-seat-inspect-viewport canvas{width:100%;height:100%;display:block}
-.jf-seat-inspect-panel .small{margin:8px 0 0}
-.jf-seat-calibration{margin-top:9px;border:1px solid var(--jf-secondary,#749cc7);border-radius:8px;padding:8px;background:var(--jf-glow,#d9e8ff);font-size:12px;color:var(--ink)}
-.jf-seat-calibration summary{cursor:pointer;font-weight:800}
-.jf-seat-build{font-size:10px;opacity:.7}
-.jf-seat-calibration-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
-.jf-seat-calibration-grid label{display:flex;flex-direction:column;gap:5px;min-width:0}
-.jf-seat-calibration-grid input{width:100%;accent-color:var(--jf-secondary,#316eb1)}
-.jf-seat-calibration-grid output{font-variant-numeric:tabular-nums;font-family:monospace}
-.jf-seat-calibration-actions{display:flex;gap:6px;flex-wrap:wrap}
-.jf-seat-calibration-actions button{font-size:11px;padding:6px 10px}
-@media(max-width:450px){.jf-seat-calibration-grid{grid-template-columns:1fr}}
-
-
 @media(max-width:600px){.jf-dance-modal{padding:9px!important}.jf-dance-stage{min-height:210px;aspect-ratio:4/3;max-height:41dvh}.jf-dance-toolbar{font-size:11px}.jf-dance-launch{bottom:10px;left:10px}#jfDanceModal{bottom:8px;left:8px;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}#jfDanceModal .jf-dance-modal{max-height:calc(100dvh - 16px)}}
 body:not(.jf-in-room) .jf-topbar{justify-content:center}
 body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
@@ -781,7 +762,6 @@ html[data-jf-theme="classic"] .track-times{
     <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 Junto Club</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
     <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
     <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
-    <div class="jf-dance-actions"><button type="button" class="btn secondary" id="jfSeatInspect">🔎 Ver cadeira ampliada</button></div>
     <div class="jf-dance-actions" aria-label="Escolha sua dança">
       <button class="btn secondary active" data-jf-dance="idle" aria-pressed="true" type="button">🧍 Parado</button>
       <button class="btn secondary" data-jf-dance="shake" aria-pressed="false" type="button">🐒 Chacoalhar</button>
@@ -791,41 +771,6 @@ html[data-jf-theme="classic"] .track-times{
       <button class="btn secondary" data-jf-dance="groove" aria-pressed="false" type="button">🎉 Dança 2</button>
     </div>
     <p class="small jf-dance-help">Clique em um quadrado vazio para o macaco andar até lá. Cada pessoa escolhe sua própria dança, que aparece para todos na mesma sala.</p>
-  </section>
-</div>
-<div id="jfSeatInspectModal" class="jf-seat-inspect-overlay" hidden>
-  <section class="jf-seat-inspect-panel" role="dialog" aria-modal="true" aria-label="Inspecionar macaco sentado">
-    <div class="jf-seat-inspect-header"><strong>🐒 Macaco sentado · Visualização ampliada</strong><button type="button" class="btn secondary" id="jfSeatInspectClose">✕ Fechar</button></div>
-    <div id="jfSeatInspectViewport" class="jf-seat-inspect-viewport"></div>
-    <details class="jf-seat-calibration">
-      <summary>🕶️ Ajustar óculos ao vivo <span class="jf-seat-build">· encaixe salvo</span></summary>
-      <p class="small">O ajuste acontece imediatamente no macaco REAL da pista. Gire a câmera para conferir o encaixe de frente e de lado.</p>
-      <p class="small" id="jfSeatGlassesDiagnostics" role="status" aria-live="polite">Verificando o acessório...</p>
-      <div class="jf-seat-calibration-grid">
-        <label>Esquerda / direita <input id="jfSeatGlassesX" type="range" min="-0.003" max="0.003" step="0.0001" value="-0.0002"><output id="jfSeatGlassesXValue">-0.0002</output></label>
-        <label>Altura <input id="jfSeatGlassesY" type="range" min="-0.003" max="0.003" step="0.0001" value="-0.0011"><output id="jfSeatGlassesYValue">-0.0011</output></label>
-        <label>Frente / trás <input id="jfSeatGlassesZ" type="range" min="-0.003" max="0.003" step="0.0001" value="-0.0024"><output id="jfSeatGlassesZValue">-0.0024</output></label>
-      </div>
-      <div class="jf-seat-calibration-actions"><button type="button" id="jfSeatGlassesPreset" class="btn secondary">Comparar sem ajuste</button><button type="button" id="jfSeatGlassesReset" class="btn secondary">Voltar ao ajuste salvo</button><button type="button" id="jfSeatGlassesCopy" class="btn secondary">Copiar ajustes</button></div>
-    </details>
-    <details id="jfSeatMonkeyCalibration" class="jf-seat-calibration" hidden>
-      <summary>🐒 Ajustar macaco sentado ao vivo <span class="jf-seat-build">· somente você</span></summary>
-      <p class="small">Ajuste seu macaco na cadeira enquanto observa a cena real. Não altera o encaixe dos óculos, nem a posição dos outros participantes. Salva neste navegador.</p>
-      <div class="jf-seat-calibration-grid">
-        <label>Lateral (X) <input id="jfSeatMonkeyX" type="range" min="-0.50" max="0.50" step="0.01" value="0.06"><output id="jfSeatMonkeyXValue">0.06</output></label>
-        <label>Altura (Y) <input id="jfSeatMonkeyY" type="range" min="0.30" max="1.50" step="0.01" value="0.84"><output id="jfSeatMonkeyYValue">0.84</output></label>
-        <label>Frente / trás (Z) <input id="jfSeatMonkeyZ" type="range" min="-0.50" max="0.50" step="0.01" value="-0.03"><output id="jfSeatMonkeyZValue">-0.03</output></label>
-        <label>Virar macaco (°) <input id="jfSeatMonkeyYaw" type="range" min="-180" max="180" step="1" value="0"><output id="jfSeatMonkeyYawValue">0°</output></label>
-        <label>Inclinar corpo (°) <input id="jfSeatMonkeyLean" type="range" min="-35" max="35" step="1" value="0"><output id="jfSeatMonkeyLeanValue">0°</output></label>
-        <label>Balanço do quadril <input id="jfSeatMonkeyHip" type="range" min="0" max="1.50" step="0.05" value="0.55"><output id="jfSeatMonkeyHipValue">0.55</output></label>
-      </div>
-      <div class="jf-seat-calibration-actions">
-        <button type="button" id="jfSeatMonkeyReset" class="btn secondary">Restaurar posição padrão</button>
-        <button type="button" id="jfSeatMonkeyCopy" class="btn secondary">Copiar valores</button>
-      </div>
-      <p id="jfSeatMonkeyStatus" class="small" role="status" aria-live="polite">Arraste os controles para ajustar.</p>
-    </details>
-    <p class="small">Arraste para girar a câmera. Use a rodinha do mouse para aproximar.</p>
   </section>
 </div>
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
