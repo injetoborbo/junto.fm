@@ -758,6 +758,8 @@ const fitInputs=Object.fromEntries(fitInputNames.map(name=>[name,$("jfFit"+name)
 const fitOptions={
   caveira:["hat","caveira"],
   sem_aro:["glasses","sem_aro"],
+  escuros:["glasses","escuros"],
+  redondos:["glasses","redondos"],
   fone_novo:["headphones","preto"],
   vestido_novo:["outfit","rosa_novo"]
 };
@@ -791,7 +793,7 @@ function preferredFitItem(){
   // Priorizar o último item selecionado no guarda-roupa.
   if(editing.headphones==="preto")return "fone_novo";
   if(editing.outfit==="rosa_novo")return "vestido_novo";
-  if(editing.glasses==="sem_aro")return "sem_aro";
+  if(["sem_aro","escuros","redondos"].includes(editing.glasses))return editing.glasses;
   if(editing.hat==="caveira")return "caveira";
   return "fone_novo";
 }
