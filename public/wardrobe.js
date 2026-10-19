@@ -54,6 +54,22 @@ function getBone(root,part){
   });
   return bone;
 }
+// O GLTFLoader normaliza nomes (por exemplo, "mixamorig:Head" pode
+// virar "mixamorigHead"). O resolvedor legado exige ":" e falha,
+// deixando os acessórios soltos no grupo do macaco.
+// Usar identificação canônica APENAS nos avatares animados por ora.
+function getAnimatedBone(root,part){
+  const expected=String(part).replace(/[^a-z0-9]/gi,"").toLowerCase();
+  let result=null;
+  root.traverse(obj=>{
+    if(result||!obj.isBone)return;
+    const basename=String(obj.name||"").split(/[|/:]/).pop();
+    const canonical=basename.replace(/^mixamorig\d*/i,"")
+      .replace(/[^a-z0-9]/gi,"").toLowerCase();
+    if(canonical===expected)result=obj;
+  });
+  return result;
+}
 function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
@@ -67,11 +83,13 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   const monkeyBindWorld=monkey.matrixWorld.clone();
   const rootBindWorld=root.matrixWorld.clone();
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
-  const headBone=getBone(monkey,"Head");
-  const topBone=getBone(monkey,"HeadTop_End");
-  const neckBone=getBone(monkey,"Neck");
-  const torsoBone=getBone(monkey,"Spine2")||getBone(monkey,"Spine");
-  const hipBone=getBone(monkey,"Hips");
+  const findBone=animated?getAnimatedBone:getBone;
+  const headBone=findBone(monkey,"Head");
+  const topBone=findBone(monkey,"HeadTop_End");
+  const neckBone=findBone(monkey,"Neck");
+  const torsoBone=findBone(monkey,"Spine2")||findBone(monkey,"Spine");
+  const hipBone=findBone(monkey,"Hips");
+  if(animated&&!headBone)console.error("Guarda-roupa 3D: osso Head ausente.",monkey.name);
   const bindMatrices=new Map(),followers=[];
   let isSeated=false;
   const glassesCalibration={x:0,y:0,z:0};
@@ -87,7 +105,8 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   };
   const getGlassesDiagnostics=()=>{
     const eyewear=followers.find(({part})=>part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos");
-    if(!eyewear)return {loaded:false,requested:selection.glasses,seated:isSeated};
+    if(!eyewear)return {loaded:false,requested:selection.glasses,seated:isSeated,
+      headBone:headBone?.name||null,attached:followers.map(({part})=>part.name)};
     monkey.updateMatrixWorld(true);
     const world=eyewear.part.getWorldPosition(new THREE.Vector3());
     const center=eyewear.bone.getWorldPosition(new THREE.Vector3());
