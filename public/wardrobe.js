@@ -1,6 +1,7 @@
 /* Guarda-roupa 3D público. Cada participante possui seu próprio macaco. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
 import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 
 const OPTIONS={
@@ -584,18 +585,25 @@ function loadPlayerSittingPose(){
   }
   return playerSittingPosePromise;
 }
-// A Junto Club usa sitting-idle; quando o GLB não estiver instalado,
-// a prévia recorre ao female-sitting existente, sinalizando a diferença.
+// Usar a mesma animacao sentadobalanca.fbx da Junto Club quando instalada.
+// Se nao houver arquivo local, manter a pose antiga e depois female-sitting.
 let wardrobeSittingPosePromise=null;
 function loadWardrobeSittingPose(){
-  if(!wardrobeSittingPosePromise)
-    wardrobeSittingPosePromise=new GLTFLoader().loadAsync("/poses/sitting-idle.glb")
-      .then(gltf=>({gltf,matchingClub:true}))
-      .catch(()=>loadPlayerSittingPose().then(gltf=>({gltf,matchingClub:false})));
+  if(!wardrobeSittingPosePromise){
+    const converter=new FBXLoader();
+    wardrobeSittingPosePromise=converter.loadAsync("/poses/sentadobalanca.fbx")
+      .then(scene=>({gltf:{scene,animations:scene.animations},matchingClub:true}))
+      .catch(()=>new GLTFLoader().loadAsync("/poses/sitting-idle.glb")
+        .then(gltf=>({gltf,matchingClub:false}))
+        .catch(()=>loadPlayerSittingPose().then(gltf=>({gltf,matchingClub:false}))));
+  }
   return wardrobeSittingPosePromise;
 }
 function applyPlayerSittingPose(monkey,source){
-  const clip=source?.animations?.find(anim=>anim.tracks?.length);
+  const clip=[...(source?.animations||[])].sort((a,b)=>
+    b.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length-
+    a.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length
+  )[0];
   if(!clip){console.warn("Pose sentada: GLB sem animação utilizável.");return false;}
   const targets=new Map();
   const clean=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
@@ -865,8 +873,8 @@ window.addEventListener("jf-wardrobe-seat-preview",event=>{
   if(fitPose!=="seated"||!fitAccess)return;
   const {applied,matchingClub}=event.detail||{};
   if(!applied)setFitStatus("Não foi possível carregar a pose sentada nesta versão.");
-  else if(!matchingClub)setFitStatus("Prévia sentada alternativa: o arquivo /poses/sitting-idle.glb da Junto Club ainda não está nesta instalação.");
-  else setFitStatus("Prévia com a pose Sitting Idle da Junto Club. Ajuste o vestido sem afetar o modelo em pé.");
+  else if(!matchingClub)setFitStatus("Prévia sentada alternativa: instale sentadobalanca.fbx em public/poses para testar a animação nova.");
+  else setFitStatus("Prévia com a pose sentadobalanca da Junto Club (quadro de referência). Ajuste o vestido sem afetar o modelo em pé.");
 });
 const fitInputNames=["Width","X","Y","Z"];
 const fitInputs=Object.fromEntries(fitInputNames.map(name=>[name,$("jfFit"+name)]));
