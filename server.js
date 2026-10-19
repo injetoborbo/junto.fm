@@ -88,7 +88,7 @@ async function validSpotifyAccessToken(session) {
 app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
-require("./listening-leaderboard")(app,io,roomTransmitters);
+require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready);
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/room-status/:room",(req,res)=>{
