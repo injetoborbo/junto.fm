@@ -31,6 +31,11 @@ const holder=widget.querySelector("#jfBananaBarrel"),count=widget.querySelector(
 let joined=false,number=0,room=null,lastClick=0,liquid=null,level=0,target=0,ripple=0,barrelReady=false,flightModel=null,THREE=null,flightRenderer=null,flightScene=null,flightCamera=null,flightLayer=null,iconRenderer=null,iconScene=null,iconCamera=null,iconModel=null;
 const clamp=n=>Math.min(15,Math.max(0,Number(n)||0));
 const setCount=value=>{number=clamp(value);target=number/15;count.textContent=number+"/15 🍌";button.hidden=!joined;button.disabled=!joined||number>=15;};
+// Modelos 3D só são baixados quando alguém realmente entra em uma sala.
+let barrelLoadStarted=false;
+async function initializeBarrel3D(){
+ if(barrelLoadStarted)return;
+ barrelLoadStarted=true;
 try{
  THREE=await import("https://esm.sh/three@0.170.0");
  const {GLTFLoader}=await import("https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
@@ -93,6 +98,7 @@ try{
  }
  render();
 }catch(err){console.warn("Barril 3D aguardando GLB:",err);holder.textContent="🛢️";}
+}
 function fly(){
  if(!barrelReady||!flightModel||!THREE)return;
  const targetBox=holder.getBoundingClientRect(),sourceBox=button.getBoundingClientRect();
@@ -118,7 +124,7 @@ function fly(){
  requestAnimationFrame(step);
 }
 button.onclick=()=>{if(!joined||number>=15||Date.now()-lastClick<1200)return;lastClick=Date.now();socket.emit("banana-throw");};
-socket.on("joined-room",data=>{joined=true;room=data.room;setCount(data.bananaCount||0)});
+socket.on("joined-room",data=>{joined=true;room=data.room;setCount(data.bananaCount||0);void initializeBarrel3D();});
 socket.on("banana-thrown",data=>{if(!joined||data.room!==room)return;fly();setCount(data.count);ripple=1;});
 socket.on("banana-error",data=>{button.title=data?.message||"Aguarde"});
 socket.on("banana-reset",data=>{if(!joined||data.room!==room)return;setCount(0);ripple=.8;button.title="Lançar banana no barril";});
