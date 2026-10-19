@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://esm.sh" crossorigin>
+<link rel="dns-prefetch" href="//esm.sh">
 <script>
 // Aplica escala visual de 75% somente em navegadores Android.
 if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('jf-android-scale');
@@ -437,6 +439,7 @@ html[data-jf-theme="classic"] .jf-chat-status{padding:0 10px 7px;background:#ece
 .jf-dj-stage{position:relative;width:160px;height:164px;min-height:164px;perspective:none;isolation:isolate;overflow:visible}
 .jf-dj-stage:before{content:"";position:absolute;left:18px;right:18px;bottom:8px;height:24px;border-radius:50%;background:color-mix(in srgb,var(--jf-glow) 55%,transparent);filter:blur(7px)}
 .jf-glb-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:4;pointer-events:none}
+.jf-dj-stage:not(.jf-glb-ready)::after{content:"Carregando mascote 3D…";position:absolute;inset:0;z-index:6;display:grid;place-items:center;text-align:center;font-size:11px;font-weight:700;color:var(--ink,#eee);opacity:.8;pointer-events:none}
 .jf-dj-caption{max-width:100%;text-align:center;line-height:1.25;display:grid;gap:3px}
 .jf-dj-caption span{font-size:8px;letter-spacing:1.4px;font-weight:900;color:#e53935}.jf-dj-caption span[hidden]{display:none!important}
 .jf-dj-caption strong{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--ink)}
