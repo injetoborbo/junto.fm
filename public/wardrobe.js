@@ -36,6 +36,37 @@ const ASSETS={
   hero:"/patrianocape_pose_heroica_final.glb",
   heroCape:"/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb"
 };
+// Encaixes dos GLBs recentes. O vestido usa a profundidade (Z=0)
+// calibrada manualmente pelo criador, não a antiga posição .06.
+const FIT_DEFAULTS=Object.freeze({
+  caveira:{width:.66,offset:[0,.35,0]},
+  sem_aro:{width:.56,offset:[0,.16,.06]},
+  fone_novo:{width:.58,offset:[0,.34,0]},
+  vestido_novo:{width:.70,offset:[0,-.24,0]}
+});
+const FIT_STORAGE="jf_wardrobe_private_fit_v1";
+const localDevelopment=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
+let fitAccess=localDevelopment;
+let privateFits={};
+function cleanFit(file,value){
+  const base=FIT_DEFAULTS[file];
+  if(!base)return null;
+  const n=(v,fallback,min,max)=>Number.isFinite(Number(v))?THREE.MathUtils.clamp(Number(v),min,max):fallback;
+  const offset=Array.isArray(value?.offset)?value.offset:base.offset;
+  return {width:n(value?.width,base.width,.20,1.30),
+    offset:base.offset.map((v,i)=>n(offset[i],v,-.60,.60))};
+}
+function loadPrivateFits(){
+  if(!fitAccess)return;
+  try{
+    const data=JSON.parse(localStorage.getItem(FIT_STORAGE)||"{}");
+    if(data&&typeof data==="object"&&!Array.isArray(data))
+      for(const file of Object.keys(FIT_DEFAULTS))
+        if(data[file])privateFits[file]=cleanFit(file,data[file]);
+  }catch(error){console.warn("Editor de trajes: calibração local inválida.",error);}
+}
+if(fitAccess)loadPrivateFits();
+const fittedItem=(file,enabled)=>enabled&&fitAccess?(privateFits[file]||FIT_DEFAULTS[file]):FIT_DEFAULTS[file];
 const assetCache=new Map(),loader=new GLTFLoader();
 function getAsset(name){
   if(!ASSETS[name])return Promise.resolve(null);
