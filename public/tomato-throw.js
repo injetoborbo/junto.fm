@@ -10,6 +10,17 @@ const testButton=document.getElementById("jfClubTestDj");
 const localTest=["localhost","127.0.0.1","::1","[::1]"].includes(location.hostname);
 const IMAGE_FLY="/tomato/tomate-inteiro.png";
 const IMAGE_SPLASH="/tomato/tomate-impacto.png";
+const IMPACT_SFX="/sfx/cartoonsplash.mp3";
+const splashSound=new Audio(IMPACT_SFX);
+splashSound.preload="auto";
+function playImpact(){
+  // Cópias independentes permitem impactos simultâneos de vários ouvintes.
+  try{
+    const sound=splashSound.cloneNode();
+    sound.volume=.7;
+    sound.play().catch(()=>{}); // Alguns navegadores exigem interação prévia para áudio.
+  }catch(error){console.debug("Áudio do tomate indisponível:",error);}
+}
 let djId=null,testDjId=null,cooldownUntil=0,hintTimeout=0;
 const livingShots=new Set();
 
@@ -43,32 +54,38 @@ function updateButton(){
     testButton.textContent=testDjId===socket?.id?"🎧 Desativar DJ de teste":"🎧 Simular DJ";
   }
 }
-function targetCenter(){
+function targetCenter(hit){
   const rect=stage.getBoundingClientRect();
-  return {x:rect.left+rect.width*.50,y:rect.top+rect.height*.46};
+  const ux=Number.isFinite(hit?.x)?Math.max(.28,Math.min(.72,hit.x)):.5;
+  const uy=Number.isFinite(hit?.y)?Math.max(.24,Math.min(.72,hit.y)):.46;
+  return {x:rect.left+rect.width*ux,y:rect.top+rect.height*uy,ux,uy};
 }
-function splatter(){
+function splatter(hit){
   if(!stage||!stage.isConnected||miniDj.hidden)return;
+  const position=targetCenter(hit);
   const splash=document.createElement("img");
   splash.className="jf-tomato-splash";
   splash.src=IMAGE_SPLASH;
   splash.alt="";
   splash.setAttribute("aria-hidden","true");
+  // Posição em percentual: segue o ponto de impacto mesmo em telas menores.
+  splash.style.left=(position.ux*100)+"%";
+  splash.style.top=(position.uy*100)+"%";
   splash.onerror=()=>{
-    // Fallback até o usuário copiar as duas PNGs para public/tomato.
     splash.remove();
     const fallback=document.createElement("span");
     fallback.className="jf-tomato-splash";
     fallback.textContent="💥";
-    fallback.style.cssText+=";display:grid;place-items:center;font-size:80px";
+    fallback.style.cssText+=";display:grid;place-items:center;font-size:42px";
+    fallback.style.left=(position.ux*100)+"%";
+    fallback.style.top=(position.uy*100)+"%";
     stage.append(fallback);
-    setTimeout(()=>fallback.remove(),1250);
+    setTimeout(()=>fallback.remove(),950);
   };
   stage.append(splash);
-  stage.classList.remove("jf-tomato-hit");
-  void stage.offsetWidth;
-  stage.classList.add("jf-tomato-hit");
-  setTimeout(()=>{splash.remove();stage.classList.remove("jf-tomato-hit");},1250);
+  playImpact();
+  // O impacto não reposiciona nem interfere na animação do macaquinho 3D.
+  setTimeout(()=>splash.remove(),950);
 }
 function sprite(){
   const img=document.createElement("img");
@@ -89,7 +106,7 @@ function sprite(){
   };
   return img;
 }
-function launch(allowScroll=true){
+function launch(hit,allowScroll=true){
   if(!button||!stage||miniDj.hidden||!bridge?.getRoom?.())return;
   if(livingShots.size>=8)return;
   // Se o player estiver fora da tela, centralize-o antes do lançamento,
@@ -97,12 +114,12 @@ function launch(allowScroll=true){
   const viewport=stage.getBoundingClientRect();
   if(allowScroll&&(viewport.bottom<40||viewport.top>innerHeight-40)){
     stage.scrollIntoView({behavior:"smooth",block:"center"});
-    setTimeout(()=>launch(false),330);
+    setTimeout(()=>launch(hit,false),330);
     return;
   }
   const bounds=button.getBoundingClientRect();
   const start={x:bounds.left+bounds.width*.5,y:bounds.top+bounds.height*.5};
-  const end=targetCenter();
+  const end=targetCenter(hit);
   const distance=Math.hypot(end.x-start.x,end.y-start.y);
   const flightMs=Math.max(285,Math.min(680,distance/1.65));
   const lift=Math.min(120,Math.max(35,distance*.1));
@@ -119,7 +136,7 @@ function launch(allowScroll=true){
     const t=Math.min(1,(now-begun)/flightMs);
     // Arrancada rápida, aproximação veloz com desaceleração curta no impacto.
     const p=1-Math.pow(1-t,2.35);
-    const dest=targetCenter();
+    const dest=targetCenter(hit);
     const x=start.x+(dest.x-start.x)*p;
     const y=start.y+(dest.y-start.y)*p-lift*Math.sin(Math.PI*p);
     const scale=(.58+.54*p)*(window.innerWidth<=520?.86:1);
@@ -127,7 +144,7 @@ function launch(allowScroll=true){
     const transform=`translate3d(${(x-size/2).toFixed(2)}px,${(y-size/2).toFixed(2)}px,0) rotate(${degrees.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
     shot.element.style.transform=transform;
     if(t<1)requestAnimationFrame(next);
-    else{shot.element.remove();livingShots.delete(shot);splatter();}
+    else{shot.element.remove();livingShots.delete(shot);splatter(hit);}
   }
   requestAnimationFrame(next);
 }
@@ -156,9 +173,9 @@ socket?.on("club-test-dj-update",({id})=>{
   testDjId=id||null;
   updateButton();
 });
-socket?.on("club-tomato-fired",({to})=>{
+socket?.on("club-tomato-fired",({to,hit})=>{
   if(!to||!bridge?.getRoom?.())return;
-  launch();
+  launch(hit);
 });
 socket?.on("club-tomato-error",({message:detail})=>{
   cooldownUntil=0;updateButton();
