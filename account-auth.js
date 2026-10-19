@@ -64,7 +64,8 @@ module.exports=function setupAccounts(app){
     const response=await fetch("https://api.resend.com/emails",{
       method:"POST",headers:{"Authorization":"Bearer "+mailKey,"Content-Type":"application/json"},
       body:JSON.stringify({from:mailFrom,to:[email],subject:"Confirme seu e-mail na Junto.fm",
-        text:"Olá, @"+username+"! Confirme seu e-mail acessando o link abaixo (válido por 24 horas):\\n"+link+"\\nSe não foi você, ignore esta mensagem."})
+        text:"Olá, @"+username+"!\n\nConfirme seu e-mail pelo link abaixo (válido por 24 horas):\n"+link+"\n\nSe não foi você, ignore esta mensagem.",
+        html:`<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px;color:#202033"><h2>Bem-vindo à Junto.fm! 🐒</h2><p>Olá, @${username}!</p><p>Confirme seu e-mail para ativar sua conta. Este link vale por 24 horas.</p><p style="margin:28px 0"><a href="${link}" style="background:#5046a8;color:white;padding:14px 20px;text-decoration:none;border-radius:8px;font-weight:bold">Confirmar meu e-mail</a></p><p>Se o botão não funcionar, copie este endereço:</p><p style="overflow-wrap:anywhere"><a href="${link}">${link}</a></p><p style="color:#777;font-size:12px">Se não foi você, ignore esta mensagem.</p></div>`})
     });
     if(!response.ok)throw Error("O serviço de e-mail recusou o envio ("+response.status+").");
   }
