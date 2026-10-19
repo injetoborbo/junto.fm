@@ -16,7 +16,10 @@
  .jf-achievement-row strong{display:block;margin-bottom:4px}
  .jf-achievement-row p{margin:0 0 4px;font-size:12px;line-height:1.5}
  .jf-social-toast{position:fixed;right:14px;bottom:84px;z-index:19001;background:#52341f;color:#ffebbb;border:2px ridge #dca753;border-radius:10px;padding:10px 15px;max-width:310px;box-shadow:0 5px 22px #0008}
- .jf-social-account-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}\n .jf-community-top-dock{position:fixed;top:85px;left:16px;z-index:10016;display:flex;align-items:center;gap:7px;flex-wrap:wrap;max-width:calc(100vw - 32px)}\n .jf-community-top-dock .btn{margin:0!important;padding:8px 12px;font-size:12px;min-height:35px;box-shadow:0 3px 10px #0003}\n @media(max-width:600px){.jf-community-top-dock{top:72px;left:9px;gap:5px}.jf-community-top-dock .btn{font-size:11px;padding:7px 8px}}
+ .jf-social-account-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+ .jf-community-top-dock{position:fixed;top:16px;left:20px;z-index:10016;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 40px)}
+ .jf-community-top-dock .btn{margin:0!important;padding:8px 10px;font-size:12px;min-height:36px;box-shadow:0 3px 10px #0003;white-space:nowrap}
+ @media(max-width:600px){.jf-community-top-dock{top:10px;left:10px;gap:5px}.jf-community-top-dock .btn{font-size:11px;padding:7px 8px}}
  `;
  document.head.appendChild(style);
  const entry=document.getElementById("jfEntryAccount");
