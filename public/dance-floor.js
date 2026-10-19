@@ -252,6 +252,41 @@ function loadSeatMonkeyFit(){
 }
 if(seatMonkeyAccess)loadSeatMonkeyFit();
 const seatSettingsFor=id=>seatMonkeyAccess&&id===socket?.id?seatMonkeyValues:SEATED_DEFAULTS;
+// Os modelos novos sao assets independentes. O clone protege o cache ao
+// reabrir a Junto Club; descartamos carregamentos de cenas ja fechadas.
+const furnitureAssets=new Map();
+function getClubFurniture(file){
+  if(!furnitureAssets.has(file)){
+    const loading=gltfLoader.loadAsync("/club/"+file).catch(error=>{
+      furnitureAssets.delete(file);
+      throw error;
+    });
+    furnitureAssets.set(file,loading);
+  }
+  return furnitureAssets.get(file);
+}
+function installClubFurniture({file,sceneBoard,worldScene,x,z,height,rotation=0,seat=false}){
+  getClubFurniture(file).then(gltf=>{
+    if(!active||scene!==worldScene||board!==sceneBoard)return;
+    const item=gltf.scene.clone(true);
+    const bounds=new THREE.Box3().setFromObject(item);
+    if(bounds.isEmpty())throw Error("Modelo sem geometria: "+file);
+    const extent=bounds.getSize(new THREE.Vector3());
+    const center=bounds.getCenter(new THREE.Vector3());
+    // As pecas vieram normalizadas num cubo ~1.9; usar altura real
+    // torna a cadeira e a mesinha proporcionais ao macaco e ao piso.
+    const scale=height/Math.max(extent.y,.0001);
+    item.name=seat?"jfClubChair":"jfClubTable";
+    item.scale.setScalar(scale);
+    item.rotation.y=rotation;
+    item.position.set(x-center.x*scale,-.08-bounds.min.y*scale,z-center.z*scale);
+    sceneBoard.add(item);
+    if(seat)item.traverse(node=>{if(node.isMesh)chairs.push(node);});
+  }).catch(error=>{
+    console.warn("Junto Club: nao foi possivel carregar "+file,error);
+    if(active&&scene===worldScene)setStatus("Móvel 3D ausente: public/club/"+file+". Extraia o pacote de móveis no projeto.");
+  });
+}
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
@@ -300,14 +335,18 @@ function sceneSetup(){
     const trim=cube(.92,.012,.92,trimMat,x-2.5,-.078,z-2.5,board);
     trim.userData.jfDanceGlow={x,z};
   }
-  // Cadeira na casa (4,4), com assento e encosto clicáveis.
-  const chairGroup=new THREE.Group();chairGroup.position.set(1.5,-.04,1.5);chairGroup.scale.setScalar(.68);board.add(chairGroup);
-  scene.userData.seatChair=chairGroup;
-  const chairMat=mat(0x355a89,.42,.37),chairLeg=mat(0x162943,.75,.28);
-  cube(.94,.16,.84,chairMat,0,.35,0,chairGroup);
-  cube(.94,1.13,.15,chairMat,0,.89,-.39,chairGroup);
-  for(const x of [-.36,.36])for(const z of [-.29,.29])cube(.10,.52,.10,chairLeg,x,.02,z,chairGroup);
-  chairGroup.traverse(obj=>{if(obj.isMesh)chairs.push(obj);});
+  // Móveis originais do criador: substituir TOTALMENTE a cadeira em cubos.
+  // Cadeira na casa (4,4): preserva clique nos meshes e o evento dance-sit.
+  // Mesa na casa (3,4), ao lado, sem interferir nos controles de sentar.
+  const furnitureScene=scene,furnitureBoard=board;
+  installClubFurniture({
+    file:"cadeirabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
+    x:1.5,z:1.5,height:1.16,seat:true
+  });
+  installClubFurniture({
+    file:"mesabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
+    x:.5,z:1.5,height:.78
+  });
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
   cube(6.7,2.35,.18,wall,0,.96,-3.12);
   cube(.18,2.35,6.7,wall,-3.12,.96,0);
@@ -892,7 +931,12 @@ viewport?.addEventListener("pointerup",e=>{
   raycaster.setFromCamera(pointer,camera);
   if(raycaster.intersectObjects(chairs).length){socket.emit("dance-sit");return;}
   const hit=raycaster.intersectObjects(tiles)[0];
-  if(hit){const {x,z}=hit.object.userData.tile;if(x===4&&z===4)socket.emit("dance-sit");else socket.emit("dance-move",{x,z});}
+  if(hit){
+    const {x,z}=hit.object.userData.tile;
+    if(x===4&&z===4)socket.emit("dance-sit");
+    else if(x===3&&z===4)setStatus("Essa casa está ocupada pela mesinha da balada.");
+    else socket.emit("dance-move",{x,z});
+  }
 });
 socket?.on("dance-state",({room:joinedRoom,participants=[]})=>{
   if(!active||joinedRoom!==room)return;
