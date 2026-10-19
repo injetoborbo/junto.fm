@@ -41,6 +41,8 @@ const ASSETS={
 const FIT_DEFAULTS=Object.freeze({
   caveira:{width:.66,offset:[0,.35,0]},
   sem_aro:{width:.56,offset:[0,.16,.06]},
+  escuros:{width:.56,offset:[0,.16,.06]},
+  redondos:{width:.56,offset:[0,.16,.06]},
   fone_novo:{width:.58,offset:[0,.34,0]},
   vestido_novo:{width:.70,offset:[0,-.24,0]}
 });
@@ -109,7 +111,7 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey,{animated=false}={}){
+function dress(root,selection,render,monkey,{animated=false,privateFit=false}={}){
   // Capturar o bind pose ANTES das animações. As promessas de GLB podem
   // resolver com o avatar andando/sentado; nesse caso attach() simples
   // preservaria uma posição antiga num esqueleto já animado.
@@ -250,46 +252,75 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     const mat=bindMatrices.get(bone);
     return mat?new THREE.Vector3().setFromMatrixPosition(mat).applyMatrix4(rootBindInverse):new THREE.Vector3();
   };
-  const installNewWearable=(file,bone,{width,offset,seatedOffset={}})=>{
+  const adjustableParts=[];
+  const onFitUpdated=event=>{
+    const file=event.detail?.file;
+    for(const binding of adjustableParts)
+      if(!file||file===binding.file)binding.update();
+  };
+  if(privateFit&&fitAccess)window.addEventListener("jf-private-fit-updated",onFitUpdated);
+  const installNewWearable=(file,bone,{seatedOffset={}}={})=>{
     getAsset(file).then(asset=>{
       if(!asset||!state.userData.active||!bone)return;
       const part=asset.clone(true);
       part.name="jfWardrobe_"+file;
       const measure=getBounds(part);
-      const scale=width/Math.max(measure.size.x,1e-6);
-      const target=restInRoot(bone).add(new THREE.Vector3(...offset));
-      part.scale.setScalar(scale);
-      part.position.set(target.x-measure.center.x*scale,
-        target.y-measure.center.y*scale,
-        target.z-measure.center.z*scale);
       state.add(part);
+      // A peça fica no espaço do osso; ao editar, recalculamos o encaixe
+      // sem recriar o renderer ou fazer um novo download do GLB.
       if(animated)attachAtBind(part,bone,rootBindWorld,{},seatedOffset);
-      else{
-        root.updateMatrixWorld(true);
-        monkey.updateMatrixWorld(true);
-        bone.attach(part);
-      }
-      updateAccessories(isSeated);
-      render();
+      else bone.add(part);
+      const boneBind=bindMatrices.get(bone);
+      const rootPart=new THREE.Matrix4(),toBone=new THREE.Matrix4();
+      const tmpPosition=new THREE.Vector3(),tmpScale=new THREE.Vector3();
+      const identityRotation=new THREE.Quaternion(),tmpRotation=new THREE.Quaternion();
+      const update=()=>{
+        if(!state.userData.active||!part.parent)return;
+        const params=fittedItem(file,privateFit);
+        const sc=params.width/Math.max(measure.size.x,1e-6);
+        const target=restInRoot(bone).add(new THREE.Vector3(...params.offset));
+        tmpPosition.set(target.x-measure.center.x*sc,
+          target.y-measure.center.y*sc,target.z-measure.center.z*sc);
+        tmpScale.setScalar(sc);
+        rootPart.compose(tmpPosition,identityRotation,tmpScale);
+        if(animated){
+          const follower=followers.find(item=>item.part===part);
+          if(!follower||!boneBind)return;
+          toBone.copy(boneBind).invert().multiply(rootBindWorld).multiply(rootPart);
+          follower.bindLocal.copy(toBone);
+          toBone.decompose(tmpPosition,tmpRotation,tmpScale);
+          tmpPosition.x+=seatedOffset.x||0;
+          tmpPosition.y+=seatedOffset.y||0;
+          tmpPosition.z+=seatedOffset.z||0;
+          follower.seatedLocal.compose(tmpPosition,tmpRotation,tmpScale);
+          updateAccessories(isSeated);
+        }else{
+          root.updateWorldMatrix(true,true);
+          bone.updateWorldMatrix(true,false);
+          toBone.copy(bone.matrixWorld).invert()
+            .multiply(root.matrixWorld).multiply(rootPart);
+          toBone.decompose(part.position,part.quaternion,part.scale);
+          part.updateMatrix();
+        }
+        render();
+      };
+      adjustableParts.push({file,update});
+      update();
     });
   };
   if(selection.hat==="caveira")installNewWearable("caveira",newHeadBone,{
-    width:.66,offset:[0,.35,0],seatedOffset:{y:-.00015}
+    seatedOffset:{y:-.00015}
   });
-  // Na prévia do guarda-roupa, usar o MESMO ponto do Head, largura e
-  // alinhamento do óculos 3D novo também para os óculos antigos.
-  // No avatar animado, preservar a calibração sentada já aprovada.
   if(selection.glasses==="sem_aro"||
      (!animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
     installNewWearable(selection.glasses,newHeadBone,{
-      width:.56,offset:[0,.16,.06],seatedOffset:{z:.00015}
+      seatedOffset:{z:.00015}
     });
   if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
-    width:.58,offset:[0,.34,0],seatedOffset:{y:-.00010}
+    seatedOffset:{y:-.00010}
   });
-  // Neste GLB, mover no sentido +Z recua o vestido em relação ao macaco.
   if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
-    width:.70,offset:[0,-.24,.06],seatedOffset:{y:.00010}
+    seatedOffset:{y:.00010}
   });
   if(selection.hat==="palha"||selection.hat==="branco"){
     const type=selection.hat;
@@ -369,6 +400,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   }
   return Object.assign(()=>{
     state.userData.active=false;
+    if(privateFit)window.removeEventListener("jf-private-fit-updated",onFitUpdated);
     // As geometrias GLB são compartilhadas com os outros usuários;
     // descarte apenas os materiais clonados dos fones.
     monkey.traverse(obj=>{
