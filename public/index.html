@@ -825,8 +825,8 @@ body.jf-in-room #jfHomeSocial{display:none!important}
     </div>
     <div class="status"><span class="dot"></span><span id="commandStatus">Nenhum comando recebido.</span></div>
     <div class="jf-suggestion-settings">
-      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox"> Adicionar pedidos automaticamente à fila do meu Spotify</label>
-      <p class="small">O DJ conecta o Spotify, começa a transmitir e ativa a fila. Pedidos dos ouvintes entram automaticamente na fila real do Spotify (requer Premium e dispositivo ativo).</p>
+      <label class="jf-check-label" for="jfReceiveSuggestions"><input id="jfReceiveSuggestions" type="checkbox" checked> Adicionar pedidos automaticamente à fila do meu Spotify</label>
+      <p class="small">A fila fica habilitada por padrão quando o DJ transmite com Spotify conectado (requer Premium e dispositivo ativo). Desmarque para não aceitar pedidos.</p>
     </div>
     <div class="jf-suggest-form">
       <label for="jfSuggestionText">Pedir música na fila do DJ</label>
@@ -1901,7 +1901,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     $("commandStatus").textContent = command === 'pause' ? 'O transmissor pediu para pausar a música.' : 'O transmissor pediu para passar à próxima música.';
     setStatus('Comando recebido. O controle da música ainda é manual neste protótipo.', true);
   });
-  let jfSuggestionEnabled=false,jfSelectedSong=null,jfSongSearchTimer=null,jfSongSearchSeq=0,jfSongPending=false;
+  let jfSuggestionEnabled=true,jfSelectedSong=null,jfSongSearchTimer=null,jfSongSearchSeq=0,jfSongPending=false;
   function jfSongStatus(message){$("jfSuggestionStatus").textContent=message;}
   function jfUpdateSuggestionControls(){
     $("jfSendSuggestion").disabled=!joined||jfSongPending||$("jfSuggestionText").value.trim().length<2;
@@ -1982,9 +1982,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }
   });
   socket.on("suggestion-settings-result",({enabled,error}={})=>{
-    jfSuggestionEnabled=Boolean(enabled);$("jfReceiveSuggestions").checked=jfSuggestionEnabled;
+    // O servidor informa o estado efetivo; não desmarca uma preferência do DJ
+    // quando ele ainda não começou a transmitir.
+    $("jfReceiveSuggestions").checked=jfSuggestionEnabled;
     if(error)jfSongStatus(error);
-    else if(jfSuggestionEnabled)jfSongStatus("Fila automática ativada: pedidos entram no Spotify do DJ.");
+    else if(enabled)jfSongStatus("Fila automática ativada: pedidos entram no Spotify do DJ.");
+    else if(!jfSuggestionEnabled)jfSongStatus("Fila de pedidos desativada.");
   });
   socket.on("music-suggestion-error",({error}={})=>{
     jfSongPending=false;jfUpdateSuggestionControls();
