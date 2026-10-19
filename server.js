@@ -392,6 +392,8 @@ const isClubFurnitureTile=(x,z)=>
   (x===CLUB_TABLE.x&&z===CLUB_TABLE.z);
 // Simulação de DJ exclusivamente para testes locais, sem transmitir áudio.
 const localClubDjs=new Map();
+// Quatro impactos recentes por sala, apenas para afastar explosões sobrepostas.
+const roomTomatoImpacts=new Map();
 function isLocalClubTester(socket){
   const address=String(socket.handshake.address||socket.request.socket?.remoteAddress||"");
   const host=String(socket.handshake.headers?.host||"").split(":")[0].toLowerCase();
@@ -510,7 +512,22 @@ io.on("connection", socket => {
       return socket.emit("club-tomato-error",{message:"O DJ saiu da sala."});
     if(isRateLimited(socket,"club-tomato",1,5000))
       return socket.emit("club-tomato-error",{message:"Espere 5 segundos para jogar outro tomate."});
-    io.to(room).emit("club-tomato-fired",{from:socket.id,to:targetId});
+    // O servidor sorteia a posição para todos verem exatamente o mesmo acerto.
+    // Evita que arremessos seguidos acertem quase o mesmo pixel.
+    const latest=roomTomatoImpacts.get(room)||[];
+    const now=Date.now();
+    const nearby=latest.filter(v=>now-v.time<3500).slice(-4);
+    let hit;
+    let bestDistance=-1;
+    for(let attempt=0;attempt<24;attempt++){
+      const candidate={x:.28+Math.random()*.44,y:.24+Math.random()*.48};
+      const closest=nearby.length?Math.min(...nearby.map(v=>Math.hypot(candidate.x-v.x,candidate.y-v.y))):1;
+      if(closest>bestDistance){hit=candidate;bestDistance=closest;}
+      if(closest>=.18)break;
+    }
+    hit={x:Number(hit.x.toFixed(4)),y:Number(hit.y.toFixed(4))};
+    roomTomatoImpacts.set(room,[...nearby,{...hit,time:now}].slice(-4));
+    io.to(room).emit("club-tomato-fired",{from:socket.id,to:targetId,hit});
   });
   socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
 
