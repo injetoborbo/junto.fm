@@ -45,8 +45,16 @@ html[data-jf-theme="kodoku"] #jfChatWindow{
   width:min(360px,calc(100vw - 28px));height:min(480px,calc(100dvh - 120px));
   min-height:0;box-sizing:border-box;padding:0;overflow:hidden;
   display:flex;flex-direction:column;
-  border:1px solid #f0f0f0!important;border-radius:2px!important;
-  background:#030303!important;box-shadow:0 12px 36px #000c!important;
+  border:0!important;border-radius:0!important;
+  background:#030303!important;box-shadow:none!important;outline:0!important;
+}
+/* No Kodoku, nenhuma borda do layout antigo disputa com o PNG. */
+html[data-jf-theme="kodoku"] #jfChatWindow :is(.jf-chat-header,.jf-chat-log,.jf-chat-tools,.jf-chat-form,.jf-chat-status){
+  border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow :is(.jf-chat-header,.jf-chat-log,.jf-chat-tools,.jf-chat-form,.jf-chat-status)::before,
+html[data-jf-theme="kodoku"] #jfChatWindow :is(.jf-chat-header,.jf-chat-log,.jf-chat-tools,.jf-chat-form,.jf-chat-status)::after{
+  box-shadow:none!important;border:0!important;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow[hidden]{display:none!important}
 html[data-jf-theme="kodoku"] #jfChatWindow::before,
@@ -59,7 +67,7 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-chat-frame{
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
   flex:0 0 auto;min-height:62px;padding:10px 62px;
-  background:#030303!important;border-bottom:1px solid #777!important;
+  background:#030303!important;border:0!important;box-shadow:none!important;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header .jf-chat-close{
   flex-shrink:0;position:relative;z-index:31;
@@ -72,7 +80,7 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-tools{flex:0 0 auto;backgrou
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form{
   flex:0 0 auto;display:flex;align-items:center;gap:8px;
   padding:9px 10px!important;background:#030303!important;
-  border-top:1px solid #777!important;
+  border:0!important;box-shadow:none!important;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form input{
   flex:1 1 auto;min-width:0;width:auto!important;background:#000!important;color:#fff!important;
