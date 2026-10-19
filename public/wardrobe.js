@@ -591,11 +591,13 @@ let wardrobeSittingPosePromise=null;
 function loadWardrobeSittingPose(){
   if(!wardrobeSittingPosePromise){
     const converter=new FBXLoader();
-    wardrobeSittingPosePromise=converter.loadAsync("/poses/sentadobalanca.fbx")
+    wardrobeSittingPosePromise=converter.loadAsync("/poses/sentadotryfix.fbx")
       .then(scene=>({gltf:{scene,animations:scene.animations},matchingClub:true}))
-      .catch(()=>new GLTFLoader().loadAsync("/poses/sitting-idle.glb")
-        .then(gltf=>({gltf,matchingClub:false}))
-        .catch(()=>loadPlayerSittingPose().then(gltf=>({gltf,matchingClub:false}))));
+      .catch(()=>converter.loadAsync("/poses/sentadobalanca.fbx")
+        .then(scene=>({gltf:{scene,animations:scene.animations},matchingClub:false}))
+        .catch(()=>new GLTFLoader().loadAsync("/poses/sitting-idle.glb")
+          .then(gltf=>({gltf,matchingClub:false}))
+          .catch(()=>loadPlayerSittingPose().then(gltf=>({gltf,matchingClub:false})))));
   }
   return wardrobeSittingPosePromise;
 }
@@ -889,8 +891,8 @@ window.addEventListener("jf-wardrobe-seat-preview",event=>{
   if(fitPose!=="seated"||!fitAccess)return;
   const {applied,matchingClub}=event.detail||{};
   if(!applied)setFitStatus("Não foi possível carregar a pose sentada nesta versão.");
-  else if(!matchingClub)setFitStatus("Prévia sentada alternativa: instale sentadobalanca.fbx em public/poses para testar a animação nova.");
-  else setFitStatus("Prévia com a pose sentadobalanca da Junto Club (quadro de referência). Ajuste o vestido sem afetar o modelo em pé.");
+  else if(!matchingClub)setFitStatus("Prévia sentada alternativa: instale sentadotryfix.fbx em public/poses para testar a nova pose.");
+  else setFitStatus("Prévia sentadotryfix (quadro de referência). O balanço completo aparece na Junto Club.");
 });
 const fitInputNames=["Width","X","Y","Z"];
 const fitInputs=Object.fromEntries(fitInputNames.map(name=>[name,$("jfFit"+name)]));
