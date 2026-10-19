@@ -958,8 +958,7 @@ html[data-jf-theme="classic"] .track-times{
   const $ = id => document.getElementById(id);
   const shareWrap=document.getElementById("jfShareRoom");
   const rankingDialog=document.getElementById("jfRankDialog");
-  document.getElementById("jfOpenRank").onclick=async()=>{
-    rankingDialog.hidden=false;
+  async function jfRefreshRanking(){
     const content=document.getElementById("jfRankContent");
     content.textContent="Carregando...";
     try{
@@ -977,6 +976,9 @@ html[data-jf-theme="classic"] .track-times{
       }
     }catch(e){content.textContent=e.message;}
   };
+  document.getElementById("jfOpenRank").onclick=()=>{rankingDialog.hidden=false;jfRefreshRanking();};
+  // Reconsulta o ranking a cada hora enquanto o painel estiver aberto.
+  setInterval(()=>{if(!rankingDialog.hidden)jfRefreshRanking();},60*60*1000);
   document.getElementById("jfCloseRank").onclick=()=>rankingDialog.hidden=true;
   rankingDialog.addEventListener("click",e=>{if(e.target===rankingDialog)rankingDialog.hidden=true;});
   // Só emitir batimento quando o próprio áudio capturado/reproduzido está ativo.
@@ -1528,7 +1530,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null,ownerId=null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; shareWrap.hidden=false; history.replaceState({}, "", "/"+encodeURIComponent(joinedRoom)); jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; shareWrap.hidden=false; if(location.pathname!=="/"+encodeURIComponent(joinedRoom))history.pushState({jfRoom:joinedRoom}, "", "/"+encodeURIComponent(joinedRoom)); jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -1635,7 +1637,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }else resetSession();
     if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
     window.dispatchEvent(new Event("jf-dance-room-left"));
-    joined=false;room="";shareWrap.hidden=true;history.replaceState({}, "", "/");jfRoomOwnerId=null;jfRoomOwner=false;
+    joined=false;room="";shareWrap.hidden=true;if(location.pathname!=="/")history.replaceState({}, "", "/");
+    try{sessionStorage.removeItem("jfSpotifyReturnRoom");sessionStorage.removeItem("jfSpotifyReturnPassword");}catch(_){}jfRoomOwnerId=null;jfRoomOwner=false;
     $("room").value="";
     $("remoteAudio").pause();$("remoteAudio").srcObject=null;
     jfRenderMiniDj(null);renderTrack(null);
@@ -1648,6 +1651,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     setStatus(reason||(socket.connected?"Você saiu da sala. Crie ou entre em outra sala.":"Desconectado do servidor."));
   }
   $("jfLeaveRoom").onclick=()=>jfLeaveCurrentRoom();
+  window.addEventListener("popstate",()=>{if(joined&&location.pathname!=="/"+encodeURIComponent(room))jfLeaveCurrentRoom();else if(!joined&&location.pathname!=="/")history.replaceState({}, "", "/");});
   socket.on("room-kicked",({room:kickedRoom,message}={})=>{
     if(joined&&room===kickedRoom)jfLeaveCurrentRoom({notifyServer:false,reason:message||"Você foi removido desta sala."});
   });
