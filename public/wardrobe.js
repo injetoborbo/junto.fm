@@ -836,12 +836,38 @@ if(document.readyState==="complete"){
 }
 const selectors=Object.fromEntries(Object.keys(OPTIONS).map(k=>[k,$("jfWardrobe"+k[0].toUpperCase()+k.slice(1))]));
 const preview=$("jfWardrobePreview");
+let fitPose="standing";
 function showPreview(){
   previewRenderer?.dispose();
-  previewRenderer=makeScene(preview,editing,{preview:true});
+  previewRenderer=makeScene(preview,editing,{preview:true,previewSeated:fitAccess&&fitPose==="seated"&&editing.outfit==="rosa_novo"});
 }
 
 const fitPanel=$("jfWardrobeFitEditor"),fitItem=$("jfFitItem"),fitStatus=$("jfFitStatus");
+const fitPosePicker=$("jfFitPosePicker"),fitTiltWrap=$("jfFitTiltWrap");
+const fitTilt=$("jfFitTilt"),fitTiltValue=$("jfFitTiltValue");
+const fitStandingButton=$("jfFitStanding"),fitSittingButton=$("jfFitSitting");
+const sittingDressSelected=()=>fitItem?.value==="vestido_novo";
+const isEditingSittingDress=()=>fitPose==="seated"&&sittingDressSelected();
+function setFitPose(next){
+  const pose=next==="seated"&&sittingDressSelected()?"seated":"standing";
+  const changed=fitPose!==pose;
+  fitPose=pose;
+  if(fitStandingButton)fitStandingButton.setAttribute("aria-pressed",String(pose==="standing"));
+  if(fitSittingButton)fitSittingButton.setAttribute("aria-pressed",String(pose==="seated"));
+  if(fitTiltWrap)fitTiltWrap.hidden=pose!=="seated";
+  if(changed&&fitAccess)showPreview();
+  showFitValues();
+  if(changed&&pose==="seated")setFitStatus("Carregando a pose sentada na prévia...");
+}
+fitStandingButton?.addEventListener("click",()=>setFitPose("standing"));
+fitSittingButton?.addEventListener("click",()=>setFitPose("seated"));
+window.addEventListener("jf-wardrobe-seat-preview",event=>{
+  if(fitPose!=="seated"||!fitAccess)return;
+  const {applied,matchingClub}=event.detail||{};
+  if(!applied)setFitStatus("Não foi possível carregar a pose sentada nesta versão.");
+  else if(!matchingClub)setFitStatus("Prévia sentada alternativa: o arquivo /poses/sitting-idle.glb da Junto Club ainda não está nesta instalação.");
+  else setFitStatus("Prévia com a pose Sitting Idle da Junto Club. Ajuste o vestido sem afetar o modelo em pé.");
+});
 const fitInputNames=["Width","X","Y","Z"];
 const fitInputs=Object.fromEntries(fitInputNames.map(name=>[name,$("jfFit"+name)]));
 const fitOptions={
@@ -856,9 +882,11 @@ function setFitStatus(message){if(fitStatus)fitStatus.textContent=message;}
 function showFitValues(){
   if(!fitItem||!fitAccess)return;
   const file=fitItem.value;
-  const params=fittedItem(file,true);
+  const params=fittedItem(file,true,isEditingSittingDress());
   if(!params)return;
   const values={Width:params.width,X:params.offset[0],Y:params.offset[1],Z:params.offset[2]};
+  if(fitTilt)fitTilt.value=String(params.pitch||0);
+  if(fitTiltValue)fitTiltValue.textContent=String(params.pitch||0)+"°";
   for(const name of fitInputNames){
     if(fitInputs[name])fitInputs[name].value=String(values[name]);
     const output=$("jfFit"+name+"Value");
@@ -868,7 +896,9 @@ function showFitValues(){
 function focusFitItem(file,{equip=false}={}){
   if(!fitAccess||!fitItem||!fitOptions[file])return;
   fitItem.value=file;
-  showFitValues();
+  if(fitPosePicker)fitPosePicker.hidden=file!=="vestido_novo";
+  if(file!=="vestido_novo"&&fitPose==="seated")setFitPose("standing");
+  else showFitValues();
   if(equip){
     const [slot,value]=fitOptions[file];
     if(editing[slot]!==value){
@@ -888,27 +918,39 @@ function preferredFitItem(){
 }
 function persistPrivateFit(file,data){
   if(!fitAccess||!FIT_DEFAULTS[file])return;
-  privateFits[file]=cleanFit(file,data);
-  try{localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));}
-  catch(error){setFitStatus("Não consegui salvar os ajustes neste navegador.");}
+  try{
+    if(file==="vestido_novo"&&isEditingSittingDress()){
+      privateSeatFits.vestido_novo=cleanSeatedFit(file,data);
+      localStorage.setItem(FIT_SEATED_STORAGE,JSON.stringify(privateSeatFits));
+    }else{
+      privateFits[file]=cleanFit(file,data);
+      localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));
+    }
+  }catch(error){setFitStatus("Não consegui salvar os ajustes neste navegador.");}
   window.dispatchEvent(new CustomEvent("jf-private-fit-updated",{detail:{file}}));
 }
 function editSelectedFit(){
   if(!fitAccess||!fitItem)return;
   const file=fitItem.value;
   const data={width:Number(fitInputs.Width?.value),
-    offset:["X","Y","Z"].map(axis=>Number(fitInputs[axis]?.value))};
+    offset:["X","Y","Z"].map(axis=>Number(fitInputs[axis]?.value)),
+    pitch:isEditingSittingDress()?Number(fitTilt?.value):0};
   persistPrivateFit(file,data);
   showFitValues();
   setFitStatus("Ajuste aplicado ao vivo e salvo neste navegador. Os outros jogadores não recebem essas mudanças.");
 }
 for(const name of fitInputNames)
   fitInputs[name]?.addEventListener("input",editSelectedFit);
+fitTilt?.addEventListener("input",editSelectedFit);
 fitItem?.addEventListener("change",()=>focusFitItem(fitItem.value,{equip:true}));
 $("jfFitReset")?.addEventListener("click",()=>{
   if(!fitAccess||!fitItem)return;
-  delete privateFits[fitItem.value];
-  try{localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));}
+  if(isEditingSittingDress())delete privateSeatFits.vestido_novo;
+  else delete privateFits[fitItem.value];
+  try{
+    if(isEditingSittingDress())localStorage.setItem(FIT_SEATED_STORAGE,JSON.stringify(privateSeatFits));
+    else localStorage.setItem(FIT_STORAGE,JSON.stringify(privateFits));
+  }
   catch(error){setFitStatus("Não consegui salvar neste navegador.");}
   window.dispatchEvent(new CustomEvent("jf-private-fit-updated",{detail:{file:fitItem.value}}));
   showFitValues();
@@ -916,9 +958,10 @@ $("jfFitReset")?.addEventListener("click",()=>{
 });
 $("jfFitCopy")?.addEventListener("click",async()=>{
   if(!fitAccess||!fitItem)return;
-  const file=fitItem.value,fit=fittedItem(file,true);
-  const value=file+": width:"+fit.width.toFixed(2)+", offset:["+
-    fit.offset.map(n=>n.toFixed(2)).join(",")+"]";
+  const file=fitItem.value,fit=fittedItem(file,true,isEditingSittingDress());
+  const value=file+(isEditingSittingDress()?" sentado":" em pé")+": width:"+fit.width.toFixed(2)+", offset:["+
+    fit.offset.map(n=>n.toFixed(2)).join(",")+"]"+
+    (isEditingSittingDress()?", inclinação:"+Number(fit.pitch||0).toFixed(0)+"°":"");
   try{await navigator.clipboard.writeText(value);setFitStatus("Valores copiados!");}
   catch(error){setFitStatus("Cópia não autorizada pelo navegador: "+value);}
 });
