@@ -519,6 +519,13 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 }
 #jfClubTomato.jf-tomato-launcher[aria-disabled="true"]{opacity:.88!important}
 #jfClubTomato.jf-tomato-launcher:hover{transform:translateY(-2px)}
+.jf-tomato-hint{
+  position:fixed;left:16px;bottom:83px;z-index:10022;max-width:min(290px,calc(100vw - 32px));
+  padding:9px 12px;border-radius:9px;border:1px solid var(--jf-secondary,#8a9cea);
+  background:#202044;color:#fff;font-size:12px;line-height:1.4;
+  box-shadow:0 5px 17px #0006;pointer-events:none
+}
+.jf-tomato-hint[hidden]{display:none!important}
 @media(max-width:520px){
   #jfClubTomato.jf-tomato-launcher{
     left:16px;right:auto;bottom:16px;width:52px;height:52px;font-size:26px
