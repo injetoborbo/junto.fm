@@ -744,15 +744,15 @@ html[data-jf-theme="classic"] .track-times{
     <div class="jf-seat-inspect-header"><strong>🐒 Macaco sentado · Visualização ampliada</strong><button type="button" class="btn secondary" id="jfSeatInspectClose">✕ Fechar</button></div>
     <div id="jfSeatInspectViewport" class="jf-seat-inspect-viewport"></div>
     <details class="jf-seat-calibration">
-      <summary>🕶️ Ajustar óculos ao vivo <span class="jf-seat-build">· diagnóstico v3</span></summary>
+      <summary>🕶️ Ajustar óculos ao vivo <span class="jf-seat-build">· encaixe salvo</span></summary>
       <p class="small">O ajuste acontece imediatamente no macaco REAL da pista. Gire a câmera para conferir o encaixe de frente e de lado.</p>
       <p class="small" id="jfSeatGlassesDiagnostics" role="status" aria-live="polite">Verificando o acessório...</p>
       <div class="jf-seat-calibration-grid">
-        <label>Esquerda / direita <input id="jfSeatGlassesX" type="range" min="-0.003" max="0.003" step="0.0001" value="0"><output id="jfSeatGlassesXValue">0.0000</output></label>
-        <label>Altura <input id="jfSeatGlassesY" type="range" min="-0.003" max="0.003" step="0.0001" value="0"><output id="jfSeatGlassesYValue">0.0000</output></label>
-        <label>Frente / trás <input id="jfSeatGlassesZ" type="range" min="-0.003" max="0.003" step="0.0001" value="0"><output id="jfSeatGlassesZValue">0.0000</output></label>
+        <label>Esquerda / direita <input id="jfSeatGlassesX" type="range" min="-0.003" max="0.003" step="0.0001" value="-0.0002"><output id="jfSeatGlassesXValue">-0.0002</output></label>
+        <label>Altura <input id="jfSeatGlassesY" type="range" min="-0.003" max="0.003" step="0.0001" value="-0.0011"><output id="jfSeatGlassesYValue">-0.0011</output></label>
+        <label>Frente / trás <input id="jfSeatGlassesZ" type="range" min="-0.003" max="0.003" step="0.0001" value="-0.0024"><output id="jfSeatGlassesZValue">-0.0024</output></label>
       </div>
-      <div class="jf-seat-calibration-actions"><button type="button" id="jfSeatGlassesPreset" class="btn secondary">Afastar e centralizar (teste)</button><button type="button" id="jfSeatGlassesReset" class="btn secondary">Restaurar</button><button type="button" id="jfSeatGlassesCopy" class="btn secondary">Copiar ajustes</button></div>
+      <div class="jf-seat-calibration-actions"><button type="button" id="jfSeatGlassesPreset" class="btn secondary">Comparar sem ajuste</button><button type="button" id="jfSeatGlassesReset" class="btn secondary">Voltar ao ajuste salvo</button><button type="button" id="jfSeatGlassesCopy" class="btn secondary">Copiar ajustes</button></div>
     </details>
     <p class="small">Arraste para girar a câmera. Use a rodinha do mouse para aproximar.</p>
   </section>
