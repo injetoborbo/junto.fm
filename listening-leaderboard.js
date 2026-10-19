@@ -1,9 +1,9 @@
 "use strict";
 const {Pool}=require("pg");
-module.exports=function enableLeaderboard(app,io,roomTransmitters){
+module.exports=function enableLeaderboard(app,io,roomTransmitters,accountsReady){
   const url=process.env.DATABASE_URL||"";
   const pool=url?new Pool({connectionString:url,ssl:process.env.PGSSL==="require"?{rejectUnauthorized:true}:false,max:3}):null;
-  const ready=pool?pool.query("CREATE TABLE IF NOT EXISTS junto_listening_time (account_id UUID PRIMARY KEY REFERENCES junto_accounts(id) ON DELETE CASCADE, seconds BIGINT NOT NULL DEFAULT 0 CHECK(seconds>=0))").then(()=>true).catch(error=>{console.error("Ranking indisponivel:",error.message);return false;}):Promise.resolve(false);
+  const ready=pool?Promise.resolve(accountsReady).then(ok=>{if(!ok)throw Error("Contas ainda indisponíveis");return pool.query("CREATE TABLE IF NOT EXISTS junto_listening_time (account_id UUID PRIMARY KEY REFERENCES junto_accounts(id) ON DELETE CASCADE, seconds BIGINT NOT NULL DEFAULT 0 CHECK(seconds>=0))").then(()=>true);}).catch(error=>{console.error("Ranking indisponivel:",error.message);return false;}):Promise.resolve(false);
   const recent=new Map();
   const liveRooms=new Map();
   app.get("/api/listening/ranking",async(_req,res)=>{
