@@ -29,6 +29,7 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomTransmitters = new Map();
+const roomBananaCounts = new Map(); // contagem temporária por sala (0–19)
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
 const roomChatMessages = new Map();
@@ -488,6 +489,17 @@ io.on("connection", socket => {
   });
   // Tomates são brincadeira visual: somente o transmissor atual pode ser alvo.
   // Nada de alvo arbitrário; o servidor valida sala, transmissão e cooldown.
+  socket.on("banana-throw",()=>{
+    const room=socket.data.room;
+    if(!room)return socket.emit("banana-error",{message:"Entre em uma sala primeiro."});
+    if(isRateLimited(socket,"banana-throw",1,1200))
+      return socket.emit("banana-error",{message:"Aguarde antes de jogar outra banana."});
+    const current=roomBananaCounts.get(room)||0;
+    if(current>=19)return socket.emit("banana-error",{message:"O barril já está cheio!"});
+    const count=current+1;
+    roomBananaCounts.set(room,count);
+    io.to(room).emit("banana-thrown",{room,count,from:socket.id});
+  });
   socket.on("club-tomato",()=>{
     const room=socket.data.room;
     const dj=room&&roomTransmitters.get(room);
@@ -750,7 +762,7 @@ io.on("connection", socket => {
     const avatarSkins=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.avatarSkin==="capitao-patria"?"capitao-patria":"default"]));
     const clientIds=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.clientId||null]));
     const registeredPeers=Object.fromEntries(peers.map(id=>[id,Boolean(io.sockets.sockets.get(id)?.data.account)]));
-    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
+    socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null, bananaCount:roomBananaCounts.get(room)||0 });
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id, clientId:socket.data.clientId, registered:Boolean(socket.data.account) });
     notifyPresence();
