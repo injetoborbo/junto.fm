@@ -17,15 +17,15 @@ module.exports=function enableLeaderboard(app,io,roomTransmitters,accountsReady)
   io.on("connection",socket=>{
     socket.on("listening-heartbeat",data=>{
       const room=socket.data.room;
-      if(!room||!socket.data.account?.id||!roomTransmitters.has(room))return;
+      if(!room||!roomTransmitters.has(room))return;
       const dj=roomTransmitters.get(room);
       if(!dj||!io.sockets.sockets.has(dj.id))return;
       if(socket.id===dj.id){
         if(!socket.data.isTransmitting||data?.djActive!==true)return;
         liveRooms.set(room,Date.now());
-        recent.set(socket.id,{room,accountId:socket.data.account.id,at:Date.now()});
+        if(socket.data.account?.id)recent.set(socket.id,{room,accountId:socket.data.account.id,at:Date.now()});
       }else if(data?.playing!==true)return;
-      recent.set(socket.id,{room,accountId:socket.data.account.id,at:Date.now()});
+      else if(socket.data.account?.id)recent.set(socket.id,{room,accountId:socket.data.account.id,at:Date.now()});
     });
     socket.on("leave-room",()=>recent.delete(socket.id));
     socket.on("disconnect",()=>recent.delete(socket.id));
