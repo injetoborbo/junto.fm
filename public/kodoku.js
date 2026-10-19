@@ -52,17 +52,30 @@
     new MutationObserver(refreshChat).observe(document.documentElement,{attributes:true,attributeFilter:["data-jf-theme"]});
     refreshChat();
   }
+  function decorateChatCorners(){
+    const win=document.getElementById("jfChatWindow");
+    if(!win||win.querySelector(".jf-kodoku-frame-corners"))return;
+    const ornaments=document.createElement("div");
+    ornaments.className="jf-kodoku-frame-corners";
+    ornaments.setAttribute("aria-hidden","true");
+    for(const corner of ["tl","tr","bl","br"]){
+      const item=document.createElement("span");
+      item.className="jf-kodoku-frame-corner jf-kodoku-corner-"+corner;
+      ornaments.appendChild(item);
+    }
+    win.appendChild(ornaments);
+  }
   const makeFeature=()=>{
     const feature=document.createElement("div");
     feature.className="jf-kodoku-feature";
     const miniMonkeyO=`<span class="jf-kodoku-letter-o" aria-hidden="true"><svg viewBox="0 0 100 100" focusable="false"><path d="M50 6 64 12 78 11 89 23 89 37 95 50 89 63 89 77 78 89 64 88 50 94 36 88 22 89 11 77 11 63 5 50 11 37 11 23 22 11 36 12Z"/><path d="M25 33Q25 19 50 19Q75 19 75 33Q78 58 68 72Q58 82 50 82Q42 82 32 72Q22 58 25 33Z"/><path d="M33 50Q30 38 41 35Q46 39 47 51Q40 56 33 50Z M67 50Q70 38 59 35Q54 39 53 51Q60 56 67 50Z"/><path d="M33 28L45 39M67 28L55 39M46 59Q50 56 54 59L50 64Z"/><path d="M29 69Q50 64 71 69M37 78Q50 82 63 78"/></svg></span>`;
-    feature.innerHTML=sealMarkup+'<strong class="jf-kodoku-wordmark"><span>K</span>'+miniMonkeyO+'<span>D</span>'+miniMonkeyO+'<span>K</span><span>U</span></strong><span class="jf-kodoku-ornament">✧ ─── ◇ ─── ✧</span><p>Registros de uma sala em silêncio.</p>';
+    feature.innerHTML=sealMarkup+'<img class="jf-kodoku-wordmark-png" src="/kodoku_wordmark.png" alt="KODOKU"><span class="jf-kodoku-ornament">✧ ─── ◇ ─── ✧</span><p>Registros de uma sala em silêncio.</p>';
     return feature;
   };
   const place=()=>{
     const player=document.querySelector(".jf-player-panel");
     if(player&&!player.querySelector(".jf-kodoku-feature"))player.prepend(makeFeature());
   };
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{place();watchChat()},{once:true});
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{place();watchChat();decorateChatCorners()},{once:true});
   else {place();watchChat()}
 })();
