@@ -1281,6 +1281,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         is_playing: data.is_playing
       };
       renderTrack(track);
+      // O DJ identifica a música para reiniciar votos ao mudar de faixa.
+      window.dispatchEvent(new CustomEvent("jf-current-song",{detail:{
+        key:track.id||track.uri||track.name+" - "+track.artists,isDj:true
+      }}));
       socket.emit('track-update', { room, track });
       $("spotifyStatus").textContent = 'Metadados sincronizados para a sala.';
     } catch (_) { $("spotifyStatus").textContent = 'Falha ao atualizar a música atual.'; }
