@@ -160,3 +160,27 @@ html[data-jf-theme="kodoku"] .jf-kodoku-seal-image{width:120px;height:120px;max-
  html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:96px;height:96px}
  html[data-jf-theme="kodoku"] .jf-kodoku-seal-image{width:96px;height:96px}
 }
+
+/* Ajuste final com a arte original aprovada: selo leve extraído da imagem. */
+html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:130px!important;height:140px!important;box-shadow:none!important;border:0!important;background:transparent!important;margin-bottom:6px!important}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal:before{display:none!important}
+html[data-jf-theme="kodoku"] .jf-kodoku-seal-image{width:130px!important;height:140px!important;max-width:100%;object-fit:contain;image-rendering:auto}
+html[data-jf-theme="kodoku"] #jfChatWindow{border:1px solid #fff!important;border-radius:3px!important;background:#000!important}
+html[data-jf-theme="kodoku"] #jfChatWindow::before,
+html[data-jf-theme="kodoku"] #jfChatWindow::after{
+  content:""!important;display:block!important;position:absolute;z-index:3;
+  width:50px!important;height:50px!important;opacity:.72!important;pointer-events:none;
+  background: url("/kodoku-corner.svg") center / contain no-repeat!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow::before{left:4px!important;top:4px!important;transform:none!important}
+html[data-jf-theme="kodoku"] #jfChatWindow::after{right:4px!important;bottom:4px!important;transform:rotate(180deg)!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:43px!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-chat-o{vertical-align:-.10em!important;transform:translateY(0)!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-bubble{min-width:0!important}
+@media(max-width:520px){
+ html[data-jf-theme="kodoku"] #jfChatWindow::before,
+ html[data-jf-theme="kodoku"] #jfChatWindow::after{width:40px!important;height:40px!important;opacity:.62!important}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:38px!important}
+ html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:103px!important;height:110px!important}
+ html[data-jf-theme="kodoku"] .jf-kodoku-seal-image{width:103px!important;height:110px!important}
+}
