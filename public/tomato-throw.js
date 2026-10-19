@@ -89,9 +89,17 @@ function sprite(){
   };
   return img;
 }
-function launch(){
+function launch(allowScroll=true){
   if(!button||!stage||miniDj.hidden||!bridge?.getRoom?.())return;
   if(livingShots.size>=8)return;
+  // Se o player estiver fora da tela, centralize-o antes do lançamento,
+  // para o usuário realmente enxergar o tomate acertando o macaco.
+  const viewport=stage.getBoundingClientRect();
+  if(allowScroll&&(viewport.bottom<40||viewport.top>innerHeight-40)){
+    stage.scrollIntoView({behavior:"smooth",block:"center"});
+    setTimeout(()=>launch(false),330);
+    return;
+  }
   const bounds=button.getBoundingClientRect();
   const start={x:bounds.left+bounds.width*.5,y:bounds.top+bounds.height*.5};
   const end=targetCenter();
