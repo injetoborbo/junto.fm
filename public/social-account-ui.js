@@ -10,6 +10,12 @@
  .jf-social-dialog form{display:grid;gap:9px}
  .jf-social-dialog input{width:100%;color:#172b4f;background:#f8fbff;padding:10px;border:1px solid var(--jf-secondary,#a3a8ff)}
  .jf-social-dialog label{margin:0;color:var(--ink);font-size:12px}
+ .jf-social-dialog .jf-auth-feedback{color:var(--ink);font-family:inherit;font-size:14px;line-height:1.55;padding:10px 12px;border:1px solid var(--jf-secondary,currentColor);border-radius:8px;background:color-mix(in srgb,var(--jf-secondary,#777be9) 13%,transparent);overflow-wrap:anywhere}
+ .jf-social-dialog .jf-auth-feedback:empty{display:none}
+ .jf-social-dialog .jf-verified-copy{color:var(--ink);font-family:inherit;line-height:1.55}
+ .jf-social-dialog .jf-verified-copy strong{color:inherit}
+ .jf-social-dialog .jf-verified-title{color:var(--ink);font-family:inherit}
+ .jf-social-dialog .jf-verified-headphones{font-size:50px;margin:0 0 10px}
  .jf-medal{width:54px;height:64px;display:grid;place-items:center;font-size:28px;background:radial-gradient(circle,#ffefa8,#dba83b 68%,#68441c 70%);border:3px ridge #a4741b;clip-path:polygon(15% 0,85% 0,85% 25%,100% 43%,84% 57%,79% 94%,50% 100%,21% 94%,16% 57%,0 43%,15% 25%);filter:drop-shadow(0 2px 2px #0005);flex:none}
  .jf-achievement-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid color-mix(in srgb,var(--jf-secondary,#999) 30%,transparent)}
  .jf-achievement-row.locked{opacity:.65}
@@ -42,14 +48,14 @@
    history.replaceState(history.state,"",clean.pathname+clean.search+clean.hash);
    const popup=document.createElement("div");
    popup.className="jf-social-overlay";
-   popup.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfVerifiedTitle" style="text-align:center"><div style="font-size:50px;margin:0 0 10px">🎧</div><h2 id="jfVerifiedTitle">E-mail confirmado!</h2><p>Sua conta está pronta e você já está conectado.</p><p><strong>Agora coloque os fones e aproveite!</strong> 🎶</p><button class="btn" type="button" id="jfVerifiedContinue">Bora ouvir música!</button></section>';
+   popup.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfVerifiedTitle" style="text-align:center"><div class="jf-verified-headphones">🎧</div><h2 class="jf-verified-title" id="jfVerifiedTitle">E-mail confirmado!</h2><p class="jf-verified-copy">Sua conta está pronta e você já está conectado.</p><p class="jf-verified-copy"><strong>Agora coloque os fones e aproveite!</strong> 🎶</p><button class="btn" type="button" id="jfVerifiedContinue">Bora ouvir música!</button></section>';
    document.body.appendChild(popup);
    popup.querySelector("#jfVerifiedContinue").onclick=()=>popup.remove();
   }
  }).catch(()=>{});
  const $=id=>document.getElementById(id);
  const overlay=document.createElement("div");overlay.id="jfSocialDialog";overlay.className="jf-social-overlay";overlay.hidden=true;
- overlay.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfLocalTitle"><header><h2 id="jfLocalTitle">Criar conta</h2><button type="button" class="btn secondary" id="jfLocalClose">✕</button></header><form id="jfLocalForm"><label for="jfLocalUsername" id="jfLocalUsernameLabel">Nome de usuário único (@)</label><input id="jfLocalUsername" type="text" autocomplete="username" minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]{3,20}" placeholder="seu_usuario" required><label for="jfLocalEmail">E-mail</label><input id="jfLocalEmail" type="email" autocomplete="email" required maxlength="254"><label for="jfLocalPassword">Senha (mínimo de 8 caracteres)</label><input id="jfLocalPassword" type="password" autocomplete="new-password" minlength="8" maxlength="256" required><button class="btn" type="submit" id="jfLocalSubmit">Criar conta</button><p id="jfLocalMessage" role="status"></p></form></section>';
+ overlay.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfLocalTitle"><header><h2 id="jfLocalTitle">Criar conta</h2><button type="button" class="btn secondary" id="jfLocalClose">✕</button></header><form id="jfLocalForm"><label for="jfLocalUsername" id="jfLocalUsernameLabel">Nome de usuário único (@)</label><input id="jfLocalUsername" type="text" autocomplete="username" minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]{3,20}" placeholder="seu_usuario" required><label for="jfLocalEmail">E-mail</label><input id="jfLocalEmail" type="email" autocomplete="email" required maxlength="254"><label for="jfLocalPassword">Senha (mínimo de 8 caracteres)</label><input id="jfLocalPassword" type="password" autocomplete="new-password" minlength="8" maxlength="256" required><button class="btn" type="submit" id="jfLocalSubmit">Criar conta</button><p id="jfLocalMessage" class="jf-auth-feedback" role="status" aria-live="polite"></p></form></section>';
  document.body.appendChild(overlay);
  const achievements=document.createElement("div");achievements.id="jfAchievementsDialog";achievements.className="jf-social-overlay";achievements.hidden=true;
  achievements.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfAchievementsTitle"><header><h2 id="jfAchievementsTitle">🏅 Conquistas</h2><button type="button" class="btn secondary" id="jfAchievementsClose">✕</button></header><p class="small">Conquistas desbloqueadas ficam salvas na sua conta. As porcentagens mostram quantos usuários cadastrados conseguiram cada medalha.</p><div id="jfAchievementsList">Carregando...</div></section>';
