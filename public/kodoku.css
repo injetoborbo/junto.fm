@@ -58,12 +58,12 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corners{
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{
   position:absolute;display:block;width:53px;height:53px;opacity:.95;
-  background-image:url("/kodoku_corner_hq3.png");background-size:contain;background-repeat:no-repeat;
+  background-image:url("/kodoku_corner_hq3.png");background-size:63px 64px;background-position:-4px -10px;background-repeat:no-repeat;
 }
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tl{top:4px;left:4px}
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tr{top:4px;right:4px;transform:scaleX(-1)}
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-bl{bottom:4px;left:4px;transform:scaleY(-1)}
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-br{bottom:4px;right:4px;transform:scale(-1,-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tl{top:0;left:0}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-tr{top:0;right:0;transform:scaleX(-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-bl{bottom:0;left:0;transform:scaleY(-1)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-corner-br{bottom:0;right:0;transform:scale(-1,-1)}
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
   flex:0 0 auto;min-height:62px;padding:10px 62px;
   background:#030303!important;border-bottom:1px solid #777!important;
@@ -126,7 +126,7 @@ html[data-jf-theme="kodoku"] .jf-friends-drawer .jf-person{
    right:12px;bottom:78px;width:calc(100vw - 24px);
    height:min(470px,calc(100dvh - 96px));
  }
- html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{width:45px;height:45px}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{width:45px;height:45px;background-size:53px 54px;background-position:-3px -9px}
  html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding:10px 49px}
  html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-status{flex-basis:46px;height:46px;min-height:46px;padding:5px 49px!important}
  html[data-jf-theme="kodoku"] .jf-kodoku-wordmark-png{width:min(250px,84%)}
