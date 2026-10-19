@@ -47,9 +47,10 @@ const FIT_DEFAULTS=Object.freeze({
   vestido_novo:{width:.70,offset:[0,-.24,0]}
 });
 const FIT_STORAGE="jf_wardrobe_private_fit_v1";
+const FIT_SEATED_STORAGE="jf_wardrobe_private_fit_seated_v1";
 const localDevelopment=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
 let fitAccess=localDevelopment;
-let privateFits={};
+let privateFits={},privateSeatFits={};
 function cleanFit(file,value){
   const base=FIT_DEFAULTS[file];
   if(!base)return null;
@@ -57,6 +58,12 @@ function cleanFit(file,value){
   const offset=Array.isArray(value?.offset)?value.offset:base.offset;
   return {width:n(value?.width,base.width,.20,1.30),
     offset:base.offset.map((v,i)=>n(offset[i],v,-.60,.60))};
+}
+function cleanSeatedFit(file,value){
+  const fit=cleanFit(file,value);
+  if(!fit)return null;
+  const pitch=Number(value?.pitch);
+  return {...fit,pitch:Number.isFinite(pitch)?THREE.MathUtils.clamp(pitch,-80,80):0};
 }
 function loadPrivateFits(){
   if(!fitAccess)return;
@@ -66,9 +73,18 @@ function loadPrivateFits(){
       for(const file of Object.keys(FIT_DEFAULTS))
         if(data[file])privateFits[file]=cleanFit(file,data[file]);
   }catch(error){console.warn("Editor de trajes: calibração local inválida.",error);}
+  try{
+    const data=JSON.parse(localStorage.getItem(FIT_SEATED_STORAGE)||"{}");
+    if(data?.vestido_novo)privateSeatFits.vestido_novo=cleanSeatedFit("vestido_novo",data.vestido_novo);
+  }catch(error){console.warn("Editor de trajes: ajuste sentado inválido.",error);}
 }
 if(fitAccess)loadPrivateFits();
-const fittedItem=(file,enabled)=>enabled&&fitAccess?(privateFits[file]||FIT_DEFAULTS[file]):FIT_DEFAULTS[file];
+const fittedItem=(file,enabled,seated=false)=>{
+  const standing=enabled&&fitAccess?(privateFits[file]||FIT_DEFAULTS[file]):FIT_DEFAULTS[file];
+  if(seated&&file==="vestido_novo"&&enabled&&fitAccess)
+    return privateSeatFits.vestido_novo||{...standing,offset:[...standing.offset],pitch:0};
+  return standing;
+};
 const assetCache=new Map(),loader=new GLTFLoader();
 function getAsset(name){
   if(!ASSETS[name])return Promise.resolve(null);
