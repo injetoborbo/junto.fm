@@ -270,7 +270,8 @@ async function putMember(id,details){
     const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;entry.getGlassesDiagnostics=avatar.getGlassesDiagnostics;
-    entry.setSeatGlassesCalibration?.(seatGlassesAdjustment);
+    // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
+    if(id===socket.id)entry.setSeatGlassesCalibration?.(seatGlassesAdjustment);
     entry.restBones=new Map();
     entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
     sittingPose().then(pose=>{
@@ -456,7 +457,8 @@ const inspectViewport=document.getElementById("jfSeatInspectViewport");
 let inspectCleanup=null,inspectOpening=false;
 const glassesAxes=["x","y","z"];
 const glassesInputs=Object.fromEntries(glassesAxes.map(axis=>[axis,document.getElementById("jfSeatGlasses"+axis.toUpperCase())]));
-const seatGlassesAdjustment={x:0,y:0,z:0};
+const savedSeatGlassesAdjustment=Object.freeze({x:-.0002,y:-.0011,z:-.0024});
+const seatGlassesAdjustment={...savedSeatGlassesAdjustment};
 const eyewearDiagnostics=document.getElementById("jfSeatGlassesDiagnostics");
 function displayEyewearDiagnostics(){
   if(!eyewearDiagnostics)return;
@@ -497,11 +499,12 @@ for(const axis of glassesAxes){
 document.getElementById("jfSeatGlassesPreset")?.addEventListener("click",()=>{
   // Deslocamento perceptível e reversível para verificar se o código da
   // prévia realmente afeta o óculos que está sendo renderizado.
-  Object.assign(seatGlassesAdjustment,{x:.001,y:-.0005,z:.0014});
+  // Comparar com a posição anterior, sem a calibração aprovada.
+  Object.assign(seatGlassesAdjustment,{x:0,y:0,z:0});
   updateGlassesPreview();
 });
 document.getElementById("jfSeatGlassesReset")?.addEventListener("click",()=>{
-  Object.assign(seatGlassesAdjustment,{x:0,y:0,z:0});
+  Object.assign(seatGlassesAdjustment,savedSeatGlassesAdjustment);
   updateGlassesPreview();
 });
 document.getElementById("jfSeatGlassesCopy")?.addEventListener("click",()=>{
