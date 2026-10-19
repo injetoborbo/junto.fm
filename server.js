@@ -29,6 +29,7 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomSkipVotes = new Map();
+const skipTickets = new Map();
 const roomBananas = new Map();
 const roomTransmitters = new Map();
 const roomOwners = new Map();
@@ -181,9 +182,15 @@ app.post("/api/spotify/logout", (req, res) => {
   res.json({ ok: true });
 });
 app.post("/api/spotify/skip",async(req,res)=>{
+  const ticket=String(req.body?.ticket||"");
+  const room=String(req.body?.room||"");
+  const entry=skipTickets.get(room);
+  if(!/^[a-f0-9]{48}$/.test(ticket)||!entry||entry.ticket!==ticket||entry.expires<Date.now()
+     ||roomTransmitters.get(room)?.id!==entry.djId)
+    return res.status(403).json({error:"Skip não autorizado pela votação."});
+  // Token de uso único: impede repetição da requisição.
+  skipTickets.delete(room);
   try{
-    const account=await accountAuth.accountFromRequest(req);
-    // O comando só é disparado pelo navegador DJ ao alcançar o quórum no servidor.
     const token=await validSpotifyAccessToken(getSession(req,res));
     const response=await fetch("https://api.spotify.com/v1/me/player/next",{method:"POST",headers:{Authorization:"Bearer "+token}});
     if(!response.ok)return res.status(response.status).json({error:"Spotify não autorizou pular a faixa."});
@@ -402,6 +409,7 @@ function releaseRoomOwnership(room,departingId){
     roomAccess.delete(room);
     roomTracks.delete(room);
     roomSkipVotes.delete(room);
+    skipTickets.delete(room);
     roomBananas.delete(room);
     roomChatMessages.delete(room);
     roomTomatoImpacts.delete(room);
@@ -526,7 +534,11 @@ io.on("connection", socket => {
     if(current.voters.size>=needed){
       current.approved=true;
       const dj=roomTransmitters.get(room);
-      if(dj?.id)io.to(dj.id).emit("skip-approved",{key});
+      if(dj?.id){
+        const ticket=crypto.randomBytes(24).toString("hex");
+        skipTickets.set(room,{ticket,key,expires:Date.now()+20000,djId:dj.id});
+        io.to(dj.id).emit("skip-approved",{key,room,ticket});
+      }
     }
     emitSkip(room);
   });
@@ -865,7 +877,7 @@ io.on("connection", socket => {
       is_playing: Boolean(track.is_playing), updated_at: Date.now()
     };
     const previous=roomTracks.get(socket.data.room);
-    if((previous?.id||previous?.name)!==(safeTrack.id||safeTrack.name)){roomSkipVotes.delete(socket.data.room);emitSkip(socket.data.room);}
+    if((previous?.id||previous?.name)!==(safeTrack.id||safeTrack.name)){roomSkipVotes.delete(socket.data.room);skipTickets.delete(socket.data.room);emitSkip(socket.data.room);}
     roomTracks.set(socket.data.room, safeTrack);
     socket.to(socket.data.room).emit("track-update", safeTrack);
   });
