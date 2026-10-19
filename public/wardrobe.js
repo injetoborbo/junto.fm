@@ -127,7 +127,7 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey,{animated=false,privateFit=false}={}){
+function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false}={}){
   // Capturar o bind pose ANTES das animações. As promessas de GLB podem
   // resolver com o avatar andando/sentado; nesse caso attach() simples
   // preservaria uma posição antiga num esqueleto já animado.
@@ -149,7 +149,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false}={}
   const newTorsoBone=getAnimatedBone(monkey,"Spine2")||torsoBone;
   if(animated&&!headBone)console.error("Guarda-roupa 3D: osso Head ausente.",monkey.name);
   const bindMatrices=new Map(),followers=[];
-  let isSeated=false;
+  let isSeated=Boolean(previewSeated);
   // Calibração feita na Junto Club (18/10): encaixe da armação
   // na pose Sitting Idle, relativo ao osso Head. Apenas avatares animados.
   const glassesCalibration={x:-.0002,y:-.0011,z:-.0024};
@@ -320,23 +320,31 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false}={}
       if(animated)attachAtBind(part,bone,rootBindWorld,{},seatedOffset);
       else bone.add(part);
       const boneBind=bindMatrices.get(bone);
-      const rootPart=new THREE.Matrix4(),toBone=new THREE.Matrix4();
+      const rootPart=new THREE.Matrix4(),seatPart=new THREE.Matrix4(),toBone=new THREE.Matrix4();
       const tmpPosition=new THREE.Vector3(),tmpScale=new THREE.Vector3();
-      const identityRotation=new THREE.Quaternion(),tmpRotation=new THREE.Quaternion();
-      const update=()=>{
-        if(!state.userData.active||!part.parent)return;
-        const params=fittedItem(file,privateFit);
+      const tmpRotation=new THREE.Quaternion(),centerOffset=new THREE.Vector3();
+      const buildMatrix=(params,matrix)=>{
         const sc=params.width/Math.max(measure.size.x,1e-6);
         const target=restInRoot(bone).add(new THREE.Vector3(...params.offset));
-        tmpPosition.set(target.x-measure.center.x*sc,
-          target.y-measure.center.y*sc,target.z-measure.center.z*sc);
+        tmpRotation.setFromAxisAngle(new THREE.Vector3(1,0,0),
+          THREE.MathUtils.degToRad(file==="vestido_novo"?(params.pitch||0):0));
+        centerOffset.copy(measure.center).multiplyScalar(sc).applyQuaternion(tmpRotation);
+        tmpPosition.copy(target).sub(centerOffset);
         tmpScale.setScalar(sc);
-        rootPart.compose(tmpPosition,identityRotation,tmpScale);
+        matrix.compose(tmpPosition,tmpRotation,tmpScale);
+      };
+      const update=()=>{
+        if(!state.userData.active||!part.parent)return;
+        buildMatrix(fittedItem(file,privateFit),rootPart);
         if(animated){
           const follower=followers.find(item=>item.part===part);
           if(!follower||!boneBind)return;
           toBone.copy(boneBind).invert().multiply(rootBindWorld).multiply(rootPart);
           follower.bindLocal.copy(toBone);
+          // O vestido sentado usa um preset privado INDEPENDENTE.
+          // As outras peças continuam usando o ajuste original sentado.
+          buildMatrix(fittedItem(file,privateFit,file==="vestido_novo"),seatPart);
+          toBone.copy(boneBind).invert().multiply(rootBindWorld).multiply(seatPart);
           toBone.decompose(tmpPosition,tmpRotation,tmpScale);
           tmpPosition.x+=seatedOffset.x||0;
           tmpPosition.y+=seatedOffset.y||0;
@@ -344,7 +352,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false}={}
           follower.seatedLocal.compose(tmpPosition,tmpRotation,tmpScale);
           updateAccessories(isSeated);
         }else{
-          root.updateWorldMatrix(true,true);
+          root.updateMatrixWorld(true);
           bone.updateWorldMatrix(true,false);
           toBone.copy(bone.matrixWorld).invert()
             .multiply(root.matrixWorld).multiply(rootPart);
