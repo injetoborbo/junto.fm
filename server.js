@@ -94,7 +94,15 @@ const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
 const achievements=require("./achievements")(app,io,accountAuth);
 require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready);
-app.use(express.static(path.join(__dirname, "public")));
+// GLBs grandes e imagens mudam menos que a interface. Cache curto evita
+// baixar o mesmo mascote novamente em cada visita, sem congelar atualizações.
+app.use(express.static(path.join(__dirname, "public"), {
+  setHeaders(res, filePath) {
+    if (/\.(?:glb|gltf|png|jpe?g|webp|mp3|wav|ogg)$/i.test(filePath)) {
+      res.setHeader("Cache-Control", "public, max-age=1800");
+    }
+  }
+}));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/room-status/:room",(req,res)=>{
  const room=String(req.params.room||"");
