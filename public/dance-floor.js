@@ -14,21 +14,6 @@ const count=document.getElementById("jfDanceCount");
 const openButton=document.getElementById("jfOpenDance");
 const closeButton=document.getElementById("jfCloseDance");
 const choices=[...document.querySelectorAll("[data-jf-dance]")];
-const tomatoButton=document.getElementById("jfClubTomato");
-let djTargetId=null,tomatoCooldown=0,localTestDjId=null,realDjId=null;
-const testDjButton=document.getElementById("jfClubTestDj");
-const testDjRow=document.getElementById("jfClubTestDjRow");
-const localClubMode=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
-if(testDjRow)testDjRow.hidden=!localClubMode;
-function updateDjTarget(){
-  djTargetId=realDjId||(localClubMode?localTestDjId:null);
-  if(testDjButton){
-    testDjButton.disabled=!active||Boolean(realDjId);
-    testDjButton.textContent=localTestDjId===socket?.id?"🎧 Desativar DJ simulado":"🎧 Simular DJ (localhost)";
-  }
-  refreshTomatoButton();
-}
-const tomatoShots=[];
 const animationFiles={
   shake:"/dance/macacochaqualha.glb",
   macarena:"/dance/macacomacarena.glb",
@@ -596,75 +581,11 @@ function updateChoices(){
   const selected=people.get(socket.id)?.data.dance||"idle";
   for(const b of choices){b.setAttribute("aria-pressed",String(b.dataset.jfDance===selected));b.classList.toggle("active",b.dataset.jfDance===selected);}
 }
-function spawnTomato({from,to}){
-  if(!active||!scene||!people.has(from)||!people.has(to))return;
-  const source=people.get(from).root,target=people.get(to).root;
-  if(!source||!target)return;
-  const geometry=new THREE.SphereGeometry(.13,12,10);
-  const material=new THREE.MeshStandardMaterial({color:0xe72d20,roughness:.54});
-  const fruit=new THREE.Mesh(geometry,material);
-  const crown=new THREE.Mesh(new THREE.ConeGeometry(.09,.10,5),new THREE.MeshStandardMaterial({color:0x287c35}));
-  crown.position.y=.13;fruit.add(crown);scene.add(fruit);
-  tomatoShots.push({fruit,geometry,material,crown,target,
-    start:source.position.clone().add(new THREE.Vector3(0,1.1,0)),
-    age:0,duration:.85});
-}
-function updateTomatoes(dt){
-  for(let i=tomatoShots.length-1;i>=0;i--){
-    const shot=tomatoShots[i];shot.age+=dt;
-    const t=Math.min(1,shot.age/shot.duration);
-    const end=shot.target.position.clone().add(new THREE.Vector3(0,1.05,0));
-    shot.fruit.position.lerpVectors(shot.start,end,t);
-    shot.fruit.position.y+=1.05*4*t*(1-t);
-    shot.fruit.rotation.z+=dt*8;
-    if(t>=1){
-      const impact=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),
-        new THREE.MeshBasicMaterial({color:0xfc5136,transparent:true,opacity:.8,depthWrite:false}));
-      impact.position.copy(end);
-      scene.add(impact);
-      setTimeout(()=>{scene?.remove(impact);impact.geometry.dispose();impact.material.dispose();},370);
-      scene.remove(shot.fruit);shot.crown.geometry.dispose();shot.crown.material.dispose();
-      shot.geometry.dispose();shot.material.dispose();tomatoShots.splice(i,1);
-    }
-  }
-}
-function refreshTomatoButton(){
-  if(!tomatoButton)return;
-  const ready=active&&Boolean(djTargetId)&&djTargetId!==socket?.id&&people.has(djTargetId)&&Date.now()>=tomatoCooldown;
-  // Sempre acessível a TODOS (inclusive ouvintes). Quando não pode atirar,
-  // um clique explica o motivo em vez de esconder/desabilitar o botão.
-  tomatoButton.disabled=false;
-  tomatoButton.setAttribute("aria-disabled",String(!ready));
-  tomatoButton.title=!active?"Abra a Junto Club para jogar tomate":
-    !djTargetId?"Aguarde alguém transmitir ou simule um DJ no localhost":
-    djTargetId===socket?.id?"O DJ não pode jogar tomate em si mesmo":
-    !people.has(djTargetId)?"O DJ precisa entrar na pista":
-    Date.now()<tomatoCooldown?"Aguarde alguns segundos para outro tomate":
-    "Jogue um tomate no DJ atual";
-}
-let tomatoHintTimer=null;
-function showTomatoHint(message){
-  if(!tomatoButton)return;
-  let hint=document.getElementById("jfClubTomatoHint");
-  if(!hint){
-    hint=document.createElement("span");
-    hint.id="jfClubTomatoHint";
-    hint.className="jf-tomato-hint";
-    hint.setAttribute("role","status");
-    tomatoButton.insertAdjacentElement("afterend",hint);
-  }
-  hint.textContent=message;
-  hint.hidden=false;
-  clearTimeout(tomatoHintTimer);
-  tomatoHintTimer=setTimeout(()=>{hint.hidden=true;},2700);
-}
 function animate(){
   if(!active||!renderer)return;
   frame=requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),.065);
   const time=clock.elapsedTime;
-  updateTomatoes(dt);
-  refreshTomatoButton();
   for(const {beam,phase} of scene.userData.beams||[]){
     beam.rotation.z=.16*Math.sin(time*.55+phase);
     beam.rotation.x=.16*Math.cos(time*.43+phase);
@@ -827,19 +748,13 @@ function open(){
   void sittingPose();
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
-  try{sceneSetup();clock.start();animate();socket.emit("dance-enter");updateDjTarget();setStatus("Entrando na pista...");}
+  try{sceneSetup();clock.start();animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
   catch(error){console.error(error);setStatus("Não foi possível abrir a pista 3D.");close();}
 }
 function close(){
   inspectCleanup?.();
   if(!active)return;
   const oldRoom=room;active=false;room=null;sequence++;
-  for(const shot of tomatoShots){
-    scene?.remove(shot.fruit);shot.crown.geometry.dispose();shot.crown.material.dispose();
-    shot.geometry.dispose();shot.material.dispose();
-  }
-  tomatoShots.length=0;localTestDjId=null;updateDjTarget();
-  cancelAnimationFrame(frame);
   socket.emit("dance-exit");
   for(const id of [...people.keys()])removeMember(id);
   scene?.userData.cleanup?.();
@@ -1130,33 +1045,6 @@ socket?.on("avatar-skin-update",({id})=>{if(id)setTimeout(()=>refreshDancer(id),
 window.addEventListener("jf-wardrobe-save",()=>refreshDancer(socket.id));
 window.addEventListener("jf-admin-skin-changed",()=>refreshDancer(socket.id));
 
-tomatoButton?.addEventListener("click",()=>{
-  refreshTomatoButton();
-  if(!active)return showTomatoHint("Abra a Junto Club para jogar tomates! 🍅");
-  if(!djTargetId)return showTomatoHint("Ainda não tem DJ. No localhost, simule um DJ em outra aba.");
-  if(djTargetId===socket?.id)return showTomatoHint("Você é o DJ! Os outros podem jogar tomates em você.");
-  if(!people.has(djTargetId))return showTomatoHint("O DJ precisa entrar na Junto Club.");
-  if(Date.now()<tomatoCooldown)return showTomatoHint("Espere mais "+Math.ceil((tomatoCooldown-Date.now())/1000)+"s 🍅");
-  tomatoCooldown=Date.now()+5000;
-  refreshTomatoButton();
-  socket.emit("club-tomato");
-});
-testDjButton?.addEventListener("click",()=>{
-  if(!active||!localClubMode||realDjId)return;
-  socket.emit("club-test-dj-toggle");
-});
-socket?.on("club-test-dj-update",({id})=>{
-  if(!localClubMode)return;
-  localTestDjId=id||null;
-  updateDjTarget();
-});
-window.addEventListener("jf-player-monkey",event=>{
-  realDjId=event.detail?.id||null;
-  updateDjTarget();
-});
-realDjId=window.jfLastTransmitterAppearance?.id||null;
-updateDjTarget();
-socket?.on("club-tomato-fired",shot=>spawnTomato(shot));
 socket?.on("dance-error",({message})=>{if(active)setStatus(message||"Não foi possível mover.");});
 socket?.on("room-kicked",close);
 socket?.on("left-room",close);
