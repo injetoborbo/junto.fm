@@ -631,8 +631,32 @@ function updateTomatoes(dt){
 function refreshTomatoButton(){
   if(!tomatoButton)return;
   const ready=active&&Boolean(djTargetId)&&djTargetId!==socket?.id&&people.has(djTargetId)&&Date.now()>=tomatoCooldown;
-  tomatoButton.disabled=!ready;
-  tomatoButton.title=!djTargetId?"Aguarde alguém transmitir":djTargetId===socket?.id?"O DJ não pode jogar tomate em si mesmo":!people.has(djTargetId)?"O DJ precisa entrar na pista":"Jogue um tomate no DJ atual";
+  // Sempre acessível a TODOS (inclusive ouvintes). Quando não pode atirar,
+  // um clique explica o motivo em vez de esconder/desabilitar o botão.
+  tomatoButton.disabled=false;
+  tomatoButton.setAttribute("aria-disabled",String(!ready));
+  tomatoButton.title=!active?"Abra a Junto Club para jogar tomate":
+    !djTargetId?"Aguarde alguém transmitir ou simule um DJ no localhost":
+    djTargetId===socket?.id?"O DJ não pode jogar tomate em si mesmo":
+    !people.has(djTargetId)?"O DJ precisa entrar na pista":
+    Date.now()<tomatoCooldown?"Aguarde alguns segundos para outro tomate":
+    "Jogue um tomate no DJ atual";
+}
+let tomatoHintTimer=null;
+function showTomatoHint(message){
+  if(!tomatoButton)return;
+  let hint=document.getElementById("jfClubTomatoHint");
+  if(!hint){
+    hint=document.createElement("span");
+    hint.id="jfClubTomatoHint";
+    hint.className="jf-tomato-hint";
+    hint.setAttribute("role","status");
+    tomatoButton.insertAdjacentElement("afterend",hint);
+  }
+  hint.textContent=message;
+  hint.hidden=false;
+  clearTimeout(tomatoHintTimer);
+  tomatoHintTimer=setTimeout(()=>{hint.hidden=true;},2700);
 }
 function animate(){
   if(!active||!renderer)return;
@@ -1108,7 +1132,11 @@ window.addEventListener("jf-admin-skin-changed",()=>refreshDancer(socket.id));
 
 tomatoButton?.addEventListener("click",()=>{
   refreshTomatoButton();
-  if(tomatoButton.disabled)return;
+  if(!active)return showTomatoHint("Abra a Junto Club para jogar tomates! 🍅");
+  if(!djTargetId)return showTomatoHint("Ainda não tem DJ. No localhost, simule um DJ em outra aba.");
+  if(djTargetId===socket?.id)return showTomatoHint("Você é o DJ! Os outros podem jogar tomates em você.");
+  if(!people.has(djTargetId))return showTomatoHint("O DJ precisa entrar na Junto Club.");
+  if(Date.now()<tomatoCooldown)return showTomatoHint("Espere mais "+Math.ceil((tomatoCooldown-Date.now())/1000)+"s 🍅");
   tomatoCooldown=Date.now()+5000;
   refreshTomatoButton();
   socket.emit("club-tomato");
