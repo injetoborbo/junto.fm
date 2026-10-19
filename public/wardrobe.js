@@ -670,7 +670,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   normalized.rotation.y=preview?previewYaw:-.18;
   renderer.render(scene,camera);
   // A câmera precisa existir antes que dress() possa solicitar um render.
-  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey);
+  if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey,{privateFit:preview&&fitAccess});
   let dragStart=null;
   const down=event=>{
     if(!preview)return;
@@ -799,7 +799,7 @@ refreshPeople();
 
 /* API reaproveitável da pista isométrica: usa a mesma rigagem e os mesmos GLBs.
    A pista é pequena e evita criar WebGLRenderers por participante. */
-export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{}){
+export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{},options={}){
   if(!base)throw Error("Modelo macaco.glb indisponível.");
   const root=new THREE.Group();
   const monkey=cloneSkeleton(base.scene);
@@ -810,7 +810,7 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   monkey.position.copy(center).multiplyScalar(-scale);
   root.add(monkey);
   let stillActive=true;
-  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey,{animated:true});
+  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey,{animated:true,privateFit:Boolean(options.local&&fitAccess)});
   if(skin==="capitao-patria"){
     const asset=await getAsset("hero");
     if(asset&&stillActive){
