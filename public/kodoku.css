@@ -261,3 +261,16 @@ html[data-jf-theme="kodoku"] .jf-kodoku-seal-image{
  html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:42px!important}
  html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:130px!important;height:130px!important}
 }
+
+/* Assets finais em alta resolução, enviados pelo autor. */
+html[data-jf-theme="kodoku"] .jf-kodoku-seal-image{
+  width:100%!important;height:100%!important;object-fit:contain!important;
+  image-rendering:auto!important;filter:none!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow::before,
+html[data-jf-theme="kodoku"] #jfChatWindow::after{
+  background-image:url("/kodoku_corner_hq3.png")!important;
+  background-position:center!important;
+  background-size:contain!important;
+  background-repeat:no-repeat!important;
+}
