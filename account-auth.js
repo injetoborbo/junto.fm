@@ -44,9 +44,32 @@ module.exports=function setupAccounts(app){
     ALTER TABLE junto_accounts ALTER COLUMN google_sub DROP NOT NULL;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email TEXT;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS username TEXT;
+    ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT TRUE;
+    ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_hash TEXT;
+    ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_expires TIMESTAMPTZ;
+    UPDATE junto_accounts SET username='macaco_' || left(replace(id::text,'-',''),12) WHERE username IS NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_username_unique ON junto_accounts (lower(username)) WHERE username IS NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_email_unique ON junto_accounts (lower(email)) WHERE email IS NOT NULL;
     `).then(()=>true).catch(error=>{console.error("Contas: banco indisponível:",error.message);return false;}):Promise.resolve(false);
   const hash=s=>crypto.createHash("sha256").update(s).digest("hex");
+  // Envio transacional via Resend. Sem chave configurada, o cadastro por e-mail fica fechado.
+  const mailKey=process.env.RESEND_API_KEY||"";
+  const mailFrom=process.env.VERIFY_EMAIL_FROM||"";
+  const appBase=(process.env.APP_BASE_URL||"").replace(/\/$/,"");
+  const mailEnabled=Boolean(mailKey&&mailFrom&&/^https:\/\//.test(appBase) || mailKey&&mailFrom&&/^http:\/\/localhost(?::\d+)?$/.test(appBase));
+  async function sendVerification(email,username,token){
+    if(!mailEnabled)throw Error("Envio de verificação não configurado.");
+    const link=appBase+"/api/account/verify?token="+encodeURIComponent(token);
+    const response=await fetch("https://api.resend.com/emails",{
+      method:"POST",headers:{"Authorization":"Bearer "+mailKey,"Content-Type":"application/json"},
+      body:JSON.stringify({from:mailFrom,to:[email],subject:"Confirme seu e-mail na Junto.fm",
+        text:"Olá, @"+username+"! Confirme seu e-mail acessando o link abaixo (válido por 24 horas):\\n"+link+"\\nSe não foi você, ignore esta mensagem."})
+    });
+    if(!response.ok)throw Error("O serviço de e-mail recusou o envio ("+response.status+").");
+  }
+  function usernameFrom(body){return String(body?.username||"").trim().toLowerCase();}
+
   const attempts=new Map();
   function permitted(req){
     const key=String(req.ip||"unknown");
@@ -79,16 +102,24 @@ module.exports=function setupAccounts(app){
     if(!sameOrigin(req))return res.status(403).json({error:"Origem da requisição inválida."});
     if(!permitted(req))return res.status(429).json({error:"Muitas tentativas. Aguarde 15 minutos."});
     const {email,password,valid}=validCredentials(req.body);
+    const username=usernameFrom(req.body);
     if(!valid)return res.status(400).json({error:"Informe um e-mail válido e uma senha de 8 a 256 caracteres."});
     try{
       if(register){
+        if(!/^[a-z0-9_]{3,20}$/.test(username))return res.status(400).json({error:"Usuário deve ter 3 a 20 letras, números ou _."});
+        if(!mailEnabled)return res.status(503).json({error:"Verificação por e-mail ainda não configurada pelo administrador."});
         const salt=crypto.randomBytes(16).toString("hex");
         const digest=await passwordDigest(password,salt);
-        const result=await pool.query("INSERT INTO junto_accounts(id,email,password_hash) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING id",[crypto.randomUUID(),email,"scrypt:"+salt+":"+digest]);
-        if(!result.rowCount)return res.status(409).json({error:"Este e-mail já possui cadastro."});
-        await createSession(req,res,result.rows[0].id);
+        const token=crypto.randomBytes(32).toString("hex");
+        const result=await pool.query(`INSERT INTO junto_accounts(id,email,password_hash,username,nickname,email_verified,email_verify_hash,email_verify_expires)
+          VALUES($1,$2,$3,$4,$4,FALSE,$5,NOW()+INTERVAL '24 hours') ON CONFLICT DO NOTHING RETURNING id`,
+          [crypto.randomUUID(),email,"scrypt:"+salt+":"+digest,username,hash(token)]);
+        if(!result.rowCount)return res.status(409).json({error:"E-mail ou nome de usuário já cadastrado."});
+        try{await sendVerification(email,username,token);}
+        catch(error){await pool.query("DELETE FROM junto_accounts WHERE id=$1 AND email_verified=FALSE",[result.rows[0].id]);throw error;}
+        return res.status(202).json({ok:true,verificationPending:true,message:"Enviamos um link de confirmação para seu e-mail. Verifique também o spam."});
       }else{
-        const result=await pool.query("SELECT id,password_hash FROM junto_accounts WHERE lower(email)=$1",[email]);
+        const result=await pool.query("SELECT id,password_hash,email_verified FROM junto_accounts WHERE lower(email)=$1",[email]);
         const stored=result.rows[0]?.password_hash||"";
         const parts=stored.split(":");
         const salt=parts[0]==="scrypt"&&/^[a-f0-9]{32}$/.test(parts[1]||"")?parts[1]:"00000000000000000000000000000000";
@@ -96,11 +127,22 @@ module.exports=function setupAccounts(app){
         const expected=/^[a-f0-9]{128}$/.test(parts[2]||"")?Buffer.from(parts[2],"hex"):Buffer.alloc(64);
         if(!result.rows[0]||!crypto.timingSafeEqual(calculated,expected))
           return res.status(401).json({error:"E-mail ou senha incorretos."});
+        if(!result.rows[0].email_verified)return res.status(403).json({error:"Confirme seu e-mail antes de entrar."});
         await createSession(req,res,result.rows[0].id);
       }
       return res.json({ok:true});
     }catch(error){console.error("Conta local:",error.message);return res.status(503).json({error:"Não foi possível concluir a operação."});}
   }
+  app.get("/api/account/verify",async(req,res)=>{
+    const token=String(req.query.token||"");
+    if(!/^[a-f0-9]{64}$/.test(token))return res.status(400).type("text").send("Link inválido.");
+    if(!await ready)return res.status(503).type("text").send("Banco indisponível.");
+    try{
+      const result=await pool.query("UPDATE junto_accounts SET email_verified=TRUE,email_verify_hash=NULL,email_verify_expires=NULL WHERE email_verify_hash=$1 AND email_verified=FALSE AND email_verify_expires>NOW() RETURNING id",[hash(token)]);
+      if(!result.rowCount)return res.status(400).type("text").send("Link inválido ou expirado.");
+      res.type("text").send("E-mail confirmado! Volte ao Junto.fm e entre com sua conta.");
+    }catch(error){console.error("Verificação:",error.message);res.status(503).type("text").send("Não foi possível confirmar agora.");}
+  });
   app.post("/api/account/register",(req,res)=>passwordEndpoint(req,res,true));
   app.post("/api/account/login",(req,res)=>passwordEndpoint(req,res,false));
   setInterval(()=>{const now=Date.now();for(const [k,v] of attempts){const live=v.filter(t=>now-t<900000);if(live.length)attempts.set(k,live);else attempts.delete(k)}},900000).unref();
@@ -114,12 +156,12 @@ module.exports=function setupAccounts(app){
     if(!await ready)return null;
     const token=cookie(req,"junto_account");
     if(!/^[a-f0-9]{64}$/.test(token))return null;
-    const result=await pool.query(`SELECT a.id,a.nickname,a.avatar,a.motto,a.wardrobe
+    const result=await pool.query(`SELECT a.id,a.nickname,a.username,a.avatar,a.motto,a.wardrobe
       FROM junto_sessions s JOIN junto_accounts a ON a.id=s.account_id
       WHERE s.token_hash=$1 AND s.expires_at>NOW()`,[hash(token)]);
     return result.rows[0]||null;
   }
-  const safeAccount=a=>({id:a.id,name:a.nickname,avatar:a.avatar,motto:a.motto,wardrobe:a.wardrobe});
+  const safeAccount=a=>({id:a.id,name:a.nickname,username:a.username,avatar:a.avatar,motto:a.motto,wardrobe:a.wardrobe});
   app.get("/api/account/status",async(req,res)=>{
     try{
       const account=await accountFromRequest(req);
@@ -155,9 +197,9 @@ module.exports=function setupAccounts(app){
       const info=await identity.json();
       if(!info.sub||typeof info.sub!=="string")throw Error("Identidade não confirmada.");
       // Google sub é armazenado somente para identificação. Não usamos foto, nome ou e-mail do Google.
-      const result=await pool.query(`INSERT INTO junto_accounts (id,google_sub)
-        VALUES ($1,$2) ON CONFLICT (google_sub) DO UPDATE SET google_sub=EXCLUDED.google_sub
-        RETURNING id`,[crypto.randomUUID(),info.sub]);
+      const result=await pool.query(`INSERT INTO junto_accounts (id,google_sub,username)
+        VALUES ($1,$2,$3) ON CONFLICT (google_sub) DO UPDATE SET google_sub=EXCLUDED.google_sub
+        RETURNING id`,[crypto.randomUUID(),info.sub,"macaco_"+crypto.randomBytes(8).toString("hex")]);
       const token=crypto.randomBytes(32).toString("hex");
       await pool.query("INSERT INTO junto_sessions(token_hash,account_id,expires_at) VALUES($1,$2,$3)",[hash(token),result.rows[0].id,new Date(Date.now()+lifetime)]);
       setCookie(req,res,"junto_account",token,lifetime/1000);
