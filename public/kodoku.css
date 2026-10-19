@@ -140,7 +140,7 @@ html[data-jf-theme="kodoku"] .jf-friends-drawer .jf-person{
 /* Fundo ilustrado opcional atrás do site, exclusivo do Kodoku. */
 html[data-jf-theme="kodoku"][data-jf-kodoku-poster="on"] #jfAeroBackground{
   opacity:1!important;
-  background-image:linear-gradient(#0007,#0007),url("/kodoku-room-directives.jpg")!important;
+  background-image:linear-gradient(#0007,#0007),url("/kodoku-room-directives.png")!important;
   background-position:center center!important;
   background-size:cover!important;
   background-repeat:no-repeat!important;
