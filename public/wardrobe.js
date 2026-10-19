@@ -855,10 +855,19 @@ function prefetchWardrobeAssets(){
   // Duas cargas paralelas, compartilhadas com todas as instâncias da cena.
   void Promise.all([worker(),worker()]);
 }
-if(document.readyState==="complete"){
-  setTimeout(prefetchWardrobeAssets,500);
-}else{
-  window.addEventListener("load",()=>setTimeout(prefetchWardrobeAssets,500),{once:true});
+// Evita baixar acessórios 3D quando o usuário só quer ouvir música.
+// A pré-carga acontece quando Trajes for solicitado pela primeira vez.
+let wardrobePrefetchStarted=false;
+function beginWardrobePrefetch(){
+  if(wardrobePrefetchStarted)return;
+  wardrobePrefetchStarted=true;
+  prefetchWardrobeAssets();
+}
+const wardrobeOpenButton=$("jfOpenWardrobe");
+if(wardrobeOpenButton){
+  wardrobeOpenButton.addEventListener("pointerenter",beginWardrobePrefetch,{once:true});
+  wardrobeOpenButton.addEventListener("focus",beginWardrobePrefetch,{once:true});
+  wardrobeOpenButton.addEventListener("click",beginWardrobePrefetch,{once:true});
 }
 const selectors=Object.fromEntries(Object.keys(OPTIONS).map(k=>[k,$("jfWardrobe"+k[0].toUpperCase()+k.slice(1))]));
 const preview=$("jfWardrobePreview");
