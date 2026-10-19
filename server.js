@@ -122,7 +122,7 @@ async function spotifyTokenRequest(body) {
   if (!response.ok) throw new Error(data.error_description || data.error || "Falha ao autenticar com o Spotify.");
   return data;
 }
-async function validSpotifyAccessToken(session) {
+async function validSpotifyAccessToken(session, req=null, res=null) {
   if (!session) throw new Error("Conecte sua conta do Spotify primeiro.");
   if (session.accessToken && session.expiresAt > Date.now() + 60000) return session.accessToken;
   if (!session.refreshToken) throw new Error("Sua sessão do Spotify expirou. Conecte novamente.");
@@ -133,6 +133,7 @@ async function validSpotifyAccessToken(session) {
   session.accessToken = refreshed.access_token;
   session.expiresAt = Date.now() + (refreshed.expires_in || 3600) * 1000;
   if (refreshed.refresh_token) session.refreshToken = refreshed.refresh_token;
+  if(req&&res)saveSpotifyCookie(req,res,session);
   return session.accessToken;
 }
 
@@ -249,7 +250,7 @@ app.post("/api/spotify/skip",async(req,res)=>{
   // Token de uso único: impede repetição da requisição.
   skipTickets.delete(room);
   try{
-    const token=await validSpotifyAccessToken(getSession(req,res));
+    const token=await validSpotifyAccessToken(getSession(req,res),req,res);
     const response=await fetch("https://api.spotify.com/v1/me/player/next",{method:"POST",headers:{Authorization:"Bearer "+token}});
     if(!response.ok)return res.status(response.status).json({error:"Spotify não autorizou pular a faixa."});
     return res.json({ok:true});
@@ -260,7 +261,7 @@ app.post("/api/spotify/save-track", async (req, res) => {
     if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
     const uri = String(req.body && req.body.uri || "").trim();
     if (!/^spotify:track:[A-Za-z0-9]{22}$/.test(uri)) return res.status(400).json({ error: "Não consegui identificar esta faixa do Spotify." });
-    const token = await validSpotifyAccessToken(getSession(req, res));
+    const token = await validSpotifyAccessToken(getSession(req, res),req,res);
     const endpoint = new URL("https://api.spotify.com/v1/me/library");
     endpoint.searchParams.set("uris", uri);
     const response = await fetch(endpoint, { method: "PUT", headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
@@ -278,7 +279,7 @@ app.post("/api/spotify/save-track", async (req, res) => {
 app.get("/api/spotify/now-playing", async (req, res) => {
   try {
     if (!SPOTIFY_CLIENT_ID) return res.status(503).json({ error: "Spotify ainda não foi configurado pelo administrador." });
-    const token = await validSpotifyAccessToken(getSession(req, res));
+    const token = await validSpotifyAccessToken(getSession(req, res),req,res);
     const response = await fetch("https://api.spotify.com/v1/me/player/currently-playing", { headers: { Authorization: `Bearer ${token}` } });
     if (response.status === 204 || response.status === 404) return res.json({ item: null, is_playing: false });
     const data = await response.json().catch(() => ({}));
