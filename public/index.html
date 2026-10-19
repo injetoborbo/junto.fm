@@ -1004,6 +1004,8 @@ html[data-jf-theme="classic"] .track-times{
   let isSender = false;
   let jfRoomOwnerId=null;
   let jfCurrentTransmitter=null;
+  let jfRealTransmitter=null;
+  let jfSimDJId=null;
   let jfRoomOwner=false;
   function jfSyncRoomOwnership(){
     jfRoomOwner=Boolean(joined&&socket.id&&jfRoomOwnerId===socket.id);
@@ -1075,6 +1077,13 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     miniDj.setAttribute("aria-label", active
       ? "Mascote ao lado do player. Ao vivo: " + transmitterName
       : "Mascote 3D do Junto.fm ao lado do player");
+  }
+  // No localhost, DJ de teste ocupa exatamente o mascote do miniplayer.
+  // Não simula transmissão musical e nunca mostra o selo "AO VIVO".
+  function jfDisplayDj(){
+    const live=jfRealTransmitter?.id&&jfRealTransmitter.active!==false?jfRealTransmitter:null;
+    const test=jfSimDJId?{id:jfSimDJId,name:"DJ simulado",simulated:true,active:true}:null;
+    jfRenderMiniDj(live||test);
   }
   let jfLyricsTrackKey="",jfLyricsData=null,jfLyricsFetchId=0;
   function jfRenderLyrics(data){
@@ -1471,7 +1480,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { window.dispatchEvent(new Event("jf-dance-room-left")); jfRealTransmitter=null;jfSimDJId=null; jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -1488,10 +1497,20 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
     if (track) renderTrack(track, true); else renderTrack(null);
-    jfRenderMiniDj(transmitter);
+    jfRealTransmitter=transmitter?.id?transmitter:null;
+    jfSimDJId=null;
+    jfDisplayDj();
     if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
   });
-  socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
+  socket.on('transmitter-update',transmitter=>{
+    jfRealTransmitter=transmitter?.id&&transmitter.active!==false?transmitter:null;
+    jfDisplayDj();
+  });
+  socket.on("club-test-dj-update",({id}={})=>{
+    if(!joined)return;
+    jfSimDJId=id||null;
+    jfDisplayDj();
+  });
   socket.on("room-owner-update",({ownerId}={})=>{jfRoomOwnerId=ownerId||null;jfSyncRoomOwnership();jfRenderPeople();});
   socket.on("transmission-denied",({message}={})=>{
     if(isSender){resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
@@ -1591,6 +1610,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
     window.dispatchEvent(new Event("jf-dance-room-left"));
     joined=false;room="";jfRoomOwnerId=null;jfRoomOwner=false;
+    jfRealTransmitter=null;jfSimDJId=null;
     $("room").value="";
     $("remoteAudio").pause();$("remoteAudio").srcObject=null;
     jfRenderMiniDj(null);renderTrack(null);
