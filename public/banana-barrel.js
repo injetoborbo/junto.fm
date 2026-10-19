@@ -23,14 +23,14 @@ style.textContent=`
 @media(max-width:520px){.jf-banana-button{left:8px;bottom:77px;width:66px;height:66px}}
 `;document.head.appendChild(style);
 const widget=document.createElement("div");widget.className="jf-banana-widget";
-widget.innerHTML='<div class="jf-banana-barrel" id="jfBananaBarrel" aria-label="Barril 3D de vitamina de banana"></div><span class="jf-banana-count" id="jfBananaCount">0/19 🍌</span>';
+widget.innerHTML='<div class="jf-banana-barrel" id="jfBananaBarrel" aria-label="Barril 3D de vitamina de banana"></div><span class="jf-banana-count" id="jfBananaCount">0/15 🍌</span>';
 const stage=player.querySelector(".jf-dj-stage");if(!stage)return;
 const row=document.createElement("div");row.className="jf-banana-dj-row";stage.parentElement.insertBefore(row,stage);row.append(stage,widget);
 const button=document.createElement("button");button.type="button";button.className="jf-banana-button";button.id="jfBananaThrow";button.title="Lançar banana no barril";button.setAttribute("aria-label","Lançar banana no barril");button.textContent="🍌";button.hidden=true;document.body.appendChild(button);
 const holder=widget.querySelector("#jfBananaBarrel"),count=widget.querySelector("#jfBananaCount");
 let joined=false,number=0,room=null,lastClick=0,liquid=null,level=0,target=0,ripple=0,barrelReady=false,flightModel=null,THREE=null,flightRenderer=null,flightScene=null,flightCamera=null,flightLayer=null,iconRenderer=null,iconScene=null,iconCamera=null,iconModel=null;
-const clamp=n=>Math.min(19,Math.max(0,Number(n)||0));
-const setCount=value=>{number=clamp(value);target=number/19;count.textContent=number+"/19 🍌";button.hidden=!joined;button.disabled=!joined||number>=19;};
+const clamp=n=>Math.min(15,Math.max(0,Number(n)||0));
+const setCount=value=>{number=clamp(value);target=number/15;count.textContent=number+"/15 🍌";button.hidden=!joined;button.disabled=!joined||number>=15;};
 try{
  THREE=await import("https://esm.sh/three@0.170.0");
  const {GLTFLoader}=await import("https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
@@ -110,7 +110,7 @@ function fly(){
  }
  requestAnimationFrame(step);
 }
-button.onclick=()=>{if(!joined||number>=19||Date.now()-lastClick<1200)return;lastClick=Date.now();socket.emit("banana-throw");};
+button.onclick=()=>{if(!joined||number>=15||Date.now()-lastClick<1200)return;lastClick=Date.now();socket.emit("banana-throw");};
 socket.on("joined-room",data=>{joined=true;room=data.room;setCount(data.bananaCount||0)});
 socket.on("banana-thrown",data=>{if(!joined||data.room!==room)return;fly();setCount(data.count);ripple=1;});
 socket.on("banana-error",data=>{button.title=data?.message||"Aguarde"});
