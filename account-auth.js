@@ -141,7 +141,9 @@ module.exports=function setupAccounts(app){
     try{
       const result=await pool.query("UPDATE junto_accounts SET email_verified=TRUE,email_verify_hash=NULL,email_verify_expires=NULL WHERE email_verify_hash=$1 AND email_verified=FALSE AND email_verify_expires>NOW() RETURNING id",[hash(token)]);
       if(!result.rowCount)return res.status(400).type("text").send("Link inválido ou expirado.");
-      res.type("text").send("E-mail confirmado! Volte ao Junto.fm e entre com sua conta.");
+      await createSession(req,res,result.rows[0].id);
+      res.set("Cache-Control","no-store");
+      res.redirect(303,"/?email_verified=1");
     }catch(error){console.error("Verificação:",error.message);res.status(503).type("text").send("Não foi possível confirmar agora.");}
   });
   app.post("/api/account/register",(req,res)=>passwordEndpoint(req,res,true));
