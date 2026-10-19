@@ -13,9 +13,24 @@ const OPTIONS={
 const defaults=()=>({hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"});
 const sanitize=x=>Object.fromEntries(Object.entries(OPTIONS).map(([key,list])=>[key,list.includes(x?.[key])?x[key]:defaults()[key]]));
 const $=id=>document.getElementById(id);
-const base=await new GLTFLoader().loadAsync("/macaco.glb").catch(error=>{
-  console.warn("Guarda-roupa: macaco.glb não foi encontrado.",error);return null;
-});
+// O macaco-base (6,5 MiB) não é necessário na tela inicial.
+let base=null,baseLoadPromise=null;
+function ensureBaseModel(){
+  if(baseLoadPromise)return baseLoadPromise;
+  baseLoadPromise=new GLTFLoader().loadAsync("/macaco.glb").then(model=>{
+    base=model;
+    refreshPeople();
+    const opened=document.getElementById("jfWardrobeModal");
+    if(opened&&!opened.hidden)showPreview();
+    return model;
+  }).catch(error=>{
+    console.warn("Guarda-roupa: macaco.glb não foi encontrado.",error);
+    const opened=document.getElementById("jfWardrobeModal");
+    if(opened&&!opened.hidden)document.getElementById("jfWardrobePreview").textContent="Modelo 3D indisponível.";
+    return null;
+  });
+  return baseLoadPromise;
+}
 let previewRenderer=null;
 let previewYaw=-.18;
 // Todas as roupas são GLBs ajustados ao corpo original do macaco.
@@ -844,7 +859,8 @@ function prefetchWardrobeAssets(){
     selection.headphones==="preto"?"fone_novo":selection.headphones!=="nenhum"?"fone":null,
     selection.outfit==="rosa_novo"?"vestido_novo":selection.outfit==="rosa"?"vestido":null
   ].filter(name=>ASSETS[name]);
-  const queue=[...new Set([...preferred,...wardrobePrefetchKeys])];
+  // Evita pré-baixar dezenas de MiB de roupas que ninguém está usando.
+  const queue=[...new Set(preferred)];
   let next=0;
   async function worker(){
     while(next<queue.length){
@@ -874,6 +890,10 @@ const preview=$("jfWardrobePreview");
 let fitPose="standing";
 function showPreview(){
   previewRenderer?.dispose();
+  if(!base){
+    if(preview)preview.textContent="Carregando macaco 3D…";
+    return;
+  }
   previewRenderer=makeScene(preview,editing,{preview:true,previewSeated:fitAccess&&fitPose==="seated"&&editing.outfit==="rosa_novo"});
 }
 
@@ -1033,7 +1053,9 @@ const modal=$("jfWardrobeModal");
 $("jfOpenWardrobe")?.addEventListener("click",()=>{
   editing={...selection};
   for(const [k,e] of Object.entries(selectors))if(e)e.value=editing[k];
-  modal.hidden=false;document.body.style.overflow="hidden";showPreview();
+  modal.hidden=false;document.body.style.overflow="hidden";
+  void ensureBaseModel();
+  showPreview();
   if(fitAccess)focusFitItem(preferredFitItem());
 });
 function close(){
@@ -1068,10 +1090,20 @@ const people=$("jfPeople");
 if(people)observer.observe(people,{childList:true,subtree:false});
 window.addEventListener("jf-wardrobe-save",()=>{selection=readSaved();refreshPeople();});
 refreshPeople();
+// Após entrar numa sala, liberar o avatar 3D dos participantes sem disputar
+// imediatamente o download do mascote principal do player.
+function scheduleRoomAvatarLoad(){
+  setTimeout(()=>{
+    if(document.body.classList.contains("jf-in-room"))void ensureBaseModel();
+  },1800);
+}
+window.jfDanceBridge?.socket?.on("joined-room",scheduleRoomAvatarLoad);
+if(document.body.classList.contains("jf-in-room"))scheduleRoomAvatarLoad();
 
 /* API reaproveitável da pista isométrica: usa a mesma rigagem e os mesmos GLBs.
    A pista é pequena e evita criar WebGLRenderers por participante. */
 export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{},options={}){
+  if(!base)await ensureBaseModel();
   if(!base)throw Error("Modelo macaco.glb indisponível.");
   const root=new THREE.Group();
   const monkey=cloneSkeleton(base.scene);
