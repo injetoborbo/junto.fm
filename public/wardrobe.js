@@ -249,10 +249,10 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     width:.56,offset:[0,.16,.06],seatedOffset:{z:.00015}
   });
   if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
-    width:.76,offset:[0,.26,0],seatedOffset:{y:-.00010}
+    width:.58,offset:[0,.22,0],seatedOffset:{y:-.00010}
   });
   if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
-    width:.68,offset:[0,-.10,.02],seatedOffset:{y:.00010}
+    width:.70,offset:[0,-.19,.01],seatedOffset:{y:.00010}
   });
   if(selection.hat==="palha"||selection.hat==="branco"){
     const type=selection.hat;
