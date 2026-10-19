@@ -4,10 +4,10 @@ import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTF
 import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 
 const OPTIONS={
-  hat:["nenhum","bone","gorro","palha","branco"],
-  glasses:["nenhum","escuros","redondos"],
-  headphones:["nenhum","azul","rosa"],
-  outfit:["padrao","rosa"]
+  hat:["nenhum","bone","gorro","palha","branco","caveira"],
+  glasses:["nenhum","escuros","redondos","sem_aro"],
+  headphones:["nenhum","azul","rosa","preto"],
+  outfit:["padrao","rosa","rosa_novo"]
 };
 const defaults=()=>({hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"});
 const sanitize=x=>Object.fromEntries(Object.entries(OPTIONS).map(([key,list])=>[key,list.includes(x?.[key])?x[key]:defaults()[key]]));
@@ -29,6 +29,10 @@ const ASSETS={
   redondos:"/oculos_redondos.glb",
   fone:"/fone_preto.glb",
   vestido:"/vestido_rosa.glb",
+  caveira:"/toucaveira.glb",
+  sem_aro:"/oculossemolo.glb",
+  fone_novo:"/fonepreto.glb",
+  vestido_novo:"/vestidorosa.glb",
   hero:"/patrianocape_pose_heroica_final.glb",
   heroCape:"/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb"
 };
@@ -89,6 +93,11 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   const neckBone=findBone(monkey,"Neck");
   const torsoBone=findBone(monkey,"Spine2")||findBone(monkey,"Spine");
   const hipBone=findBone(monkey,"Hips");
+  // Novas peças de geometria livre: buscar os ossos também quando GLTFLoader
+  // converte "mixamorig:Head" para "mixamorigHead".
+  const newHeadBone=getAnimatedBone(monkey,"Head")||headBone;
+  const newTopBone=getAnimatedBone(monkey,"HeadTop_End")||topBone;
+  const newTorsoBone=getAnimatedBone(monkey,"Spine2")||torsoBone;
   if(animated&&!headBone)console.error("Guarda-roupa 3D: osso Head ausente.",monkey.name);
   const bindMatrices=new Map(),followers=[];
   let isSeated=false;
@@ -106,7 +115,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     updateAccessories(true);
   };
   const getGlassesDiagnostics=()=>{
-    const eyewear=followers.find(({part})=>part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos");
+    const eyewear=followers.find(({part})=>part.name==="jfWardrobe_escuros"||part.name==="jfWardrobe_redondos"||part.name==="jfWardrobe_sem_aro");
     if(!eyewear)return {loaded:false,requested:selection.glasses,seated:isSeated,
       headBone:headBone?.name||null,attached:followers.map(({part})=>part.name)};
     monkey.updateMatrixWorld(true);
@@ -118,7 +127,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       boneCoordinates:center.toArray().map(v=>Number(v.toFixed(4))),
       calibration:{...glassesCalibration}};
   };
-  for(const bone of [headBone,neckBone,torsoBone,hipBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
+  for(const bone of [headBone,neckBone,torsoBone,hipBone,newHeadBone,newTopBone,newTorsoBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
   const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
   const updateAccessories=(seated=isSeated)=>{
     isSeated=Boolean(seated);
@@ -194,6 +203,48 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       render();
     });
   };
+  // Os novos arquivos têm largura ~2, diferente dos acessórios originais.
+  // Usa o centro do osso no bind pose e escala por largura em unidades de palco.
+  const rootBindInverse=rootBindWorld.clone().invert();
+  const restInRoot=bone=>{
+    const mat=bindMatrices.get(bone);
+    return mat?new THREE.Vector3().setFromMatrixPosition(mat).applyMatrix4(rootBindInverse):new THREE.Vector3();
+  };
+  const installNewWearable=(file,bone,{width,offset,seatedOffset={}})=>{
+    getAsset(file).then(asset=>{
+      if(!asset||!state.userData.active||!bone)return;
+      const part=asset.clone(true);
+      part.name="jfWardrobe_"+file;
+      const measure=getBounds(part);
+      const scale=width/Math.max(measure.size.x,1e-6);
+      const target=restInRoot(bone).add(new THREE.Vector3(...offset));
+      part.scale.setScalar(scale);
+      part.position.set(target.x-measure.center.x*scale,
+        target.y-measure.center.y*scale,
+        target.z-measure.center.z*scale);
+      state.add(part);
+      if(animated)attachAtBind(part,bone,rootBindWorld,{},seatedOffset);
+      else{
+        root.updateMatrixWorld(true);
+        monkey.updateMatrixWorld(true);
+        bone.attach(part);
+      }
+      updateAccessories(isSeated);
+      render();
+    });
+  };
+  if(selection.hat==="caveira")installNewWearable("caveira",newHeadBone,{
+    width:.66,offset:[0,.35,0],seatedOffset:{y:-.00015}
+  });
+  if(selection.glasses==="sem_aro")installNewWearable("sem_aro",newHeadBone,{
+    width:.56,offset:[0,.16,.06],seatedOffset:{z:.00015}
+  });
+  if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
+    width:.76,offset:[0,.26,0],seatedOffset:{y:-.00010}
+  });
+  if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
+    width:.68,offset:[0,-.10,.02],seatedOffset:{y:.00010}
+  });
   if(selection.hat==="palha"||selection.hat==="branco"){
     const type=selection.hat;
     getAsset(type).then(asset=>{
@@ -225,7 +276,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
       part.position.x=rawX;
     },true,headBone,null,{y:-.0004});
   }
-  if(selection.glasses!=="nenhum"){
+  if(selection.glasses!=="nenhum"&&selection.glasses!=="sem_aro"){
     attachFitted(selection.glasses,(part,measure)=>{
       const s=.88;
       part.scale.setScalar(s);
@@ -236,7 +287,7 @@ function dress(root,selection,render,monkey,{animated=false}={}){
     // O Head usa a escala NAtiva (~milésimos de unidade no GLB).\n    // Ajuste pequeno na coordenada do osso, preservado por toda animação.
     },true,headBone,animated?{x:.00010,y:-.00008,z:.00072}:null,{x:.00026,y:-.00022,z:.00185});
   }
-  if(selection.headphones!=="nenhum"){
+  if(selection.headphones!=="nenhum"&&selection.headphones!=="preto"){
     const wearingHat=selection.hat!=="nenhum";
     attachFitted("fone",(part,measure)=>{
       part.traverse(node=>{
@@ -597,8 +648,8 @@ function prefetchWardrobeAssets(){
   const preferred=[
     selection.hat,
     selection.glasses,
-    selection.headphones!=="nenhum"?"fone":null,
-    selection.outfit==="rosa"?"vestido":null
+    selection.headphones==="preto"?"fone_novo":selection.headphones!=="nenhum"?"fone":null,
+    selection.outfit==="rosa_novo"?"vestido_novo":selection.outfit==="rosa"?"vestido":null
   ].filter(name=>ASSETS[name]);
   const queue=[...new Set([...preferred,...wardrobePrefetchKeys])];
   let next=0;
