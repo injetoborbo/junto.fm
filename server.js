@@ -48,17 +48,64 @@ function cookieValue(req, name) {
   }
   return "";
 }
+// A sessão na memória some quando o Render reinicia. Um cookie criptografado
+// permite restaurar somente a conexão Spotify deste navegador, sem expor tokens.
+const spotifyCookieSecret=String(process.env.SPOTIFY_SESSION_SECRET||"");
+const spotifyCookieKey=spotifyCookieSecret.length>=32
+  ?crypto.createHash("sha256").update("junto.fm.spotify.v1:").update(spotifyCookieSecret).digest()
+  :null;
+if(!spotifyCookieKey)console.warn("Spotify: configure SPOTIFY_SESSION_SECRET (mín. 32 caracteres) para manter conexões após reinícios.");
+const spotifyCookieAge=90*24*60*60;
+function spotifySecureCookie(req){
+  return req.secure||req.headers["x-forwarded-proto"]==="https"?"; Secure":"";
+}
+function appendSpotifyCookie(res,cookie){
+  if(!res)return;
+  const old=res.getHeader("Set-Cookie");
+  res.setHeader("Set-Cookie",[...(Array.isArray(old)?old:old?[old]:[]),cookie]);
+}
+function saveSpotifyCookie(req,res,session){
+  if(!spotifyCookieKey||!res||!session?.refreshToken)return;
+  const iv=crypto.randomBytes(12);
+  const cipher=crypto.createCipheriv("aes-256-gcm",spotifyCookieKey,iv);
+  const data=Buffer.from(JSON.stringify({refreshToken:session.refreshToken,scope:session.scope||"",issued:Date.now()}));
+  const encrypted=Buffer.concat([cipher.update(data),cipher.final()]);
+  const token=Buffer.concat([iv,cipher.getAuthTag(),encrypted]).toString("base64url");
+  appendSpotifyCookie(res,"junto_spotify_restore="+token+"; HttpOnly; SameSite=Lax; Path=/; Max-Age="+spotifyCookieAge+spotifySecureCookie(req));
+}
+function restoreSpotifyCookie(req){
+  if(!spotifyCookieKey)return null;
+  const value=cookieValue(req,"junto_spotify_restore");
+  if(!value||value.length>4000)return null;
+  try{
+    const raw=Buffer.from(value,"base64url");
+    if(raw.length<30)return null;
+    const decipher=crypto.createDecipheriv("aes-256-gcm",spotifyCookieKey,raw.subarray(0,12));
+    decipher.setAuthTag(raw.subarray(12,28));
+    const payload=JSON.parse(Buffer.concat([decipher.update(raw.subarray(28)),decipher.final()]).toString("utf8"));
+    if(typeof payload.refreshToken!=="string"||!payload.refreshToken||!Number.isFinite(payload.issued)||Date.now()-payload.issued>spotifyCookieAge*1000)return null;
+    return {refreshToken:payload.refreshToken,scope:String(payload.scope||""),expiresAt:0};
+  }catch{return null;}
+}
 function getSession(req, res, create = false) {
-  let id = cookieValue(req, "junto_spotify_session");
-  let session = id && spotifySessions.get(id);
-  if (!session && create) {
-    id = crypto.randomBytes(24).toString("hex");
-    session = {};
-    spotifySessions.set(id, session);
-    const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
-    res.setHeader("Set-Cookie", `junto_spotify_session=${id}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${secure ? "; Secure" : ""}`);
+  let id=cookieValue(req,"junto_spotify_session");
+  let session=id&&spotifySessions.get(id);
+  if(!session){
+    session=restoreSpotifyCookie(req);
+    if(session){
+      if(!id)id=crypto.randomBytes(24).toString("hex");
+      spotifySessions.set(id,session);
+      if(res)appendSpotifyCookie(res,"junto_spotify_session="+id+"; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000"+spotifySecureCookie(req));
+    }
   }
-  return session || null;
+  if(!session&&create){
+    id=crypto.randomBytes(24).toString("hex");
+    session={};
+    spotifySessions.set(id,session);
+    appendSpotifyCookie(res,"junto_spotify_session="+id+"; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000"+spotifySecureCookie(req));
+  }
+  if(session?.refreshToken&&res)saveSpotifyCookie(req,res,session);
+  return session||null;
 }
 function spotifyRedirectUri(req) {
   if (SPOTIFY_REDIRECT_URI) return SPOTIFY_REDIRECT_URI;
@@ -146,7 +193,7 @@ app.get("/api/turn/ice-servers", async (_req, res) => {
 });
 
 app.get("/api/spotify/status", (req, res) => {
-  res.json({ configured: Boolean(SPOTIFY_CLIENT_ID), connected: Boolean(getSession(req, res)) });
+  res.json({ configured: Boolean(SPOTIFY_CLIENT_ID), connected: Boolean(getSession(req, res)?.refreshToken) });
 });
 app.get("/spotify/login", (req, res) => {
   if (!SPOTIFY_CLIENT_ID) return res.status(503).send("Spotify não configurado. Defina SPOTIFY_CLIENT_ID no ambiente do servidor.");
@@ -178,6 +225,7 @@ app.get("/spotify/callback", async (req, res) => {
     session.scope = tokens.scope || "";
     session.refreshToken = tokens.refresh_token || session.refreshToken;
     session.expiresAt = Date.now() + (tokens.expires_in || 3600) * 1000;
+    saveSpotifyCookie(req,res,session);
     res.redirect("/?spotify=connected");
   } catch (err) {
     console.error("Erro no OAuth Spotify:", err.message);
@@ -187,7 +235,8 @@ app.get("/spotify/callback", async (req, res) => {
 app.post("/api/spotify/logout", (req, res) => {
   const id = cookieValue(req, "junto_spotify_session");
   if (id) spotifySessions.delete(id);
-  res.setHeader("Set-Cookie", "junto_spotify_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
+  appendSpotifyCookie(res,"junto_spotify_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"+spotifySecureCookie(req));
+  appendSpotifyCookie(res,"junto_spotify_restore=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"+spotifySecureCookie(req));
   res.json({ ok: true });
 });
 app.post("/api/spotify/skip",async(req,res)=>{
