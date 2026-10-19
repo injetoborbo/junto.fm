@@ -1618,7 +1618,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   const jfCableSelect=$("jfCableDevice");
   const jfCableHint=$("jfCableHelp");
   const jfAudioMode=$("jfAudioSource");
-  const jfIsCableName=name=>/VB[\\s-]?Audio|VB[\\s-]?CABLE|CABLE\\s*(?:Output|[-AB]\\s*Output)|Virtual\\s*(?:Audio\\s*)?Cable/i.test(name||"");
+  const jfIsCableName=name=>/VB[\s-]?Audio|VB[\s-]?CABLE|CABLE\s*(?:Output|[-AB]\s*Output)|Virtual\s*(?:Audio\s*)?Cable/i.test(name||"");
   async function jfDetectCable(requestPermission=false){
     if(!navigator.mediaDevices?.getUserMedia||!navigator.mediaDevices?.enumerateDevices){
       jfCableHint.textContent="Este navegador não oferece seleção de dispositivos de áudio. Use Chrome/Edge por HTTPS ou localhost.";
@@ -1663,30 +1663,40 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
       if (!jfRoomOwner) { setStatus('Somente o dono da sala pode transmitir o Spotify.'); return; }
-      if (!navigator.mediaDevices?.getDisplayMedia) { setStatus('A captura exige Chrome/Edge em localhost ou HTTPS.'); return; }
+      const external=jfAudioMode.value==="system";
+      if(external&&!navigator.mediaDevices?.getUserMedia){setStatus("O VB-CABLE exige acesso ao microfone em HTTPS/localhost.");return;}
+      if(!external&&!navigator.mediaDevices?.getDisplayMedia){setStatus("A captura da aba exige Chrome/Edge em HTTPS/localhost.");return;}
       // Música capturada da aba deve permanecer estéreo, sem tratamento de voz.
       // Alguns navegadores ignoram estas preferências na captura de tela.
       const musicAudio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
-      const external=$("jfAudioSource").value==="system";
-      // WEB: preservar a chamada de captura original, usada antes da regressão.
-      // EXTERNO: solicitar áudio do sistema em separado, sem interferir no modo web.
-      const captured = await navigator.mediaDevices.getDisplayMedia(external
-        ? {video:{displaySurface:"monitor"},audio:true,systemAudio:"include"}
-        : {video:true,audio:musicAudio});
+      let selectedId=null;
+      if(external){
+        selectedId=jfCableSelect.value;
+        if(!selectedId){setStatus("Antes de transmitir, clique em Detectar VB-CABLE e selecione CABLE Output.");return;}
+        const available=await navigator.mediaDevices.enumerateDevices();
+        if(!available.some(d=>d.kind==="audioinput"&&d.deviceId===selectedId&&jfIsCableName(d.label))){
+          setStatus("CABLE Output não está disponível. Clique em Detectar VB-CABLE novamente.");return;
+        }
+      }
+      // O modo web preserva a captura funcional. O modo externo captura
+      // somente o dispositivo virtual explicitamente escolhido.
+      const captured=external
+        ? await navigator.mediaDevices.getUserMedia({video:false,audio:{...musicAudio,deviceId:{exact:selectedId}}})
+        : await navigator.mediaDevices.getDisplayMedia({video:true,audio:musicAudio});
       const audioTracks = captured.getAudioTracks();
-      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'Sem áudio do sistema: escolha Tela inteira e marque compartilhar áudio do sistema. Se a opção não aparecer, Chrome/Windows não oferece captura desse aplicativo.':'Sem áudio da aba: escolha Aba do Chrome/Edge e marque Compartilhar áudio da aba.'); return; }
+      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'CABLE Output não retornou nenhuma faixa de áudio. Verifique a instalação e as permissões.':'Sem áudio da aba: escolha Aba do Chrome/Edge e marque Compartilhar áudio da aba.'); return; }
       for (const track of audioTracks) {
         try { track.contentHint = 'music'; } catch (_) {}
         // applyConstraints é best-effort: não interrompe a transmissão caso falhe.
         try { await track.applyConstraints({ echoCancellation: false, noiseSuppression: false, autoGainControl: false }); }
         catch (error) { console.info('Captura não aceita todas as preferências de música:', error); }
       }
-      // Captura web volta ao ciclo original; na captura do sistema, conservar
-      // o vídeo localmente porque sua interrupção pode finalizar a sessão.
-      // Em ambos os casos SOMENTE as faixas de áudio são enviadas por WebRTC.
+      // Somente áudio é encaminhado pelo WebRTC. O VB-CABLE nem gera vídeo.
       if(!external)captured.getVideoTracks().forEach(track=>track.stop());
       resetSession();
-      localStream = captured; isSender = true; socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
+      localStream = captured; isSender = true;
+      jfAudioMode.disabled=true;jfCableSelect.disabled=true;$("jfCableDetect").disabled=true;
+      socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
       // serão conectados pelo evento peer-joined do servidor.
       enableControls();
@@ -1694,13 +1704,15 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       for (const id of knownPeers) await createSenderOffer(id);
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
       audioTracks[0].addEventListener('mute', ()=>{
-        if(isSender)setStatus('A fonte do áudio foi silenciada pelo navegador. Verifique a aba escolhida ou o compartilhamento de áudio.');
+        if(isSender)setStatus(external?'VB-CABLE sem sinal. Confirme Spotifast → CABLE Input no Mixer de volume do Windows.':'A aba foi silenciada pelo navegador. Verifique a aba escolhida.');
       });
-      setStatus(external?'Áudio do sistema capturado. Conectando ouvintes…':'Áudio da aba capturado. Conectando ouvintes…', true);
+      setStatus(external?'Capturando CABLE Output. Confira a música em outro dispositivo.':'Áudio da aba capturado. Conectando ouvintes…', true);
       if (spotifyConnected) startSpotifyPolling();
     } catch (error) {
       console.error('Captura cancelada ou bloqueada:', error);
+      if(isSender){socket.emit("transmission-stopped",{room});socket.emit("clear-track",{room});}
       resetSession();
+      jfAudioMode.disabled=false;$("jfCableDetect").disabled=false;jfCableSelect.disabled=!jfCableSelect.value;
       const reason=error?.name==="NotAllowedError"?"Permissão de compartilhamento negada ou cancelada.":error?.name==="NotSupportedError"?"Este navegador não oferece esse modo de captura.":error?.name==="NotFoundError"?"Nenhuma fonte de compartilhamento disponível.":"Não foi possível iniciar a captura ("+(error?.name||"erro desconhecido")+").";
       setStatus(reason);
     }
