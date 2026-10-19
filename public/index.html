@@ -2480,13 +2480,20 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     // O novo GLB inclui a mesa de DJ na parte inferior. Subir o conjunto
     // sem mudar modelScale para a mesa não ser cortada pelo rodapé do player.
     model.position.y+=.08;
+    // O modelo padrão já está no palco. Skins adicionais só são carregadas
+    // quando o dono ativa o traje correspondente, sem atrasar o macaco padrão.
+    let patriot=null;
+    const patriotRoot=new THREE.Group();root.add(patriotRoot);
+    let patriotLoadPromise=null;
+    function ensurePatriotLoaded(){
+      if(patriotLoadPromise)return patriotLoadPromise;
+      patriotLoadPromise=(async()=>{
     // Skin completa gerada no Meshy: substitui a armadura geométrica antiga.
     const patriotGltf=await new GLTFLoader().loadAsync("/patrianocape_pose_heroica_final.glb").catch(error=>{
       console.warn("Skin Capitão Pátria indisponível; mantendo macaco padrão.",error);
       return null;
     });
-    const patriot=patriotGltf?.scene||null;
-    const patriotRoot=new THREE.Group();root.add(patriotRoot);
+    patriot=patriotGltf?.scene||null;
     if(patriot){
       patriotRoot.add(patriot);
       const pb=new THREE.Box3().setFromObject(patriot);
@@ -2504,8 +2511,6 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const capeAsset="/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb";
       let capeMount=null;
       try{
-        const capeResponse=await fetch(capeAsset,{method:"HEAD"});
-        if(!capeResponse.ok)throw new Error("HTTP "+capeResponse.status+" ao acessar "+capeAsset);
         const capeGltf=await new GLTFLoader().loadAsync(capeAsset);
         const cape=capeGltf.scene;
         const capeBox=new THREE.Box3().setFromObject(cape);
@@ -2587,8 +2592,14 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         patriotRoot.add(pupil);
       }
     }
+        updateAdminCostume();
+      })().catch(error=>console.warn("Skin alternativa indisponível:",error));
+      return patriotLoadPromise;
+    }
     function updateAdminCostume(){
-      const enabled=Boolean(patriot)&&Boolean(document.getElementById("jfMiniDj")?.classList.contains("jf-homelander"));
+      const requested=Boolean(document.getElementById("jfMiniDj")?.classList.contains("jf-homelander"));
+      if(requested&&!patriot&&!patriotLoadPromise)void ensurePatriotLoaded();
+      const enabled=requested&&Boolean(patriot);
       model.visible=!enabled;
       patriotRoot.visible=enabled;
     }
@@ -2609,8 +2620,14 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if("ResizeObserver" in window)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);
     const clock=new THREE.Clock();
     const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const animate=()=>{
+    const frameDelay=window.matchMedia("(max-width:760px)").matches?42:28;
+    let lastFrame=0;
+    const animate=(now=performance.now())=>{
       requestAnimationFrame(animate);
+      // Não ocupar a GPU na home nem quando o navegador está em segundo plano.
+      if(document.hidden||!document.body.classList.contains("jf-in-room"))return;
+      if(now-lastFrame<frameDelay)return;
+      lastFrame=now;
       const t=clock.getElapsedTime();
       if(!reduced){root.rotation.y=-.16+Math.sin(t*1.15)*.09;root.position.y=patriotRoot.visible ? .005+Math.sin(t*1.35)*.045 : Math.sin(t*2.1)*.035;root.rotation.z=Math.sin(t*1.7)*.018;}
       renderer.render(scene,camera);
