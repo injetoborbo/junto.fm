@@ -13,7 +13,7 @@ style.textContent=`
 .jf-banana-barrel{width:96px;height:120px;position:relative;pointer-events:none;transform:translateY(9px)}
 .jf-banana-barrel canvas{width:100%;height:100%;display:block}
 .jf-banana-count{font:700 11px system-ui,sans-serif;color:var(--jf-secondary,#e7c778);white-space:nowrap}
-.jf-banana-button{position:fixed;left:10px;bottom:86px;z-index:10021;width:76px;height:76px;border:0;background:transparent;padding:0;cursor:pointer;display:grid;place-items:center;filter:drop-shadow(0 3px 5px #0009);transition:transform .14s ease,filter .14s ease}
+.jf-banana-button[hidden]{display:none!important}\n.jf-banana-button{position:fixed;left:10px;bottom:86px;z-index:10021;width:76px;height:76px;border:0;background:transparent;padding:0;cursor:pointer;display:grid;place-items:center;filter:drop-shadow(0 3px 5px #0009);transition:transform .14s ease,filter .14s ease}
 .jf-banana-button canvas{width:100%;height:100%;display:block;pointer-events:none}
 .jf-banana-button:hover{transform:scale(1.12) rotate(-8deg)}
 .jf-banana-button:active{transform:scale(.92)}
@@ -26,11 +26,11 @@ const widget=document.createElement("div");widget.className="jf-banana-widget";
 widget.innerHTML='<div class="jf-banana-barrel" id="jfBananaBarrel" aria-label="Barril 3D de vitamina de banana"></div><span class="jf-banana-count" id="jfBananaCount">0/19 🍌</span>';
 const stage=player.querySelector(".jf-dj-stage");if(!stage)return;
 const row=document.createElement("div");row.className="jf-banana-dj-row";stage.parentElement.insertBefore(row,stage);row.append(stage,widget);
-const button=document.createElement("button");button.type="button";button.className="jf-banana-button";button.id="jfBananaThrow";button.title="Lançar banana no barril";button.setAttribute("aria-label","Lançar banana no barril");button.textContent="🍌";document.body.appendChild(button);
+const button=document.createElement("button");button.type="button";button.className="jf-banana-button";button.id="jfBananaThrow";button.title="Lançar banana no barril";button.setAttribute("aria-label","Lançar banana no barril");button.textContent="🍌";button.hidden=true;document.body.appendChild(button);
 const holder=widget.querySelector("#jfBananaBarrel"),count=widget.querySelector("#jfBananaCount");
 let joined=false,number=0,room=null,lastClick=0,liquid=null,level=0,target=0,ripple=0,barrelReady=false,flightModel=null,THREE=null,flightRenderer=null,flightScene=null,flightCamera=null,flightLayer=null,iconRenderer=null,iconScene=null,iconCamera=null,iconModel=null;
 const clamp=n=>Math.min(19,Math.max(0,Number(n)||0));
-const setCount=value=>{number=clamp(value);target=number/19;count.textContent=number+"/19 🍌";button.disabled=!joined||number>=19;};
+const setCount=value=>{number=clamp(value);target=number/19;count.textContent=number+"/19 🍌";button.hidden=!joined;button.disabled=!joined||number>=19;};
 try{
  THREE=await import("https://esm.sh/three@0.170.0");
  const {GLTFLoader}=await import("https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
