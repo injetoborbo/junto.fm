@@ -114,6 +114,7 @@ button.onclick=()=>{if(!joined||number>=15||Date.now()-lastClick<1200)return;las
 socket.on("joined-room",data=>{joined=true;room=data.room;setCount(data.bananaCount||0)});
 socket.on("banana-thrown",data=>{if(!joined||data.room!==room)return;fly();setCount(data.count);ripple=1;});
 socket.on("banana-error",data=>{button.title=data?.message||"Aguarde"});
+socket.on("banana-reset",data=>{if(!joined||data.room!==room)return;setCount(0);ripple=.8;button.title="Lançar banana no barril";});
 function reset(){joined=false;room=null;setCount(0);}
 socket.on("left-room",reset);socket.on("disconnect",reset);
 setCount(0);
