@@ -599,6 +599,17 @@ html[data-jf-theme="classic"] .track-times{
   font-variant-numeric:tabular-nums;
 }
 
+/* Pessoas na sala: foto separada do palco 3D e administrador no topo via JS. */
+.jf-room-people .jf-room-profile-photo{
+  width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;
+  border:2px solid color-mix(in srgb,var(--jf-secondary,#9fc8ff) 70%,#fff);
+  border-radius:50%;background:color-mix(in srgb,var(--jf-primary,#8177c8) 25%,#edf4ff);
+  color:#253c68;font-size:16px;font-weight:800;overflow:hidden;
+}
+.jf-room-people .jf-room-profile-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.jf-room-people .jf-member-monkey{flex-shrink:0}
+.jf-room-people .jf-person-details{flex:1 1 95px;overflow-wrap:anywhere}
+@media(max-width:540px){.jf-room-people .jf-room-profile-photo{width:32px;height:32px;flex-basis:32px}}
 </style>
 <style>
 #jfAdminPanel{margin:22px 0;padding:16px;border:1px solid #8b85d0;border-radius:15px;background:#181738;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
@@ -1905,7 +1916,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       active.set(clientId?"client:"+clientId:"socket:"+id,[id,p]);
     }
     if(socket.id)active.set("client:"+jfClientId,[socket.id,jfProfile]);
-    const unique=[...active.values()];
+    const unique=[...active.values()].sort((a,b)=>Number(b[0]===jfRoomOwnerId)-Number(a[0]===jfRoomOwnerId));
     if(!unique.length){const p=document.createElement("p");p.className="small";p.textContent="Você está na sala.";list.appendChild(p);return;}
     for(const [id,p] of unique){
       const card=document.createElement("div");card.className="jf-person";
@@ -1913,6 +1924,16 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       card.dataset.wardrobe=JSON.stringify(p.wardrobe||{});
     card.dataset.skin=id===socket.id?jfMySkin():(jfPeerSkins.get(id)||"default");
       const monkey=document.createElement("div");monkey.className="jf-member-monkey";card.appendChild(monkey);
+      // A foto fica em seu próprio espaço, sem sobrepor o mascote 3D.
+      const photo=document.createElement("div");photo.className="jf-room-profile-photo";
+      const avatar=String(p.avatar||"");
+      if(/^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(avatar)&&avatar.length<=220000){
+        const img=document.createElement("img");img.src=avatar;img.alt="Foto de "+String(p.name||"participante");img.loading="lazy";photo.appendChild(img);
+      }else{
+        photo.textContent=String(p.name||"?").trim().charAt(0).toUpperCase()||"?";
+        photo.setAttribute("aria-label","Sem foto de perfil");
+      }
+      card.appendChild(photo);
       /* A identidade visual principal do participante é sempre seu macaco 3D. */
       const details=document.createElement("div");details.className="jf-person-details";const label=document.createElement("strong");label.textContent=(p.name||"Ouvinte")+(id===socket.id?" (você)":"")+(id===jfRoomOwnerId?" 👑":"");details.appendChild(label);
       if(p.motto){const motto=document.createElement("span");motto.className="jf-motto";motto.textContent=p.motto;details.appendChild(motto);}
