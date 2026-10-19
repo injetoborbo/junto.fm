@@ -464,8 +464,10 @@ function displayEyewearDiagnostics(){
   if(!member){eyewearDiagnostics.textContent="Aguardando seu avatar entrar na pista.";return;}
   const check=member.getGlassesDiagnostics?.();
   if(!check?.loaded){
-    eyewearDiagnostics.textContent="Óculos 3D não encontrados no avatar. Selecionado: "+
-      (check?.requested||"desconhecido")+".";
+    eyewearDiagnostics.textContent="Óculos ainda não vinculados | selecionado: "+
+      (check?.requested||"desconhecido")+" | Head encontrado: "+
+      (check?.headBone||"NÃO")+" | objetos vinculados: "+
+      (check?.attached?.join(", ")||"nenhum")+".";
     return;
   }
   eyewearDiagnostics.textContent="Óculos detectados: "+check.requested+
