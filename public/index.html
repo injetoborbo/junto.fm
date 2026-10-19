@@ -607,10 +607,14 @@ html[data-jf-theme="classic"] .track-times{
 #jfAdminSkin{accent-color:#eac26d}
 #jfMiniDj.jf-homelander .jf-dj-stage{filter:drop-shadow(0 0 10px #e9bc62)}
 #jfMiniDj.jf-homelander .jf-dj-caption:after{content:"★ CAPITÃO PÁTRIA ★";display:block;color:#f6d781;font-weight:900;font-size:10px;letter-spacing:1px}
+#jfWelcomeToast[hidden],#jfShareRoom[hidden]{display:none!important}
+#jfWelcomeToast{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:16000;display:flex;align-items:center;gap:14px;width:min(390px,calc(100vw - 26px));padding:17px;border-radius:14px;background:linear-gradient(145deg,#5b351e,#a46d3c,#56331d);border:3px ridge #d7a269;color:#fff4d4;box-shadow:0 14px 40px #0009;font-family:Georgia,serif}
+#jfWelcomeToast svg{width:73px;height:73px;flex:none}#jfWelcomeToast strong{display:block;font-size:18px}#jfWelcomeToast span{display:block;font-size:12px;margin-top:4px}
 </style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
+<div id="jfWelcomeToast" role="status" hidden><svg viewBox="0 0 96 96" role="img" aria-label="Navio de madeira entalhada"><defs><linearGradient id="jfWoodShip"><stop stop-color="#f5d09a"/><stop offset=".5" stop-color="#c18a4f"/><stop offset="1" stop-color="#86502b"/></linearGradient></defs><circle cx="48" cy="48" r="42" fill="#57321e" stroke="#edc78b" stroke-width="5"/><path d="M49 18v43M49 24l-24 32h24zm4 7 20 25H53zM17 62h63L67 77H30Z" fill="url(#jfWoodShip)" stroke="#3b2116" stroke-width="3" stroke-linejoin="round"/><path d="M24 83q7-5 13 0t12 0t12 0t12 0" fill="none" stroke="#efc28a" stroke-width="3"/></svg><div><small>🏆 CONQUISTA DESBLOQUEADA</small><strong>Bem-vindo a bordo</strong><span>Seu primeiro embarque no Junto.fm!</span></div></div>
 <main>
   <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
@@ -629,7 +633,7 @@ html[data-jf-theme="classic"] .track-times{
     </div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
-    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><div id="jfShareRoom" style="margin-top:10px" hidden><button type="button" class="btn secondary" id="jfCopyRoomLink">🔗 Copiar link da sala</button><span id="jfRoomLinkInfo" class="small"></span></div><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
   </section>
 
 
@@ -941,6 +945,27 @@ html[data-jf-theme="classic"] .track-times{
   }catch(_){jfClientId="tab_"+Math.random().toString(36).slice(2)+Date.now().toString(36);}
   const socket = io({auth:{clientId:jfClientId}});
   const $ = id => document.getElementById(id);
+  const shareWrap=document.getElementById("jfShareRoom");
+  document.getElementById("jfCopyRoomLink").onclick=async()=>{
+    const link=location.origin+"/"+encodeURIComponent(room);
+    try{await navigator.clipboard.writeText(link);document.getElementById("jfRoomLinkInfo").textContent="Link copiado!";}
+    catch(_){document.getElementById("jfRoomLinkInfo").textContent=link;}
+  };
+  try{if(!localStorage.getItem("jf-welcome-v1")){
+    const toast=document.getElementById("jfWelcomeToast");
+    toast.hidden=false;localStorage.setItem("jf-welcome-v1","1");
+    setTimeout(()=>toast.hidden=true,6500);toast.onclick=()=>toast.hidden=true;
+  }}catch(_){}
+  let pendingDeepLink=/^[a-zA-Z0-9_-]{1,40}$/.test(location.pathname.slice(1))?location.pathname.slice(1):null;
+  function handleDeepLink(){
+    if(!pendingDeepLink||!socket.connected)return;
+    const name=pendingDeepLink;pendingDeepLink=null;
+    fetch("/api/room-status/"+encodeURIComponent(name),{cache:"no-store"}).then(r=>r.json()).then(data=>{
+      if(!data.exists){setStatus("Essa sala não está ativa no momento.");return;}
+      if(data.passwordProtected){openJoinRoomModal();$("jfExistingRoomName").value=name;}
+      else joinRoom(name,"");
+    }).catch(()=>setStatus("Não foi possível consultar a sala."));
+  }
   let room = "noite";
   let joined = false;
   let isSender = false;
@@ -1411,7 +1436,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if (event.key === "Escape" && !joinModal.hidden) closeJoinRoomModal();
   });
 
-  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
+  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); handleDeepLink(); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
   socket.on('disconnect', () => { window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
@@ -1425,7 +1450,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null,ownerId=null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; shareWrap.hidden=false; history.replaceState({}, "", "/"+encodeURIComponent(joinedRoom)); jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
