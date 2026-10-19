@@ -1381,7 +1381,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         } catch (error) {
           console.warn("Erro ao medir áudio:", error);
         }
-      }, 2000);
+      }, 5000);
 
       $("remoteAudio").play()
         .then(() => setStatus("Áudio recebido e reproduzindo.", true))
