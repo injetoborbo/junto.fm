@@ -64,7 +64,7 @@ module.exports=function setupAccounts(app){
   function validCredentials(body){
     const email=String(body?.email||"").trim().toLowerCase();
     const password=String(body?.password||"");
-    return {email,password,valid:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)&&email.length<=254&&password.length>=12&&Buffer.byteLength(password)<=256};
+    return {email,password,valid:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)&&email.length<=254&&password.length>=8&&Buffer.byteLength(password)<=256};
   }
   async function passwordDigest(password,salt){
     return (await scrypt(password,salt,64,{maxmem:32*1024*1024})).toString("hex");
@@ -79,7 +79,7 @@ module.exports=function setupAccounts(app){
     if(!sameOrigin(req))return res.status(403).json({error:"Origem da requisição inválida."});
     if(!permitted(req))return res.status(429).json({error:"Muitas tentativas. Aguarde 15 minutos."});
     const {email,password,valid}=validCredentials(req.body);
-    if(!valid)return res.status(400).json({error:"Informe um e-mail válido e uma senha de 12 a 256 caracteres."});
+    if(!valid)return res.status(400).json({error:"Informe um e-mail válido e uma senha de 8 a 256 caracteres."});
     try{
       if(register){
         const salt=crypto.randomBytes(16).toString("hex");
