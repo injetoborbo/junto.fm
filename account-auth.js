@@ -64,7 +64,7 @@ module.exports=function setupAccounts(app){
   function validCredentials(body){
     const email=String(body?.email||"").trim().toLowerCase();
     const password=String(body?.password||"");
-    return {email,password,valid:/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)&&email.length<=254&&password.length>=12&&Buffer.byteLength(password)<=256};
+    return {email,password,valid:/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)&&email.length<=254&&password.length>=12&&Buffer.byteLength(password)<=256};
   }
   async function passwordDigest(password,salt){
     return (await scrypt(password,salt,64,{maxmem:32*1024*1024})).toString("hex");
