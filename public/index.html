@@ -623,6 +623,12 @@ html[data-jf-theme="classic"] .track-times{
 .jf-cable-picker[hidden]{display:none!important}
 .jf-cable-picker .jf-audio-source{max-width:340px;flex:1;min-width:160px}
 .jf-cable-picker .btn{min-height:42px}
+.jf-cable-monitor{margin-top:12px;padding-top:12px;border-top:1px solid var(--jf-secondary,var(--line,#777be9))}
+.jf-cable-monitor>.jf-audio-source{margin-top:6px}
+.jf-cable-monitor-actions{margin-top:10px;gap:12px;align-items:center;flex-wrap:wrap}
+.jf-cable-monitor-actions label{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.jf-cable-monitor-actions input[type="range"]{accent-color:var(--jf-secondary,#7997ff);width:110px}
+.jf-cable-monitor audio[hidden]{display:none!important}
 .jf-audio-source:disabled{opacity:.6;cursor:not-allowed}
 .jf-audio-source option{background:var(--jf-panel,var(--panel,#202043));color:var(--ink,#fff)}
 html[data-jf-theme="classic"] .jf-audio-source{background:linear-gradient(#fff,#e4efff);color:#173a65;border:1px solid #6597d3;box-shadow:inset 0 1px 0 #fff,0 2px 3px #254b7b30}
@@ -705,6 +711,20 @@ html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#eff
         <button id="jfCableDetect" type="button" class="btn secondary">Detectar VB-CABLE</button>
       </div>
       <p id="jfCableHelp" class="small" aria-live="polite">No Mixer de volume do Windows, escolha CABLE Input como saída do Spotifast. Clique em Detectar VB-CABLE, permita o acesso ao microfone e selecione CABLE Output.</p>
+      <div class="jf-cable-monitor">
+        <label for="jfCableMonitorDevice" class="small">Onde ouvir o retorno (fone de ouvido)</label>
+        <select id="jfCableMonitorDevice" class="jf-audio-source" aria-label="Saída para ouvir o áudio">
+          <option value="">Saída padrão do Windows</option>
+        </select>
+        <div class="row jf-cable-monitor-actions">
+          <button id="jfCableMonitorToggle" type="button" class="btn secondary" disabled>🎧 Ouvir no meu fone</button>
+          <label for="jfCableMonitorVolume" class="small">Volume do retorno
+            <input id="jfCableMonitorVolume" type="range" min="0" max="100" value="65" aria-label="Volume do retorno local">
+          </label>
+        </div>
+        <p id="jfCableMonitorStatus" class="small" aria-live="polite">Depois de começar a transmitir, clique em Ouvir no meu fone. Desative “Escutar este dispositivo” nas configurações do Windows para não duplicar o áudio.</p>
+        <audio id="jfCableMonitorAudio" playsinline preload="none" hidden></audio>
+      </div>
     </div>
     <div class="row" style="margin-top:12px">
       <button class="btn" id="start" disabled>Transmitir áudio da aba (web)</button>
@@ -1293,6 +1313,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     $("createRoom").disabled = !socket.connected;
     $("start").disabled = !joined || !jfRoomOwner || isSender;
     $("stop").disabled = !joined || !isSender;
+    const monitorBtn=$("jfCableMonitorToggle");
+    if(monitorBtn)monitorBtn.disabled=!joined||!isSender||$("jfAudioSource").value!=="system";
     $("pauseCmd").disabled = !joined;
     $("nextCmd").disabled = !joined;
   }
@@ -1313,6 +1335,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     for (const id of [...peers.keys()]) closePeer(id);
   }
   function stopLocalStream() {
+    jfStopCableMonitor();
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());
       localStream = null;
@@ -1647,6 +1670,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfCableSelect.value=cables.some(d=>d.deviceId===previous)?previous:cables[0].deviceId;
     jfCableSelect.disabled=isSender;
     jfCableHint.textContent="Entrada virtual detectada! Configure Spotifast → CABLE Input no Mixer de volume do Windows e transmita usando CABLE Output.";
+    jfRefreshMonitorOutputs().catch(error=>console.info("Não foi possível listar saídas de áudio:",error));
     return true;
   }
   $("jfCableDetect").addEventListener("click",async()=>{
@@ -1657,6 +1681,72 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     catch(error){
       jfCableHint.textContent=error?.name==="NotAllowedError"?"Permissão negada. Libere o microfone para este site.":"Falha ao detectar o dispositivo ("+(error?.name||"erro desconhecido")+").";
     }finally{button.disabled=isSender;}
+  });
+  let jfCableMonitorActive=false;
+  const jfMonitorAudio=$("jfCableMonitorAudio");
+  const jfMonitorButton=$("jfCableMonitorToggle");
+  const jfMonitorStatus=$("jfCableMonitorStatus");
+  const jfMonitorSelect=$("jfCableMonitorDevice");
+  const jfMonitorVolume=$("jfCableMonitorVolume");
+  function jfStopCableMonitor(){
+    jfMonitorAudio.pause();
+    jfMonitorAudio.srcObject=null;
+    jfCableMonitorActive=false;
+    jfMonitorButton.textContent="🎧 Ouvir no meu fone";
+    if(jfMonitorStatus)jfMonitorStatus.textContent="Retorno desligado. Você pode continuar transmitindo.";
+  }
+  async function jfRefreshMonitorOutputs(){
+    if(!navigator.mediaDevices?.enumerateDevices)return;
+    const outputs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audiooutput"&&d.deviceId);
+    const previous=jfMonitorSelect.value;
+    jfMonitorSelect.replaceChildren(new Option("Saída padrão do Windows",""));
+    for(const d of outputs){
+      if(d.deviceId==="default")continue;
+      jfMonitorSelect.add(new Option(d.label||"Saída de áudio "+(jfMonitorSelect.options.length),d.deviceId));
+    }
+    if([...jfMonitorSelect.options].some(option=>option.value===previous))jfMonitorSelect.value=previous;
+  }
+  async function jfMonitorSelectOutput(){
+    const id=jfMonitorSelect.value;
+    if(typeof jfMonitorAudio.setSinkId==="function"){
+      await jfMonitorAudio.setSinkId(id);
+    }else if(id){
+      throw new Error("Seu navegador não permite escolher essa saída. Selecione Saída padrão do Windows.");
+    }
+  }
+  jfMonitorVolume.addEventListener("input",()=>{
+    jfMonitorAudio.volume=Math.max(0,Math.min(1,(Number(jfMonitorVolume.value)||0)/100));
+  });
+  jfMonitorSelect.addEventListener("change",async()=>{
+    if(!jfCableMonitorActive)return;
+    try{
+      await jfMonitorSelectOutput();
+      jfMonitorStatus.textContent="Saída do retorno alterada.";
+    }catch(error){
+      console.warn("Falha ao escolher saída do retorno:",error);
+      jfStopCableMonitor();
+      jfMonitorStatus.textContent="Não foi possível usar essa saída. Selecione o fone como padrão do Windows ou escolha outra saída.";
+    }
+  });
+  jfMonitorButton.addEventListener("click",async()=>{
+    if(jfCableMonitorActive){jfStopCableMonitor();return;}
+    if(!isSender||jfAudioMode.value!=="system"||!localStream?.getAudioTracks().length){
+      jfMonitorStatus.textContent="Comece a transmissão pelo VB-CABLE antes de ativar o retorno.";
+      return;
+    }
+    try{
+      jfMonitorAudio.srcObject=localStream;
+      jfMonitorAudio.volume=Math.max(0,Math.min(1,(Number(jfMonitorVolume.value)||0)/100));
+      await jfMonitorSelectOutput();
+      await jfMonitorAudio.play();
+      jfCableMonitorActive=true;
+      jfMonitorButton.textContent="🔇 Parar de ouvir";
+      jfMonitorStatus.textContent="Retorno ativo. Desmarque Escutar este dispositivo no Windows para evitar áudio duplicado e estalos.";
+    }catch(error){
+      console.warn("Retorno local indisponível:",error);
+      jfStopCableMonitor();
+      jfMonitorStatus.textContent="Não consegui reproduzir no fone ("+(error?.message||"erro desconhecido")+"). Confira a saída de áudio.";
+    }
   });
   jfAudioMode.addEventListener("change",()=>{
     const external=jfAudioMode.value==="system";
@@ -1700,6 +1790,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(!external)captured.getVideoTracks().forEach(track=>track.stop());
       resetSession();
       localStream = captured; isSender = true;
+      jfMonitorButton.disabled=!external;
       jfAudioMode.disabled=true;jfCableSelect.disabled=true;$("jfCableDetect").disabled=true;
       socket.emit("transmission-started", { room }); socket.emit("suggestion-settings", { room, enabled: jfSuggestionEnabled }); jfUpdateSuggestionControls();
       // Os participantes presentes recebem uma conexão individual. Novos participantes
