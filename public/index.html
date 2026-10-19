@@ -607,10 +607,19 @@ html[data-jf-theme="classic"] .track-times{
 #jfAdminSkin{accent-color:#eac26d}
 #jfMiniDj.jf-homelander .jf-dj-stage{filter:drop-shadow(0 0 10px #e9bc62)}
 #jfMiniDj.jf-homelander .jf-dj-caption:after{content:"★ CAPITÃO PÁTRIA ★";display:block;color:#f6d781;font-weight:900;font-size:10px;letter-spacing:1px}
+#jfWelcomeToast[hidden],#jfShareRoom[hidden]{display:none!important}
+#jfWelcomeToast{position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:16000;display:flex;align-items:center;gap:14px;width:min(390px,calc(100vw - 26px));padding:17px;border-radius:14px;background:linear-gradient(145deg,#5b351e,#a46d3c,#56331d);border:3px ridge #d7a269;color:#fff4d4;box-shadow:0 14px 40px #0009;font-family:Georgia,serif}
+#jfWelcomeToast svg{width:73px;height:73px;flex:none}#jfWelcomeToast strong{display:block;font-size:18px}#jfWelcomeToast span{display:block;font-size:12px;margin-top:4px}
+#jfRankDialog[hidden]{display:none!important}
+#jfRankDialog{position:fixed;inset:0;background:#0c1123b9;z-index:13050;display:grid;place-items:center;padding:18px}
+.jf-rank-body{width:min(450px,100%);max-height:80dvh;overflow:auto;background:var(--jf-panel,#f4e4fa);color:var(--ink,#29213a);border:2px solid #c6a6d1;border-radius:15px;padding:20px;box-shadow:0 18px 65px #0008}
+.jf-rank-row{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #a990af66}
 </style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
+<div id="jfRankDialog" hidden role="dialog" aria-modal="true" aria-labelledby="jfRankHeading"><div class="jf-rank-body"><div style="display:flex;justify-content:space-between;align-items:center"><h2 id="jfRankHeading">🏆 Ranking de horas</h2><button type="button" class="btn secondary" id="jfCloseRank">Fechar</button></div><p class="small">Tempo de DJ e ouvintes com conta Google durante transmissão com áudio.</p><div id="jfRankContent">Carregando...</div></div></div>
+<div id="jfWelcomeToast" role="status" hidden><svg viewBox="0 0 96 96" role="img" aria-label="Navio de madeira entalhada"><defs><linearGradient id="jfWoodShip"><stop stop-color="#f5d09a"/><stop offset=".5" stop-color="#c18a4f"/><stop offset="1" stop-color="#86502b"/></linearGradient></defs><circle cx="48" cy="48" r="42" fill="#57321e" stroke="#edc78b" stroke-width="5"/><path d="M49 18v43M49 24l-24 32h24zm4 7 20 25H53zM17 62h63L67 77H30Z" fill="url(#jfWoodShip)" stroke="#3b2116" stroke-width="3" stroke-linejoin="round"/><path d="M24 83q7-5 13 0t12 0t12 0t12 0" fill="none" stroke="#efc28a" stroke-width="3"/></svg><div><small>🏆 CONQUISTA DESBLOQUEADA</small><strong>Bem-vindo a bordo</strong><span>Seu primeiro embarque no Junto.fm!</span></div></div>
 <main>
   <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
@@ -629,7 +638,7 @@ html[data-jf-theme="classic"] .track-times{
     </div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
-    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><button type="button" class="btn secondary" id="jfOpenRank" style="margin-top:8px">🏆 Ranking de horas</button><div id="jfShareRoom" style="margin-top:10px" hidden><button type="button" class="btn secondary" id="jfCopyRoomLink">🔗 Copiar link da sala</button><span id="jfRoomLinkInfo" class="small"></span></div><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
   </section>
 
 
@@ -941,6 +950,94 @@ html[data-jf-theme="classic"] .track-times{
   }catch(_){jfClientId="tab_"+Math.random().toString(36).slice(2)+Date.now().toString(36);}
   const socket = io({auth:{clientId:jfClientId}});
   const $ = id => document.getElementById(id);
+  const shareWrap=document.getElementById("jfShareRoom");
+  const rankingDialog=document.getElementById("jfRankDialog");
+  document.getElementById("jfOpenRank").onclick=async()=>{
+    rankingDialog.hidden=false;
+    const content=document.getElementById("jfRankContent");
+    content.textContent="Carregando...";
+    try{
+      const response=await fetch("/api/listening/ranking",{cache:"no-store"});
+      const payload=await response.json();
+      if(!response.ok)throw Error(payload.error||"Ranking indisponível");
+      content.replaceChildren();
+      if(!payload.ranking?.length){content.textContent="Ninguém acumulou horas ainda.";return;}
+      for(const [index,person] of payload.ranking.entries()){
+        const row=document.createElement("div");row.className="jf-rank-row";
+        const name=document.createElement("span");name.textContent=(index+1)+". "+person.name;
+        const total=Math.max(0,Number(person.seconds)||0);
+        const duration=document.createElement("strong");duration.textContent=Math.floor(total/3600)+"h "+Math.floor((total%3600)/60)+"min";
+        row.append(name,duration);content.append(row);
+      }
+    }catch(e){content.textContent=e.message;}
+  };
+  document.getElementById("jfCloseRank").onclick=()=>rankingDialog.hidden=true;
+  rankingDialog.addEventListener("click",e=>{if(e.target===rankingDialog)rankingDialog.hidden=true;});
+  // Só emitir batimento quando o próprio áudio capturado/reproduzido está ativo.
+  const listeningAnalyser={stream:null,ctx:null,analyser:null};
+  // AudioContext criado com gesto do DJ para não ficar suspenso por autoplay.
+  document.getElementById("start").addEventListener("click",()=>{
+    if(!listeningAnalyser.ctx){
+      try{listeningAnalyser.ctx=new (window.AudioContext||window.webkitAudioContext)();}
+      catch(_){}
+    }
+    listeningAnalyser.ctx?.resume().catch(()=>{});
+  });
+  async function audioDetected(stream){
+    if(!stream||!stream.getAudioTracks().some(t=>t.readyState==="live"&&t.enabled&&!t.muted))return false;
+    try{
+      if(listeningAnalyser.stream!==stream){
+        const ctx=listeningAnalyser.ctx;
+        if(!ctx)return false;
+        const source=ctx.createMediaStreamSource(stream);
+        const analyser=ctx.createAnalyser();analyser.fftSize=1024;
+        source.connect(analyser);
+        // Mantém o analisador ativo sem reproduzir o áudio duas vezes no DJ.
+        const silent=ctx.createGain();silent.gain.value=0;
+        analyser.connect(silent);silent.connect(ctx.destination);
+        listeningAnalyser.stream=stream;listeningAnalyser.ctx=ctx;listeningAnalyser.analyser=analyser;
+      }
+      const analyser=listeningAnalyser.analyser;
+      if(listeningAnalyser.ctx.state==="suspended")return false;
+      const samples=new Uint8Array(analyser.fftSize);
+      analyser.getByteTimeDomainData(samples);
+      let sum=0;
+      for(const sample of samples){const x=(sample-128)/128;sum+=x*x;}
+      return Math.sqrt(sum/samples.length)>.002;
+    }catch(_){return false;}
+  }
+  setInterval(async()=>{
+    if(!joined||!socket.connected||!jfCurrentTransmitter?.id)return;
+    const dj=isSender&&socket.id===jfCurrentTransmitter.id;
+    if(dj){
+      if(await audioDetected(localStream))socket.emit("listening-heartbeat",{djActive:true});
+    }else{
+      const a=document.getElementById("remoteAudio");
+      if(!a||a.paused||a.muted||a.volume<=0||a.readyState<2)return;
+      socket.emit("listening-heartbeat",{playing:true});
+    }
+  },15000);
+
+  document.getElementById("jfCopyRoomLink").onclick=async()=>{
+    const link=location.origin+"/"+encodeURIComponent(room);
+    try{await navigator.clipboard.writeText(link);document.getElementById("jfRoomLinkInfo").textContent="Link copiado!";}
+    catch(_){document.getElementById("jfRoomLinkInfo").textContent=link;}
+  };
+  try{if(!localStorage.getItem("jf-welcome-v1")){
+    const toast=document.getElementById("jfWelcomeToast");
+    toast.hidden=false;localStorage.setItem("jf-welcome-v1","1");
+    setTimeout(()=>toast.hidden=true,6500);toast.onclick=()=>toast.hidden=true;
+  }}catch(_){}
+  let pendingDeepLink=/^[a-zA-Z0-9_-]{1,40}$/.test(location.pathname.slice(1))?location.pathname.slice(1):null;
+  function handleDeepLink(){
+    if(!pendingDeepLink||!socket.connected)return;
+    const name=pendingDeepLink;pendingDeepLink=null;
+    fetch("/api/room-status/"+encodeURIComponent(name),{cache:"no-store"}).then(r=>r.json()).then(data=>{
+      if(!data.exists){setStatus("Essa sala não está ativa no momento.");return;}
+      if(data.passwordProtected){openJoinRoomModal();$("jfExistingRoomName").value=name;}
+      else joinRoom(name,"");
+    }).catch(()=>setStatus("Não foi possível consultar a sala."));
+  }
   let room = "noite";
   let joined = false;
   let isSender = false;
@@ -1411,9 +1508,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if (event.key === "Escape" && !joinModal.hidden) closeJoinRoomModal();
   });
 
-  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
+  socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); handleDeepLink(); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { shareWrap.hidden=true; window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -1425,7 +1522,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null,ownerId=null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; shareWrap.hidden=false; history.replaceState({}, "", "/"+encodeURIComponent(joinedRoom)); jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -1532,7 +1629,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }else resetSession();
     if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
     window.dispatchEvent(new Event("jf-dance-room-left"));
-    joined=false;room="";jfRoomOwnerId=null;jfRoomOwner=false;
+    joined=false;room="";shareWrap.hidden=true;history.replaceState({}, "", "/");jfRoomOwnerId=null;jfRoomOwner=false;
     $("room").value="";
     $("remoteAudio").pause();$("remoteAudio").srcObject=null;
     jfRenderMiniDj(null);renderTrack(null);

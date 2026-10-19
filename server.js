@@ -88,8 +88,21 @@ async function validSpotifyAccessToken(session) {
 app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
+require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready);
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get("/api/room-status/:room",(req,res)=>{
+ const room=String(req.params.room||"");
+ if(!/^[a-zA-Z0-9_-]{1,40}$/.test(room))return res.status(400).json({exists:false});
+ res.set("Cache-Control","no-store");
+ return res.json({exists:roomAccess.has(room),passwordProtected:!!roomAccess.get(room)});
+});
+app.get("/:room",(req,res,next)=>{
+ const room=String(req.params.room||"");
+ if(!/^[a-zA-Z0-9_-]{1,40}$/.test(room)||["api","auth","spotify","socket.io","health"].includes(room.toLowerCase()))return next();
+ res.set("Cache-Control","no-cache");
+ return res.sendFile(path.join(__dirname,"public","index.html"));
+});
 
 // Mantém a API key específica da credencial TURN no servidor, nunca no HTML público.
 const METERED_DOMAIN = String(process.env.METERED_DOMAIN || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
@@ -531,6 +544,7 @@ io.on("connection", socket => {
       socket.emit("create-room-error", { message: "Escolha um nome válido para a sala." });
       return;
     }
+    if(["api","auth","spotify","socket.io","health"].includes(room.toLowerCase()))return socket.emit("create-room-error",{message:"Nome reservado."});
     if (password && password.length < 4) {
       socket.emit("create-room-error", { message: "A senha deve ter pelo menos 4 caracteres." });
       return;
