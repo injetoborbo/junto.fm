@@ -862,6 +862,7 @@ html[data-jf-theme="classic"] .track-times{
       <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
     </div>
     <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">Disponível no Frutiger Aero. A preferência fica salva neste navegador.</p></div>
+    <div id="jfKodokuPosterOption" hidden style="margin-top:16px"><label class="jf-check-label" for="jfKodokuPoster"><input id="jfKodokuPoster" type="checkbox"> Usar pôster Kodoku como fundo</label><p class="small" style="margin:6px 0 0">Imagem cobrindo toda a página com um leve desfoque.</p></div>
     <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
   </section>
 </div>
@@ -1832,12 +1833,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const hex=/^#[0-9a-f]{6}$/i.test(color||"")?color:"#ff78d2";
       t=[hex,hex,"#252447"];
     }
-    document.documentElement.dataset.jfTheme=name;document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
+    document.documentElement.dataset.jfTheme=name;document.documentElement.dataset.jfKodokuPoster=$("jfKodokuPoster")?.checked?"on":"off";document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
     document.documentElement.style.setProperty("--pink",t[0]);document.documentElement.style.setProperty("--cyan",t[1]);document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur")?.checked?"5px":"0px");
   }
   function jfSaveTheme(){
     const name=$("jfTheme").value,color=$("jfColor").value;jfApplyTheme(name,color);
-    try{localStorage.setItem("junto_theme",JSON.stringify({name,color,blur:$("jfAeroBlur")?.checked||false}));}catch(_){}
+    try{localStorage.setItem("junto_theme",JSON.stringify({name,color,blur:$("jfAeroBlur")?.checked||false,kodokuPoster:$("jfKodokuPoster")?.checked||false}));}catch(_){}
   }
   function jfRenderAvatar(){
     $("jfAvatarPreview").hidden=!jfProfile.avatar;$("jfAvatarPlaceholder").hidden=!!jfProfile.avatar;
@@ -2057,6 +2058,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(jfThemes[t.name])$("jfTheme").value=t.name;
     if(t.name==="custom")$("jfTheme").value="custom";
     if(/^#[0-9a-f]{6}$/i.test(t.color||""))$("jfColor").value=t.color;
+    $("jfKodokuPoster").checked=Boolean(t.kodokuPoster);
     $("jfAeroBlur").checked=Boolean(t.blur);document.documentElement.style.setProperty("--jf-aero-blur",t.blur?"5px":"0px");
     jfApplyTheme($("jfTheme").value,$("jfColor").value);
     let options={};try{options=JSON.parse(localStorage.getItem("junto_options")||"{}");}catch(_){}
@@ -2065,8 +2067,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const allowedFonts=["Trebuchet MS","Arial","Verdana","Georgia","Courier New","Tahoma","system-ui"];
     const savedFont=allowedFonts.includes(options.font)?options.font:"Trebuchet MS";$("jfFont").value=savedFont;document.documentElement.style.setProperty("--jf-font-family",`"${savedFont}"`);
     $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero";
-    $("jfTheme").addEventListener("change",()=>{ $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero"; jfSaveTheme(); });$("jfColor").addEventListener("input",()=>{$("jfTheme").value="custom";$("jfAeroBlurOption").hidden=true;jfSaveTheme();});
-    $("jfAeroBlur").addEventListener("change",()=>{document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur").checked?"5px":"0px");try{localStorage.setItem("junto_theme",JSON.stringify({name:$("jfTheme").value,color:$("jfColor").value,blur:$("jfAeroBlur").checked}));}catch(_){} });
+    $("jfKodokuPosterOption").hidden=$("jfTheme").value!=="kodoku";
+    $("jfTheme").addEventListener("change",()=>{ $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero"; $("jfKodokuPosterOption").hidden=$("jfTheme").value!=="kodoku"; jfSaveTheme(); });$("jfColor").addEventListener("input",()=>{$("jfTheme").value="custom";$("jfAeroBlurOption").hidden=true;$("jfKodokuPosterOption").hidden=true;jfSaveTheme();});
+    $("jfKodokuPoster").addEventListener("change",jfSaveTheme);
+    $("jfAeroBlur").addEventListener("change",()=>{document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur").checked?"5px":"0px");try{localStorage.setItem("junto_theme",JSON.stringify({name:$("jfTheme").value,color:$("jfColor").value,blur:$("jfAeroBlur").checked,kodokuPoster:$("jfKodokuPoster").checked}));}catch(_){} });
     $("jfVolume").addEventListener("input",()=>{const volume=Math.max(0,Math.min(100,Number($("jfVolume").value)||0));$("remoteAudio").volume=volume/100;$("jfVolumeValue").textContent=`${volume}%`;try{localStorage.setItem("junto_options",JSON.stringify({volume,font:$("jfFont").value}));}catch(_){} });
     $("jfFont").addEventListener("change",()=>{const font=$("jfFont").value;document.documentElement.style.setProperty("--jf-font-family",`"${font}"`);try{localStorage.setItem("junto_options",JSON.stringify({volume:Number($("jfVolume").value),font}));}catch(_){} });
     $("jfAvatarFile").addEventListener("change",()=>{
