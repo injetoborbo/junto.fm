@@ -47,12 +47,32 @@ function sittingPose(){
       }
     }
     const clips=source.animations||[];
-    // Arquivos FBX podem conter uma animacao de Camera alem do corpo.
-    // Selecionar o clipe que mais anima os ossos da rig Mixamo.
-    const clip=[...clips].sort((a,b)=>
-      b.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length-
-      a.tracks.filter(t=>t.name.endsWith(".quaternion")&&/mixamorig/i.test(t.name)).length
-    )[0];
+    // O FBX do Mixamo contem DUAS tomadas: RootNode|mixamo.com
+    // (transforms estaticos) e mixamo.com (64 quadros de movimento).
+    // Contar somente ossos empatava as tomadas e podia escolher a estatica.
+    // Preferir a que tem rotacoes REALMENTE variando no tempo.
+    const clipScore=take=>{
+      let score=0;
+      for(const track of take.tracks){
+        if(!track.name.endsWith(".quaternion")||!/mixamorig/i.test(track.name))continue;
+        const values=track.values;
+        if(!values||values.length<4)continue;
+        let moving=false;
+        for(let i=4;i+3<values.length;i+=4){
+          let difference=0;
+          for(let axis=0;axis<4;axis++)
+            difference+=Math.abs(values[i+axis]-values[axis]);
+          if(difference>.005){moving=true;break;}
+        }
+        score+=(moving?1000:0)+Math.min(track.times?.length||0,120);
+      }
+      return score;
+    };
+    const clip=[...clips].sort((a,b)=>clipScore(b)-clipScore(a))[0];
+    if(source.filename==="sentadobalanca.fbx")
+      console.info("Tomadas no FBX:",clips.map(c=>({
+        name:c.name,seconds:c.duration.toFixed(2),motionScore:clipScore(c)
+      })),"Selecionada:",clip?.name);
     if(!clip?.tracks?.length)return null;
     source.scene.updateMatrixWorld(true);
     const sourceBones=new Map();
