@@ -34,16 +34,23 @@ function sittingPose(){
   if(!sittingPosePromise)sittingPosePromise=(async()=>{
     let source;
     try{
-      const scene=await seatedFBXLoader.loadAsync("/poses/sentadobalanca.fbx");
-      source={scene,animations:scene.animations,filename:"sentadobalanca.fbx"};
+      // sentadotryfix: FBX somente de esqueleto, 49 nós Mixamo e 64 quadros.
+      // Mesma hierarquia do arquivo original, sem malha/câmera extra.
+      const scene=await seatedFBXLoader.loadAsync("/poses/sentadotryfix.fbx");
+      source={scene,animations:scene.animations,filename:"sentadotryfix.fbx"};
     }catch(error){
-      console.warn("Animacao de balanco nao instalada; usando pose anterior da cadeira.");
+      console.warn("Nova animação sentadotryfix indisponível; tentando versões anteriores.");
       try{
-        const gltf=await gltfLoader.loadAsync("/poses/sitting-idle.glb");
-        source={scene:gltf.scene,animations:gltf.animations,filename:"sitting-idle.glb"};
-      }catch(fallbackError){
-        console.warn("Nenhuma animacao sentada disponivel.",fallbackError);
-        return null;
+        const scene=await seatedFBXLoader.loadAsync("/poses/sentadobalanca.fbx");
+        source={scene,animations:scene.animations,filename:"sentadobalanca.fbx"};
+      }catch(previousError){
+        try{
+          const gltf=await gltfLoader.loadAsync("/poses/sitting-idle.glb");
+          source={scene:gltf.scene,animations:gltf.animations,filename:"sitting-idle.glb"};
+        }catch(fallbackError){
+          console.warn("Nenhuma animação sentada disponível.",fallbackError);
+          return null;
+        }
       }
     }
     const clips=source.animations||[];
@@ -69,7 +76,7 @@ function sittingPose(){
       return score;
     };
     const clip=[...clips].sort((a,b)=>clipScore(b)-clipScore(a))[0];
-    if(source.filename==="sentadobalanca.fbx")
+    if(source.filename==="sentadobalanca.fbx"||source.filename==="sentadotryfix.fbx")
       console.info("Tomadas no FBX:",clips.map(c=>({
         name:c.name,seconds:c.duration.toFixed(2),motionScore:clipScore(c)
       })),"Selecionada:",clip?.name);
@@ -78,7 +85,7 @@ function sittingPose(){
     const sourceBones=new Map();
     source.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
     const hipBone=sourceBones.get("hips");
-    const hipPositionTrack=source.filename==="sentadobalanca.fbx"?
+    const hipPositionTrack=/^sentado(?:balanca|tryfix)\.fbx$/.test(source.filename)?
       clip.tracks.find(track=>track.name.endsWith(".position")&&
         boneKey(track.name.slice(0,track.name.lastIndexOf(".")))==="hips"):null;
     const hipInterpolant=hipPositionTrack?.createInterpolant();
@@ -102,7 +109,7 @@ function sittingPose(){
       const sourceInverse=bone.quaternion.clone().invert();
       const correction=sourceInverse.clone().multiply(new THREE.Quaternion().fromArray(value));
       changes.set(name,correction);
-      if(source.filename==="sentadobalanca.fbx")
+      if(source.filename==="sentadobalanca.fbx"||source.filename==="sentadotryfix.fbx")
         animatedTracks.set(name,{sourceInverse,interpolant});
     }
     console.info("Junto Club sentado:",source.filename,changes.size,
