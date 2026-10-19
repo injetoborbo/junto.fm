@@ -225,14 +225,14 @@ const seatedHipDelta=new THREE.Vector3();
 // Encaixe da cadeira, separado dos acessórios. Valores privados não são
 // enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
 const SEATED_DEFAULTS=Object.freeze({x:.10,y:.85,z:.28,yaw:0,lean:0,hip:0});
-// Canto entre as duas paredes: cadeiras nas casas (0,1) e (2,1),
-// viradas uma para outra (+X e -X); mesa ocupa a casa (1,1).
-// Os mesmos endereços são validados no servidor.
+// As casas lógicas continuam como identificadores sincronizados com o
+// servidor. wx/wz são coordenadas VISUAIS independentes: o lounge fica
+// encostado no canto sem trocar a ocupação de cada cadeira.
 const CLUB_SEATS=Object.freeze([
-  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2}),
-  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2})
+  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2,wx:-2.18,wz:-2.18}),
+  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2,wx:-1.02,wz:-2.18})
 ]);
-const CLUB_TABLE=Object.freeze({x:1,z:1});
+const CLUB_TABLE=Object.freeze({x:1,z:1,wx:-1.60,wz:-2.18});
 const clubSeatAt=(x,z)=>CLUB_SEATS.find(seat=>seat.x===x&&seat.z===z)||null;
 // A calibração X/Z pertence à orientação do assento: acompanhá-la
 // quando a cadeira gira, para o macaco continuar encaixado.
@@ -362,11 +362,11 @@ function sceneSetup(){
   const furnitureScene=scene,furnitureBoard=board;
   for(const seat of CLUB_SEATS)installClubFurniture({
     file:"cadeirabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
-    x:seat.x-2.5,z:seat.z-2.5,height:1.16,rotation:seat.yaw,seatId:seat.id
+    x:seat.wx,z:seat.wz,height:1.16,rotation:seat.yaw,seatId:seat.id
   });
   installClubFurniture({
     file:"mesabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
-    x:CLUB_TABLE.x-2.5,z:CLUB_TABLE.z-2.5,height:.78
+    x:CLUB_TABLE.wx,z:CLUB_TABLE.wz,height:.78
   });
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
   cube(6.7,2.35,.18,wall,0,.96,-3.12);
@@ -411,15 +411,56 @@ function sceneSetup(){
   }
   scene.userData.beams=beams;
   scene.userData.glowingTiles=board.children.filter(o=>o.userData?.jfDanceGlow);
-  // Faixa decorativa com nome do club.
-  const canvas=document.createElement("canvas");canvas.width=512;canvas.height=160;
+  // Letreiro neon: moldura rosa e letras azul-claro iluminadas.
+  // Uma segunda textura SEM fundo, com composicao aditiva, cria o halo
+  // visível para além do retângulo sem esconder o texto nitido.
+  const canvas=document.createElement("canvas");canvas.width=1024;canvas.height=320;
   const ctx=canvas.getContext("2d");
-  ctx.fillStyle="#100e2b";ctx.fillRect(0,0,512,160);
-  ctx.strokeStyle="#ff55c6";ctx.lineWidth=12;ctx.strokeRect(7,7,498,146);
-  ctx.fillStyle="#e8faff";ctx.textAlign="center";ctx.font="bold 70px Trebuchet MS";ctx.fillText("JUNTO CLUB",256,102);
+  ctx.fillStyle="#0c102a";ctx.fillRect(0,0,1024,320);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.strokeStyle="#ff70d5";ctx.lineWidth=14;
+  ctx.shadowColor="#ff3cba";ctx.shadowBlur=24;
+  ctx.strokeRect(34,32,956,256);
+  ctx.shadowColor="#5cecff";ctx.shadowBlur=22;
+  ctx.fillStyle="#f3ffff";ctx.font="bold 125px Trebuchet MS, Arial, sans-serif";
+  ctx.fillText("JUNTO CLUB",512,163,888);
+  ctx.shadowBlur=0;
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
-  const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.7,.84),new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false}));
-  sign.position.set(-1.25,1.3,-2.99);scene.add(sign);scene.userData.signTexture=texture;
+  const signGeometry=new THREE.PlaneGeometry(2.7,.84);
+  const sign=new THREE.Mesh(signGeometry,new THREE.MeshBasicMaterial({
+    map:texture,side:THREE.DoubleSide,toneMapped:false
+  }));
+  sign.position.set(-1.25,1.3,-2.99);
+  scene.add(sign);
+  scene.userData.signTexture=texture;
+
+  // Brilho exterior na moldura e ao redor das letras (não é apenas cor forte).
+  const haloCanvas=document.createElement("canvas");
+  haloCanvas.width=1024;haloCanvas.height=320;
+  const haloCtx=haloCanvas.getContext("2d");
+  haloCtx.textAlign="center";haloCtx.textBaseline="middle";
+  haloCtx.strokeStyle="rgba(255,87,203,.78)";
+  haloCtx.lineWidth=15;
+  haloCtx.shadowColor="#ff36ad";haloCtx.shadowBlur=55;
+  haloCtx.strokeRect(34,32,956,256);
+  haloCtx.fillStyle="rgba(119,237,255,.58)";
+  haloCtx.font="bold 125px Trebuchet MS, Arial, sans-serif";
+  haloCtx.shadowColor="#5cecff";haloCtx.shadowBlur=50;
+  haloCtx.fillText("JUNTO CLUB",512,163,888);
+  const haloTexture=new THREE.CanvasTexture(haloCanvas);
+  haloTexture.colorSpace=THREE.SRGBColorSpace;
+  const haloMaterial=new THREE.MeshBasicMaterial({
+    map:haloTexture,transparent:true,depthWrite:false,
+    blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+    toneMapped:false,opacity:.77
+  });
+  const halo=new THREE.Mesh(new THREE.PlaneGeometry(2.85,.89),haloMaterial);
+  halo.position.set(-1.25,1.3,-2.963);
+  scene.add(halo);
+  const signLight=new THREE.PointLight(0xff55c1,3.5,2.8,2);
+  signLight.position.set(-1.25,1.3,-2.67);
+  scene.add(signLight);
+  scene.userData.signNeon={halo,haloTexture,signLight};
   camera=new THREE.OrthographicCamera(-6.35,6.35,4.25,-4.25,.1,100);
   camera.position.set(9,12,9);camera.lookAt(0,.55,0);
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
@@ -554,6 +595,12 @@ function animate(){
     tile.material.emissiveIntensity=.19+.45*(.5+.5*Math.sin(time*1.85+(x+z)*.63));
   }
   if(scene.userData.disco)scene.userData.disco.rotation.y+=dt*.34;
+  // Suave pulsação de LED sem piscar agressivamente.
+  if(scene.userData.signNeon){
+    const neon=scene.userData.signNeon;
+    neon.halo.material.opacity=.77+.09*Math.sin(time*1.3);
+    neon.signLight.intensity=3.5+.6*Math.sin(time*1.3);
+  }
   for(const [id,p] of people){
     if(!p.root)continue;
     const d=p.data,style=d.seated?"idle":d.dance||"idle";
@@ -564,7 +611,9 @@ function animate(){
     const seatedSettings=seatSettingsFor(id);
     const seat=d.seated?clubSeatAt(d.x,d.z):null;
     const offset=d.seated?chairRelativeOffset(seatedSettings,seat):{x:0,z:0};
-    const poseX=targetX+offset.x,poseZ=targetZ+offset.z;
+    const seatBaseX=d.seated&&seat?seat.wx:targetX;
+    const seatBaseZ=d.seated&&seat?seat.wz:targetZ;
+    const poseX=seatBaseX+offset.x,poseZ=seatBaseZ+offset.z;
     const dx=poseX-p.root.position.x,dz=poseZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
     const walking=distance>.025;
@@ -711,6 +760,11 @@ function close(){
   for(const id of [...people.keys()])removeMember(id);
   scene?.userData.cleanup?.();
   scene?.userData.signTexture?.dispose();
+  if(scene?.userData.signNeon){
+    const {halo,haloTexture,signLight}=scene.userData.signNeon;
+    halo.geometry.dispose();halo.material.dispose();haloTexture.dispose();
+    signLight.dispose?.();
+  }
   for(const tile of scene?.userData.glowingTiles||[])tile.material.dispose();
   for(const {beam} of scene?.userData.beams||[])beam.material.dispose();
   renderer?.dispose();renderer?.forceContextLoss();renderer?.domElement.remove();
@@ -752,8 +806,8 @@ function repositionSeatMonkeyNow(){
   if(!me?.root||!me.data?.seated)return;
   const seat=clubSeatAt(me.data.x,me.data.z);
   const offset=chairRelativeOffset(seatMonkeyValues,seat);
-  me.root.position.x=me.data.x-2.5+offset.x;
-  me.root.position.z=me.data.z-2.5+offset.z;
+  me.root.position.x=(seat?.wx??(me.data.x-2.5))+offset.x;
+  me.root.position.z=(seat?.wz??(me.data.z-2.5))+offset.z;
   me.root.position.y=seatMonkeyValues.y;
   me.root.rotation.y=(seat?.yaw||0)+THREE.MathUtils.degToRad(seatMonkeyValues.yaw);
   me.root.rotation.x=THREE.MathUtils.degToRad(seatMonkeyValues.lean);
