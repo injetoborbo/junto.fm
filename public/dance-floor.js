@@ -222,6 +222,7 @@ const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vecto
 const clock=new THREE.Clock();
 const sittingFrameQuaternion=new THREE.Quaternion();
 const seatedHipDelta=new THREE.Vector3();
+const PUBLISHED_SEAT_GLASSES_FIT=Object.freeze({x:-.0002,y:-.0011,z:-.0024});
 // Encaixe da cadeira, separado dos acessórios. Valores privados não são
 // enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
 const SEATED_DEFAULTS=Object.freeze({x:.10,y:.85,z:.28,yaw:0,lean:0,hip:0});
@@ -240,33 +241,8 @@ function chairRelativeOffset(settings,seat){
   const angle=seat?.yaw||0,c=Math.cos(angle),s=Math.sin(angle);
   return {x:settings.x*c+settings.z*s,z:settings.z*c-settings.x*s};
 }
-const SEAT_MONKEY_STORAGE="jf_club_seated_monkey_fit_v1";
-const seatMonkeyRanges={
-  x:[-.5,.5],y:[.30,1.50],z:[-.5,.5],
-  yaw:[-180,180],lean:[-35,35],hip:[0,1.50]
-};
-const seatMonkeyIsLocal=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
-let seatMonkeyAccess=seatMonkeyIsLocal;
-const seatMonkeyValues={...SEATED_DEFAULTS};
-function normaliseSeatMonkey(saved){
-  const result={...SEATED_DEFAULTS};
-  if(!saved||typeof saved!=="object"||Array.isArray(saved))return result;
-  for(const [key,[min,max]] of Object.entries(seatMonkeyRanges)){
-    if(saved[key]===undefined||saved[key]===null)continue;
-    const number=Number(saved[key]);
-    if(Number.isFinite(number))result[key]=THREE.MathUtils.clamp(number,min,max);
-  }
-  return result;
-}
-function loadSeatMonkeyFit(){
-  if(!seatMonkeyAccess)return;
-  try{Object.assign(seatMonkeyValues,normaliseSeatMonkey(
-    JSON.parse(localStorage.getItem(SEAT_MONKEY_STORAGE)||"{}")
-  ));}
-  catch(error){console.warn("Junto Club: encaixe local da cadeira inválido.",error);}
-}
-if(seatMonkeyAccess)loadSeatMonkeyFit();
-const seatSettingsFor=id=>seatMonkeyAccess&&id===socket?.id?seatMonkeyValues:SEATED_DEFAULTS;
+// Publicação: calibração fixa aprovada; ferramentas ficam na branch de dev.
+const seatSettingsFor=()=>SEATED_DEFAULTS;
 // Os modelos novos sao assets independentes. O clone protege o cache ao
 // reabrir a Junto Club; descartamos carregamentos de cenas ja fechadas.
 const furnitureAssets=new Map();
@@ -501,7 +477,7 @@ async function putMember(id,details){
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;entry.getGlassesDiagnostics=avatar.getGlassesDiagnostics;
     // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
-    if(id===socket.id)entry.setSeatGlassesCalibration?.(seatGlassesAdjustment);
+    if(id===socket.id)entry.setSeatGlassesCalibration?.(PUBLISHED_SEAT_GLASSES_FIT);
     entry.restBones=new Map();
     entry.rig.traverse(obj=>{
       if(!obj.isBone)return;
@@ -737,7 +713,7 @@ function animate(){
     // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
     p.updateAccessories?.(Boolean(d.seated));
   }
-  if(!inspectCleanup)renderer.render(scene,camera);
+  renderer.render(scene,camera);
 }
 function setStatus(message){status.textContent=message;}
 function open(){
@@ -752,7 +728,6 @@ function open(){
   catch(error){console.error(error);setStatus("Não foi possível abrir a pista 3D.");close();}
 }
 function close(){
-  inspectCleanup?.();
   if(!active)return;
   const oldRoom=room;active=false;room=null;sequence++;
   cancelAnimationFrame(frame);
@@ -774,230 +749,10 @@ function close(){
   if(openButton)openButton.hidden=false;
   if(oldRoom)setStatus("Saiu da pista.");
 }
-// Inspeção ampliada isolada: um renderer temporário, sem alterar o estado da pista.
-const inspectButton=document.getElementById("jfSeatInspect");
-const inspectModal=document.getElementById("jfSeatInspectModal");
-const inspectClose=document.getElementById("jfSeatInspectClose");
-const inspectViewport=document.getElementById("jfSeatInspectViewport");
-let inspectCleanup=null,inspectOpening=false;
-// Ajuste da posicao do macaquinho SENTADO - independente dos oculos.
-const seatMonkeyPanel=document.getElementById("jfSeatMonkeyCalibration");
-const seatMonkeyStatus=document.getElementById("jfSeatMonkeyStatus");
-const seatMonkeyAxes=["x","y","z","yaw","lean","hip"];
-const seatMonkeyInputs=Object.fromEntries(seatMonkeyAxes.map(key=>[
-  key,document.getElementById("jfSeatMonkey"+key[0].toUpperCase()+key.slice(1))
-]));
-function setSeatMonkeyStatus(message){
-  if(seatMonkeyStatus)seatMonkeyStatus.textContent=message;
-}
-function displaySeatMonkeyFit(){
-  for(const key of seatMonkeyAxes){
-    const number=seatMonkeyValues[key],input=seatMonkeyInputs[key];
-    if(input)input.value=String(number);
-    const output=document.getElementById("jfSeatMonkey"+key[0].toUpperCase()+key.slice(1)+"Value");
-    if(output)output.textContent=(key==="yaw"||key==="lean"?number.toFixed(0)+"°":number.toFixed(2));
-  }
-}
-function repositionSeatMonkeyNow(){
-  // Sem caminhar um passo a cada pequeno arrasto de slider.
-  // Mover só o nosso próprio avatar se ele já estiver sentado.
-  if(!seatMonkeyAccess)return;
-  const me=people.get(socket?.id);
-  if(!me?.root||!me.data?.seated)return;
-  const seat=clubSeatAt(me.data.x,me.data.z);
-  const offset=chairRelativeOffset(seatMonkeyValues,seat);
-  me.root.position.x=(seat?.wx??(me.data.x-2.5))+offset.x;
-  me.root.position.z=(seat?.wz??(me.data.z-2.5))+offset.z;
-  me.root.position.y=seatMonkeyValues.y;
-  me.root.rotation.y=(seat?.yaw||0)+THREE.MathUtils.degToRad(seatMonkeyValues.yaw);
-  me.root.rotation.x=THREE.MathUtils.degToRad(seatMonkeyValues.lean);
-}
-function storeSeatMonkeyFit(){
-  try{
-    localStorage.setItem(SEAT_MONKEY_STORAGE,JSON.stringify(seatMonkeyValues));
-    setSeatMonkeyStatus("Ajustes aplicados ao vivo e salvos neste navegador. Outros macacos não mudam.");
-  }catch(error){
-    setSeatMonkeyStatus("Ajuste aplicado, mas este navegador não permitiu salvar.");
-  }
-}
-for(const key of seatMonkeyAxes){
-  seatMonkeyInputs[key]?.addEventListener("input",()=>{
-    if(!seatMonkeyAccess)return;
-    const val=Number(seatMonkeyInputs[key].value);
-    if(!Number.isFinite(val))return;
-    const [min,max]=seatMonkeyRanges[key];
-    seatMonkeyValues[key]=THREE.MathUtils.clamp(val,min,max);
-    displaySeatMonkeyFit();
-    repositionSeatMonkeyNow();
-    storeSeatMonkeyFit();
-  });
-}
-document.getElementById("jfSeatMonkeyReset")?.addEventListener("click",()=>{
-  if(!seatMonkeyAccess)return;
-  Object.assign(seatMonkeyValues,SEATED_DEFAULTS);
-  displaySeatMonkeyFit();repositionSeatMonkeyNow();storeSeatMonkeyFit();
-  setSeatMonkeyStatus("Posição original da cadeira restaurada.");
-});
-document.getElementById("jfSeatMonkeyCopy")?.addEventListener("click",async()=>{
-  if(!seatMonkeyAccess)return;
-  const value=JSON.stringify(seatMonkeyValues);
-  try{
-    if(!navigator.clipboard?.writeText)throw Error("Área de transferência indisponível");
-    await navigator.clipboard.writeText(value);
-    setSeatMonkeyStatus("Valores copiados para colar aqui no chat.");
-  }catch(error){
-    setSeatMonkeyStatus("Não foi possível copiar automaticamente. Valores: "+value);
-  }
-});
-function seatMonkeyPermission(enabled){
-  const wasAllowed=seatMonkeyAccess;
-  seatMonkeyAccess=Boolean(enabled);
-  if(seatMonkeyPanel)seatMonkeyPanel.hidden=!seatMonkeyAccess;
-  if(seatMonkeyAccess&&!wasAllowed)loadSeatMonkeyFit();
-  displaySeatMonkeyFit();
-}
-seatMonkeyPermission(seatMonkeyAccess);
-fetch("/api/admin/status",{credentials:"same-origin",cache:"no-store"})
-  .then(response=>response.ok?response.json():{admin:false})
-  .then(data=>seatMonkeyPermission(seatMonkeyIsLocal||data.admin===true))
-  .catch(()=>seatMonkeyPermission(seatMonkeyIsLocal));
-
-const glassesAxes=["x","y","z"];
-const glassesInputs=Object.fromEntries(glassesAxes.map(axis=>[axis,document.getElementById("jfSeatGlasses"+axis.toUpperCase())]));
-const savedSeatGlassesAdjustment=Object.freeze({x:-.0002,y:-.0011,z:-.0024});
-const seatGlassesAdjustment={...savedSeatGlassesAdjustment};
-const eyewearDiagnostics=document.getElementById("jfSeatGlassesDiagnostics");
-function displayEyewearDiagnostics(){
-  if(!eyewearDiagnostics)return;
-  const member=people.get(socket?.id);
-  if(!member){eyewearDiagnostics.textContent="Aguardando seu avatar entrar na pista.";return;}
-  const check=member.getGlassesDiagnostics?.();
-  if(!check?.loaded){
-    eyewearDiagnostics.textContent="Óculos ainda não vinculados | selecionado: "+
-      (check?.requested||"desconhecido")+" | Head encontrado: "+
-      (check?.headBone||"NÃO")+" | objetos vinculados: "+
-      (check?.attached?.join(", ")||"nenhum")+".";
-    return;
-  }
-  eyewearDiagnostics.textContent="Óculos detectados: "+check.requested+
-    " | osso: "+check.bone+
-    " | pose sentada: "+(check.seated?"SIM":"NÃO")+
-    " | posição real: "+check.coordinates.join(", ")+
-    " | ajuste: "+glassesAxes.map(axis=>seatGlassesAdjustment[axis].toFixed(4)).join(", ");
-}
-function updateGlassesPreview(){
-  for(const axis of glassesAxes){
-    const input=glassesInputs[axis];
-    if(input)input.value=String(seatGlassesAdjustment[axis]);
-    const output=document.getElementById("jfSeatGlasses"+axis.toUpperCase()+"Value");
-    if(output)output.textContent=seatGlassesAdjustment[axis].toFixed(4);
-  }
-  const member=people.get(socket?.id);
-  member?.setSeatGlassesCalibration?.(seatGlassesAdjustment);
-  displayEyewearDiagnostics();
-}
-for(const axis of glassesAxes){
-  glassesInputs[axis]?.addEventListener("input",value=>{
-    // Input is native DOM; read slider value directly.
-    seatGlassesAdjustment[axis]=Number(glassesInputs[axis].value)||0;
-    updateGlassesPreview();
-  });
-}
-document.getElementById("jfSeatGlassesPreset")?.addEventListener("click",()=>{
-  // Deslocamento perceptível e reversível para verificar se o código da
-  // prévia realmente afeta o óculos que está sendo renderizado.
-  // Comparar com a posição anterior, sem a calibração aprovada.
-  Object.assign(seatGlassesAdjustment,{x:0,y:0,z:0});
-  updateGlassesPreview();
-});
-document.getElementById("jfSeatGlassesReset")?.addEventListener("click",()=>{
-  Object.assign(seatGlassesAdjustment,savedSeatGlassesAdjustment);
-  updateGlassesPreview();
-});
-document.getElementById("jfSeatGlassesCopy")?.addEventListener("click",()=>{
-  const info=JSON.stringify(seatGlassesAdjustment);
-  navigator.clipboard?.writeText(info).catch(()=>{});
-});
-
-async function openSeatInspect(){
-  if(!active||inspectCleanup||!inspectModal||!inspectViewport)return;
-  const me=people.get(socket?.id);
-  if(!me?.root||!me.data.seated){
-    setStatus("Sente seu macaco na cadeira da pista antes de abrir a visão ampliada.");
-    return;
-  }
-  inspectModal.hidden=false;
-  if(seatMonkeyAccess)displaySeatMonkeyFit();
-  updateGlassesPreview();
-  let raf=0,disposed=false,drag=null,yaw=.55,pitch=.23,distance=2.65;
-  // Compartilha o renderer e a cena originais: não clona o rig, os óculos
-  // nem as texturas, e não cria outro contexto WebGL.
-  const inspectCamera=new THREE.PerspectiveCamera(35,1,.05,80);
-  const center=new THREE.Vector3(),bounds=new THREE.Box3();
-  const dispose=()=>{
-    if(disposed)return;
-    disposed=true;cancelAnimationFrame(raf);
-    inspectViewport.removeEventListener("pointerdown",down);
-    inspectViewport.removeEventListener("pointermove",move);
-    inspectViewport.removeEventListener("pointerup",up);
-    inspectViewport.removeEventListener("pointercancel",up);
-    inspectViewport.removeEventListener("wheel",wheel);
-    // Um canvas não pode pertencer a dois elementos: devolve-o à pista.
-    if(renderer?.domElement&&viewport){
-      viewport.appendChild(renderer.domElement);
-      // Restaurar dimensões e câmera da pista ao fechar a inspeção.
-      const width=Math.max(220,viewport.clientWidth),height=Math.max(220,viewport.clientHeight);
-      renderer.setSize(width,height,false);
-      const aspect=width/height,halfH=4.55;
-      camera.left=-halfH*aspect;camera.right=halfH*aspect;
-      camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
-    }
-    inspectModal.hidden=true;
-    inspectCleanup=null;
-  };
-  const down=e=>{drag={x:e.clientX,y:e.clientY,yaw,pitch};inspectViewport.setPointerCapture?.(e.pointerId);};
-  const move=e=>{if(!drag)return;yaw=drag.y-(e.clientX-drag.x)*.009;pitch=Math.max(-.1,Math.min(.9,drag.pitch+(e.clientY-drag.y)*.006));};
-  const up=()=>{drag=null;};
-  const wheel=e=>{e.preventDefault();distance=Math.max(1.7,Math.min(6,distance+Math.sign(e.deltaY)*.18));};
-  inspectCleanup=dispose;
-  inspectViewport.addEventListener("pointerdown",down);
-  inspectViewport.addEventListener("pointermove",move);
-  inspectViewport.addEventListener("pointerup",up);
-  inspectViewport.addEventListener("pointercancel",up);
-  inspectViewport.addEventListener("wheel",wheel,{passive:false});
-  inspectViewport.setAttribute("aria-label","Cena real da pista ampliada sobre o macaco sentado, com acessórios originais");
-  inspectViewport.appendChild(renderer.domElement);
-  // A renderização ocorre no loop principal, depois da atualização da pose.
-  // Somente trocamos câmera e viewport, nunca alteramos os ossos.
-  const update=()=>{
-    if(disposed)return;
-    const current=people.get(socket?.id);
-    if(!active||!renderer||!current?.root||!current.data.seated){dispose();return;}
-    current.root.updateWorldMatrix(true,true);
-    bounds.setFromObject(current.root);
-    bounds.getCenter(center);
-    // A cabeça e a cadeira ocupam aproximadamente este espaço.
-    center.y=Math.max(.55,Math.min(1.18,center.y));
-    const w=Math.max(1,inspectViewport.clientWidth),h=Math.max(1,inspectViewport.clientHeight);
-    renderer.setSize(w,h,false);
-    inspectCamera.aspect=w/h;inspectCamera.updateProjectionMatrix();
-    inspectCamera.position.set(center.x+distance*Math.sin(yaw)*Math.cos(pitch),
-      center.y+distance*Math.sin(pitch),
-      center.z+distance*Math.cos(yaw)*Math.cos(pitch));
-    inspectCamera.lookAt(center);
-    renderer.render(scene,inspectCamera);
-    displayEyewearDiagnostics();
-    raf=requestAnimationFrame(update);
-  };
-  update();
-}
-inspectButton?.addEventListener("click",openSeatInspect);
-inspectClose?.addEventListener("click",()=>inspectCleanup?.());
-inspectModal?.addEventListener("click",e=>{if(e.target===inspectModal)inspectCleanup?.();});
 openButton?.addEventListener("click",open);
 closeButton?.addEventListener("click",close);
 modal?.addEventListener("click",e=>{if(e.target===modal)close();});
-document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(inspectCleanup)inspectCleanup();else if(active)close();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&active)close();});
 for(const button of choices)button.addEventListener("click",()=>{if(!active)return;socket.emit("dance-style",{dance:button.dataset.jfDance});});
 viewport?.addEventListener("pointerdown",e=>{down={x:e.clientX,y:e.clientY};});
 viewport?.addEventListener("pointerup",e=>{
