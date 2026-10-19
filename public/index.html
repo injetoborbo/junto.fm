@@ -639,6 +639,31 @@ html[data-jf-theme="aero"] .jf-audio-source{background:linear-gradient(#174e70,#
 html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#efffff}
 </style>
 <style>
+/* Barra discreta de arremessos: sem cobrir letras ou capa no celular. */
+.jf-mobile-fun-bar{display:contents}
+@media(max-width:760px){
+  body.jf-in-room .jf-top-actions{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:5px!important}
+  body.jf-in-room .jf-top-actions #jfOpenFriends{display:none!important}
+  body.jf-in-room .jf-top-actions>.btn{font-size:10px!important;min-height:34px!important;height:34px!important;padding:5px 3px!important;gap:3px}
+  body.jf-in-room .jf-top-actions .jf-profile-trigger img{max-width:20px;max-height:20px}
+  body.jf-in-room .jf-community-top-dock{gap:5px}
+  body.jf-in-room .jf-community-top-dock .btn{min-height:32px;padding:5px 7px}
+  body.jf-in-room #jfRoomEntryPanel>.status{margin-top:8px}
+  body.jf-in-room #jfRoomEntryPanel #roomCount{margin:7px 0}
+  body.jf-in-room #jfLeaveRoom{min-height:35px;padding:7px 10px}
+  body.jf-in-room #jfCopyRoomLink{min-height:34px;padding:7px 10px}
+  body.jf-in-room .jf-mobile-fun-bar{display:flex;align-items:center;justify-content:flex-start;gap:12px;margin:10px 0 4px;min-height:48px;max-width:100%;clear:both}
+  body.jf-in-room #jfClubTomato.jf-tomato-launcher,body.jf-in-room #jfBananaThrow.jf-banana-button{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:48px!important;height:48px!important;min-width:48px;min-height:48px;margin:0!important;transform:none}
+  body.jf-in-room #jfClubTomato.jf-tomato-launcher:hover,body.jf-in-room #jfBananaThrow.jf-banana-button:hover{transform:scale(1.06)!important}
+  body:not(.jf-in-room) #jfMobileFunBar{display:none!important}
+  body.jf-in-room .jf-chat-launcher{bottom:12px!important;width:44px!important;height:44px!important}
+  body.jf-in-room #jfChatLauncher{right:10px!important}
+  body.jf-in-room #jfFriendsLauncher{right:62px!important}
+  body.jf-in-room .jf-chat-window{bottom:65px!important}
+  body.jf-in-room .spotify-note{font-size:11px;line-height:1.4}
+  body.jf-in-room .track-card{gap:10px;padding:10px}
+}
+@media(max-width:370px){body.jf-in-room .jf-top-actions{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
 /* O Social só existe no hall; dentro da sala permanece a aba Amigos. */
 body.jf-in-room #jfHomeSocial{display:none!important}
 /* Ajustes exclusivos para telas estreitas, preservando a versão desktop. */
@@ -727,6 +752,9 @@ body.jf-in-room #jfHomeSocial{display:none!important}
         </div>
       </div>
     </div>
+    <div id="jfMobileFunBar" class="jf-mobile-fun-bar" aria-label="Arremessos na sala">
+      <button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
+    </div>
     <div class="spotify-actions">
       <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Conectar Spotify</a>
       <button class="btn secondary" id="spotifyDisconnect" type="button" hidden>Desconectar Spotify</button>
@@ -787,7 +815,7 @@ body.jf-in-room #jfHomeSocial{display:none!important}
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8.3 8.3 0 0 1-3.3-.7L4 20l1.3-4.1a7.5 7.5 0 1 1 14.7-4.4Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
   <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
 </button>
-<button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
+
 <button type="button" id="jfFriendsLauncher" class="jf-chat-launcher jf-friends-launcher" aria-label="Abrir amigos" aria-expanded="false" aria-controls="jfFriendsDrawer" title="Amigos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg><span id="jfFriendsUnread" class="jf-chat-unread" aria-label="Solicitações pendentes"></span></button>
 <section id="jfFriendsDrawer" class="jf-chat-window jf-friends-drawer" aria-labelledby="jfFriendsDrawerHeading" hidden><header class="jf-chat-header"><div><h2 id="jfFriendsDrawerHeading" class="jf-chat-heading">Amigos</h2><div class="jf-chat-subheading">Online e solicitações</div></div><button type="button" id="jfFriendsDrawerClose" class="jf-chat-close" aria-label="Fechar amigos">×</button></header><div class="jf-friends-drawer-content"><button type="button" id="jfDrawerFriendsTab" hidden>Amigos</button><div id="jfDrawerFriendsList" class="jf-people"></div><div id="jfDrawerRequestsList" class="jf-people" hidden></div><div class="jf-friends-drawer-footer"><button class="btn secondary jf-friends-tab" id="jfDrawerRequestsTab" type="button">Pedidos <span id="jfDrawerRequestCount" class="jf-request-count" hidden>0</span></button></div><button type="button" id="jfManageFriends" hidden>Gerenciar amigos</button></div></section>
 <section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
