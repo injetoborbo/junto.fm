@@ -8,7 +8,7 @@
  .jf-social-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
  .jf-social-dialog header h2{margin:0;font-size:21px;color:var(--ink)}
  .jf-social-dialog form{display:grid;gap:9px}
- .jf-social-dialog input{width:100%;color:var(--ink);background:color-mix(in srgb,var(--jf-primary,#202045) 15%,#161834);padding:10px;border:1px solid var(--jf-secondary,#a3a8ff)}
+ .jf-social-dialog input{width:100%;color:#172b4f;background:#f8fbff;padding:10px;border:1px solid var(--jf-secondary,#a3a8ff)}
  .jf-social-dialog label{margin:0;color:var(--ink);font-size:12px}
  .jf-medal{width:54px;height:64px;display:grid;place-items:center;font-size:28px;background:radial-gradient(circle,#ffefa8,#dba83b 68%,#68441c 70%);border:3px ridge #a4741b;clip-path:polygon(15% 0,85% 0,85% 25%,100% 43%,84% 57%,79% 94%,50% 100%,21% 94%,16% 57%,0 43%,15% 25%);filter:drop-shadow(0 2px 2px #0005);flex:none}
  .jf-achievement-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid color-mix(in srgb,var(--jf-secondary,#999) 30%,transparent)}
@@ -24,6 +24,13 @@
  actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen">Criar conta Junto.fm</button><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
  if(entry)entry.appendChild(actions);
  else document.querySelector("main")?.appendChild(actions);
+ const inRoomButton=document.createElement("button");inRoomButton.type="button";inRoomButton.className="btn secondary";inRoomButton.id="jfAchievementsRoomOpen";inRoomButton.textContent="🏅 Conquistas";
+ document.getElementById("jfOpenRank")?.insertAdjacentElement("afterend",inRoomButton);
+ fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json()).then(data=>{
+  const registered=Boolean(data.loggedIn);
+  document.getElementById("jfLocalRegisterOpen").hidden=registered;
+  document.getElementById("jfLocalLoginOpen").hidden=registered;
+ }).catch(()=>{});
  const $=id=>document.getElementById(id);
  const overlay=document.createElement("div");overlay.id="jfSocialDialog";overlay.className="jf-social-overlay";overlay.hidden=true;
  overlay.innerHTML='<section class="jf-social-dialog" role="dialog" aria-modal="true" aria-labelledby="jfLocalTitle"><header><h2 id="jfLocalTitle">Criar conta</h2><button type="button" class="btn secondary" id="jfLocalClose">✕</button></header><form id="jfLocalForm"><label for="jfLocalEmail">E-mail</label><input id="jfLocalEmail" type="email" autocomplete="email" required maxlength="254"><label for="jfLocalPassword">Senha (mínimo de 12 caracteres)</label><input id="jfLocalPassword" type="password" autocomplete="new-password" minlength="12" maxlength="256" required><button class="btn" type="submit" id="jfLocalSubmit">Criar conta</button><p id="jfLocalMessage" role="status"></p></form></section>';
@@ -64,6 +71,7 @@
   }catch(err){list.textContent=err.message}
  }
  $("jfAchievementsOpen").onclick=openAchievements;
+ inRoomButton.onclick=openAchievements;
  $("jfAchievementsClose").onclick=()=>achievements.hidden=true;
  achievements.onclick=e=>{if(e.target===achievements)achievements.hidden=true};
  // O visitante pode ver a lista, mas somente contas autenticadas desbloqueiam.
