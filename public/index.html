@@ -509,9 +509,12 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 @media(max-width:540px){.jf-wardrobe-layout{grid-template-columns:1fr}.jf-wardrobe-preview{width:100%}}
 /* Friends drawer + lyrics */
 .jf-friends-launcher{right:90px}.jf-friends-drawer{right:90px}
-.jf-tomato-launcher{right:156px;font-size:29px;line-height:1;cursor:pointer}
-.jf-tomato-launcher:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
-.jf-tomato-launcher:not(:disabled):hover{transform:translateY(-2px)}
+/* Tomate sempre legível ao lado de Amigos/Chat, mesmo antes de ter DJ. */
+#jfClubTomato.jf-tomato-launcher{right:156px;bottom:24px;display:grid!important;visibility:visible!important;opacity:1;
+  font-size:30px;line-height:1;cursor:pointer;background:var(--jf-primary);
+  filter:none;z-index:10021}
+#jfClubTomato.jf-tomato-launcher:disabled{opacity:.85;cursor:not-allowed;filter:none}
+#jfClubTomato.jf-tomato-launcher:not(:disabled):hover{transform:translateY(-2px)}
 @media(max-width:520px){.jf-tomato-launcher{right:140px;bottom:16px;width:52px;height:52px;font-size:26px}}
 .jf-friends-drawer-content{padding:12px;overflow:auto;min-height:0;flex:1}
 .jf-friends-tabs{display:flex;gap:8px;margin:8px 0 12px;flex-wrap:wrap}
