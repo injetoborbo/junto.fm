@@ -29,6 +29,8 @@ const spotifySessions = new Map();
 const spotifyAuthStates = new Map();
 const roomTracks = new Map();
 const roomTransmitters = new Map();
+const roomSkipVotes=new Map();
+const skipTickets=new Map();
 const roomBananaCounts = new Map(); // 0 a 19 por sala
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
@@ -89,6 +91,7 @@ async function validSpotifyAccessToken(session) {
 app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
+const achievements=require("./achievements")(app,io,accountAuth);
 require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready);
 app.use(express.static(path.join(__dirname, "public")));
 app.get("/health", (_req, res) => res.json({ ok: true }));
@@ -177,6 +180,22 @@ app.post("/api/spotify/logout", (req, res) => {
   if (id) spotifySessions.delete(id);
   res.setHeader("Set-Cookie", "junto_spotify_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0");
   res.json({ ok: true });
+});
+app.post("/api/spotify/skip",async(req,res)=>{
+  const ticket=String(req.body?.ticket||"");
+  const room=String(req.body?.room||"");
+  const entry=skipTickets.get(room);
+  if(!/^[a-f0-9]{48}$/.test(ticket)||!entry||entry.ticket!==ticket||entry.expires<Date.now()
+     ||roomTransmitters.get(room)?.id!==entry.djId)
+    return res.status(403).json({error:"Skip não autorizado pela votação."});
+  // Token de uso único: impede repetição da requisição.
+  skipTickets.delete(room);
+  try{
+    const token=await validSpotifyAccessToken(getSession(req,res));
+    const response=await fetch("https://api.spotify.com/v1/me/player/next",{method:"POST",headers:{Authorization:"Bearer "+token}});
+    if(!response.ok)return res.status(response.status).json({error:"Spotify não autorizou pular a faixa."});
+    return res.json({ok:true});
+  }catch(error){return res.status(401).json({error:"Conecte o Spotify para pular a faixa."});}
 });
 app.post("/api/spotify/save-track", async (req, res) => {
   try {
@@ -390,7 +409,7 @@ function releaseRoomOwnership(room,departingId){
     roomAccess.delete(room);
     roomTracks.delete(room);
     roomChatMessages.delete(room);
-    roomTomatoImpacts.delete(room);roomBananaCounts.delete(room);
+    roomTomatoImpacts.delete(room);roomBananaCounts.delete(room);roomSkipVotes.delete(room);skipTickets.delete(room);
   }
 }
 io.use(async (socket,next)=>{
@@ -489,6 +508,36 @@ io.on("connection", socket => {
   });
   // Tomates são brincadeira visual: somente o transmissor atual pode ser alvo.
   // Nada de alvo arbitrário; o servidor valida sala, transmissão e cooldown.
+  function emitSkip(room){
+    const ids=io.sockets.adapter.rooms.get(room)||new Set();
+    const state=roomSkipVotes.get(room)||{key:"",voters:new Set()};
+    for(const id of state.voters)if(!ids.has(id))state.voters.delete(id);
+    const total=ids.size,required=total===2?2:Math.max(2,Math.ceil(total/2));
+    io.to(room).emit("skip-state",{votes:state.voters.size,total,required,approved:Boolean(state.approved)});
+  }
+  socket.on("skip-vote",()=>{
+    const room=socket.data.room;if(!room)return;
+    const track=roomTracks.get(room);
+    if(!track?.is_playing||!roomTransmitters.has(room))return socket.emit("skip-error",{message:"Não há música tocando."});
+    const key=track.id||track.uri||track.name+"|"+track.artists;
+    const state=roomSkipVotes.get(room);
+    if(!state||state.key!==key)roomSkipVotes.set(room,{key,voters:new Set(),approved:false});
+    const current=roomSkipVotes.get(room);
+    if(current.approved||current.voters.has(socket.id))return;
+    current.voters.add(socket.id);
+    const members=io.sockets.adapter.rooms.get(room)||new Set();
+    const needed=members.size===2?2:Math.max(2,Math.ceil(members.size/2));
+    if(current.voters.size>=needed){
+      current.approved=true;
+      const dj=roomTransmitters.get(room);
+      if(dj?.id){
+        const ticket=crypto.randomBytes(24).toString("hex");
+        skipTickets.set(room,{ticket,key,expires:Date.now()+20000,djId:dj.id});
+        io.to(dj.id).emit("skip-approved",{key,room,ticket});
+      }
+    }
+    emitSkip(room);
+  });
   socket.on("banana-throw",()=>{
     const room=socket.data.room;
     if(!room)return socket.emit("banana-error",{message:"Entre em uma sala primeiro."});
@@ -761,6 +810,7 @@ io.on("connection", socket => {
     const clientIds=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.clientId||null]));
     const registeredPeers=Object.fromEntries(peers.map(id=>[id,Boolean(io.sockets.sockets.get(id)?.data.account)]));
     socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null, bananaCount:roomBananaCounts.get(room)||0 });
+    emitSkip(room);
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id, clientId:socket.data.clientId, registered:Boolean(socket.data.account) });
     notifyPresence();
@@ -803,6 +853,8 @@ io.on("connection", socket => {
     if (!socket.data.room || !payload || payload.room !== socket.data.room) return;
     if(roomTransmitters.get(socket.data.room)?.id!==socket.id)return;
     roomTracks.delete(socket.data.room);
+    roomSkipVotes.delete(socket.data.room);skipTickets.delete(socket.data.room);
+    emitSkip(socket.data.room);
     socket.to(socket.data.room).emit("track-clear");
   });
 
@@ -820,7 +872,10 @@ io.on("connection", socket => {
       progress_ms: Math.max(0, Math.min(Number(track.progress_ms) || 0, 24 * 60 * 60 * 1000)),
       is_playing: Boolean(track.is_playing), updated_at: Date.now()
     };
+    const oldTrack=roomTracks.get(socket.data.room);
+    if((oldTrack?.id||oldTrack?.name)!==(safeTrack.id||safeTrack.name)){roomSkipVotes.delete(socket.data.room);skipTickets.delete(socket.data.room);}
     roomTracks.set(socket.data.room, safeTrack);
+    emitSkip(socket.data.room);
     socket.to(socket.data.room).emit("track-update", safeTrack);
   });
 
