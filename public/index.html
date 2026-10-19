@@ -360,7 +360,40 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 #jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(568px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
 #jfDanceModal[hidden]{display:none!important}
 #jfDanceModal .jf-dance-modal{box-shadow:0 16px 55px #10254388,0 0 0 2px #cbe7ff;max-height:calc(100dvh - 28px);overflow:auto}
-#jfDanceModal .jf-dance-modal .jf-modal-head{position:sticky;top:0;z-index:2;padding:4px 0 7px;background:var(--jf-panel,#f1f7ff)}
+/* Junto Club: cabeçalho acompanha os temas, sem faixa branca. */
+#jfDanceModal .jf-dance-modal .jf-modal-head{
+  position:sticky;top:0;z-index:2;padding:8px 10px 10px;
+  border-radius:8px 8px 4px 4px;
+  color:var(--ink,#f7f4ff);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--jf-primary,#51538b) 23%,#202044),color-mix(in srgb,var(--jf-secondary,#a2a5ff) 12%,#151633));
+  border:1px solid color-mix(in srgb,var(--jf-secondary,#a2a5ff) 38%,transparent);
+}
+#jfDanceModal .jf-dance-modal .jf-modal-head h2{color:inherit!important;text-shadow:none}
+/* Temas claros: contraste escuro, fundo pastel coerente. */
+html[data-jf-theme="pastel"] #jfDanceModal .jf-modal-head,
+html[data-jf-theme="lavender"] #jfDanceModal .jf-modal-head,
+html[data-jf-theme="peach"] #jfDanceModal .jf-modal-head,
+html[data-jf-theme="mint"] #jfDanceModal .jf-modal-head,
+html[data-jf-theme="baby-pink"] #jfDanceModal .jf-modal-head,
+html[data-jf-theme="ocean"] #jfDanceModal .jf-modal-head,
+html[data-jf-theme="sunset"] #jfDanceModal .jf-modal-head{
+  color:var(--ink,#302c53);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--jf-primary,#d8c9ff) 15%,#ffffff),color-mix(in srgb,var(--jf-secondary,#efdaff) 28%,#f4f0ff));
+}
+/* Frutiger Aero: vidro azul profundo, texto claro. */
+html[data-jf-theme="aero"] #jfDanceModal .jf-modal-head{
+  color:#f4ffff;background:linear-gradient(135deg,#08476ceF,#052e4cf5);border-color:#75deef;
+}
+/* Windows XP: barra azul Luna com título em branco. */
+html[data-jf-theme="classic"] #jfDanceModal .jf-modal-head{
+  color:#fff;background:linear-gradient(180deg,#4698ff 0%,#216edb 45%,#0a4baf 100%);
+  border:1px solid #1a54a8;border-radius:6px 6px 3px 3px;box-shadow:inset 0 1px #a5d1ff;
+}
+html[data-jf-theme="classic"] #jfDanceModal .jf-modal-head h2{text-shadow:0 1px 2px #153a83}
+/* Personalizado: usa a paleta ativa, sem assumir tema claro. */
+html[data-jf-theme="custom"] #jfDanceModal .jf-modal-head{
+  background:linear-gradient(135deg,color-mix(in srgb,var(--jf-primary,#5754a4) 24%,#222044),color-mix(in srgb,var(--jf-secondary,#827dcd) 14%,#191831));
+}
 
 .jf-dance-modal{width:100%;max-width:100%;overflow:auto;padding:13px!important}
 .jf-dance-modal .jf-modal-head{margin-bottom:9px}
