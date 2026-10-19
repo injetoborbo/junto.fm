@@ -42,7 +42,7 @@ html:not([data-jf-theme="kodoku"]) .jf-kodoku-feature{display:none!important}
 /* Chat Kodoku — um único conjunto de regras, sem patches sobrepostos. */
 html[data-jf-theme="kodoku"] #jfChatWindow{
   position:fixed;right:24px;bottom:92px;
-  width:min(360px,calc(100vw - 28px));height:min(480px,calc(100dvh - 120px));
+  width:min(400px,calc(100vw - 28px));height:min(550px,calc(100dvh - 120px));
   min-height:0;box-sizing:border-box;padding:0;overflow:hidden;
   display:flex;flex-direction:column;
   border:0!important;border-radius:0!important;
@@ -66,20 +66,20 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-chat-frame{
   background:url("/kodoku-chat-frame.png") center center / 100% 100% no-repeat;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
-  flex:0 0 auto;min-height:62px;padding:10px 62px;
+  flex:0 0 auto;min-height:76px;padding:21px 66px 8px 40px;position:relative;
   background:#030303!important;border:0!important;box-shadow:none!important;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header .jf-chat-close{
-  flex-shrink:0;position:relative;z-index:31;
+  flex-shrink:0;position:absolute;top:15px;right:27px;z-index:31;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-log{
-  flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px;
+  flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px 30px;
   background:#030303!important;scrollbar-color:#888 #080808;
 }
-html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-tools{flex:0 0 auto;background:#030303!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-tools{flex:0 0 auto;background:#030303!important;padding:0 30px 5px!important}
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form{
   flex:0 0 auto;display:flex;align-items:center;gap:8px;
-  padding:9px 10px!important;background:#030303!important;
+  padding:7px 30px 10px!important;background:#030303!important;
   border:0!important;box-shadow:none!important;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form input{
@@ -87,8 +87,8 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form input{
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form button{flex:0 0 auto}
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-status{
-  flex:0 0 52px;height:52px;min-height:52px;box-sizing:border-box;
-  padding:5px 60px!important;display:flex;align-items:center;justify-content:center;
+  flex:0 0 38px;height:38px;min-height:38px;box-sizing:border-box;
+  padding:3px 35px 12px!important;display:flex;align-items:center;justify-content:center;
   text-align:center;line-height:1.35;margin:0;
   background:#030303!important;color:#ddd!important;position:relative;z-index:3;
 }
@@ -125,10 +125,14 @@ html[data-jf-theme="kodoku"] .jf-friends-drawer .jf-person{
 @media(max-width:520px){
  html[data-jf-theme="kodoku"] #jfChatWindow{
    right:12px;bottom:78px;width:calc(100vw - 24px);
-   height:min(470px,calc(100dvh - 96px));
+   height:min(520px,calc(100dvh - 96px));
  }
- html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding:10px 49px}
- html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-status{flex-basis:46px;height:46px;min-height:46px;padding:5px 49px!important}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{min-height:68px;padding:17px 55px 8px 30px}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header .jf-chat-close{top:11px;right:19px}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-log{padding:10px 23px}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-tools{padding:0 23px 5px!important}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form{padding:7px 23px 9px!important}
+ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-status{flex-basis:36px;height:36px;min-height:36px;padding:3px 26px 10px!important}
  html[data-jf-theme="kodoku"] .jf-kodoku-wordmark-png{width:min(250px,84%)}
  html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:124px;height:124px}
 }
