@@ -304,3 +304,40 @@ html[data-jf-theme="kodoku"] .jf-kodoku-wordmark{display:none!important}
  html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:43px!important}
  html[data-jf-theme="kodoku"] .jf-kodoku-wordmark-png{width:min(250px,84%)}
 }
+
+/* Acabamento de moldura: cantos em área reservada, nunca sobre botões ou texto. */
+html[data-jf-theme="kodoku"] #jfChatWindow{
+  padding-bottom:53px!important;
+  box-sizing:border-box!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corners{
+  z-index:4!important;
+  border:1px solid #fff!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{
+  width:49px!important;height:49px!important;
+  opacity:.92!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
+  padding-left:64px!important;
+  padding-right:64px!important;
+  min-height:60px!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header .jf-chat-close{
+  flex:0 0 auto!important;position:relative!important;z-index:5!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form{
+  padding-bottom:10px!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-status{
+  position:relative!important;z-index:5!important;
+}
+@media(max-width:520px){
+  html[data-jf-theme="kodoku"] #jfChatWindow{padding-bottom:43px!important}
+  html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{
+    width:39px!important;height:39px!important;
+  }
+  html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
+    padding-left:53px!important;padding-right:52px!important;
+  }
+}
