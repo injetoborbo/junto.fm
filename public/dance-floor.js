@@ -225,6 +225,21 @@ const seatedHipDelta=new THREE.Vector3();
 // Encaixe da cadeira, separado dos acessórios. Valores privados não são
 // enviados ao Socket.IO nem aplicados ao modelo de outros participantes.
 const SEATED_DEFAULTS=Object.freeze({x:.12,y:.46,z:.25,yaw:0,lean:0,hip:0});
+// Canto entre as duas paredes: cadeiras nas casas (0,1) e (2,1),
+// viradas uma para outra (+X e -X); mesa ocupa a casa (1,1).
+// Os mesmos endereços são validados no servidor.
+const CLUB_SEATS=Object.freeze([
+  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2}),
+  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2})
+]);
+const CLUB_TABLE=Object.freeze({x:1,z:1});
+const clubSeatAt=(x,z)=>CLUB_SEATS.find(seat=>seat.x===x&&seat.z===z)||null;
+// A calibração X/Z pertence à orientação do assento: acompanhá-la
+// quando a cadeira gira, para o macaco continuar encaixado.
+function chairRelativeOffset(settings,seat){
+  const angle=seat?.yaw||0,c=Math.cos(angle),s=Math.sin(angle);
+  return {x:settings.x*c+settings.z*s,z:settings.z*c-settings.x*s};
+}
 const SEAT_MONKEY_STORAGE="jf_club_seated_monkey_fit_v1";
 const seatMonkeyRanges={
   x:[-.5,.5],y:[.30,1.50],z:[-.5,.5],
@@ -265,7 +280,7 @@ function getClubFurniture(file){
   }
   return furnitureAssets.get(file);
 }
-function installClubFurniture({file,sceneBoard,worldScene,x,z,height,rotation=0,seat=false}){
+function installClubFurniture({file,sceneBoard,worldScene,x,z,height,rotation=0,seatId=null}){
   getClubFurniture(file).then(gltf=>{
     if(!active||scene!==worldScene||board!==sceneBoard)return;
     const item=gltf.scene.clone(true);
@@ -273,15 +288,22 @@ function installClubFurniture({file,sceneBoard,worldScene,x,z,height,rotation=0,
     if(bounds.isEmpty())throw Error("Modelo sem geometria: "+file);
     const extent=bounds.getSize(new THREE.Vector3());
     const center=bounds.getCenter(new THREE.Vector3());
-    // As pecas vieram normalizadas num cubo ~1.9; usar altura real
-    // torna a cadeira e a mesinha proporcionais ao macaco e ao piso.
     const scale=height/Math.max(extent.y,.0001);
-    item.name=seat?"jfClubChair":"jfClubTable";
+    // Centralizar no pivô ANTES de rotacionar. Assim, girar 180° a segunda
+    // cadeira não faz o GLB deslocar lateralmente pela origem da exportação.
+    const anchor=new THREE.Group();
+    anchor.name=seatId===null?"jfClubTable":"jfClubChair"+seatId;
+    anchor.position.set(x,0,z);
+    anchor.rotation.y=rotation;
     item.scale.setScalar(scale);
-    item.rotation.y=rotation;
-    item.position.set(x-center.x*scale,-.08-bounds.min.y*scale,z-center.z*scale);
-    sceneBoard.add(item);
-    if(seat)item.traverse(node=>{if(node.isMesh)chairs.push(node);});
+    item.position.set(-center.x*scale,-.08-bounds.min.y*scale,-center.z*scale);
+    anchor.add(item);
+    sceneBoard.add(anchor);
+    if(seatId!==null)item.traverse(node=>{
+      if(!node.isMesh)return;
+      node.userData.jfClubSeatId=seatId;
+      chairs.push(node);
+    });
   }).catch(error=>{
     console.warn("Junto Club: nao foi possivel carregar "+file,error);
     if(active&&scene===worldScene)setStatus("Móvel 3D ausente: public/club/"+file+". Extraia o pacote de móveis no projeto.");
@@ -335,17 +357,16 @@ function sceneSetup(){
     const trim=cube(.92,.012,.92,trimMat,x-2.5,-.078,z-2.5,board);
     trim.userData.jfDanceGlow={x,z};
   }
-  // Móveis originais do criador: substituir TOTALMENTE a cadeira em cubos.
-  // Cadeira na casa (4,4): preserva clique nos meshes e o evento dance-sit.
-  // Mesa na casa (3,4), ao lado, sem interferir nos controles de sentar.
+  // Lounge no canto: duas cópias da cadeira original, uma de frente para
+  // a outra, com a mesinha no quadrado central. Sem cadeira em cubos.
   const furnitureScene=scene,furnitureBoard=board;
-  installClubFurniture({
+  for(const seat of CLUB_SEATS)installClubFurniture({
     file:"cadeirabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
-    x:1.5,z:1.5,height:1.16,seat:true
+    x:seat.x-2.5,z:seat.z-2.5,height:1.16,rotation:seat.yaw,seatId:seat.id
   });
   installClubFurniture({
     file:"mesabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
-    x:.5,z:1.5,height:.78
+    x:CLUB_TABLE.x-2.5,z:CLUB_TABLE.z-2.5,height:.78
   });
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
   cube(6.7,2.35,.18,wall,0,.96,-3.12);
@@ -541,9 +562,9 @@ function animate(){
     // A cadeira usa um deslocamento visual. O destino da caminhada
     // precisa ser o mesmo para não provocar oscilação infinita.
     const seatedSettings=seatSettingsFor(id);
-    const seatedOffsetX=d.seated?seatedSettings.x:0;
-    const seatedOffsetZ=d.seated?seatedSettings.z:0;
-    const poseX=targetX+seatedOffsetX,poseZ=targetZ+seatedOffsetZ;
+    const seat=d.seated?clubSeatAt(d.x,d.z):null;
+    const offset=d.seated?chairRelativeOffset(seatedSettings,seat):{x:0,z:0};
+    const poseX=targetX+offset.x,poseZ=targetZ+offset.z;
     const dx=poseX-p.root.position.x,dz=poseZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
     const walking=distance>.025;
@@ -568,7 +589,7 @@ function animate(){
     p.root.rotation.x=d.seated&&!walking?THREE.MathUtils.degToRad(seatedSettings.lean):0;
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
     if(!walking){
-      const targetYaw=d.seated?THREE.MathUtils.degToRad(seatedSettings.yaw):.65;
+      const targetYaw=d.seated?(seat?.yaw||0)+THREE.MathUtils.degToRad(seatedSettings.yaw):.65;
       p.root.rotation.y+=Math.atan2(Math.sin(targetYaw-p.root.rotation.y),Math.cos(targetYaw-p.root.rotation.y))*Math.min(1,dt*1.6);
     }
     p.mixer?.update(dt);
@@ -729,10 +750,12 @@ function repositionSeatMonkeyNow(){
   if(!seatMonkeyAccess)return;
   const me=people.get(socket?.id);
   if(!me?.root||!me.data?.seated)return;
-  me.root.position.x=me.data.x-2.5+seatMonkeyValues.x;
-  me.root.position.z=me.data.z-2.5+seatMonkeyValues.z;
+  const seat=clubSeatAt(me.data.x,me.data.z);
+  const offset=chairRelativeOffset(seatMonkeyValues,seat);
+  me.root.position.x=me.data.x-2.5+offset.x;
+  me.root.position.z=me.data.z-2.5+offset.z;
   me.root.position.y=seatMonkeyValues.y;
-  me.root.rotation.y=THREE.MathUtils.degToRad(seatMonkeyValues.yaw);
+  me.root.rotation.y=(seat?.yaw||0)+THREE.MathUtils.degToRad(seatMonkeyValues.yaw);
   me.root.rotation.x=THREE.MathUtils.degToRad(seatMonkeyValues.lean);
 }
 function storeSeatMonkeyFit(){
@@ -929,12 +952,18 @@ viewport?.addEventListener("pointerup",e=>{
   const bounds=renderer.domElement.getBoundingClientRect();
   pointer.set((e.clientX-bounds.left)/bounds.width*2-1,-(e.clientY-bounds.top)/bounds.height*2+1);
   raycaster.setFromCamera(pointer,camera);
-  if(raycaster.intersectObjects(chairs).length){socket.emit("dance-sit");return;}
+  const chairHit=raycaster.intersectObjects(chairs)[0];
+  if(chairHit){
+    socket.emit("dance-sit",{seat:chairHit.object.userData.jfClubSeatId});
+    return;
+  }
   const hit=raycaster.intersectObjects(tiles)[0];
   if(hit){
     const {x,z}=hit.object.userData.tile;
-    if(x===4&&z===4)socket.emit("dance-sit");
-    else if(x===3&&z===4)setStatus("Essa casa está ocupada pela mesinha da balada.");
+    const seat=clubSeatAt(x,z);
+    if(seat)socket.emit("dance-sit",{seat:seat.id});
+    else if(x===CLUB_TABLE.x&&z===CLUB_TABLE.z)
+      setStatus("Essa casa está ocupada pela mesinha da balada.");
     else socket.emit("dance-move",{x,z});
   }
 });
