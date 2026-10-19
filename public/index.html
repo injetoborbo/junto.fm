@@ -395,6 +395,65 @@ html[data-jf-theme="custom"] #jfDanceModal .jf-modal-head{
   background:linear-gradient(135deg,color-mix(in srgb,var(--jf-primary,#5754a4) 24%,#222044),color-mix(in srgb,var(--jf-secondary,#827dcd) 14%,#191831));
 }
 
+/* Legibilidade Junto Club: cores locais prevalecem sobre .small e títulos globais. */
+#jfDanceModal .jf-dance-modal{
+  --jf-club-text:#f7f7ff;--jf-club-muted:#e0e5ff;
+  color:var(--jf-club-text);
+}
+#jfDanceModal .jf-dance-toolbar,
+#jfDanceModal .jf-dance-help,
+#jfDanceModal #jfDanceCount,
+#jfDanceModal #jfDanceStatus{
+  color:var(--jf-club-text);
+  font-weight:650;
+  text-shadow:0 1px 2px #080b2380;
+}
+#jfDanceModal .jf-modal-head h2{
+  font-weight:900;letter-spacing:.15px;
+  text-shadow:0 1px 3px #080b2399;
+}
+#jfDanceModal .jf-modal-head p.small{
+  color:var(--jf-club-muted);font-weight:650;
+  text-shadow:0 1px 2px #080b2380;
+}
+#jfDanceModal .jf-dance-help{line-height:1.55}
+html[data-jf-theme="pastel"] #jfDanceModal .jf-dance-modal,
+html[data-jf-theme="lavender"] #jfDanceModal .jf-dance-modal,
+html[data-jf-theme="peach"] #jfDanceModal .jf-dance-modal,
+html[data-jf-theme="mint"] #jfDanceModal .jf-dance-modal,
+html[data-jf-theme="baby-pink"] #jfDanceModal .jf-dance-modal,
+html[data-jf-theme="ocean"] #jfDanceModal .jf-dance-modal,
+html[data-jf-theme="sunset"] #jfDanceModal .jf-dance-modal,
+html[data-jf-theme="classic"] #jfDanceModal .jf-dance-modal{
+  --jf-club-text:#18345b;--jf-club-muted:#37577d;
+}
+html[data-jf-theme="pastel"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="lavender"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="peach"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="mint"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="baby-pink"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="ocean"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="sunset"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="classic"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="pastel"] #jfDanceModal .jf-dance-help,
+html[data-jf-theme="lavender"] #jfDanceModal .jf-dance-help,
+html[data-jf-theme="peach"] #jfDanceModal .jf-dance-help,
+html[data-jf-theme="mint"] #jfDanceModal .jf-dance-help,
+html[data-jf-theme="baby-pink"] #jfDanceModal .jf-dance-help,
+html[data-jf-theme="ocean"] #jfDanceModal .jf-dance-help,
+html[data-jf-theme="sunset"] #jfDanceModal .jf-dance-help,
+html[data-jf-theme="classic"] #jfDanceModal .jf-dance-help{
+  text-shadow:none;
+}
+html[data-jf-theme="classic"] #jfDanceModal .jf-modal-head h2,
+html[data-jf-theme="classic"] #jfDanceModal .jf-modal-head p.small{
+  color:#fff;text-shadow:0 1px 3px #092f75;
+}
+html[data-jf-theme="classic"] #jfDanceModal .jf-modal-head{background:linear-gradient(180deg,#317cdd 0%,#125bbf 50%,#063e92 100%)}
+html[data-jf-theme="classic"] #jfDanceModal .jf-dance-toolbar,
+html[data-jf-theme="classic"] #jfDanceModal .jf-dance-help{
+  background:#eaf3ff;border-radius:6px;padding:9px 10px;
+}
 .jf-dance-modal{width:100%;max-width:100%;overflow:auto;padding:13px!important}
 .jf-dance-modal .jf-modal-head{margin-bottom:9px}
 .jf-dance-toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 10px 10px}
