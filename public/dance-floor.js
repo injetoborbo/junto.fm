@@ -372,7 +372,14 @@ async function putMember(id,details){
     // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
     if(id===socket.id)entry.setSeatGlassesCalibration?.(seatGlassesAdjustment);
     entry.restBones=new Map();
-    entry.rig.traverse(obj=>{if(obj.isBone)entry.restBones.set(obj.uuid,obj.quaternion.clone());});
+    entry.rig.traverse(obj=>{
+      if(!obj.isBone)return;
+      entry.restBones.set(obj.uuid,obj.quaternion.clone());
+      // Memorizar a pose natural ANTES da primeira animacao.
+      // Se a pessoa sentar antes de dancar, nao capturar a pose deformada
+      // como repouso ao se levantar da cadeira.
+      obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
+    });
     sittingPose().then(pose=>{
       if(!pose||!active||people.get(id)!==entry)return;
       entry.sitRotations=new Map();
@@ -505,47 +512,20 @@ function animate(){
       }
     }
     if(p.rig&&!p.action){
-      // Retarget em espaço GLOBAL somente para o conjunto de braços.
-      // No FBX as bases locais de clavículas e ombros podem ser diferentes
-      // das do macaco. A matriz mundial relativa à raiz preserva os eixos.
-      const sourcePoseWorld=new Map();
       const seatedTime=p.sitDuration>0?
         ((time%p.sitDuration)+p.sitDuration)%p.sitDuration:0;
-      const animatedSourceWorld=(info)=>{
-        if(sourcePoseWorld.has(info.key))return sourcePoseWorld.get(info.key);
-        const parentWorld=info.parent?
-          animatedSourceWorld(info.parent):
-          info.parentWorldRest.clone();
-        const values=info.track?.evaluate(seatedTime);
-        const local=values?.length===4?
-          sittingFrameQuaternion.fromArray(values).clone():info.localRest;
-        const world=parentWorld.multiply(local).normalize();
-        sourcePoseWorld.set(info.key,world);
-        return world;
-      };
       p.rig.traverse(obj=>{
         if(!obj.isBone)return;
+        // Retarget Mixamo nao garante os MESMOS eixos de ombro e cotovelo.
+        // Nesta versao de teste, preserve inteiramente o bind pose dos
+        // bracos/maos e da cabeca durante a animacao sentada. Assim nao ha
+        // rotacoes FBX deformando os bracos nem saltos na pose de repouso.
+        if(d.seated&&!walking&&/^(?:left|right)(?:shoulder|arm|forearm|hand)|^(?:head|neck)$/.test(boneKey(obj.name))){
+          const rest=p.restBones?.get(obj.uuid);
+          if(rest)obj.quaternion.copy(rest);
+          return;
+        }
         if(d.seated&&!walking&&p.sitTracks?.has(obj.uuid)&&p.sitDuration>0){
-          const key=boneKey(obj.name);
-          // Omoplatas, braços e antebraços recebem rotação GLOBAL relativa
-          // ao rig original. O restante continua com a transferência antiga.
-          const isArm=/^(left|right)(shoulder|arm|forearm|hand)$/.test(key);
-          const sourceInfo=isArm?p.sitSourceWorld?.get(key):null;
-          const targetRest=isArm?p.sitTargetRestWorld?.get(obj.uuid):null;
-          if(sourceInfo&&targetRest){
-            const sourceRotation=animatedSourceWorld(sourceInfo);
-            const desiredWorld=sourceRotation.clone()
-              .multiply(sourceInfo.worldRest.clone().invert())
-              .multiply(targetRest);
-            p.rig.updateWorldMatrix(true,false);
-            obj.parent.updateWorldMatrix(true,false);
-            const rigWorld=p.rig.getWorldQuaternion(new THREE.Quaternion());
-            const parentWorld=obj.parent.getWorldQuaternion(new THREE.Quaternion());
-            const parentInRig=rigWorld.invert().multiply(parentWorld);
-            obj.quaternion.copy(parentInRig.invert().multiply(desiredWorld)).normalize();
-            obj.updateMatrix();
-            return;
-          }
           const {rest,sourceInverse,interpolant}=p.sitTracks.get(obj.uuid);
           const value=interpolant.evaluate(seatedTime);
           if(value?.length===4){
