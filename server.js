@@ -470,6 +470,18 @@ io.on("connection", socket => {
     member.seated=false;
     io.to(room).emit("dance-updated",{id:socket.id,...member});
   });
+  // Tomates são brincadeira visual: somente o transmissor atual pode ser alvo.
+  // Nada de alvo arbitrário; o servidor valida sala, transmissão e cooldown.
+  socket.on("club-tomato",()=>{
+    const room=socket.data.room;
+    const floor=room&&danceFloors.get(room);
+    const dj=room&&roomTransmitters.get(room);
+    if(!floor?.has(socket.id)||!dj?.id||dj.id===socket.id)return;
+    if(!floor.has(dj.id))return socket.emit("dance-error",{message:"O DJ precisa estar na Junto Club para receber tomates."});
+    if(isRateLimited(socket,"club-tomato",1,5000))
+      return socket.emit("dance-error",{message:"Espere 5 segundos para jogar outro tomate."});
+    io.to(room).emit("club-tomato-fired",{from:socket.id,to:dj.id});
+  });
   socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
 
   // Um identificador por aba permite reconciliar sockets após reconexão.
