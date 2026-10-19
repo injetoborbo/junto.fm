@@ -37,3 +37,28 @@ html[data-jf-theme="kodoku"] .jf-kodoku-feature strong{display:block;text-align:
 html[data-jf-theme="kodoku"] .jf-kodoku-feature p{text-align:center;color:#fff!important;font:15px "IM Fell English SC",Georgia,serif;margin:8px 0 2px}
 html:not([data-jf-theme="kodoku"]) .jf-kodoku-feature{display:none!important}
 @media(max-width:520px){html[data-jf-theme="kodoku"] .jf-kodoku-feature{padding:14px 10px}html[data-jf-theme="kodoku"] .jf-kodoku-seal{width:82px;height:82px}html[data-jf-theme="kodoku"] .jf-kodoku-seal svg{width:58px;height:58px}}
+
+/* Kodoku: moldura ritual manuscrita, ornamentação apenas nas extremidades do chat. */
+html[data-jf-theme="kodoku"] #jfChatWindow{
+  position:relative;isolation:isolate;overflow:hidden;
+  border:1px solid #fff!important;
+  background:#000!important;
+  box-shadow:inset 0 0 0 4px #000,inset 0 0 0 5px #777,0 12px 36px #000c!important;
+}
+html[data-jf-theme="kodoku"] #jfChatWindow::before,
+html[data-jf-theme="kodoku"] #jfChatWindow::after{
+  content:"";position:absolute;width:49px;height:49px;pointer-events:none;z-index:3;opacity:.82;
+  background:
+    linear-gradient(#fff,#fff) top left/42px 1px no-repeat,
+    linear-gradient(#fff,#fff) top left/1px 42px no-repeat,
+    radial-gradient(circle at 22px 22px,transparent 7px,#fff 8px 9px,transparent 10px),
+    linear-gradient(135deg,transparent 43%,#fff 44% 46%,transparent 47%);
+}
+html[data-jf-theme="kodoku"] #jfChatWindow::before{top:6px;left:6px}
+html[data-jf-theme="kodoku"] #jfChatWindow::after{bottom:6px;right:6px;transform:rotate(180deg)}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{padding-left:15px;padding-right:15px;border-bottom:1px solid #ddd!important}
+html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-form{border-top:1px solid #ddd!important}
+html[data-jf-theme="kodoku"] .jf-kodoku-wordmark{display:flex;align-items:center;justify-content:center;gap:.09em;white-space:nowrap}
+html[data-jf-theme="kodoku"] .jf-kodoku-wordmark>span{display:inline-flex;align-items:center;justify-content:center;line-height:1}
+html[data-jf-theme="kodoku"] .jf-kodoku-letter-o{width:.79em;height:.86em;flex:0 0 .79em;transform:translateY(.03em)}
+html[data-jf-theme="kodoku"] .jf-kodoku-letter-o svg{display:block;width:100%;height:100%;stroke:#fff;fill:none;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
