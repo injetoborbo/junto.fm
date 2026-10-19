@@ -992,6 +992,9 @@ html[data-jf-theme="classic"] .track-times{
         const source=ctx.createMediaStreamSource(stream);
         const analyser=ctx.createAnalyser();analyser.fftSize=1024;
         source.connect(analyser);
+        // Mantém o analisador ativo sem reproduzir o áudio duas vezes no DJ.
+        const silent=ctx.createGain();silent.gain.value=0;
+        analyser.connect(silent);silent.connect(ctx.destination);
         listeningAnalyser.stream=stream;listeningAnalyser.ctx=ctx;listeningAnalyser.analyser=analyser;
       }
       const analyser=listeningAnalyser.analyser;
