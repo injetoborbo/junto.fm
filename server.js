@@ -408,9 +408,10 @@ function danceSnapshot(room){
   return [...(danceFloors.get(room)||new Map()).entries()].map(([id,data])=>({id,...data}));
 }
 function danceLeave(room,id){
+  // O DJ de teste pode nem ter aberto a pista.
+  clearLocalClubDj(room,id);
   const floor=danceFloors.get(room);
   if(!floor||!floor.delete(id))return;
-  clearLocalClubDj(room,id);
   io.to(room).emit("dance-left",{id});
   if(!floor.size)danceFloors.delete(room);
 }
@@ -435,7 +436,7 @@ io.on("connection", socket => {
       io.to(room).emit("dance-updated",{id:socket.id,...data});
     }
     socket.emit("dance-state",{room,participants:danceSnapshot(room)});
-    if(isLocalClubTester(socket))socket.emit("club-test-dj-update",{id:localClubDjs.get(room)||null});
+    // O estado do DJ local é transmitido ao entrar na sala, sem depender da pista.
   });
   socket.on("dance-move",payload=>{
     const room=socket.data.room;
@@ -489,8 +490,7 @@ io.on("connection", socket => {
   socket.on("club-test-dj-toggle",()=>{
     if(!isLocalClubTester(socket))return;
     const room=socket.data.room;
-    const floor=room&&danceFloors.get(room);
-    if(!floor?.has(socket.id))return;
+    if(!room)return;
     const current=localClubDjs.get(room);
     if(current===socket.id)clearLocalClubDj(room,socket.id);
     else if(!roomTransmitters.get(room)?.id){
@@ -502,13 +502,14 @@ io.on("connection", socket => {
   // Nada de alvo arbitrário; o servidor valida sala, transmissão e cooldown.
   socket.on("club-tomato",()=>{
     const room=socket.data.room;
-    const floor=room&&danceFloors.get(room);
     const dj=room&&roomTransmitters.get(room);
     const targetId=dj?.id||(isLocalClubTester(socket)?localClubDjs.get(room):null);
-    if(!floor?.has(socket.id)||!targetId||targetId===socket.id)return;
-    if(!floor.has(targetId))return socket.emit("dance-error",{message:"O DJ precisa estar na Junto Club para receber tomates."});
+    if(!room||!targetId)return socket.emit("club-tomato-error",{message:"Aguarde um DJ transmitir."});
+    if(targetId===socket.id)return socket.emit("club-tomato-error",{message:"Você não pode jogar tomate em si mesmo."});
+    if(!io.sockets.sockets.get(targetId)||io.sockets.sockets.get(targetId).data.room!==room)
+      return socket.emit("club-tomato-error",{message:"O DJ saiu da sala."});
     if(isRateLimited(socket,"club-tomato",1,5000))
-      return socket.emit("dance-error",{message:"Espere 5 segundos para jogar outro tomate."});
+      return socket.emit("club-tomato-error",{message:"Espere 5 segundos para jogar outro tomate."});
     io.to(room).emit("club-tomato-fired",{from:socket.id,to:targetId});
   });
   socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
@@ -746,6 +747,8 @@ io.on("connection", socket => {
     const clientIds=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.clientId||null]));
     const registeredPeers=Object.fromEntries(peers.map(id=>[id,Boolean(io.sockets.sockets.get(id)?.data.account)]));
     socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null });
+    if(isLocalClubTester(socket))
+      socket.emit("club-test-dj-update",{id:localClubDjs.get(room)||null});
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id, clientId:socket.data.clientId, registered:Boolean(socket.data.account) });
     notifyPresence();
