@@ -1613,9 +1613,51 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     } catch (error) { console.error('Falha na sinalização WebRTC:', error); setStatus('Falha ao conectar o áudio. Tente entrar novamente na sala.'); }
   });
 
-  $("jfAudioSource").addEventListener("change",()=>{
-    const external=$("jfAudioSource").value==="system";
+  // VB-CABLE aparece como dispositivo de ENTRADA ("CABLE Output").
+  // Nunca substituir automaticamente por um microfone comum.
+  const jfCableSelect=$("jfCableDevice");
+  const jfCableHint=$("jfCableHelp");
+  const jfAudioMode=$("jfAudioSource");
+  const jfIsCableName=name=>/VB[\\s-]?Audio|VB[\\s-]?CABLE|CABLE\\s*(?:Output|[-AB]\\s*Output)|Virtual\\s*(?:Audio\\s*)?Cable/i.test(name||"");
+  async function jfDetectCable(requestPermission=false){
+    if(!navigator.mediaDevices?.getUserMedia||!navigator.mediaDevices?.enumerateDevices){
+      jfCableHint.textContent="Este navegador não oferece seleção de dispositivos de áudio. Use Chrome/Edge por HTTPS ou localhost.";
+      return false;
+    }
+    if(requestPermission){
+      const probe=await navigator.mediaDevices.getUserMedia({video:false,audio:true});
+      probe.getTracks().forEach(track=>track.stop());
+    }
+    const devices=await navigator.mediaDevices.enumerateDevices();
+    const cables=devices.filter(d=>d.kind==="audioinput"&&d.deviceId&&jfIsCableName(d.label));
+    const previous=jfCableSelect.value;
+    jfCableSelect.replaceChildren();
+    if(!cables.length){
+      jfCableSelect.add(new Option("VB-CABLE não encontrado",""));
+      jfCableSelect.disabled=true;
+      jfCableHint.textContent="Não encontrei CABLE Output. Instale o VB-CABLE, reinicie o navegador e permita acesso ao microfone.";
+      return false;
+    }
+    for(const device of cables)jfCableSelect.add(new Option(device.label,device.deviceId));
+    jfCableSelect.value=cables.some(d=>d.deviceId===previous)?previous:cables[0].deviceId;
+    jfCableSelect.disabled=isSender;
+    jfCableHint.textContent="Entrada virtual detectada! Configure Spotifast → CABLE Input no Mixer de volume do Windows e transmita usando CABLE Output.";
+    return true;
+  }
+  $("jfCableDetect").addEventListener("click",async()=>{
+    const button=$("jfCableDetect");
+    button.disabled=true;
+    jfCableHint.textContent="Buscando VB-CABLE. Autorize o acesso ao microfone quando solicitado.";
+    try{await jfDetectCable(true);}
+    catch(error){
+      jfCableHint.textContent=error?.name==="NotAllowedError"?"Permissão negada. Libere o microfone para este site.":"Falha ao detectar o dispositivo ("+(error?.name||"erro desconhecido")+").";
+    }finally{button.disabled=isSender;}
+  });
+  jfAudioMode.addEventListener("change",()=>{
+    const external=jfAudioMode.value==="system";
+    $("jfCablePicker").hidden=!external;
     $("start").textContent=external?"Transmitir áudio de app externo":"Transmitir áudio da aba (web)";
+    if(external)jfDetectCable(false).catch(error=>console.warn("Falha ao listar VB-CABLE:",error));
   });
   $("start").onclick = async () => {
     try {
