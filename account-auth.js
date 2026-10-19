@@ -1,6 +1,8 @@
 "use strict";
 const crypto=require("crypto");
 const {Pool}=require("pg");
+const {promisify}=require("util");
+const scrypt=promisify(crypto.scrypt);
 
 module.exports=function setupAccounts(app){
   const clientId=process.env.GOOGLE_CLIENT_ID||"";
@@ -13,7 +15,7 @@ module.exports=function setupAccounts(app){
   const ready=pool?pool.query(`
     CREATE TABLE IF NOT EXISTS junto_accounts (
       id UUID PRIMARY KEY,
-      google_sub TEXT UNIQUE NOT NULL,
+      google_sub TEXT UNIQUE,
       nickname VARCHAR(24) NOT NULL DEFAULT 'Macaco',
       avatar TEXT NOT NULL DEFAULT '',
       motto VARCHAR(90) NOT NULL DEFAULT '',
@@ -39,8 +41,69 @@ module.exports=function setupAccounts(app){
       PRIMARY KEY(user_a,user_b),
       CHECK(user_a<user_b)
     );
+    ALTER TABLE junto_accounts ALTER COLUMN google_sub DROP NOT NULL;
+    ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_email_unique ON junto_accounts (lower(email)) WHERE email IS NOT NULL;
     `).then(()=>true).catch(error=>{console.error("Contas: banco indisponível:",error.message);return false;}):Promise.resolve(false);
   const hash=s=>crypto.createHash("sha256").update(s).digest("hex");
+  const attempts=new Map();
+  function permitted(req){
+    const key=String(req.ip||"unknown");
+    const now=Date.now(),old=attempts.get(key)||[];
+    const recent=old.filter(n=>now-n<15*60*1000);
+    if(recent.length>=12)return false;
+    recent.push(now);attempts.set(key,recent);
+    return true;
+  }
+  function sameOrigin(req){
+    const origin=req.get("origin");
+    if(!origin)return false;
+    try{return new URL(origin).host===req.get("host")&&new URL(origin).protocol===(req.secure||req.headers["x-forwarded-proto"]==="https"?"https:":"http:");}catch{return false}
+  }
+  function validCredentials(body){
+    const email=String(body?.email||"").trim().toLowerCase();
+    const password=String(body?.password||"");
+    return {email,password,valid:/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)&&email.length<=254&&password.length>=12&&Buffer.byteLength(password)<=256};
+  }
+  async function passwordDigest(password,salt){
+    return (await scrypt(password,salt,64,{maxmem:32*1024*1024})).toString("hex");
+  }
+  async function createSession(req,res,id){
+    const token=crypto.randomBytes(32).toString("hex");
+    await pool.query("INSERT INTO junto_sessions(token_hash,account_id,expires_at) VALUES($1,$2,$3)",[hash(token),id,new Date(Date.now()+lifetime)]);
+    setCookie(req,res,"junto_account",token,lifetime/1000);
+  }
+  async function passwordEndpoint(req,res,register){
+    if(!await ready)return res.status(503).json({error:"Banco de contas indisponível."});
+    if(!sameOrigin(req))return res.status(403).json({error:"Origem da requisição inválida."});
+    if(!permitted(req))return res.status(429).json({error:"Muitas tentativas. Aguarde 15 minutos."});
+    const {email,password,valid}=validCredentials(req.body);
+    if(!valid)return res.status(400).json({error:"Informe um e-mail válido e uma senha de 12 a 256 caracteres."});
+    try{
+      if(register){
+        const salt=crypto.randomBytes(16).toString("hex");
+        const digest=await passwordDigest(password,salt);
+        const result=await pool.query("INSERT INTO junto_accounts(id,email,password_hash) VALUES($1,$2,$3) ON CONFLICT DO NOTHING RETURNING id",[crypto.randomUUID(),email,"scrypt:"+salt+":"+digest]);
+        if(!result.rowCount)return res.status(409).json({error:"Este e-mail já possui cadastro."});
+        await createSession(req,res,result.rows[0].id);
+      }else{
+        const result=await pool.query("SELECT id,password_hash FROM junto_accounts WHERE lower(email)=$1",[email]);
+        const stored=result.rows[0]?.password_hash||"";
+        const parts=stored.split(":");
+        const salt=parts[0]==="scrypt"&&/^[a-f0-9]{32}$/.test(parts[1]||"")?parts[1]:"00000000000000000000000000000000";
+        const calculated=Buffer.from(await passwordDigest(password,salt),"hex");
+        const expected=/^[a-f0-9]{128}$/.test(parts[2]||"")?Buffer.from(parts[2],"hex"):Buffer.alloc(64);
+        if(!result.rows[0]||!crypto.timingSafeEqual(calculated,expected))
+          return res.status(401).json({error:"E-mail ou senha incorretos."});
+        await createSession(req,res,result.rows[0].id);
+      }
+      return res.json({ok:true});
+    }catch(error){console.error("Conta local:",error.message);return res.status(503).json({error:"Não foi possível concluir a operação."});}
+  }
+  app.post("/api/account/register",(req,res)=>passwordEndpoint(req,res,true));
+  app.post("/api/account/login",(req,res)=>passwordEndpoint(req,res,false));
+  setInterval(()=>{const now=Date.now();for(const [k,v] of attempts){const live=v.filter(t=>now-t<900000);if(live.length)attempts.set(k,live);else attempts.delete(k)}},900000).unref();
   function cookie(req,name){return String(req.headers.cookie||"").split(";").map(x=>x.trim()).find(x=>x.startsWith(name+"="))?.slice(name.length+1)||"";}
   function setCookie(req,res,name,value,maxAge){
     const secure=req.secure||req.headers["x-forwarded-proto"]==="https";
@@ -61,7 +124,7 @@ module.exports=function setupAccounts(app){
     try{
       const account=await accountFromRequest(req);
       res.set("Cache-Control","no-store");
-      res.json({configured:enabled && await ready,loggedIn:!!account,profile:account?safeAccount(account):null});
+      res.json({configured:await ready,googleConfigured:enabled&&await ready,loggedIn:!!account,profile:account?safeAccount(account):null});
     }catch(e){res.status(503).json({configured:false,loggedIn:false,error:"Serviço de contas indisponível."});}
   });
   app.get("/auth/google",async(req,res)=>{
