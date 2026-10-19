@@ -92,7 +92,9 @@ function dress(root,selection,render,monkey,{animated=false}={}){
   if(animated&&!headBone)console.error("Guarda-roupa 3D: osso Head ausente.",monkey.name);
   const bindMatrices=new Map(),followers=[];
   let isSeated=false;
-  const glassesCalibration={x:0,y:0,z:0};
+  // Calibração feita na Junto Club (18/10): encaixe da armação
+  // na pose Sitting Idle, relativo ao osso Head. Apenas avatares animados.
+  const glassesCalibration={x:-.0002,y:-.0011,z:-.0024};
   const seatShift=new THREE.Matrix4();
   const setSeatGlassesCalibration=(values={})=>{
     for(const axis of ["x","y","z"]){
