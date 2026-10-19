@@ -376,11 +376,11 @@ body:not(.jf-in-room) .jf-topbar{justify-content:center}
 body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
 /* Na tela de entrada, exibir apenas Perfil e Trajes no canto superior direito. */
 body:not(.jf-in-room) .jf-top-actions{display:flex!important;position:fixed;top:16px;right:20px;z-index:20;gap:8px;margin:0}
-body:not(.jf-in-room) .jf-top-actions > :not(#jfOpenWardrobe):not(#jfOpenProfile){display:none!important}
-body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{display:inline-flex!important;min-height:40px;width:auto;min-width:92px;padding:7px 10px}
+body:not(.jf-in-room) .jf-top-actions > :not(#jfHomeSocial):not(#jfOpenWardrobe):not(#jfOpenProfile){display:none!important}
+body:not(.jf-in-room) #jfHomeSocial,body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{display:inline-flex!important;min-height:40px;width:auto;min-width:92px;padding:7px 10px}
 @media(max-width:600px){
  body:not(.jf-in-room) .jf-top-actions{top:10px;right:10px;gap:5px}
- body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{min-width:0;min-height:36px;padding:5px 7px;font-size:11px}
+ body:not(.jf-in-room) #jfHomeSocial,body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{min-width:0;min-height:36px;padding:5px 7px;font-size:11px}
  body:not(.jf-in-room) .jf-topbar{padding-top:58px}
 }
 
@@ -615,13 +615,25 @@ html[data-jf-theme="classic"] .track-times{
 .jf-rank-body{width:min(450px,100%);max-height:80dvh;overflow:auto;background:var(--jf-panel,#f4e4fa);color:var(--ink,#29213a);border:2px solid #c6a6d1;border-radius:15px;padding:20px;box-shadow:0 18px 65px #0008}
 .jf-rank-row{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #a990af66}
 </style>
+<style>
+/* Fonte de áudio: herda aparência, cores e fontes do tema ativo */
+.jf-audio-source{display:block;width:100%;max-width:380px;min-height:44px;padding:10px 34px 10px 12px;border:1px solid var(--jf-secondary,var(--line,#777be9));border-radius:9px;background:var(--jf-panel,var(--panel,#202043));color:var(--ink,#fff);font:inherit;font-weight:600;cursor:pointer;box-shadow:inset 0 1px 2px #0002;transition:border-color .2s,box-shadow .2s}
+.jf-audio-source:focus-visible{outline:2px solid var(--jf-primary,#7997ff);outline-offset:2px}
+.jf-audio-source option{background:var(--jf-panel,var(--panel,#202043));color:var(--ink,#fff)}
+html[data-jf-theme="classic"] .jf-audio-source{background:linear-gradient(#fff,#e4efff);color:#173a65;border:1px solid #6597d3;box-shadow:inset 0 1px 0 #fff,0 2px 3px #254b7b30}
+html[data-jf-theme="classic"] .jf-audio-source option{background:#f0f6ff;color:#173a65}
+html[data-jf-theme="aero"] .jf-audio-source{background:linear-gradient(#174e70,#092c47);color:#efffff;border:1px solid #65d9ed;box-shadow:inset 0 1px 0 #9defff48,0 2px 8px #00274070}
+html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#efffff}
+</style>
+<!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
+<link rel="stylesheet" href="/kodoku.css">
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
 <div id="jfRankDialog" hidden role="dialog" aria-modal="true" aria-labelledby="jfRankHeading"><div class="jf-rank-body"><div style="display:flex;justify-content:space-between;align-items:center"><h2 id="jfRankHeading">🏆 Ranking de horas</h2><button type="button" class="btn secondary" id="jfCloseRank">Fechar</button></div><p class="small">Tempo de DJ e ouvintes com conta Google durante transmissão com áudio.</p><div id="jfRankContent">Carregando...</div></div></div>
 <div id="jfWelcomeToast" role="status" hidden><svg viewBox="0 0 96 96" role="img" aria-label="Navio de madeira entalhada"><defs><linearGradient id="jfWoodShip"><stop stop-color="#f5d09a"/><stop offset=".5" stop-color="#c18a4f"/><stop offset="1" stop-color="#86502b"/></linearGradient></defs><circle cx="48" cy="48" r="42" fill="#57321e" stroke="#edc78b" stroke-width="5"/><path d="M49 18v43M49 24l-24 32h24zm4 7 20 25H53zM17 62h63L67 77H30Z" fill="url(#jfWoodShip)" stroke="#3b2116" stroke-width="3" stroke-linejoin="round"/><path d="M24 83q7-5 13 0t12 0t12 0t12 0" fill="none" stroke="#efc28a" stroke-width="3"/></svg><div><small>🏆 CONQUISTA DESBLOQUEADA</small><strong>Bem-vindo a bordo</strong><span>Seu primeiro embarque no Junto.fm!</span></div></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -632,8 +644,8 @@ html[data-jf-theme="classic"] .track-times{
       <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
     </div>
     <div class="jf-entry-account" id="jfEntryAccount">
-      <span class="small" id="jfEntryAccountHint">Entre com Google para salvar seu perfil e usar Amigos. Sem conta, você ainda pode entrar em salas.</span>
-      <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Entrar com Google</a>
+      <span class="small" id="jfEntryAccountHint">Escolha como criar sua conta. Você também pode entrar nas salas sem cadastro.</span>
+      <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Criar com Google</a>
       <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
     </div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
@@ -676,8 +688,13 @@ html[data-jf-theme="classic"] .track-times{
     <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte sua conta para favoritar a faixa atual na sua biblioteca. Cada pessoa precisa conectar o próprio Spotify; os metadados da música são compartilhados pela sala.</p>
     <p class="small" id="spotifyFavoriteStatus" aria-live="polite"></p>
     <section class="jf-lyrics" aria-labelledby="jfLyricsHeading"><div class="jf-lyrics-head"><h3 id="jfLyricsHeading">♫ Letra da música</h3><span id="jfLyricsMode" class="small">Sincronizada quando disponível</span></div><div id="jfLyricsContent" class="jf-lyrics-content" aria-live="polite"><p class="small">A letra aparecerá aqui quando disponível.</p></div></section>
-    <div class="row" style="margin-top:18px">
-      <button class="btn" id="start" disabled>Transmitir áudio da aba</button>
+    <label for="jfAudioSource" class="small" style="display:block;margin-top:18px;margin-bottom:6px">Fonte do áudio</label>
+    <select id="jfAudioSource" class="jf-audio-source">
+      <option value="tab">Transmitir áudio da aba (web)</option>
+      <option value="system">Transmitir áudio de app externo (sistema)</option>
+    </select>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="start" disabled>Transmitir áudio da aba (web)</button>
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
     </div>
     <audio id="remoteAudio" autoplay playsinline></audio>
@@ -685,7 +702,7 @@ html[data-jf-theme="classic"] .track-times{
   Diagnóstico do áudio: aguardando conexão...
 </p>
     
-    <p class="small">A transmissão depende do navegador e da opção de compartilhar áudio. Use o player do Spotify Web, não o aplicativo desktop, para tentar capturar somente o som da aba.</p>
+    <p class="small" id="jfCaptureHelp">Modo web: escolha a aba com a música e marque “Compartilhar áudio”. No modo externo, escolha a tela inteira e ative “Compartilhar áudio do sistema” quando disponível. O áudio de aplicativos como Spotifast depende do navegador e do Windows; alguns apps protegidos podem não ser capturados.</p>
   </section>
   <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
     <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
@@ -856,10 +873,11 @@ html[data-jf-theme="classic"] .track-times{
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfThemeHeading">
     <div class="jf-modal-head"><h2 id="jfThemeHeading">Aparência</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfThemeModal" aria-label="Fechar janela">✕</button></div>
     <div class="jf-grid">
-      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="pastel">Pastel dream</option><option value="lavender">Lavender milk</option><option value="peach">Peach soda</option><option value="mint">Mint candy</option><option value="baby-pink">Rosa bebê</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="custom">Minha cor</option></select></div>
+      <div><label for="jfTheme">Tema</label><select id="jfTheme"><option value="y2k">Y2K original</option><option value="pastel">Pastel dream</option><option value="lavender">Lavender milk</option><option value="peach">Peach soda</option><option value="mint">Mint candy</option><option value="baby-pink">Rosa bebê</option><option value="ocean">Ocean dream</option><option value="sunset">Sunset pop</option><option value="lime">Lime cyber</option><option value="mono">Chrome mono</option><option value="aero">Frutiger Aero</option><option value="classic">Windows XP (Luna)</option><option value="kodoku">Kodoku · Escrituras</option><option value="custom">Minha cor</option></select></div>
       <div><label for="jfColor">Cor personalizada</label><div class="jf-color"><input id="jfColor" type="color" value="#ff78d2"><span class="small">Escolha sua cor</span></div></div>
     </div>
     <div class="jf-aero-blur-option" id="jfAeroBlurOption" style="margin-top:16px"><label class="jf-check-label" for="jfAeroBlur"><input id="jfAeroBlur" type="checkbox"> Desfocar o fundo das colinas</label><p class="small" style="margin:6px 0 0">Disponível no Frutiger Aero. A preferência fica salva neste navegador.</p></div>
+    <div id="jfKodokuPosterOption" hidden style="margin-top:16px"><label class="jf-check-label" for="jfKodokuPoster"><input id="jfKodokuPoster" type="checkbox"> Usar pôster Kodoku como fundo</label><p class="small" style="margin:6px 0 0">Imagem cobrindo toda a página com um leve desfoque.</p></div>
     <p class="small" style="margin-bottom:0">Tema e cor ficam salvos só neste navegador.</p>
   </section>
 </div>
@@ -949,11 +967,13 @@ html[data-jf-theme="classic"] .track-times{
     }
   }catch(_){jfClientId="tab_"+Math.random().toString(36).slice(2)+Date.now().toString(36);}
   const socket = io({auth:{clientId:jfClientId}});
+  window.jfSocialSocket=socket;
+  window.jfSocialTransmitting=()=>joined&&isSender;
+  window.jfBananaSocket=socket;
   const $ = id => document.getElementById(id);
   const shareWrap=document.getElementById("jfShareRoom");
   const rankingDialog=document.getElementById("jfRankDialog");
-  document.getElementById("jfOpenRank").onclick=async()=>{
-    rankingDialog.hidden=false;
+  async function jfRefreshRanking(){
     const content=document.getElementById("jfRankContent");
     content.textContent="Carregando...";
     try{
@@ -971,6 +991,9 @@ html[data-jf-theme="classic"] .track-times{
       }
     }catch(e){content.textContent=e.message;}
   };
+  document.getElementById("jfOpenRank").onclick=()=>{rankingDialog.hidden=false;jfRefreshRanking();};
+  // Reconsulta o ranking a cada hora enquanto o painel estiver aberto.
+  setInterval(()=>{if(!rankingDialog.hidden)jfRefreshRanking();},60*60*1000);
   document.getElementById("jfCloseRank").onclick=()=>rankingDialog.hidden=true;
   rankingDialog.addEventListener("click",e=>{if(e.target===rankingDialog)rankingDialog.hidden=true;});
   // Só emitir batimento quando o próprio áudio capturado/reproduzido está ativo.
@@ -1522,7 +1545,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on('joined-room', async ({ room: joinedRoom, peers: existingPeers = [], track = null, transmitter = null,ownerId=null }) => {
     if (joined && room !== joinedRoom) resetSession();
-    joined = true; room = joinedRoom; shareWrap.hidden=false; history.replaceState({}, "", "/"+encodeURIComponent(joinedRoom)); jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
+    joined = true; room = joinedRoom; shareWrap.hidden=false; if(location.pathname!=="/"+encodeURIComponent(joinedRoom))history.pushState({jfRoom:joinedRoom}, "", "/"+encodeURIComponent(joinedRoom)); jfRoomOwnerId=ownerId; jfSyncRoomOwnership(); try { sessionStorage.setItem("jfSpotifyReturnRoom", joinedRoom); } catch (_) {} jfUpdateRoomView(); $("room").value = room; $("jfExistingRoomPassword").value = ""; $("jfConfirmJoinRoom").disabled = false; closeJoinRoomModal(); socket.emit("suggestion-settings",{room,enabled:jfSuggestionEnabled}); jfUpdateSuggestionControls();
     setStatus(`Você entrou na sala “${room}”. Compartilhe o nome com os ouvintes.`, true);
     $("roomCount").textContent = `Sala: ${room} · participantes conectados: ${existingPeers.length + 1}`;
     enableControls();
@@ -1577,6 +1600,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     } catch (error) { console.error('Falha na sinalização WebRTC:', error); setStatus('Falha ao conectar o áudio. Tente entrar novamente na sala.'); }
   });
 
+  $("jfAudioSource").addEventListener("change",()=>{
+    const external=$("jfAudioSource").value==="system";
+    $("start").textContent=external?"Transmitir áudio de app externo":"Transmitir áudio da aba (web)";
+  });
   $("start").onclick = async () => {
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
@@ -1585,9 +1612,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       // Música capturada da aba deve permanecer estéreo, sem tratamento de voz.
       // Alguns navegadores ignoram estas preferências na captura de tela.
       const musicAudio = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 } };
-      const captured = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: musicAudio });
+      const external=$("jfAudioSource").value==="system";
+      const captured = await navigator.mediaDevices.getDisplayMedia(external
+        ? {video:{displaySurface:"monitor"},audio:musicAudio,systemAudio:"include",surfaceSwitching:"exclude",selfBrowserSurface:"exclude"}
+        : {video:true,audio:musicAudio});
       const audioTracks = captured.getAudioTracks();
-      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus('A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
+      if (!audioTracks.length) { captured.getTracks().forEach(t => t.stop()); setStatus(external?'Nenhum áudio do sistema disponível. Escolha a tela inteira e habilite o compartilhamento de áudio; nem todo navegador ou aplicativo permite essa captura.':'A captura não incluiu áudio. Escolha a aba de música e marque “Compartilhar áudio”.'); return; }
       for (const track of audioTracks) {
         try { track.contentHint = 'music'; } catch (_) {}
         // applyConstraints é best-effort: não interrompe a transmissão caso falhe.
@@ -1607,7 +1637,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       // Se ouvintes já estavam na sala, IDs são guardados no conjunto abaixo.
       for (const id of knownPeers) await createSenderOffer(id);
       audioTracks[0].addEventListener('ended', stopTransmission, { once: true });
-      setStatus('Captura de áudio ativa. Aguardando/conectando ouvintes…', true);
+      setStatus(external?'Áudio do sistema capturado. Conectando ouvintes…':'Áudio da aba capturado. Conectando ouvintes…', true);
       if (spotifyConnected) startSpotifyPolling();
     } catch (error) { console.error('Captura cancelada ou bloqueada:', error); resetSession(); setStatus('Transmissão cancelada ou não permitida pelo navegador.'); }
   };
@@ -1629,7 +1659,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }else resetSession();
     if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
     window.dispatchEvent(new Event("jf-dance-room-left"));
-    joined=false;room="";shareWrap.hidden=true;history.replaceState({}, "", "/");jfRoomOwnerId=null;jfRoomOwner=false;
+    joined=false;room="";shareWrap.hidden=true;if(location.pathname!=="/")history.replaceState({}, "", "/");
+    try{sessionStorage.removeItem("jfSpotifyReturnRoom");sessionStorage.removeItem("jfSpotifyReturnPassword");}catch(_){}jfRoomOwnerId=null;jfRoomOwner=false;
     $("room").value="";
     $("remoteAudio").pause();$("remoteAudio").srcObject=null;
     jfRenderMiniDj(null);renderTrack(null);
@@ -1642,6 +1673,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     setStatus(reason||(socket.connected?"Você saiu da sala. Crie ou entre em outra sala.":"Desconectado do servidor."));
   }
   $("jfLeaveRoom").onclick=()=>jfLeaveCurrentRoom();
+  window.addEventListener("popstate",()=>{if(joined&&location.pathname!=="/"+encodeURIComponent(room))jfLeaveCurrentRoom();else if(!joined&&location.pathname!=="/")history.replaceState({}, "", "/");});
   socket.on("room-kicked",({room:kickedRoom,message}={})=>{
     if(joined&&room===kickedRoom)jfLeaveCurrentRoom({notifyServer:false,reason:message||"Você foi removido desta sala."});
   });
@@ -1761,7 +1793,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   socket.on('disconnect', () => knownPeers.clear());
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
-  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"]};
+  const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"],kodoku:["#ffffff","#d8d8d8","#777777"]};
   let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
   const jfPeerClientIds=new Map();
@@ -1830,12 +1862,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const hex=/^#[0-9a-f]{6}$/i.test(color||"")?color:"#ff78d2";
       t=[hex,hex,"#252447"];
     }
-    document.documentElement.dataset.jfTheme=name;document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
+    document.documentElement.dataset.jfTheme=name;document.documentElement.dataset.jfKodokuPoster=$("jfKodokuPoster")?.checked?"on":"off";document.documentElement.style.setProperty("--jf-primary",t[0]);document.documentElement.style.setProperty("--jf-secondary",t[1]);document.documentElement.style.setProperty("--jf-glow",t[2]);
     document.documentElement.style.setProperty("--pink",t[0]);document.documentElement.style.setProperty("--cyan",t[1]);document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur")?.checked?"5px":"0px");
   }
   function jfSaveTheme(){
     const name=$("jfTheme").value,color=$("jfColor").value;jfApplyTheme(name,color);
-    try{localStorage.setItem("junto_theme",JSON.stringify({name,color,blur:$("jfAeroBlur")?.checked||false}));}catch(_){}
+    try{localStorage.setItem("junto_theme",JSON.stringify({name,color,blur:$("jfAeroBlur")?.checked||false,kodokuPoster:$("jfKodokuPoster")?.checked||false}));}catch(_){}
   }
   function jfRenderAvatar(){
     $("jfAvatarPreview").hidden=!jfProfile.avatar;$("jfAvatarPlaceholder").hidden=!!jfProfile.avatar;
@@ -2037,6 +2069,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
     $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
     $("jfOpenFriends").addEventListener("click",()=>{jfRenderFriends();openModal("jfFriendsModal");});
+    $("jfHomeSocial").addEventListener("click",()=>{jfRenderFriends();openModal("jfFriendsModal");});
     $("jfFriendsTabList").addEventListener("click",()=>jfSetFriendsTab(false));
     $("jfRequestsTab").addEventListener("click",()=>jfSetFriendsTab(true));
     $("jfFriendsLauncher").addEventListener("click",()=>{const open=$("jfFriendsDrawer").hidden;$("jfFriendsDrawer").hidden=!open;$("jfFriendsLauncher").setAttribute("aria-expanded",String(open));if(open){$("jfChatWindow").hidden=true;$("jfChatLauncher").setAttribute("aria-expanded","false");jfRenderDrawerFriends();}});
@@ -2055,6 +2088,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(jfThemes[t.name])$("jfTheme").value=t.name;
     if(t.name==="custom")$("jfTheme").value="custom";
     if(/^#[0-9a-f]{6}$/i.test(t.color||""))$("jfColor").value=t.color;
+    $("jfKodokuPoster").checked=Boolean(t.kodokuPoster);
     $("jfAeroBlur").checked=Boolean(t.blur);document.documentElement.style.setProperty("--jf-aero-blur",t.blur?"5px":"0px");
     jfApplyTheme($("jfTheme").value,$("jfColor").value);
     let options={};try{options=JSON.parse(localStorage.getItem("junto_options")||"{}");}catch(_){}
@@ -2063,8 +2097,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const allowedFonts=["Trebuchet MS","Arial","Verdana","Georgia","Courier New","Tahoma","system-ui"];
     const savedFont=allowedFonts.includes(options.font)?options.font:"Trebuchet MS";$("jfFont").value=savedFont;document.documentElement.style.setProperty("--jf-font-family",`"${savedFont}"`);
     $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero";
-    $("jfTheme").addEventListener("change",()=>{ $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero"; jfSaveTheme(); });$("jfColor").addEventListener("input",()=>{$("jfTheme").value="custom";$("jfAeroBlurOption").hidden=true;jfSaveTheme();});
-    $("jfAeroBlur").addEventListener("change",()=>{document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur").checked?"5px":"0px");try{localStorage.setItem("junto_theme",JSON.stringify({name:$("jfTheme").value,color:$("jfColor").value,blur:$("jfAeroBlur").checked}));}catch(_){} });
+    $("jfKodokuPosterOption").hidden=$("jfTheme").value!=="kodoku";
+    $("jfTheme").addEventListener("change",()=>{ $("jfAeroBlurOption").hidden=$("jfTheme").value!=="aero"; $("jfKodokuPosterOption").hidden=$("jfTheme").value!=="kodoku"; jfSaveTheme(); });$("jfColor").addEventListener("input",()=>{$("jfTheme").value="custom";$("jfAeroBlurOption").hidden=true;$("jfKodokuPosterOption").hidden=true;jfSaveTheme();});
+    $("jfKodokuPoster").addEventListener("change",jfSaveTheme);
+    $("jfAeroBlur").addEventListener("change",()=>{document.documentElement.style.setProperty("--jf-aero-blur",$("jfAeroBlur").checked?"5px":"0px");try{localStorage.setItem("junto_theme",JSON.stringify({name:$("jfTheme").value,color:$("jfColor").value,blur:$("jfAeroBlur").checked,kodokuPoster:$("jfKodokuPoster").checked}));}catch(_){} });
     $("jfVolume").addEventListener("input",()=>{const volume=Math.max(0,Math.min(100,Number($("jfVolume").value)||0));$("remoteAudio").volume=volume/100;$("jfVolumeValue").textContent=`${volume}%`;try{localStorage.setItem("junto_options",JSON.stringify({volume,font:$("jfFont").value}));}catch(_){} });
     $("jfFont").addEventListener("change",()=>{const font=$("jfFont").value;document.documentElement.style.setProperty("--jf-font-family",`"${font}"`);try{localStorage.setItem("junto_options",JSON.stringify({volume:Number($("jfVolume").value),font}));}catch(_){} });
     $("jfAvatarFile").addEventListener("change",()=>{
@@ -2416,5 +2452,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
  });
 })();
 </script>
+<script defer src="/kodoku.js"></script>
+<script type="module" src="/banana-barrel.js"></script>
+<script defer src="/social-account-ui.js"></script>
+<script defer src="/kodoku-skip.js"></script>
 </body>
 </html>
