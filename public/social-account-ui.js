@@ -22,8 +22,15 @@
  .jf-achievement-row strong{display:block;margin-bottom:4px}
  .jf-achievement-row p{margin:0 0 4px;font-size:12px;line-height:1.5}
  .jf-social-toast{position:fixed;right:14px;bottom:84px;z-index:19001;background:#52341f;color:#ffebbb;border:2px ridge #dca753;border-radius:10px;padding:10px 15px;max-width:310px;box-shadow:0 5px 22px #0008}
- .jf-social-account-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:min(420px,100%);margin:3px auto 0}
- .jf-social-account-actions .btn{min-width:0!important;width:100%;min-height:43px}
+ .jf-social-account-actions{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(420px,100%);margin:0 auto}
+ .jf-social-account-actions .jf-have-account{width:100%;text-align:center}
+ .jf-have-account-link{border:0;background:transparent;color:var(--ink,#24466e);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:8px}
+ .jf-login-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;margin-top:8px}
+ .jf-login-choice[hidden],.jf-have-account-link[hidden]{display:none!important}
+ .jf-login-choice .btn{min-width:0!important;min-height:40px;width:100%}
+ body:not(.jf-in-room) #jfGoogleLogin{width:min(420px,100%);max-width:420px}
+ @media(max-width:520px){.jf-login-choice{grid-template-columns:1fr}}
+ .jf-social-account-actions>.btn{min-width:0!important;width:100%;min-height:43px}
  .jf-wooden-ship{width:58px;height:64px;display:grid;place-items:center;flex:none;background:transparent;border:0;clip-path:none;filter:drop-shadow(0 3px 3px #0005)}
  .jf-wooden-ship svg{width:58px;height:58px;display:block}
  body:not(.jf-in-room) #jfRoomEntryPanel{max-width:680px;padding:24px 26px}
@@ -36,7 +43,7 @@
  html[data-jf-theme="classic"] body:not(.jf-in-room) #jfRoomEntryPanel #jfEntryAccountHint,
  html[data-jf-theme="classic"] body:not(.jf-in-room) #jfRoomEntryPanel #roomCount,
  html[data-jf-theme="classic"] body:not(.jf-in-room) #jfRoomEntryPanel #help{color:#24466e!important;text-shadow:none!important}
- @media(max-width:520px){body:not(.jf-in-room) #jfRoomEntryPanel{padding:18px 14px}.jf-social-account-actions{grid-template-columns:1fr 1fr;gap:7px}.jf-social-account-actions .btn{font-size:12px;padding:8px 4px}}
+ @media(max-width:520px){body:not(.jf-in-room) #jfRoomEntryPanel{padding:18px 14px}.jf-social-account-actions{gap:7px}.jf-social-account-actions .btn{font-size:12px;padding:8px 4px}}
 
  .jf-community-top-dock{position:fixed;top:16px;left:20px;z-index:10016;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 40px)}
  .jf-community-top-dock .btn{margin:0!important;padding:8px 10px;font-size:12px;min-height:36px;box-shadow:0 3px 10px #0003;white-space:nowrap}
@@ -45,8 +52,14 @@
  document.head.appendChild(style);
  const entry=document.getElementById("jfEntryAccount");
  const actions=document.createElement("div");actions.className="jf-social-account-actions";
- actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen">Criar conta Junto.fm</button><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
+ actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen">Criar conta Junto.fm</button><div class="jf-have-account"><button class="jf-have-account-link" type="button" id="jfHaveAccountToggle" aria-expanded="false" aria-controls="jfLoginChoice">Já tem uma conta? Aperte aqui.</button><div class="jf-login-choice" id="jfLoginChoice" hidden><a class="btn secondary" href="/auth/google">Entrar com Google</a><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button></div></div><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
  if(entry)entry.appendChild(actions);
+ const loginToggle=document.getElementById("jfHaveAccountToggle");
+ const loginChoice=document.getElementById("jfLoginChoice");
+ loginToggle.addEventListener("click",()=>{
+  loginChoice.hidden=!loginChoice.hidden;
+  loginToggle.setAttribute("aria-expanded",String(!loginChoice.hidden));
+ });
  else document.querySelector("main")?.appendChild(actions);
  const dock=document.createElement("nav");dock.className="jf-community-top-dock";dock.setAttribute("aria-label","Ranking e conquistas");
  const rankButton=document.getElementById("jfOpenRank");
@@ -57,7 +70,9 @@
  fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json()).then(data=>{
   const registered=Boolean(data.loggedIn);
   document.getElementById("jfLocalRegisterOpen").hidden=registered;
-  document.getElementById("jfLocalLoginOpen").hidden=registered;
+  loginToggle.hidden=registered;
+  loginChoice.hidden=true;
+  loginToggle.setAttribute("aria-expanded","false");
   if(new URLSearchParams(location.search).get("email_verified")==="1" && registered){
    const clean=new URL(location.href);clean.searchParams.delete("email_verified");
    history.replaceState(history.state,"",clean.pathname+clean.search+clean.hash);
