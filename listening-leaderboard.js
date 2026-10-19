@@ -23,6 +23,7 @@ module.exports=function enableLeaderboard(app,io,roomTransmitters,accountsReady)
       if(socket.id===dj.id){
         if(!socket.data.isTransmitting||data?.djActive!==true)return;
         liveRooms.set(room,Date.now());
+        recent.set(socket.id,{room,accountId:socket.data.account.id,at:Date.now()});
       }else if(data?.playing!==true)return;
       recent.set(socket.id,{room,accountId:socket.data.account.id,at:Date.now()});
     });
