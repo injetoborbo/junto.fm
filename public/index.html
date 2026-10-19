@@ -509,6 +509,10 @@ html[data-jf-theme="lavender"] .jf-dj-caption strong,html[data-jf-theme="peach"]
 @media(max-width:540px){.jf-wardrobe-layout{grid-template-columns:1fr}.jf-wardrobe-preview{width:100%}}
 /* Friends drawer + lyrics */
 .jf-friends-launcher{right:90px}.jf-friends-drawer{right:90px}
+.jf-tomato-launcher{right:156px;font-size:29px;line-height:1;cursor:pointer}
+.jf-tomato-launcher:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
+.jf-tomato-launcher:not(:disabled):hover{transform:translateY(-2px)}
+@media(max-width:520px){.jf-tomato-launcher{right:140px;bottom:16px;width:52px;height:52px;font-size:26px}}
 .jf-friends-drawer-content{padding:12px;overflow:auto;min-height:0;flex:1}
 .jf-friends-tabs{display:flex;gap:8px;margin:8px 0 12px;flex-wrap:wrap}
 .jf-friends-tab{padding:8px 12px!important;font-size:12px}.jf-friends-tab.active{outline:2px solid var(--jf-secondary);outline-offset:1px}
@@ -668,6 +672,7 @@ html[data-jf-theme="classic"] .track-times{
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5 8.3 8.3 0 0 1-3.3-.7L4 20l1.3-4.1a7.5 7.5 0 1 1 14.7-4.4Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>
   <span id="jfChatUnread" class="jf-chat-unread" aria-label="Novas mensagens"></span>
 </button>
+<button type="button" id="jfClubTomato" class="jf-chat-launcher jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ" disabled>🍅</button>
 <button type="button" id="jfFriendsLauncher" class="jf-chat-launcher jf-friends-launcher" aria-label="Abrir amigos" aria-expanded="false" aria-controls="jfFriendsDrawer" title="Amigos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"></circle><path d="M2.5 20v-2a6.5 6.5 0 0 1 13 0v2"></path><path d="M19 8v8M15 12h8"></path></svg><span id="jfFriendsUnread" class="jf-chat-unread" aria-label="Solicitações pendentes"></span></button>
 <section id="jfFriendsDrawer" class="jf-chat-window jf-friends-drawer" aria-labelledby="jfFriendsDrawerHeading" hidden><header class="jf-chat-header"><div><h2 id="jfFriendsDrawerHeading" class="jf-chat-heading">Amigos</h2><div class="jf-chat-subheading">Online e solicitações</div></div><button type="button" id="jfFriendsDrawerClose" class="jf-chat-close" aria-label="Fechar amigos">×</button></header><div class="jf-friends-drawer-content"><button type="button" id="jfDrawerFriendsTab" hidden>Amigos</button><div id="jfDrawerFriendsList" class="jf-people"></div><div id="jfDrawerRequestsList" class="jf-people" hidden></div><div class="jf-friends-drawer-footer"><button class="btn secondary jf-friends-tab" id="jfDrawerRequestsTab" type="button">Pedidos <span id="jfDrawerRequestCount" class="jf-request-count" hidden>0</span></button></div><button type="button" id="jfManageFriends" hidden>Gerenciar amigos</button></div></section>
 <section id="jfChatWindow" class="jf-chat-window" aria-labelledby="jfChatHeading" hidden>
@@ -782,7 +787,7 @@ html[data-jf-theme="classic"] .track-times{
     <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
     <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
     <div class="jf-dance-actions"><button type="button" class="btn secondary" id="jfSeatInspect">🔎 Ver cadeira ampliada</button></div>
-    <div class="jf-dance-actions"><button type="button" class="btn secondary" id="jfClubTomato" disabled title="Jogue um tomate no DJ atual">🍅 Jogar tomate no DJ</button></div>
+    <div class="jf-dance-actions" id="jfClubTestDjRow" hidden><button type="button" class="btn secondary" id="jfClubTestDj">🎧 Simular DJ (localhost)</button></div>
     <div class="jf-dance-actions" aria-label="Escolha sua dança">
       <button class="btn secondary active" data-jf-dance="idle" aria-pressed="true" type="button">🧍 Parado</button>
       <button class="btn secondary" data-jf-dance="shake" aria-pressed="false" type="button">🐒 Chacoalhar</button>
