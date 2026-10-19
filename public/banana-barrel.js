@@ -6,18 +6,27 @@ const socket=window.jfBananaSocket,player=document.getElementById("jfMiniDj");
 if(!socket||!player)return;
 const style=document.createElement("style");
 style.textContent=`
-.jf-banana-dj-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%;min-width:0}\n.jf-banana-widget{display:flex;align-items:center;flex-direction:column;gap:2px;flex:0 0 75px;min-width:0;align-self:center}\n.jf-mini-dj:has(.jf-banana-widget){width:245px;max-width:100%}\n.jf-track-content:has(.jf-banana-widget){grid-template-columns:minmax(0,1fr) 245px}
+.jf-banana-dj-row{display:flex;align-items:center;justify-content:center;gap:0;width:100%;min-width:0}
+.jf-banana-widget{display:flex;align-items:center;flex-direction:column;gap:2px;flex:0 0 75px;min-width:0;align-self:center}
+.jf-mini-dj:has(.jf-banana-widget){width:245px;max-width:100%}
+.jf-track-content:has(.jf-banana-widget){grid-template-columns:minmax(0,1fr) 245px}
 .jf-banana-barrel{width:75px;height:96px;position:relative;pointer-events:none}
 .jf-banana-barrel canvas{width:100%;height:100%;display:block}
 .jf-banana-count{font:700 11px system-ui,sans-serif;color:var(--jf-secondary,#e7c778);white-space:nowrap}
-.jf-banana-button{position:fixed;left:86px;bottom:16px;z-index:10021;width:60px;height:60px;border:0;background:transparent;padding:0;cursor:pointer;display:grid;place-items:center;filter:drop-shadow(0 3px 5px #0009);transition:transform .14s ease,filter .14s ease}\n.jf-banana-button canvas{width:100%;height:100%;display:block;pointer-events:none}\n.jf-banana-button:hover{transform:scale(1.12) rotate(-8deg)}\n.jf-banana-button:active{transform:scale(.92)}
+.jf-banana-button{position:fixed;left:86px;bottom:16px;z-index:10021;width:60px;height:60px;border:0;background:transparent;padding:0;cursor:pointer;display:grid;place-items:center;filter:drop-shadow(0 3px 5px #0009);transition:transform .14s ease,filter .14s ease}
+.jf-banana-button canvas{width:100%;height:100%;display:block;pointer-events:none}
+.jf-banana-button:hover{transform:scale(1.12) rotate(-8deg)}
+.jf-banana-button:active{transform:scale(.92)}
 .jf-banana-button:disabled{opacity:.4;cursor:not-allowed}
 .jf-banana-flight{position:fixed;inset:0;width:100vw;height:100dvh;z-index:13000;pointer-events:none}
-@media(max-width:760px){.jf-track-content:has(.jf-banana-widget){grid-template-columns:minmax(0,1fr)}.jf-mini-dj:has(.jf-banana-widget){width:100%;justify-content:center;flex-wrap:wrap}.jf-banana-widget{flex-basis:65px}.jf-banana-barrel{width:65px;height:80px}}\n@media(max-width:520px){.jf-banana-button{left:72px;bottom:12px;width:52px;height:52px}}
+@media(max-width:760px){.jf-track-content:has(.jf-banana-widget){grid-template-columns:minmax(0,1fr)}.jf-mini-dj:has(.jf-banana-widget){width:100%;justify-content:center;flex-wrap:wrap}.jf-banana-widget{flex-basis:65px}.jf-banana-barrel{width:65px;height:80px}}
+@media(max-width:520px){.jf-banana-button{left:72px;bottom:12px;width:52px;height:52px}}
 `;document.head.appendChild(style);
 const widget=document.createElement("div");widget.className="jf-banana-widget";
 widget.innerHTML='<div class="jf-banana-barrel" id="jfBananaBarrel" aria-label="Barril 3D de vitamina de banana"></div><span class="jf-banana-count" id="jfBananaCount">0/19 🍌</span>';
-const stage=player.querySelector(".jf-dj-stage");if(!stage)return;\nconst row=document.createElement("div");row.className="jf-banana-dj-row";stage.parentElement.insertBefore(row,stage);row.append(stage,widget);\nconst button=document.createElement("button");button.type="button";button.className="jf-banana-button";button.id="jfBananaThrow";button.title="Lançar banana no barril";button.setAttribute("aria-label","Lançar banana no barril");button.textContent="🍌";document.body.appendChild(button);
+const stage=player.querySelector(".jf-dj-stage");if(!stage)return;
+const row=document.createElement("div");row.className="jf-banana-dj-row";stage.parentElement.insertBefore(row,stage);row.append(stage,widget);
+const button=document.createElement("button");button.type="button";button.className="jf-banana-button";button.id="jfBananaThrow";button.title="Lançar banana no barril";button.setAttribute("aria-label","Lançar banana no barril");button.textContent="🍌";document.body.appendChild(button);
 const holder=widget.querySelector("#jfBananaBarrel"),count=widget.querySelector("#jfBananaCount");
 let joined=false,number=0,room=null,lastClick=0,liquid=null,level=0,target=0,ripple=0,barrelReady=false,flightModel=null,THREE=null,flightRenderer=null,flightScene=null,flightCamera=null,flightLayer=null,iconRenderer=null,iconScene=null,iconCamera=null,iconModel=null;
 const clamp=n=>Math.min(19,Math.max(0,Number(n)||0));
@@ -56,7 +65,10 @@ try{
  loader.loadAsync("/banana/bananalowpoly.glb").then(g=>{
    flightModel=g.scene;
    const bb=new THREE.Box3().setFromObject(flightModel),sz=bb.getSize(new THREE.Vector3()),ct=bb.getCenter(new THREE.Vector3());
-   const sc=1.05/Math.max(sz.x,sz.y,sz.z);flightModel.position.sub(ct).multiplyScalar(sc);flightModel.scale.setScalar(sc);\n   iconScene=new THREE.Scene();iconScene.add(new THREE.AmbientLight(0xffffff,2.5));const iconLight=new THREE.DirectionalLight(0xffffff,2);iconLight.position.set(3,5,5);iconScene.add(iconLight);\n   iconModel=flightModel.clone(true);iconScene.add(iconModel);iconCamera=new THREE.PerspectiveCamera(35,1,.1,100);iconCamera.position.set(0,0,3.4);\n   iconRenderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});iconRenderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));iconRenderer.setSize(60,60,false);iconRenderer.setClearColor(0,0);button.textContent="";button.appendChild(iconRenderer.domElement);
+   const sc=1.05/Math.max(sz.x,sz.y,sz.z);flightModel.position.sub(ct).multiplyScalar(sc);flightModel.scale.setScalar(sc);
+   iconScene=new THREE.Scene();iconScene.add(new THREE.AmbientLight(0xffffff,2.5));const iconLight=new THREE.DirectionalLight(0xffffff,2);iconLight.position.set(3,5,5);iconScene.add(iconLight);
+   iconModel=flightModel.clone(true);iconScene.add(iconModel);iconCamera=new THREE.PerspectiveCamera(35,1,.1,100);iconCamera.position.set(0,0,3.4);
+   iconRenderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});iconRenderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));iconRenderer.setSize(60,60,false);iconRenderer.setClearColor(0,0);button.textContent="";button.appendChild(iconRenderer.domElement);
  }).catch(err=>console.warn("Banana GLB não disponível:",err));
  const clock=new THREE.Clock();
  function render(){
