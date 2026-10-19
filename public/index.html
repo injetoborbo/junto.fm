@@ -975,12 +975,20 @@ html[data-jf-theme="classic"] .track-times{
   rankingDialog.addEventListener("click",e=>{if(e.target===rankingDialog)rankingDialog.hidden=true;});
   // Só emitir batimento quando o próprio áudio capturado/reproduzido está ativo.
   const listeningAnalyser={stream:null,ctx:null,analyser:null};
+  // AudioContext criado com gesto do DJ para não ficar suspenso por autoplay.
+  document.getElementById("start").addEventListener("click",()=>{
+    if(!listeningAnalyser.ctx){
+      try{listeningAnalyser.ctx=new (window.AudioContext||window.webkitAudioContext)();}
+      catch(_){}
+    }
+    listeningAnalyser.ctx?.resume().catch(()=>{});
+  });
   async function audioDetected(stream){
     if(!stream||!stream.getAudioTracks().some(t=>t.readyState==="live"&&t.enabled&&!t.muted))return false;
     try{
       if(listeningAnalyser.stream!==stream){
-        if(listeningAnalyser.ctx)await listeningAnalyser.ctx.close();
-        const ctx=new (window.AudioContext||window.webkitAudioContext)();
+        const ctx=listeningAnalyser.ctx;
+        if(!ctx)return false;
         const source=ctx.createMediaStreamSource(stream);
         const analyser=ctx.createAnalyser();analyser.fftSize=1024;
         source.connect(analyser);
@@ -1499,7 +1507,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   socket.on('connect', () => { setStatus('Conectado ao servidor. Entre ou crie uma sala.', true); handleDeepLink(); $("help").textContent = 'Use o mesmo nome da sala em todos os aparelhos. Para criar uma sala nova, use “Criar sala” e compartilhe o nome.'; enableControls(); });
   socket.on('connect_error', error => { joined = false; jfUpdateRoomView(); resetSession(); enableControls(); setStatus('Não foi possível conectar ao servidor.'); $("help").textContent = 'Confira a hospedagem/servidor e abra a aplicação por HTTP/HTTPS, não pelo arquivo HTML. ' + (error?.message || ''); });
-  socket.on('disconnect', () => { window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
+  socket.on('disconnect', () => { shareWrap.hidden=true; window.dispatchEvent(new Event("jf-dance-room-left")); jfRoomOwnerId=null; jfRoomOwner=false; joined = false; jfUpdateRoomView(); jfRenderMiniDj(null); resetSession(); $("roomCount").textContent = 'Desconectado do servidor.'; enableControls(); setStatus('Conexão perdida. Reconecte e entre na sala novamente.'); });
   socket.on('join-error', ({message}) => {
     const errorMessage = message || 'Não foi possível entrar na sala.';
     if (!joinModal.hidden) {
@@ -1618,7 +1626,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }else resetSession();
     if(notifyServer)socket.emit("leave-room",{room:leavingRoom});
     window.dispatchEvent(new Event("jf-dance-room-left"));
-    joined=false;room="";jfRoomOwnerId=null;jfRoomOwner=false;
+    joined=false;room="";shareWrap.hidden=true;history.replaceState({}, "", "/");jfRoomOwnerId=null;jfRoomOwner=false;
     $("room").value="";
     $("remoteAudio").pause();$("remoteAudio").srcObject=null;
     jfRenderMiniDj(null);renderTrack(null);
