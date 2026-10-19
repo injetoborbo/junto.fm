@@ -53,7 +53,7 @@ html[data-jf-theme="kodoku"] #jfChatWindow::before,
 html[data-jf-theme="kodoku"] #jfChatWindow::after{content:none!important}
 #jfChatWindow .jf-kodoku-frame-corners{display:none}
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corners{
-  display:block;position:absolute;inset:0;pointer-events:none;z-index:2;
+  display:block;position:absolute;inset:0;pointer-events:none;z-index:30;
   border:0;box-shadow:inset 0 0 0 1px #f0f0f0;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-kodoku-frame-corner{
@@ -69,7 +69,7 @@ html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header{
   background:#030303!important;border-bottom:1px solid #777!important;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-header .jf-chat-close{
-  flex-shrink:0;position:relative;z-index:3;
+  flex-shrink:0;position:relative;z-index:31;
 }
 html[data-jf-theme="kodoku"] #jfChatWindow .jf-chat-log{
   flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px;
