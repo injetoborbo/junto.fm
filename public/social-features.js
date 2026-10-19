@@ -5,6 +5,11 @@
   style.textContent=`
   .jf-social-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px;margin:10px 0;border:1px solid var(--jf-secondary,#8a8de6);border-radius:10px;background:color-mix(in srgb,var(--jf-primary,#6966b6) 13%,transparent)}
   .jf-social-actions .btn{padding:8px 12px;font-size:12px}
+  .jf-skip-inline{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;margin:5px 0 2px}
+  #jfSkipVote.btn{width:31px;height:29px;min-width:31px;padding:0;display:inline-grid;place-items:center;font-size:17px;line-height:1;border-radius:6px}
+  #jfSkipProgress{font-size:10px;white-space:nowrap}
+  .jf-social-actions{margin-top:4px}
+
   .jf-barrel-box{display:flex;align-items:center;gap:9px}
   .jf-barrel-visual{width:66px;height:64px;object-fit:contain;display:block}
   .jf-barrel-fallback{font-size:42px;line-height:1}
@@ -18,8 +23,12 @@
   if(!player)return;
   const wrap=document.createElement("div");
   wrap.className="jf-social-actions";
-  wrap.innerHTML='<button class="btn secondary" type="button" id="jfSkipVote">⏭ Pular música</button><span class="jf-social-count" id="jfSkipProgress">0/2 votos</span><div class="jf-barrel-box"><button type="button" class="btn secondary" id="jfThrowBanana" aria-label="Gostei da música: jogar banana">🍌</button><div id="jfBananaTarget" style="text-align:center"><progress id="jfBananaProgress" class="jf-barrel-meter" max="20" value="0"></progress><img id="jfBananaBarrelArt" class="jf-barrel-visual" alt="Barril de bananas" hidden><span id="jfBananaFallback" class="jf-barrel-fallback">🛢️</span><span id="jfBananaTotal" class="jf-social-count">0 / 20 🍌</span></div></div><span id="jfBananaCelebrate" class="jf-social-count" hidden>🐒 Barril cheio! Um macaquinho está a caminho.</span>';
+  wrap.innerHTML='<div class="jf-skip-inline"><button class="btn secondary" type="button" id="jfSkipVote" aria-label="Votar para pular música" title="Votar para pular música">⏭</button><span class="jf-social-count" id="jfSkipProgress">0/2 votos</span></div><div class="jf-barrel-box"><button type="button" class="btn secondary" id="jfThrowBanana" aria-label="Gostei da música: jogar banana">🍌</button><div id="jfBananaTarget" style="text-align:center"><progress id="jfBananaProgress" class="jf-barrel-meter" max="20" value="0"></progress><img id="jfBananaBarrelArt" class="jf-barrel-visual" alt="Barril de bananas" hidden><span id="jfBananaFallback" class="jf-barrel-fallback">🛢️</span><span id="jfBananaTotal" class="jf-social-count">0 / 20 🍌</span></div></div><span id="jfBananaCelebrate" class="jf-social-count" hidden>🐒 Barril cheio! Um macaquinho está a caminho.</span>';
   player.insertAdjacentElement("afterend",wrap);
+  const skipInline=wrap.querySelector(".jf-skip-inline");
+  const trackInfo=player.querySelector(".jf-track-info");
+  if(trackInfo)trackInfo.appendChild(skipInline); // Logo abaixo do progresso da música.
+
   const $=id=>document.getElementById(id);
   let joined=false,room="",count=0,approved=false,skipKey="";
   function setBananas(n){
