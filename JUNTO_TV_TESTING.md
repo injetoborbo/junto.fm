@@ -13,7 +13,7 @@ Branch: feature/junto-fm-tv-prototype. **Não foi feito merge na main.**
 
 ## Interface
 
-Um único botão **📺 TV** fica ao lado de **🪩 Abrir pista de dança**. Ele abre uma janela própria com três abas (apenas para o dono da sala):
+Os ícones **📺 TV PS1** e **🪩 bola de balada PS1** aparecem no dock ao lado do **🍅 tomate** e da **🍌 banana 3D**. Não há mais botão largo na área de participantes. As artes enviadas pelo criador são carregadas de maneira otimizada. A TV abre uma janela própria com três abas (apenas para o dono da sala):
 
 1. **YouTube:** ADM cola link e controla iniciar/pausar/posição. Outros só assistem. Entradas tardias carregam o estado atual; sincronização periódica tenta corrigir diferenças.
 2. **Vídeo local:** ADM escolhe um arquivo de vídeo no próprio PC e transmite sua reprodução por P2P. Áudio e vídeo dependem dos codecs e da capacidade do navegador. Prévia local fica sem áudio para evitar duplicação.
@@ -49,3 +49,9 @@ Abra http://localhost:3000 e crie uma sala. Para testar com amigos em **redes di
 * Vídeo local captura o **arquivo em reprodução**, não faz upload nem fornece download. Formatos/codecs não suportados pelo browser podem falhar. Áudio local requer teste prático Chrome/Firefox.
 * A aplicação usa um peer WebRTC por espectador, não um SFU. Quatro espectadores podem exigir quatro codificações e consumir bateria/CPU/upload do DJ.
 * A interface e o backend possuem verificações de sintaxe e testes lógicos de autorização/sinalização; **ainda falta teste visual real e teste de rede com dois dispositivos** antes de merge.
+
+## Ajustes após teste no localhost
+
+* O play/pause do YouTube é enviado imediatamente com posição exata quando disponível, estado versionado (revision) e relógio relativo ao recebimento. Sync atrasado não pode desfazer pause. O espectador pode precisar clicar em **Ativar reprodução/som** devido à política de autoplay do navegador.
+* Login administrativo por GitHub fica no **hall inicial** em forma de ícone. Também aparece no localhost quando o OAuth não está configurado, mas o login real só funciona se as variáveis do GitHub OAuth estiverem configuradas no servidor. A permissão não é concedida pelo botão.
+* Testar com dois navegadores: play, pause, retomar, seek; vídeo P2P continua sem TURN.
