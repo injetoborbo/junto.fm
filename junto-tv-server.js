@@ -53,6 +53,12 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       broadcast(room);
     });
 
+    socket.on("tv:request-state", () => {
+      const room=socket.data.room;
+      if (!room || isRateLimited(socket,"tv:request-state",3,10000)) return;
+      socket.emit("tv:state",snapshot(room));
+    });
+
     socket.on("tv:control", data => {
       const room = socket.data.room, s = states.get(room);
       if (!isRoomOwner(socket, room) || s?.mode !== "youtube" || s.hostId !== socket.id) {
