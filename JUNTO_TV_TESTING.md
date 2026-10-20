@@ -5,11 +5,11 @@ Branch: feature/junto-fm-tv-prototype. **Não foi feito merge na main.**
 ## Objetivo: proteger os 20 GB mensais da Metered.ca
 
 * YouTube: cada participante carrega o player **diretamente do YouTube**; o Socket.io sincroniza ID, play/pause, posição e relógio. Os vídeos não atravessam o Render nem o TURN.
-* Jogo e vídeo local: conexões WebRTC **separadas** da transmissão de música, com **somente STUN** (stun:stun.l.google.com:19302), sem nenhum servidor TURN. Em redes incompatíveis com P2P, o vídeo **não conecta** em vez de recorrer à Metered.
-* Apenas quem clica **Assistir ao vídeo P2P** recebe um fluxo; no máximo **4 espectadores**. Limite de codificação por espectador: aproximadamente **1,5 Mbps de vídeo**, máximo **30 FPS**, tentativa de até **720p** (suporte do navegador dependente).
+* Transmissão de tela (janela, aba, monitor ou jogo) e vídeo local: conexões WebRTC **separadas** da música, com **somente STUN** (stun:stun.l.google.com:19302) e **sem servidor TURN**. Se o P2P direto não funcionar, o vídeo **não conecta** em vez de usar a Metered.
+* Apenas quem clica **Assistir ao vídeo P2P** recebe um fluxo; no máximo **4 espectadores**. Novo teto de codificação por espectador: **até 6 Mbps de vídeo**, máximo **30 FPS**, resolução ideal **1920 × 1080**, com redução apenas para fonte acima de 1080p. Valores reais são adaptativos e dependem da rede, origem e navegador.
 * Nenhum arquivo local é enviado ou armazenado no backend. Áudio de arquivos locais é capturado com Web Audio quando disponível; captura de jogo é **sem áudio**, preservando a transmissão musical atual.
 * A infraestrutura **da música** permanece como estava e **ainda pode usar TURN**. Não há teto de uso mensal imposto pelo protótipo para essa parte.
-* P2P pode exigir até cerca de **6 Mbps de upload** do DJ para quatro espectadores, além dos demais serviços; o uso de internet local continua existindo, só o relay TURN de vídeo foi eliminado.
+* P2P pode exigir até cerca de **24 Mbps de upload** do transmissor para quatro espectadores (6 Mbps por destino), além da música e sinalização. **600 Mbps de download não garantem 600 Mbps de upload.** Na ausência de banda suficiente o WebRTC reduz a qualidade. O relay TURN de vídeo continua desativado.
 
 ## Interface
 
@@ -17,7 +17,7 @@ Os ícones **📺 TV PS1** e **🪩 bola de balada PS1** aparecem no dock ao lad
 
 1. **YouTube:** ADM cola link e controla iniciar/pausar/posição. Outros só assistem. Entradas tardias carregam o estado atual; sincronização periódica tenta corrigir diferenças.
 2. **Vídeo local:** ADM escolhe um arquivo de vídeo no próprio PC e transmite sua reprodução por P2P. Áudio e vídeo dependem dos codecs e da capacidade do navegador. Prévia local fica sem áudio para evitar duplicação.
-3. **Jogo:** ADM clica em **Escolher janela do jogo** e, no diálogo nativo do navegador, seleciona a opção **Janela** e o jogo. Por segurança, **fechar a janelinha encerra a captura**. Trocar para o jogo com Alt+Tab não encerra a captura.
+3. **Transmissão de tela:** ADM clica em **Compartilhar tela ou janela** e, no seletor nativo do navegador, escolhe **aba, janela ou tela inteira** (jogos inclusive). Por segurança, **fechar a janelinha encerra a captura**. O áudio dessa captura fica desligado para não se misturar com a música; vídeo é 1080p/30 FPS com teto de 6 Mbps por espectador, quando suportado.
 
 Os espectadores não veem comandos administrativos. Eles escolhem se desejam assistir a um stream P2P (para não aumentar upload sem necessidade). Se o navegador bloquear autoplay, clicam em **Ativar reprodução/som**.
 
@@ -37,7 +37,7 @@ Abra http://localhost:3000 e crie uma sala. Para testar com amigos em **redes di
 
 1. Entrar em uma sala como ADM, abrir a TV e colar um vídeo público do YouTube que permita incorporação. Em outro navegador, entrar na mesma sala, abrir TV e confirmar sincronização de play/pause/seek; confirmar que um convidado não controla o vídeo.
 2. Com outro dispositivo/rede, selecionar um vídeo local MP4 ou WebM e clicar **Assistir ao vídeo P2P**; testar som, imagem e uso de CPU/Internet.
-3. Abrir um jogo em modo janela ou janela sem borda; clicar em **Escolher janela do jogo** e selecionar apenas essa janela no diálogo nativo. Verificar FPS, visualização, atraso e perda de conexão.
+3. Abrir jogo, janela de navegador e compartilhamento de tela inteira, usando **Compartilhar tela ou janela**. Verificar nitidez em textos, FPS, visualização, atraso e perda de conexão. Conferir FPS/resolução reais em **chrome://webrtc-internals**: `frameWidth`/`frameHeight`, `framesPerSecond`, `bytesSent` e bitrate estimado.
 4. Conferir em chrome://webrtc-internals (emissor/receptor) os candidatos e o par ICE selecionado: **não deve existir candidato de tipo relay nos peers de vídeo**. Conferir também o dashboard da Metered: o vídeo não deve consumir o tráfego TURN; música pode continuar consumindo.
 5. Fechar a TV do ADM, trocar de modo, sair da sala, expulsar espectador e desconectar rede; nenhum stream deve continuar ativo no cliente. Validar o layout em telefone.
 
@@ -70,3 +70,11 @@ Depois dos testes no localhost com delay e o ouvinte continuando a assistir dura
 * Testes automatizados adicionados: `node --test tests/junto-tv*.test.js`, cobrindo estado do servidor, simulação do IFrame API e integração entre dois navegadores simulados, inclusive seek, pause/replay e participante tardio.
 
 **Importante:** esses testes não são confirmação de operação com o YouTube real no navegador. Antes de considerar a TV pronta para merge, confirmar manualmente com **dois navegadores/dispositivos**, ambos atualizados, que play, pause e seek sincronizam sem atraso perceptível. Não foi alterada a configuração STUN sem TURN do gameplay e vídeo local.
+
+## Perfil de vídeo aprimorado (transmissão de tela)
+
+* Nova aba **Transmissão de tela** substitui o antigo rótulo **Jogo**, preservando o modo interno `screen` no servidor.
+* `getDisplayMedia`: resolução *ideal* 1920 × 1080, no máximo 30 FPS, sem áudio da captura.
+* `RTCRtpSender.setParameters`: teto de 6.000.000 bits/s por espectador; evitar reduzir 1080p para 720p; capturas superiores a 1080p são limitadas antes da codificação quando suportado.
+* ICE do vídeo continua somente STUN (`iceTransportPolicy: all`, `iceServers` apenas com STUN). **Não** foi alterado o ICE/TURN da transmissão de música. Não há relay de vídeo pelo túnel Cloudflare: o túnel carrega o site e o Socket.io; mídia P2P continua direta.
+* Se o cliente remoto não conseguir estabelecer P2P, o vídeo pode falhar em redes mais restritas. Não há fallback TURN justamente para evitar uso da cota.
