@@ -472,6 +472,7 @@ function releaseRoomOwnership(room,departingId){
     if(roomBananaResetTimers.has(room)){clearTimeout(roomBananaResetTimers.get(room));roomBananaResetTimers.delete(room);}roomSkipVotes.delete(room);skipTickets.delete(room);
   }
 }
+const juntoTv = require("./junto-tv-server")(io, isRoomOwner, isRateLimited);
 io.use(async (socket,next)=>{
   try { socket.data.account=await accountAuth.accountFromRequest(socket.request); }
   catch(error){ console.warn("Conta na conexão:",error.message); socket.data.account=null; }
@@ -719,6 +720,7 @@ io.on("connection", socket => {
     target.data.isTransmitting=false;
     target.data.receiveMusicSuggestions=false;
     target.data.room=null;
+    juntoTv.leave(room,targetId);
     danceLeave(room,targetId);
     target.leave(room);
     if(roomTransmitters.get(room)?.id===targetId){
@@ -805,6 +807,7 @@ io.on("connection", socket => {
       io.to(room).emit("transmitter-update", { id: socket.id, active: false });
     }
     socket.data.isTransmitting = false;
+    juntoTv.leave(room,socket.id);
     danceLeave(room,socket.id);
     releaseRoomOwnership(room,socket.id);
     socket.leave(room);
@@ -847,6 +850,7 @@ io.on("connection", socket => {
         io.to(previousRoom).emit("transmitter-update", { id: socket.id, active: false });
       }
       socket.data.isTransmitting = false;
+      juntoTv.leave(previousRoom,socket.id);
       danceLeave(previousRoom,socket.id);
       releaseRoomOwnership(previousRoom,socket.id);
       socket.leave(previousRoom);
@@ -880,6 +884,7 @@ io.on("connection", socket => {
     const registeredPeers=Object.fromEntries(peers.map(id=>[id,Boolean(io.sockets.sockets.get(id)?.data.account)]));
     socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null, bananaCount:roomBananaCounts.get(room)||0 });
     emitSkip(room);
+    juntoTv.joined(socket);
     socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id, clientId:socket.data.clientId, registered:Boolean(socket.data.account) });
     notifyPresence();
@@ -1077,6 +1082,7 @@ io.on("connection", socket => {
     const room = socket.data.room;
     if (!room) return;
     socket.data.room=null;
+    juntoTv.leave(room,socket.id);
     danceLeave(room,socket.id);
     notifyPresence();
     releaseRoomOwnership(room,socket.id);

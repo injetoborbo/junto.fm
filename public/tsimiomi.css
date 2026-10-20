@@ -1,0 +1,102 @@
+/* Tsimiomi — arte original fornecida pelo criador da Junto.fm.
+   As figuras são elementos decorativos e jamais capturam cliques. */
+html[data-jf-theme="tsimiomi"] {
+  color-scheme: dark;
+  --ink:#fff0ed;--muted:#f0c9c2;
+  background:#4a0000;
+}
+html[data-jf-theme="tsimiomi"] body {
+  background:#4a0000 url("/themes/tsimiomi/sky.webp") center center / cover fixed no-repeat !important;
+  color:#fff0ed;
+  isolation:isolate;
+}
+html[data-jf-theme="tsimiomi"] body::before,
+html[data-jf-theme="tsimiomi"] body::after {
+  content:"" !important;
+  display:block !important;
+  pointer-events:none !important;
+  position:fixed !important;
+  opacity:1 !important;
+  animation:none !important;
+  filter:none !important;
+  transform:none !important;
+  inset:auto !important;
+  border:0 !important;
+  background-color:transparent !important;
+  background-repeat:no-repeat !important;
+}
+html[data-jf-theme="tsimiomi"] body::before {
+  z-index:0 !important;
+  left:50% !important;
+  bottom:18vh !important;
+  width:clamp(180px,26vw,420px) !important;
+  height:min(76vh,720px) !important;
+  translate:-50% 0;
+  background-image:url("/themes/tsimiomi/crucifix.webp") !important;
+  background-position:center bottom !important;
+  background-size:contain !important;
+}
+html[data-jf-theme="tsimiomi"] body::after {
+  z-index:1 !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:-22vh !important;
+  width:100% !important;
+  height:auto !important;
+  aspect-ratio: 1648 / 930 !important;
+  background-image:url("/themes/tsimiomi/army.webp") !important;
+  background-position:center bottom !important;
+  background-size:100% auto !important;
+}
+html[data-jf-theme="tsimiomi"] body > main,
+html[data-jf-theme="tsimiomi"] body > header,
+html[data-jf-theme="tsimiomi"] body > footer {
+  position:relative; z-index:2;
+}
+html[data-jf-theme="tsimiomi"] .panel,
+html[data-jf-theme="tsimiomi"] .jf-modal {
+  color:#fff2f0;
+  border-color:#991e1e;
+  background:linear-gradient(145deg,#19090aee,#330c13f0);
+  box-shadow:0 8px 26px #130000a8,inset 0 1px #ff8c8c26;
+}
+html[data-jf-theme="tsimiomi"] .panel h2,
+html[data-jf-theme="tsimiomi"] .panel h3,
+html[data-jf-theme="tsimiomi"] label {color:#fff2ec;}
+html[data-jf-theme="tsimiomi"] .btn {
+  color:#fff;
+  background:linear-gradient(#962c35,#5d0b18);
+  border-color:#c64b4e;
+}
+html[data-jf-theme="tsimiomi"] .track-card,
+html[data-jf-theme="tsimiomi"] .jf-person {
+  color:#fff;
+  background:#2b1115e8;
+  border-color:#983b42;
+}
+html[data-jf-theme="tsimiomi"] .track-title{color:#fff;}
+html[data-jf-theme="tsimiomi"] .track-artist,
+html[data-jf-theme="tsimiomi"] .track-album,
+html[data-jf-theme="tsimiomi"] .small{color:#f1cac6;}
+@media(max-width:700px){
+  html[data-jf-theme="tsimiomi"] body{
+    background-position:53% center !important;
+    background-attachment:scroll !important;
+  }
+  html[data-jf-theme="tsimiomi"] body::before{
+    width:min(58vw,285px) !important;
+    height: min(53vh,470px) !important;
+    bottom:13vh !important;
+  }
+  html[data-jf-theme="tsimiomi"] body::after{
+    height:auto !important;
+    bottom:-12vh !important;
+    aspect-ratio:1648 / 930 !important;
+    background-size:100% auto !important;
+    background-position:center bottom !important;
+  }
+}
+@media(max-height:500px) and (orientation:landscape){
+  html[data-jf-theme="tsimiomi"] body::before{height:65vh !important;width:20vw !important;bottom:10vh !important;}
+  html[data-jf-theme="tsimiomi"] body::after{height:auto !important;bottom:-20vh !important;}
+}
