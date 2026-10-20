@@ -124,3 +124,34 @@ test("Ao abrir TV do ouvinte, o cliente pede estado recente ao servidor",async()
   const app=setup();app.room();await app.openYoutube();
   assert.ok(app.transmissions.some(e=>e.name==="tv:request-state"),"O cliente deve solicitar ressincronização");
 });
+
+test("Ouvinte inicia com som habilitado sem apertar Ativar som",async()=>{
+  const app=setup();app.room();const base=await app.openYoutube();
+  assert.ok(app.youtube.calls.some(x=>x[0]==="unmute"),"Som deve ser solicitado no onReady");
+  const before=app.youtube.calls.length;
+  app.events.get("tv:playback")({...base,seconds:20,playing:true,revision:2,action:"play"});
+  const after=app.youtube.calls.slice(before).map(x=>x[0]);
+  assert.ok(after.includes("unmute"),"Play do ADM solicita reprodução audível");
+  assert.equal(after.includes("mute"),false,"Não iniciar ouvinte silenciosamente");
+  assert.equal(app.elements.get("jfTvSound").hidden,true,"Botão manual não deve aparecer quando som é automático");
+});
+test("Pause do ADM não desativa o som da próxima reprodução",async()=>{
+  const app=setup();app.room();const base=await app.openYoutube();
+  app.events.get("tv:playback")({...base,seconds:20,playing:true,revision:2,action:"play"});
+  const before=app.youtube.calls.length;
+  app.events.get("tv:playback")({...base,seconds:21,playing:false,revision:3,action:"pause"});
+  const paused=app.youtube.calls.slice(before).map(x=>x[0]);
+  assert.equal(paused.includes("mute"),false,"PAUSE não deve silenciar permanentemente o player");
+  app.events.get("tv:playback")({...base,seconds:21,playing:true,revision:4,action:"play"});
+  assert.equal(app.youtube.calls.at(-1)[0]==="unmute"||app.youtube.calls.slice(-4).some(x=>x[0]==="unmute"),true);
+});
+test("Se navegador bloquear autoplay, exibir botão de som sem perder sincronização",async()=>{
+  const app=setup();app.room();const base=await app.openYoutube();
+  app.events.get("tv:playback")({...base,seconds:20,playing:true,revision:2,action:"play"});
+  app.youtube.opts.events.onAutoplayBlocked();
+  assert.equal(app.elements.get("jfTvSound").hidden,false,"Exibir fallback somente quando o navegador exigir");
+  assert.equal(app.youtube.calls.at(-1)[0],"play","Continua o vídeo mutado quando som é bloqueado");
+  app.elements.get("jfTvSound").onclick();
+  assert.equal(app.elements.get("jfTvSound").hidden,true,"Esconder fallback depois de liberar som");
+  assert.ok(app.youtube.calls.slice(-3).some(x=>x[0]==="unmute"),"Tentar unMute após clique");
+});
