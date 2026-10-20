@@ -26,7 +26,7 @@ const widget=document.createElement("div");widget.className="jf-banana-widget";
 widget.innerHTML='<div class="jf-banana-barrel" id="jfBananaBarrel" aria-label="Barril 3D de vitamina de banana"></div><span class="jf-banana-count" id="jfBananaCount">0/15 🍌</span>';
 const stage=player.querySelector(".jf-dj-stage");if(!stage)return;
 const row=document.createElement("div");row.className="jf-banana-dj-row";stage.parentElement.insertBefore(row,stage);row.append(stage,widget);
-const button=document.createElement("button");button.type="button";button.className="jf-banana-button";button.id="jfBananaThrow";button.title="Lançar banana no barril";button.setAttribute("aria-label","Lançar banana no barril");button.textContent="🍌";button.hidden=true;(document.getElementById("jfMobileFunBar")||document.body).appendChild(button);
+const button=document.createElement("button");button.type="button";button.className="jf-banana-button";button.id="jfBananaThrow";button.title="Lançar banana no barril";button.setAttribute("aria-label","Lançar banana no barril");button.textContent="🍌";button.hidden=true;const funBar=document.getElementById("jfMobileFunBar");if(funBar)funBar.insertBefore(button,document.getElementById("jfTvLaunch")||null);else document.body.appendChild(button);
 const holder=widget.querySelector("#jfBananaBarrel"),count=widget.querySelector("#jfBananaCount");
 let joined=false,number=0,room=null,lastClick=0,liquid=null,level=0,target=0,ripple=0,barrelReady=false,flightModel=null,THREE=null,flightRenderer=null,flightScene=null,flightCamera=null,flightLayer=null,iconRenderer=null,iconScene=null,iconCamera=null,iconModel=null;
 const clamp=n=>Math.min(15,Math.max(0,Number(n)||0));
