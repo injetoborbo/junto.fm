@@ -7,7 +7,8 @@
   // Bitrate de publicação global, não um custo por espectador.
   const VIDEO_MAX_HEIGHT = 1080;
   const VIDEO_MAX_FPS = 30;
-  const VIDEO_MAX_BITRATE = 3500000; // até 6 Mbps por espectador, WebRTC adapta à rede
+  const VIDEO_SCREEN_BITRATE = 3000000;
+  const VIDEO_LOCAL_BITRATE = 4000000; // até 6 Mbps por espectador, WebRTC adapta à rede
 
   const style = document.createElement("style");
   style.textContent = [
@@ -82,7 +83,7 @@
           '<section id="jfTvGameTools" class="jf-tv-tools" hidden>',
             '<label class="jf-tv-audio-choice"><input id="jfTvCaptureAudio" type="checkbox" checked> 🔊 Transmitir áudio da tela/aba</label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartGame">🖥️ Compartilhar tela ou janela</button></div>',
-            '<p class="jf-tv-note">Escolha <strong>aba, janela ou tela inteira</strong>. Para transmitir som, marque também <strong>Compartilhar áudio</strong> no seletor do navegador (se disponível). O Chrome/Edge costuma oferecer áudio de abas e, no Windows, pode oferecer áudio do sistema ou de janelas. Nem toda janela/navegador permite captura de som. Até 1080p / 30 FPS / 3,5 Mbps por ouvinte. Se a música já estiver sendo transmitida separadamente, evite capturá-la outra vez.</p>',
+            '<p class="jf-tv-note">Escolha <strong>aba, janela ou tela inteira</strong>. Para transmitir som, marque também <strong>Compartilhar áudio</strong> no seletor do navegador (se disponível). O Chrome/Edge costuma oferecer áudio de abas e, no Windows, pode oferecer áudio do sistema ou de janelas. Nem toda janela/navegador permite captura de som. Até 1080p / 30 FPS / 3 Mbps por ouvinte. Se a música já estiver sendo transmitida separadamente, evite capturá-la outra vez.</p>',
           '</section>',
           '<div class="jf-tv-actions"><button type="button" class="jf-tv-danger" id="jfTvStop">■ Encerrar TV</button></div>',
         '</div>',
@@ -386,7 +387,7 @@
       for(const track of stream.getTracks()){
         const options=track.kind==="video"?
           {name:"junto-tv-video",source:Client.Track.Source.ScreenShare,
-            videoEncoding:{maxBitrate:VIDEO_MAX_BITRATE,maxFramerate:VIDEO_MAX_FPS},simulcast:true}:
+            videoEncoding:{maxBitrate:state?.mode==="local"?VIDEO_LOCAL_BITRATE:VIDEO_SCREEN_BITRATE,maxFramerate:VIDEO_MAX_FPS},simulcast:true}:
           {name:"junto-tv-audio",source:Client.Track.Source.ScreenShareAudio};
         await roomInstance.localParticipant.publishTrack(track,options);
       }
