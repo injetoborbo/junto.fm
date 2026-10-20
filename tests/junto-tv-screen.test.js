@@ -20,6 +20,7 @@ async function setup(height = 1080, {shareAudio = true, provideAudio = true} = {
       addEventListener(){}, querySelectorAll(){return [];}, appendChild(){}, focus(){},
       set innerHTML(v){this.html=v;},
       set textContent(v){this.text=v;},
+      get textContent(){return this.text;},
       play(){return Promise.resolve();}
     });
     return elements.get(id);
@@ -131,7 +132,7 @@ test("Captura acima de 1080p ajusta escala, mas nunca recorre a relay",async()=>
 test("Rótulos da interface: Transmissão de tela e compartilhamento amplo",()=>{
   assert.ok(source.includes("Transmissão de tela"));
   assert.ok(source.includes("Compartilhar tela ou janela"));
-  assert.ok(source.includes("janela, aba ou tela inteira"));
+  assert.ok(source.includes("aba, janela ou tela inteira"));
   assert.equal(source.includes('data-tv-tab="screen"'),true);
 });
 
