@@ -73,7 +73,7 @@
           '<section id="jfTvLocalTools" class="jf-tv-tools" hidden>',
             '<label>Vídeo do seu computador (não será enviado ao Render)<input type="file" id="jfTvFile" accept="video/*"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartLocal">Transmitir arquivo</button></div>',
-            '<p class="jf-tv-note">O arquivo fica no seu PC. Apenas a reprodução capturada segue por P2P direto. Seu vídeo é exibido sem controles para os espectadores.</p>',
+            '<p class="jf-tv-note">O arquivo fica no seu PC. A reprodução (vídeo e áudio) segue por P2P direto. Prévia do ADM silenciosa para evitar áudio duplicado.</p>',
           '</section>',
           '<section id="jfTvGameTools" class="jf-tv-tools" hidden>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartGame">🎮 Escolher janela do jogo</button></div>',
@@ -92,7 +92,7 @@
   const stage=$("jfTvStreamVideo"), frame=$("jfTvYoutubeFrame"), ytWrapper=$("jfTvYoutubeWrapper");
   let joined=false, room="", ownerId=null, state=null, currentTab="youtube";
   let player=null, playerReady=false, loadedId="", ytLoading=null, opened=false;
-  let sourceStream=null, localVideo=null, localUrl="", viewerRequested=false;
+  let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, viewerRequested=false;
   const peers=new Map(), pendingIce=new Map();
   let activeStreamHost=null;
 
@@ -124,6 +124,7 @@
     if(sourceStream){for(const track of sourceStream.getTracks())track.stop();sourceStream=null;}
     if(localVideo){localVideo.pause();localVideo.removeAttribute("src");localVideo.load();localVideo=null;}
     if(localUrl){URL.revokeObjectURL(localUrl);localUrl="";}
+    if(localAudioContext){localAudioContext.close().catch(()=>{});localAudioContext=null;}
     releasePeers();
   }
   function stopBroadcast(){
@@ -301,19 +302,35 @@
     stopLocal();
     localUrl=URL.createObjectURL(file);
     const video=document.createElement("video");
-    localVideo=video;video.playsInline=true;video.muted=true;video.preload="auto";
+    localVideo=video;video.playsInline=true;video.muted=false;video.preload="auto";
     video.src=localUrl;video.onended=()=>{if(localVideo===video)stopBroadcast();};
     try{
       await new Promise((resolve,reject)=>{video.addEventListener("loadeddata",resolve,{once:true});video.addEventListener("error",()=>reject(new Error("Arquivo não pôde ser aberto.")),{once:true});video.load();});
+      // O som vai direto ao MediaStreamDestination: nada sai pelo fone do ADM
+      // e não duplicamos as faixas de áudio do captureStream.
+      let audioStream=null;
+      const AudioEngine=window.AudioContext||window.webkitAudioContext;
+      if(AudioEngine){
+        localAudioContext=new AudioEngine();
+        const sourceNode=localAudioContext.createMediaElementSource(video);
+        const destination=localAudioContext.createMediaStreamDestination();
+        sourceNode.connect(destination);
+        audioStream=destination.stream;
+        await localAudioContext.resume();
+      }else video.muted=true;
       await video.play();
-      const captured=(video.captureStream||video.mozCaptureStream).call(video);
+      const direct=(video.captureStream||video.mozCaptureStream).call(video);
+      const captured=new MediaStream([
+        ...direct.getVideoTracks(),
+        ...(audioStream?audioStream.getAudioTracks():direct.getAudioTracks())
+      ]);
       if(!captured.getVideoTracks().length)throw new Error("Vídeo não disponível para captura.");
       // publishStream limpa a captura anterior; preservar este elemento local.
       localVideo=null;localUrl="";
       await publishStream(captured,"local");
       localVideo=video;localUrl=video.src;
       stage.muted=true;
-      status("Arquivo local em P2P. Não foi enviado ao servidor. Áudio depende do suporte à captura do navegador.");
+      status("Arquivo local por P2P, com áudio quando o formato permitir. Nenhum arquivo foi enviado ao servidor.");
     }catch(e){
       status("Falha no arquivo local: "+e.message);
       stopLocal();
