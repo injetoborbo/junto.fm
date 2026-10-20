@@ -92,7 +92,9 @@
   let joined=false, room="", ownerId=null, state=null, currentTab="youtube";
   let player=null, playerReady=false, loadedId="", ytLoading=null, opened=false;
   let stateReceivedAt=Date.now(), syncAttempt=0, lastAdminSyncAt=0;
-  let youtubeHardStopped=false, viewerAudioEnabled=false, pauseRetryCount=0;
+  // Abrir a TV é uma interação do usuário: tentar áudio audível desde o início.
+  // Só usar o botão manual quando o próprio navegador bloquear autoplay com som.
+  let youtubeHardStopped=false, viewerAudioEnabled=true, viewerAudioBlocked=false, pauseRetryCount=0;
   let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, viewerRequested=false;
   const peers=new Map(), pendingIce=new Map();
   let activeStreamHost=null;
@@ -193,7 +195,7 @@
       const changed=loadedId!==state.videoId;
       if(paused){
         // Sem seek enquanto pausado: alguns players recomeçam ao buscar posição.
-        if(!isAdmin())player.mute();
+        // Não mutar: o som deve permanecer habilitado para a próxima retomada.
         player.pauseVideo();
         if(changed){
           loadedId=state.videoId;
@@ -201,10 +203,10 @@
         }
         player.pauseVideo();
       }else{
-        if(!isAdmin() || !viewerAudioEnabled){
-          // Navegadores exigem clique antes do som; vídeo pode começar silencioso.
-          if(!isAdmin()&&!viewerAudioEnabled)player.mute();
-        }
+        // Prioridade ao som automático. Somente caso onAutoplayBlocked dispare,
+        // recorrer à reprodução mutada e oferecer o botão de desbloqueio.
+        if(!isAdmin()&&viewerAudioEnabled)player.unMute();
+        else if(!isAdmin())player.mute();
         if(changed||youtubeHardStopped){
           loadedId=state.videoId;
           youtubeHardStopped=false;
@@ -214,7 +216,6 @@
           if(Math.abs(current-wanted)>1.25)player.seekTo(wanted,true);
           if(force||player.getPlayerState()!==1)player.playVideo();
         }
-        if(!isAdmin()&&viewerAudioEnabled)player.unMute();
       }
       $("jfTvSeek").max=String(Math.max(1,Math.floor(player.getDuration()||100)));
       $("jfTvSeek").value=String(Math.min(Number($("jfTvSeek").max),Math.floor(wanted)));
@@ -247,7 +248,7 @@
     const next=Number(event?.data);
     if(!state.playing && (next===1||next===3)){
       try{
-        player.mute();
+        // Pausar não deve desligar o som permanentemente do ouvinte.
         player.pauseVideo();
         if(++pauseRetryCount>3)hardStopYoutubeIfNecessary(state.revision);
       }catch(_){}
@@ -255,6 +256,23 @@
     }
   }
 
+  function onYoutubeAutoplayBlocked(){
+    if(isAdmin()||!opened||state?.mode!=="youtube"||!state.playing)return;
+    viewerAudioEnabled=false;
+    viewerAudioBlocked=true;
+    updateViewerAudioButton();
+    status("🔊 Seu navegador bloqueou o som automático. Clique em Ativar som uma vez.");
+    try{
+      // Manter o vídeo sincronizado, mesmo se áudio com autoplay for bloqueado.
+      player.mute();
+      player.playVideo();
+    }catch(_){}
+  }
+  function updateViewerAudioButton(){
+    const manual=Boolean(!isAdmin()&&state?.mode==="youtube"&&viewerAudioBlocked);
+    $("jfTvSound").hidden=!manual && state?.mode==="youtube";
+    if(manual)$("jfTvSound").textContent="🔊 Ativar som";
+  }
   async function ensureYoutube(){
     if(!opened||state?.mode!=="youtube")return;
     ytWrapper.hidden=false;
@@ -267,12 +285,13 @@
           events:{onReady:()=>{
               playerReady=true;loadedId="";youtubeHardStopped=false;
               try{player.getIframe()?.setAttribute("tabindex","-1");}catch(_){}
-              if(!isAdmin())try{player.mute();}catch(_){}
+              if(!isAdmin()&&viewerAudioEnabled)try{player.unMute();}catch(_){}
               syncYoutube(true);
               if(state?.playing)retryYoutubePlayback();
               else if(state?.mode==="youtube")enforceYoutubePause();
             },
             onStateChange:onYoutubePlayerState,
+            onAutoplayBlocked:onYoutubeAutoplayBlocked,
             onError:()=>status("Este vídeo não permite reprodução incorporada ou não está disponível.")}});
       }else syncYoutube();
     }catch(e){status(e.message||"Não foi possível abrir o YouTube.");}
@@ -379,17 +398,23 @@
     if(state?.mode==="youtube"){
       if(!playerReady)return status("Aguarde o player do YouTube carregar.");
       viewerAudioEnabled=true;
+      viewerAudioBlocked=false;
+      updateViewerAudioButton();
       try{
+        player.unMute();
         if(state.playing){
-          player.unMute();
           player.playVideo();
-          status("Som habilitado. Só o ADM controla play/pause.");
+          status("Som habilitado. Agora segue o play/pause do ADM.");
         }else{
-          // Jamais chamar playVideo para destravar áudio quando o vídeo está pausado.
+          // Nunca iniciar vídeo pausado só para liberar áudio.
           player.pauseVideo();
-          status("Som habilitado para quando o ADM retomar o vídeo.");
+          status("Som liberado para a próxima reprodução do ADM.");
         }
-      }catch(_){status("Toque de novo para liberar o som.");}
+      }catch(_){
+        viewerAudioBlocked=true;
+        updateViewerAudioButton();
+        status("O navegador ainda bloqueou o som. Toque de novo para liberar.");
+      }
     }else stage.play().catch(()=>status("Não foi possível iniciar a reprodução."));
   };
   async function publishStream(stream,mode){
@@ -475,7 +500,7 @@
     $("jfTvViewerTools").hidden=!joined||admin||!state;
     $("jfTvWatch").hidden=!isStream;
     $("jfTvWatch").disabled=viewerRequested;
-    $("jfTvSound").hidden=!state;
+    $("jfTvSound").hidden=!state||state.mode==="youtube"&&!viewerAudioBlocked;
     const showYoutube=state?.mode==="youtube"&&opened;
     ytWrapper.hidden=!showYoutube;
     updateYoutubePauseShield();
@@ -509,6 +534,8 @@
     }
     if(!state||state.mode!=="youtube"){
       if(playerReady)try{player.pauseVideo()}catch(_){}
+      viewerAudioBlocked=false;
+      viewerAudioEnabled=true;
       pauseShield.hidden=true;
     }
     if(!state||state.mode==="youtube"||prior?.mode!==state.mode||prior?.hostId!==state.hostId){
@@ -540,6 +567,7 @@
   socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;updateUi();});
   function reset(){
     joined=false;room="";ownerId=null;state=null;viewerRequested=false;
+    viewerAudioEnabled=true;viewerAudioBlocked=false;
     if(sourceStream)stopLocal();else releasePeers();
     overlay.hidden=true;opened=false;updateUi();
   }
