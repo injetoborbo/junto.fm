@@ -42,10 +42,10 @@ html[data-jf-theme="tsimiomi"] body::after {
   right:0 !important;
   bottom:-1px !important;
   width:100% !important;
-  height:clamp(120px,29vh,320px) !important;
+  height:clamp(180px,38vh,380px) !important;
   background-image:url("/themes/tsimiomi/army.webp") !important;
   background-position:center bottom !important;
-  background-size:100% auto !important;
+  background-size:100% 100% !important;
 }
 html[data-jf-theme="tsimiomi"] body > main,
 html[data-jf-theme="tsimiomi"] body > header,
@@ -88,12 +88,12 @@ html[data-jf-theme="tsimiomi"] .small{color:#f1cac6;}
     bottom:0 !important;
   }
   html[data-jf-theme="tsimiomi"] body::after{
-    height:clamp(105px,23vh,210px) !important;
-    background-size:auto 100% !important;
+    height:clamp(135px,30vh,240px) !important;
+    background-size:100% 100% !important;
     background-position:center bottom !important;
   }
 }
 @media(max-height:500px) and (orientation:landscape){
   html[data-jf-theme="tsimiomi"] body::before{height:65vh !important;width:20vw !important;}
-  html[data-jf-theme="tsimiomi"] body::after{height:32vh !important;}
+  html[data-jf-theme="tsimiomi"] body::after{height:38vh !important;}
 }
