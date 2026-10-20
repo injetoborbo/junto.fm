@@ -571,7 +571,9 @@
     }
     if(!state||state.mode==="youtube"||prior?.mode!==state.mode||prior?.hostId!==state.hostId){
       if(prior?.mode!=="youtube" && viewerRequested){socket.emit("tv:unwatch");}
-      if(!state||state.mode==="youtube"||prior?.hostId!==state.hostId){viewerRequested=false;releasePeers();}
+      if((!state||state.mode==="youtube"||prior?.hostId!==state.hostId) && !(isAdmin()&&sourceStream&&state?.hostId===socket.id)){
+        viewerRequested=false;releasePeers();
+      }
     }
     if(isAdmin()&&sourceStream && (!state||state.hostId!==socket.id||state.mode==="youtube"))stopLocal();
     if(state?.mode==="youtube"&&prior?.videoId!==state.videoId){loadedId="";if(isAdmin())showTab("youtube");}
