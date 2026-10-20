@@ -8,7 +8,7 @@
   const VIDEO_MAX_HEIGHT = 1080;
   const VIDEO_MAX_FPS = 30;
   const VIDEO_SCREEN_BITRATE = 3000000;
-  const VIDEO_LOCAL_BITRATE = 4000000; // até 6 Mbps por espectador, WebRTC adapta à rede
+  const VIDEO_LOCAL_BITRATE = 4000000; // bitrate de publicação do arquivo local; ajustado pelo LiveKit
 
   const style = document.createElement("style");
   style.textContent = [
