@@ -660,7 +660,7 @@ function animate(now=performance.now()){
         if(d.seated&&!walking&&/^(?:left|right)(?:shoulder|arm|forearm|hand)|^(?:head|neck)$/.test(boneKey(obj.name))){
           const rest=p.restBones?.get(obj.uuid);
           if(rest)obj.quaternion.copy(rest);
-          return;
+          continue;
         }
         if(d.seated&&!walking&&p.sitTracks?.has(obj.uuid)&&p.sitDuration>0){
           const {rest,sourceInverse,interpolant}=p.sitTracks.get(obj.uuid);
@@ -668,12 +668,12 @@ function animate(now=performance.now()){
           if(value?.length===4){
             obj.quaternion.copy(rest).multiply(sourceInverse)
               .multiply(sittingFrameQuaternion.fromArray(value)).normalize();
-            return;
+            continue;
           }
         }
         if(d.seated&&!walking&&p.sitRotations?.has(obj.uuid)){
           obj.quaternion.copy(p.sitRotations.get(obj.uuid));
-          return;
+          continue;
         }
         if(!obj.userData.jfDanceRest)obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
         const [rx,ry,rz]=obj.userData.jfDanceRest;
