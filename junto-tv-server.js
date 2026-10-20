@@ -161,10 +161,12 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       if (!isRoomOwner(socket, room)) return fail(socket, "Só o administrador pode transmitir.");
       if (isRateLimited(socket, "tv:start-stream", 4, 10000)) return;
       if (!allowedModes.has(data?.mode)) return fail(socket, "Fonte de vídeo inválida.");
-      stop(room);
+      // Substituir fonte sem anunciar um estado nulo intermediário, que encerraria
+      // a captura recém-iniciada no navegador do administrador.
+      clearIdle(room);
       states.set(room, { mode: data.mode, hostId: socket.id, playing: true, updatedAt: Date.now() });
       broadcast(room);
-      scheduleIdle(room);
+      if (!(viewers.get(room)?.size)) scheduleIdle(room);
     });
 
     socket.on("tv:stop", () => {
