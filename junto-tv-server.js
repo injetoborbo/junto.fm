@@ -6,12 +6,15 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   const viewers = new Map();
   const MAX_VIEWERS = 4;
   const allowedModes = new Set(["local", "screen"]);
+  let revisionCounter = 0;
+  const nextRevision = () => ++revisionCounter;
 
   function snapshot(room) {
     const s = states.get(room);
     if (!s) return null;
     return { mode: s.mode, videoId: s.videoId || "", playing: !!s.playing,
-      seconds: s.seconds || 0, updatedAt: s.updatedAt, hostId: s.hostId };
+      seconds: s.seconds || 0, updatedAt: s.updatedAt, hostId: s.hostId,
+      revision: s.revision || 0, serverNow: Date.now() };
   }
   function broadcast(room) {
     io.to(room).emit("tv:state", snapshot(room));
@@ -46,7 +49,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return fail(socket, "Link do YouTube inválido.");
       stop(room);
       states.set(room, { mode: "youtube", videoId: id, hostId: socket.id,
-        playing: false, seconds: 0, updatedAt: Date.now() });
+        playing: false, seconds: 0, updatedAt: Date.now(), revision: nextRevision() });
       broadcast(room);
     });
 
@@ -60,12 +63,13 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       const now = Date.now();
       const elapsed = s.playing ? Math.max(0, (now - s.updatedAt) / 1000) : 0;
       const base = s.seconds + elapsed;
-      const requested = Number(data?.seconds);
-      s.seconds = action === "seek" && Number.isFinite(requested)
-        ? Math.max(0, Math.min(requested, 12 * 3600))
-        : Math.max(0, Math.min(base, 12 * 3600));
+      const explicit = data && data.seconds != null ? Number(data.seconds) : NaN;
+      const requested = Number.isFinite(explicit) && explicit >= 0 && explicit <= 12 * 3600;
+      // O ponto capturado pelo ADM ao clicar é mais preciso do que o relógio do servidor.
+      s.seconds = requested ? explicit : Math.max(0, Math.min(base, 12 * 3600));
       s.playing = action === "play" ? true : action === "pause" ? false : s.playing;
       s.updatedAt = now;
+      s.revision = nextRevision();
       broadcast(room);
     });
 
@@ -74,9 +78,13 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       const room = socket.data.room, s = states.get(room);
       if (!isRoomOwner(socket, room) || s?.mode !== "youtube" || s.hostId !== socket.id) return;
       if (isRateLimited(socket, "tv:sync", 1, 7000)) return;
+      // Sync antigo nunca pode ressuscitar um vídeo pausado.
+      if (!s.playing || data?.playing !== true || Number(data?.revision) !== s.revision) return;
       const seconds = Number(data?.seconds);
       if (!Number.isFinite(seconds) || seconds < 0 || seconds > 12 * 3600) return;
-      s.seconds = seconds; s.playing = !!data?.playing; s.updatedAt = Date.now();
+      s.seconds = seconds;
+      s.updatedAt = Date.now();
+      s.revision = nextRevision();
       broadcast(room);
     });
 
