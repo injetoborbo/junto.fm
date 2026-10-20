@@ -103,6 +103,7 @@
   let youtubeHardStopped=false, viewerAudioEnabled=true, viewerAudioBlocked=false, pauseRetryCount=0;
   let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, viewerRequested=false;
   let lkRoom=null, lkLoadPromise=null, lkGeneration=0;
+  const livekitAudio=new Set();
 
   function isAdmin(){return joined && socket.id===ownerId;}
   function status(message){$("jfTvStatus").textContent=message;}
@@ -127,6 +128,8 @@
   function releasePeers(){
     ++lkGeneration;
     if(lkRoom){const old=lkRoom;lkRoom=null;void old.disconnect().catch(()=>{});}
+    for(const el of livekitAudio){el.pause();el.remove();}
+    livekitAudio.clear();
     stage.srcObject=null;
   }
   function stopLocal(){
@@ -362,10 +365,19 @@
           stage.muted=false;stage.hidden=false;
           stage.play().catch(()=>status("Clique em Ativar reprodução/som."));
         }else if(track.kind===Client.Track.Kind.Audio){
-          track.attach();
+          const audio=track.attach();
+          audio.autoplay=true;
+          audio.style.display="none";
+          overlay.appendChild(audio);
+          livekitAudio.add(audio);
+          audio.play().catch(()=>status("O navegador bloqueou o som. Clique em Ativar reprodução/som."));
         }
       });
-      roomInstance.on(Client.RoomEvent.TrackUnsubscribed,track=>track.detach());
+      roomInstance.on(Client.RoomEvent.TrackUnsubscribed,track=>{
+        for(const el of track.detach()){
+          if(livekitAudio.has(el)){livekitAudio.delete(el);el.remove();}
+        }
+      });
     }
     await roomInstance.connect(auth.url,auth.token,{autoSubscribe:!publish});
     if(generation!==lkGeneration){await roomInstance.disconnect();return;}
@@ -413,7 +425,10 @@
         updateViewerAudioButton();
         status("O navegador ainda bloqueou o som. Toque de novo para liberar.");
       }
-    }else stage.play().catch(()=>status("Não foi possível iniciar a reprodução."));
+    }else {
+      stage.play().catch(()=>status("Não foi possível iniciar a reprodução."));
+      for(const audio of livekitAudio)audio.play().catch(()=>status("Não foi possível liberar o áudio."));
+    }
   };
   async function publishStream(stream,mode){
     if(!isAdmin()){stream.getTracks().forEach(t=>t.stop());return;}
