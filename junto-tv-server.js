@@ -55,9 +55,14 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
     socket.on("tv:control", data => {
       const room = socket.data.room, s = states.get(room);
-      if (!isRoomOwner(socket, room) || s?.mode !== "youtube" || s.hostId !== socket.id)
+      if (!isRoomOwner(socket, room) || s?.mode !== "youtube" || s.hostId !== socket.id) {
+        socket.emit("tv:control-result", { ok:false, message:"O comando não foi aceito: controle exclusivo do ADM." });
         return fail(socket, "Só o administrador controla o vídeo.");
-      if (isRateLimited(socket, "tv:control", 12, 5000)) return;
+      }
+      if (isRateLimited(socket, "tv:control", 12, 5000)) {
+        socket.emit("tv:control-result", { ok:false, message:"Comandos muito rápidos. Aguarde um instante." });
+        return fail(socket, "Comandos muito rápidos. Aguarde um instante.");
+      }
       const action = data?.action;
       if (!["play", "pause", "seek"].includes(action)) return;
       const now = Date.now();
@@ -70,6 +75,11 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       s.playing = action === "play" ? true : action === "pause" ? false : s.playing;
       s.updatedAt = now;
       s.revision = nextRevision();
+      const current = snapshot(room);
+      // Mensagem de controle de alta prioridade. Ouvintes aplicam antes de renderizar UI.
+      // Não há upload de vídeo: somente posição, ação e revisão no Socket.io.
+      io.to(room).emit("tv:playback", {...current, action});
+      socket.emit("tv:control-result", { ok:true, action, revision:s.revision });
       broadcast(room);
     });
 
