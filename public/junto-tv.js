@@ -22,6 +22,9 @@
     "#jfTvOverlay .jf-tv-tabs button[aria-selected=true]{background:#4779c8;color:#fff;border-color:#a6d1ff}",
     "#jfTvOverlay .jf-tv-screen{aspect-ratio:16/9;background:#070914;border-radius:9px;border:1px solid #55608c;display:grid;place-items:center;position:relative;min-height:185px;overflow:hidden}",
     "#jfTvOverlay .jf-tv-screen video,#jfTvOverlay .jf-tv-screen iframe,#jfTvOverlay #jfTvYoutubeWrapper{width:100%;height:100%;display:block;object-fit:contain}",
+    "#jfTvOverlay #jfTvYoutubeWrapper iframe{pointer-events:none!important}",
+    "#jfTvOverlay .jf-tv-youtube-shield{position:absolute;inset:0;z-index:3;display:grid;place-items:center;pointer-events:auto;background:linear-gradient(180deg,#0d123cdd,#090c26e9);color:#fff;text-align:center;font-size:15px;font-weight:bold;letter-spacing:.3px}",
+    "#jfTvOverlay .jf-tv-youtube-shield span{border:1px solid #6679ae;border-radius:10px;background:#171d47ed;padding:14px 22px;box-shadow:0 8px 24px #0007}",
     "#jfTvOverlay .jf-tv-empty{text-align:center;display:grid;gap:7px;justify-items:center;padding:18px;color:#cbd3ec;font-size:13px}",
     "#jfTvOverlay .jf-tv-empty span{font-size:34px}",
     "#jfTvOverlay .jf-tv-tools{display:grid;gap:10px}",
@@ -57,6 +60,7 @@
         '<div class="jf-tv-screen">',
           '<div class="jf-tv-empty" id="jfTvEmpty"><span>📺</span><strong>Nada na telinha ainda</strong><small>O administrador escolhe o que assistir.</small></div>',
           '<div id="jfTvYoutubeWrapper" hidden><div id="jfTvYoutubeFrame"></div></div>',
+          '<div id="jfTvYoutubeShield" class="jf-tv-youtube-shield" hidden><span>⏸ Pausado pelo administrador</span></div>',
           '<video id="jfTvStreamVideo" autoplay playsinline hidden></video>',
         '</div>',
         '<div class="jf-tv-tools" id="jfTvAdminTools" hidden>',
@@ -84,10 +88,11 @@
   ].join("");
   document.body.appendChild(overlay);
   const $=id=>document.getElementById(id);
-  const stage=$("jfTvStreamVideo"), frame=$("jfTvYoutubeFrame"), ytWrapper=$("jfTvYoutubeWrapper");
+  const stage=$("jfTvStreamVideo"), frame=$("jfTvYoutubeFrame"), ytWrapper=$("jfTvYoutubeWrapper"), pauseShield=$("jfTvYoutubeShield");
   let joined=false, room="", ownerId=null, state=null, currentTab="youtube";
   let player=null, playerReady=false, loadedId="", ytLoading=null, opened=false;
   let stateReceivedAt=Date.now(), syncAttempt=0, lastAdminSyncAt=0;
+  let youtubeHardStopped=false, viewerAudioEnabled=false, pauseRetryCount=0;
   let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, viewerRequested=false;
   const peers=new Map(), pendingIce=new Map();
   let activeStreamHost=null;
@@ -132,12 +137,14 @@
     if(isAdmin()&&sourceStream) stopBroadcast(); // nunca compartilhar uma tela com a janela fechada
     if(!isAdmin() && viewerRequested){socket.emit("tv:unwatch");viewerRequested=false;releasePeers();}
     if(playerReady && state?.mode==="youtube")try{player.pauseVideo()}catch(_){}
+    pauseShield.hidden=true;
   }
   $("jfTvClose").onclick=closeTv;
   overlay.addEventListener("click",event=>{if(event.target===overlay)closeTv();});
   launch.onclick=()=>{
     if(!joined)return;
     opened=true;overlay.hidden=false;updateUi();
+    socket.emit("tv:request-state");
     if(state?.mode==="youtube")void ensureYoutube();
     $("jfTvClose").focus();
   };
@@ -163,53 +170,91 @@
       (state.playing?Math.max(0,((Number(state.serverNow)||Number(state.updatedAt))-(Number(state.updatedAt)||0))/1000):0);
     return Math.max(0, baseline+(state.playing?Math.max(0,(Date.now()-stateReceivedAt)/1000):0));
   }
-  function syncYoutube(force=false){
-    if(!playerReady||!state||state.mode!=="youtube"||!opened)return;
+  function updateYoutubePauseShield(){
+    pauseShield.hidden=!opened||state?.mode!=="youtube"||Boolean(state.playing);
+  }
+  function hardStopYoutubeIfNecessary(expectedRevision){
+    if(!playerReady||!opened||state?.mode!=="youtube"||state.playing||state.revision!==expectedRevision)return;
     try{
-      const wanted=targetTime();
+      // Fallback para players que continuam avançando apesar do pauseVideo.
+      // stopVideo descarrega a execução, mas preservamos o ID/tempo para restaurar no PLAY.
+      if(player.getPlayerState()===1){
+        player.stopVideo();
+        youtubeHardStopped=true;
+        status("⏸ Pausa forçada: o YouTube não interrompeu na primeira tentativa.");
+      }
+    }catch(_){}
+  }
+  function syncYoutube(force=false){
+    if(!playerReady||state?.mode!=="youtube"||!opened)return;
+    const paused=!state.playing;
+    const wanted=targetTime();
+    try{
       const changed=loadedId!==state.videoId;
-      if(!state.playing){
-        // Primeiro PAUSAR, depois ajustar o relógio, por último PAUSAR de novo.
-        // Um seek do YouTube pode iniciar buffering e religar playback se veio
-        // logo após loadVideoById. Isso também cobre PAUSE recebido no carregamento.
+      if(paused){
+        // Sem seek enquanto pausado: alguns players recomeçam ao buscar posição.
         if(!isAdmin())player.mute();
         player.pauseVideo();
         if(changed){
           loadedId=state.videoId;
           player.cueVideoById({videoId:loadedId,startSeconds:wanted});
-        }else if(Math.abs(player.getCurrentTime()-wanted)>.65){
-          player.seekTo(wanted,true);
         }
         player.pauseVideo();
-      }else if(changed){
-        loadedId=state.videoId;
-        player.loadVideoById({videoId:loadedId,startSeconds:wanted});
       }else{
-        const current=player.getCurrentTime();
-        if(Math.abs(current-wanted)>1.15)player.seekTo(wanted,true);
-        if(force||player.getPlayerState()!==1)player.playVideo();
+        if(!isAdmin() || !viewerAudioEnabled){
+          // Navegadores exigem clique antes do som; vídeo pode começar silencioso.
+          if(!isAdmin()&&!viewerAudioEnabled)player.mute();
+        }
+        if(changed||youtubeHardStopped){
+          loadedId=state.videoId;
+          youtubeHardStopped=false;
+          player.loadVideoById({videoId:loadedId,startSeconds:wanted});
+        }else{
+          const current=player.getCurrentTime();
+          if(Math.abs(current-wanted)>1.25)player.seekTo(wanted,true);
+          if(force||player.getPlayerState()!==1)player.playVideo();
+        }
+        if(!isAdmin()&&viewerAudioEnabled)player.unMute();
       }
       $("jfTvSeek").max=String(Math.max(1,Math.floor(player.getDuration()||100)));
       $("jfTvSeek").value=String(Math.min(Number($("jfTvSeek").max),Math.floor(wanted)));
       $("jfTvTime").textContent=fmt(wanted);
-    }catch(error){console.debug("Junto TV: espera pelo player",error);}
+    }catch(error){console.debug("Junto TV: player ainda não pronto",error);}
+    updateYoutubePauseShield();
   }
   function retryYoutubePlayback(){
     const rev=state?.revision,vid=state?.videoId,token=++syncAttempt;
-    [160,460,1100].forEach(wait=>setTimeout(()=>{
+    [120,350,850].forEach(wait=>setTimeout(()=>{
       if(token!==syncAttempt||!opened||state?.revision!==rev||state?.videoId!==vid||!state?.playing)return;
       syncYoutube(false);
     },wait));
   }
   function enforceYoutubePause(){
     const rev=state?.revision,vid=state?.videoId,token=++syncAttempt;
-    // A IFrame API envia postMessage ao player, de forma assíncrona.
-    // Reforçar PAUSE durante buffering e ignorar reforços após um PLAY novo.
-    [90,250,650,1200].forEach(wait=>setTimeout(()=>{
+    pauseRetryCount=0;
+    // Reforçar pause no YouTube IFrame via postMessage. Reproduções externas
+    // (cliques, buffer e seek tardio) são capturadas também por onStateChange.
+    [80,220,500,950].forEach(wait=>setTimeout(()=>{
       if(token!==syncAttempt||!opened||state?.revision!==rev||state?.videoId!==vid||state?.playing!==false)return;
       syncYoutube(false);
+      if(wait===950)hardStopYoutubeIfNecessary(rev);
     },wait));
   }
+  function onYoutubePlayerState(event){
+    // Mesmo ocultando controles, onStateChange fecha a brecha quando o iframe
+    // muda para PLAYING independentemente de uma ordem do servidor.
+    if(!state||state.mode!=="youtube"||!opened)return;
+    const next=Number(event?.data);
+    if(!state.playing && (next===1||next===3)){
+      try{
+        player.mute();
+        player.pauseVideo();
+        if(++pauseRetryCount>3)hardStopYoutubeIfNecessary(state.revision);
+      }catch(_){}
+      updateYoutubePauseShield();
+    }
+  }
+
   async function ensureYoutube(){
     if(!opened||state?.mode!=="youtube")return;
     ytWrapper.hidden=false;
@@ -218,14 +263,16 @@
       if(!opened||state?.mode!=="youtube")return;
       if(!player){
         player=new YT.Player(frame,{height:"360",width:"640",videoId:state.videoId,
-          playerVars:{playsinline:1,controls:0,disablekb:1,rel:0,autoplay:0},
+          playerVars:{playsinline:1,controls:0,disablekb:1,fs:0,rel:0,autoplay:0},
           events:{onReady:()=>{
-              playerReady=true;loadedId="";
+              playerReady=true;loadedId="";youtubeHardStopped=false;
+              try{player.getIframe()?.setAttribute("tabindex","-1");}catch(_){}
               if(!isAdmin())try{player.mute();}catch(_){}
               syncYoutube(true);
               if(state?.playing)retryYoutubePlayback();
               else if(state?.mode==="youtube")enforceYoutubePause();
             },
+            onStateChange:onYoutubePlayerState,
             onError:()=>status("Este vídeo não permite reprodução incorporada ou não está disponível.")}});
       }else syncYoutube();
     }catch(e){status(e.message||"Não foi possível abrir o YouTube.");}
@@ -331,11 +378,17 @@
   $("jfTvSound").onclick=()=>{
     if(state?.mode==="youtube"){
       if(!playerReady)return status("Aguarde o player do YouTube carregar.");
+      viewerAudioEnabled=true;
       try{
-        player.unMute();
-        if(state.playing)player.playVideo();
-        else player.pauseVideo();
-        status("Som liberado. Play e pause são controlados pelo ADM.");
+        if(state.playing){
+          player.unMute();
+          player.playVideo();
+          status("Som habilitado. Só o ADM controla play/pause.");
+        }else{
+          // Jamais chamar playVideo para destravar áudio quando o vídeo está pausado.
+          player.pauseVideo();
+          status("Som habilitado para quando o ADM retomar o vídeo.");
+        }
       }catch(_){status("Toque de novo para liberar o som.");}
     }else stage.play().catch(()=>status("Não foi possível iniciar a reprodução."));
   };
@@ -425,6 +478,7 @@
     $("jfTvSound").hidden=!state;
     const showYoutube=state?.mode==="youtube"&&opened;
     ytWrapper.hidden=!showYoutube;
+    updateYoutubePauseShield();
     stage.hidden=!isStream||!opened;
     $("jfTvEmpty").hidden=!!state;
     if(!state){status(joined?(admin?"Escolha YouTube, vídeo local ou jogo para começar.":"Aguardando o administrador abrir a TV."):"Entre em uma sala para usar a TV.");}
@@ -455,6 +509,7 @@
     }
     if(!state||state.mode!=="youtube"){
       if(playerReady)try{player.pauseVideo()}catch(_){}
+      pauseShield.hidden=true;
     }
     if(!state||state.mode==="youtube"||prior?.mode!==state.mode||prior?.hostId!==state.hostId){
       if(prior?.mode!=="youtube" && viewerRequested){socket.emit("tv:unwatch");}
@@ -490,12 +545,17 @@
   }
   socket.on("left-room",reset);socket.on("room-kicked",reset);socket.on("disconnect",reset);
   setInterval(()=>{
-    if(!opened||!state||state.mode!=="youtube"||!playerReady||!state.playing)return;
+    if(!opened||!state||state.mode!=="youtube"||!playerReady)return;
+    // Leitura de segurança a cada segundo, mesmo pausado.
+    if(!state.playing){
+      if(player.getPlayerState()===1||player.getPlayerState()===3)syncYoutube(false);
+      return;
+    }
     if(isAdmin()){
-      if(Date.now()-lastAdminSyncAt<16000||player.getPlayerState()!==1)return;
+      if(Date.now()-lastAdminSyncAt<15000||player.getPlayerState()!==1)return;
       lastAdminSyncAt=Date.now();
       try{socket.emit("tv:sync",{seconds:player.getCurrentTime(),playing:true,revision:state.revision});}catch(_){}
     }else syncYoutube(false);
-  },2500);
+  },1000);
   updateUi();
 })();
