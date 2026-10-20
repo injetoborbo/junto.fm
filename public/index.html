@@ -697,6 +697,13 @@ body.jf-in-room #jfHomeSocial{display:none!important}
   .jf-top-actions,body:not(.jf-in-room) .jf-top-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
   .jf-community-top-dock .btn{flex-basis:45%}
 }
+/* Login administrativo discreto no hall; nao afeta os controles da sala. */
+.jf-admin-entry-access[hidden],.jf-admin-github-login[hidden]{display:none!important}
+.jf-admin-entry-access{display:flex;justify-content:flex-end;align-items:center;margin:8px 0 -7px}
+.jf-admin-github-login{width:36px;height:36px;min-width:36px;min-height:36px;padding:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink,#fff);background:color-mix(in srgb,var(--jf-glow,#29295b) 50%,transparent);border:1px solid color-mix(in srgb,var(--jf-secondary,#a2a5ff) 65%,transparent);border-radius:9px;cursor:pointer;transition:background .16s,border-color .16s,transform .16s}
+.jf-admin-github-login svg{display:block;flex:0 0 auto}
+.jf-admin-github-login:hover,.jf-admin-github-login:focus-visible{background:color-mix(in srgb,var(--jf-primary,#ff78d2) 24%,var(--jf-glow,#29295b));border-color:var(--jf-secondary,#a2a5ff);transform:translateY(-1px)}
+body.jf-in-room #jfAdminEntry{display:none!important}
 </style>
 <!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
 <link rel="stylesheet" href="/kodoku.css">
@@ -720,6 +727,11 @@ body.jf-in-room #jfHomeSocial{display:none!important}
       <span class="small" id="jfEntryAccountHint">Escolha como criar sua conta. Você também pode entrar nas salas sem cadastro.</span>
       <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Criar com Google</a>
       <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
+    </div>
+    <div id="jfAdminEntry" class="jf-admin-entry-access" hidden>
+      <button id="jfAdminLogin" class="jf-admin-github-login" type="button" hidden aria-label="Entrar como administrador pelo GitHub" title="Entrar como administrador pelo GitHub">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .8A11.2 11.2 0 0 0 8.46 22.63c.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.33-3.79-1.33-.51-1.29-1.25-1.63-1.25-1.63-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 .71 2.62.51 3.25.39.1-.72.39-1.22.71-1.5-2.5-.28-5.14-1.25-5.14-5.55 0-1.23.44-2.24 1.16-3.03-.12-.28-.5-1.43.11-2.99 0 0 .95-.3 3.08 1.15a10.7 10.7 0 0 1 5.61 0c2.14-1.45 3.09-1.15 3.09-1.15.61 1.56.23 2.71.11 2.99a4.36 4.36 0 0 1 1.16 3.03c0 4.31-2.65 5.27-5.17 5.54.4.35.76 1.03.76 2.07v3.08c0 .3.2.65.77.54A11.2 11.2 0 0 0 12 .8Z"/></svg>
+      </button>
     </div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
@@ -1003,8 +1015,7 @@ body.jf-in-room #jfHomeSocial{display:none!important}
   </section>
 <section id="jfAdminPanel" aria-label="Administração e skin exclusiva">
   <div class="jf-admin-info"><strong>👑 Guarda-roupa especial</strong><small id="jfAdminStatus">Verificando acesso...</small></div>
-  <div><button id="jfAdminLogin" type="button" hidden>Entrar como administrador</button>
-  <label id="jfAdminSkinWrap" hidden><input id="jfAdminSkin" type="checkbox"> Capitão Pátria ★</label>
+  <div><label id="jfAdminSkinWrap" hidden><input id="jfAdminSkin" type="checkbox"> Capitão Pátria ★</label>
   <button id="jfAdminLogout" type="button" hidden>Sair do admin</button></div>
 </section>
   <footer>Junto.fm · Projeto experimental de escuta compartilhada</footer>
@@ -2688,7 +2699,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
 <script>
 (()=> {
- const login=document.getElementById("jfAdminLogin"),logout=document.getElementById("jfAdminLogout"),wrap=document.getElementById("jfAdminSkinWrap"),check=document.getElementById("jfAdminSkin"),status=document.getElementById("jfAdminStatus");
+ const login=document.getElementById("jfAdminLogin"),entry=document.getElementById("jfAdminEntry"),logout=document.getElementById("jfAdminLogout"),wrap=document.getElementById("jfAdminSkinWrap"),check=document.getElementById("jfAdminSkin"),status=document.getElementById("jfAdminStatus");
  const apply=skin=>document.getElementById("jfMiniDj")?.classList.toggle("jf-homelander",skin==="capitao-patria");
  // Prévia visual exclusivamente local: não altera permissões nem envia skin pela rede.
  const isLocal=["localhost","127.0.0.1","[::1]"].includes(location.hostname);
@@ -2709,7 +2720,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
  }
  fetch("/api/admin/status",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
   status.textContent=data.admin?"Administrador autenticado":data.configured?"Acesso livre — sem login necessário":"Login administrativo ainda não configurado";
-  login.hidden=!data.configured||data.admin;logout.hidden=!data.admin;wrap.hidden=!data.admin;
+  login.hidden=!data.configured||data.admin;entry.hidden=login.hidden;logout.hidden=!data.admin;wrap.hidden=!data.admin;
   if(data.admin){check.checked=sessionStorage.getItem("jf-admin-skin")==="capitao-patria";apply(check.checked?"capitao-patria":"default");window.dispatchEvent(new CustomEvent("jf-admin-skin-changed",{detail:{skin:check.checked?"capitao-patria":"default"}}));}
  }).catch(()=>{status.textContent="Não foi possível verificar o administrador";});
  login.addEventListener("click",()=>{location.href="/auth/github";});
