@@ -128,7 +128,7 @@
     releasePeers();
   }
   function stopBroadcast(){
-    if(joined&&isAdmin()&&state&&state.mode!=="youtube")socket.emit("tv:stop");
+    if(joined&&isAdmin()&&sourceStream)socket.emit("tv:stop");
     stopLocal();
   }
   function closeTv(){
@@ -185,7 +185,7 @@
       if(!player){
         player=new YT.Player(frame,{height:"360",width:"640",videoId:state.videoId,
           playerVars:{playsinline:1,controls:0,disablekb:1,rel:0,autoplay:0},
-          events:{onReady:()=>{playerReady=true;loadedId=state?.videoId||"";syncYoutube();},
+          events:{onReady:()=>{playerReady=true;loadedId="";syncYoutube();},
             onError:()=>status("Este vídeo não permite reprodução incorporada ou não está disponível.")}});
       }else syncYoutube();
     }catch(e){status(e.message||"Não foi possível abrir o YouTube.");}
@@ -204,7 +204,9 @@
   function sendSignal(to,data){if(joined)socket.emit("tv:signal",{to,data});}
   function makePeer(id){
     const old=peers.get(id);if(old)old.close();
-    const pc=new RTCPeerConnection(ICE);peers.set(id,pc);pendingIce.delete(id);
+    const pc=new RTCPeerConnection(ICE);peers.set(id,pc);
+    // Candidatos ICE podem chegar ANTES da oferta; o espectador precisa guardá-los.
+    if(isAdmin())pendingIce.delete(id);
     pc.onicecandidate=event=>{if(event.candidate && peers.get(id)===pc)sendSignal(id,{type:"candidate",candidate:event.candidate.toJSON()});};
     pc.onconnectionstatechange=()=>{
       if(peers.get(id)!==pc)return;
