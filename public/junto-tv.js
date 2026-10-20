@@ -1,16 +1,13 @@
 (() => {
   "use strict";
-  // Junto.fm TV: YouTube = API de reprodução; gameplay/local = WebRTC exclusivamente
-  // com STUN. Esta conexão NUNCA recebe as credenciais TURN da música.
+  // TV via LiveKit Cloud. Música continua usando seu transporte independente.
   const socket = window.jfSocialSocket;
   const dance = document.getElementById("jfOpenDance");
   if (!socket || !dance) return;
-  // Vídeo é P2P direto (STUN, sem fallback TURN), separado da música.
-  // A taxa abaixo é um teto por espectador, não uma reserva ou bitrate garantido.
-  const ICE = Object.freeze({iceServers:[{urls:"stun:stun.l.google.com:19302"}],iceTransportPolicy:"all"});
+  // Bitrate de publicação global, não um custo por espectador.
   const VIDEO_MAX_HEIGHT = 1080;
   const VIDEO_MAX_FPS = 30;
-  const VIDEO_MAX_BITRATE = 6000000; // até 6 Mbps por espectador, WebRTC adapta à rede
+  const VIDEO_MAX_BITRATE = 3500000; // até 6 Mbps por espectador, WebRTC adapta à rede
 
   const style = document.createElement("style");
   style.textContent = [
@@ -80,18 +77,18 @@
           '<section id="jfTvLocalTools" class="jf-tv-tools" hidden>',
             '<label>Vídeo do seu computador (não será enviado ao Render)<input type="file" id="jfTvFile" accept="video/*"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartLocal">Transmitir arquivo</button></div>',
-            '<p class="jf-tv-note">O arquivo fica no seu PC. A reprodução (vídeo e áudio) segue por P2P direto. Prévia do ADM silenciosa para evitar áudio duplicado.</p>',
+            '<p class="jf-tv-note">O arquivo fica no seu PC. A reprodução (vídeo e áudio) segue por LiveKit. Prévia do ADM silenciosa para evitar áudio duplicado.</p>',
           '</section>',
           '<section id="jfTvGameTools" class="jf-tv-tools" hidden>',
             '<label class="jf-tv-audio-choice"><input id="jfTvCaptureAudio" type="checkbox" checked> 🔊 Transmitir áudio da tela/aba</label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartGame">🖥️ Compartilhar tela ou janela</button></div>',
-            '<p class="jf-tv-note">Escolha <strong>aba, janela ou tela inteira</strong>. Para transmitir som, marque também <strong>Compartilhar áudio</strong> no seletor do navegador (se disponível). O Chrome/Edge costuma oferecer áudio de abas e, no Windows, pode oferecer áudio do sistema ou de janelas. Nem toda janela/navegador permite captura de som. Até 1080p / 30 FPS / 6 Mbps por ouvinte. Se a música já estiver sendo transmitida separadamente, evite capturá-la outra vez.</p>',
+            '<p class="jf-tv-note">Escolha <strong>aba, janela ou tela inteira</strong>. Para transmitir som, marque também <strong>Compartilhar áudio</strong> no seletor do navegador (se disponível). O Chrome/Edge costuma oferecer áudio de abas e, no Windows, pode oferecer áudio do sistema ou de janelas. Nem toda janela/navegador permite captura de som. Até 1080p / 30 FPS / 3,5 Mbps por ouvinte. Se a música já estiver sendo transmitida separadamente, evite capturá-la outra vez.</p>',
           '</section>',
           '<div class="jf-tv-actions"><button type="button" class="jf-tv-danger" id="jfTvStop">■ Encerrar TV</button></div>',
         '</div>',
-        '<div class="jf-tv-actions" id="jfTvViewerTools" hidden><button type="button" id="jfTvWatch">▶ Assistir ao vídeo P2P</button><button type="button" id="jfTvSound">🔊 Ativar reprodução/som</button></div>',
+        '<div class="jf-tv-actions" id="jfTvViewerTools" hidden><button type="button" id="jfTvWatch">▶ Assistir ao vídeo</button><button type="button" id="jfTvSound">🔊 Ativar reprodução/som</button></div>',
         '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
-        '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: somente STUN/P2P, sem credenciais TURN nem mídia enviada ao servidor. Se a conexão direta falhar, não haverá retransmissão pela Metered.ca.</p>',
+        '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: LiveKit Cloud para tela e arquivos, sem enviar o arquivo ao Render. A música continua independente.</p>',
       '</div>',
     '</section>'
   ].join("");
@@ -105,8 +102,7 @@
   // Só usar o botão manual quando o próprio navegador bloquear autoplay com som.
   let youtubeHardStopped=false, viewerAudioEnabled=true, viewerAudioBlocked=false, pauseRetryCount=0;
   let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, viewerRequested=false;
-  const peers=new Map(), pendingIce=new Map();
-  let activeStreamHost=null;
+  let lkRoom=null, lkLoadPromise=null, lkGeneration=0;
 
   function isAdmin(){return joined && socket.id===ownerId;}
   function status(message){$("jfTvStatus").textContent=message;}
@@ -129,8 +125,9 @@
     $("jfTvGameTools").hidden=mode!=="screen";
   }
   function releasePeers(){
-    for(const pc of peers.values()) try{pc.close()}catch(_){}
-    peers.clear();pendingIce.clear();stage.srcObject=null;
+    ++lkGeneration;
+    if(lkRoom){const old=lkRoom;lkRoom=null;void old.disconnect().catch(()=>{});}
+    stage.srcObject=null;
   }
   function stopLocal(){
     if(sourceStream){for(const track of sourceStream.getTracks())track.stop();sourceStream=null;}
@@ -327,84 +324,73 @@
   $("jfTvPause").onclick=()=>sendYoutubeControl("pause");
   $("jfTvSeek").addEventListener("change",()=>sendYoutubeControl("seek",Number($("jfTvSeek").value)));
 
-  function sendSignal(to,data){if(joined)socket.emit("tv:signal",{to,data});}
-  function makePeer(id){
-    const old=peers.get(id);if(old)old.close();
-    const pc=new RTCPeerConnection(ICE);peers.set(id,pc);
-    // Candidatos ICE podem chegar ANTES da oferta; o espectador precisa guardá-los.
-    if(isAdmin())pendingIce.delete(id);
-    pc.onicecandidate=event=>{if(event.candidate && peers.get(id)===pc)sendSignal(id,{type:"candidate",candidate:event.candidate.toJSON()});};
-    pc.onconnectionstatechange=()=>{
-      if(peers.get(id)!==pc)return;
-      if(pc.connectionState==="connected")status("🟢 Vídeo conectado diretamente por P2P. Sem TURN.");
-      if(pc.connectionState==="failed")status("P2P indisponível nesta rede. Vídeo interrompido; TURN não será usado.");
-    };
-    if(!isAdmin()){
-      pc.ontrack=event=>{
-        if(peers.get(id)!==pc)return;
-        const stream=event.streams?.[0]||new MediaStream([event.track]);
-        if(stage.srcObject!==stream)stage.srcObject=stream;
-        stage.muted=false;
-        stage.play().catch(()=>status("Clique em Ativar reprodução/som para liberar o vídeo."));
-      };
+  async function loadLivekit(){
+    if(window.LivekitClient)return window.LivekitClient;
+    if(!lkLoadPromise)lkLoadPromise=new Promise((resolve,reject)=>{
+      const script=document.createElement("script");
+      script.src="https://cdn.jsdelivr.net/npm/livekit-client@2.15.0/dist/livekit-client.umd.js";
+      script.onload=()=>window.LivekitClient?resolve(window.LivekitClient):reject(new Error("SDK LiveKit não carregou."));
+      script.onerror=()=>reject(new Error("Falha ao baixar biblioteca LiveKit."));
+      document.head.appendChild(script);
+    }).catch(error=>{lkLoadPromise=null;throw error;});
+    return lkLoadPromise;
+  }
+  function getLivekitToken(publish){
+    return new Promise((resolve,reject)=>{
+      socket.timeout(9000).emit("tv:livekit-token",{publish},(error,response)=>{
+        if(error)return reject(new Error("Servidor não respondeu à autorização LiveKit."));
+        if(!response?.ok)return reject(new Error(response?.error||"LiveKit indisponível."));
+        resolve(response);
+      });
+    });
+  }
+  async function connectLivekit(publish,stream){
+    const generation=++lkGeneration;
+    if(lkRoom){const old=lkRoom;lkRoom=null;await old.disconnect().catch(()=>{});}
+    const Client=await loadLivekit();
+    const auth=await getLivekitToken(publish);
+    if(generation!==lkGeneration||!joined||(publish&&!isAdmin()))return;
+    const roomInstance=new Client.Room({adaptiveStream:true,dynacast:true});
+    lkRoom=roomInstance;
+    roomInstance.on(Client.RoomEvent.Disconnected,()=>{
+      if(lkRoom===roomInstance && generation===lkGeneration)status("Conexão com LiveKit encerrada.");
+    });
+    if(!publish){
+      roomInstance.on(Client.RoomEvent.TrackSubscribed,(track,publication,participant)=>{
+        if(track.kind===Client.Track.Kind.Video){
+          track.attach(stage);
+          stage.muted=false;stage.hidden=false;
+          stage.play().catch(()=>status("Clique em Ativar reprodução/som."));
+        }else if(track.kind===Client.Track.Kind.Audio){
+          track.attach();
+        }
+      });
+      roomInstance.on(Client.RoomEvent.TrackUnsubscribed,track=>track.detach());
     }
-    return pc;
-  }
-  async function flushIce(id,pc){
-    const queued=pendingIce.get(id)||[];pendingIce.delete(id);
-    for(const c of queued)try{await pc.addIceCandidate(c)}catch(_){}
-  }
-  async function offerToViewer(id){
-    if(!isAdmin()||!sourceStream||state?.hostId!==socket.id)return;
-    const pc=makePeer(id);
-    for(const track of sourceStream.getTracks()){
-      const sender=pc.addTrack(track,sourceStream);
-      if(track.kind==="video"){
-        const p=sender.getParameters();if(!p.encodings?.length)p.encodings=[{}];
-        p.encodings[0].maxBitrate=VIDEO_MAX_BITRATE;
-        p.encodings[0].maxFramerate=VIDEO_MAX_FPS;
-        const h=track.getSettings?.().height||0;
-        // Nunca reduzir capturas 1080p para 720p; só comprimir se a fonte
-        // for maior que Full HD. O navegador continua ajustando à rede.
-        if(h>VIDEO_MAX_HEIGHT)p.encodings[0].scaleResolutionDownBy=h/VIDEO_MAX_HEIGHT;
-        Promise.resolve(sender.setParameters(p)).catch(error=>
-          console.warn("Junto.fm TV: navegador não aceitou o perfil Full HD:",error));
+    await roomInstance.connect(auth.url,auth.token,{autoSubscribe:!publish});
+    if(generation!==lkGeneration){await roomInstance.disconnect();return;}
+    if(publish){
+      if(!stream||sourceStream!==stream){await roomInstance.disconnect();return;}
+      for(const track of stream.getTracks()){
+        const options=track.kind==="video"?
+          {name:"junto-tv-video",source:Client.Track.Source.ScreenShare,
+            videoEncoding:{maxBitrate:VIDEO_MAX_BITRATE,maxFramerate:VIDEO_MAX_FPS},simulcast:true}:
+          {name:"junto-tv-audio",source:Client.Track.Source.ScreenShareAudio};
+        await roomInstance.localParticipant.publishTrack(track,options);
       }
-    }
-    try{
-      const offer=await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      sendSignal(id,{type:"offer",sdp:pc.localDescription.sdp});
-    }catch(e){status("Não consegui iniciar o vídeo P2P: "+e.message);}
+      status("🟢 TV ao vivo pelo LiveKit, com qualidade adaptativa.");
+    }else status("🟢 Conectado ao vídeo pelo LiveKit.");
   }
-  socket.on("tv:viewer-joined",({viewerId}={})=>{if(isAdmin()&&sourceStream&&typeof viewerId==="string")void offerToViewer(viewerId);});
-  socket.on("tv:viewer-left",({viewerId}={})=>{const pc=peers.get(viewerId);if(pc){pc.close();peers.delete(viewerId);}pendingIce.delete(viewerId);});
-  socket.on("tv:signal",async({from,data}={})=>{
-    if(!joined||!opened||!state||state.mode==="youtube"||!from||!data)return;
-    if(!isAdmin()&&from!==state.hostId)return;
-    try{
-      if(data.type==="offer" && !isAdmin() && viewerRequested){
-        activeStreamHost=from;
-        const pc=makePeer(from);
-        await pc.setRemoteDescription({type:"offer",sdp:data.sdp});
-        await flushIce(from,pc);
-        const answer=await pc.createAnswer();await pc.setLocalDescription(answer);
-        sendSignal(from,{type:"answer",sdp:pc.localDescription.sdp});
-      }else if(data.type==="answer"&&isAdmin()){
-        const pc=peers.get(from);
-        if(pc?.signalingState==="have-local-offer"){await pc.setRemoteDescription({type:"answer",sdp:data.sdp});await flushIce(from,pc);}
-      }else if(data.type==="candidate"){
-        const pc=peers.get(from);
-        if(pc?.remoteDescription)await pc.addIceCandidate(data.candidate);
-        else {const q=pendingIce.get(from)||[];if(q.length<80)q.push(data.candidate);pendingIce.set(from,q);}
-      }
-    }catch(e){status("Falha na conexão direta: "+e.message);}
-  });
-  $("jfTvWatch").onclick=()=>{
+  socket.on("tv:viewer-joined",()=>{});
+  socket.on("tv:viewer-left",()=>{});
+  $("jfTvWatch").onclick=async()=>{
     if(isAdmin()||!joined||!state||state.mode==="youtube")return;
     viewerRequested=true;releasePeers();
-    socket.emit("tv:watch");status("Conectando diretamente ao PC do administrador...");
+    socket.emit("tv:watch");
     $("jfTvWatch").disabled=true;
+    status("Conectando à transmissão LiveKit...");
+    try{await connectLivekit(false);}
+    catch(error){viewerRequested=false;releasePeers();status("Falha ao assistir: "+error.message);updateUi();}
   };
   $("jfTvSound").onclick=()=>{
     if(state?.mode==="youtube"){
@@ -445,7 +431,8 @@
     stage.muted=true;stage.srcObject=stream;
     stage.play().catch(()=>{});
     socket.emit("tv:start-stream",{mode});
-    status("Transmissão iniciada. Vídeo só chega a quem clicar em Assistir. Apenas P2P.");
+    try{await connectLivekit(true,stream);}
+    catch(error){status("Falha ao publicar no LiveKit: "+error.message);stopBroadcast();}
   }
   $("jfTvStartGame").onclick=async()=>{
     if(!isAdmin()||!navigator.mediaDevices?.getDisplayMedia)return status("Seu navegador não suporta compartilhar janela.");
@@ -465,11 +452,11 @@
       const hasAudio=stream.getAudioTracks().some(track=>track.readyState!=="ended");
       await publishStream(stream,"screen");
       if(wantAudio && hasAudio){
-        status("🟢 Tela + áudio capturados. Transmitindo diretamente por P2P, sem TURN.");
+        status("🟢 Tela + áudio capturados. Transmitindo diretamente pelo LiveKit, sem TURN.");
       }else if(wantAudio){
         status("⚠️ Tela transmitindo SEM áudio: o navegador não forneceu faixa de som. Compartilhe uma aba com 'Compartilhar áudio' marcado ou selecione áudio do sistema, se disponível, e reinicie a transmissão.");
       }else{
-        status("🖥️ Tela transmitindo sem áudio por escolha do administrador (P2P, sem TURN).");
+        status("🖥️ Tela transmitindo sem áudio por escolha do administrador (LiveKit).");
       }
     }catch(e){if(e.name!=="NotAllowedError")status("Não foi possível capturar a tela: "+e.message);}
   };
@@ -508,7 +495,7 @@
       if(!captured.getVideoTracks().length)throw new Error("Vídeo não disponível para captura.");
       await publishStream(captured,"local");
       stage.muted=true;
-      status("Arquivo local por P2P, com áudio quando o formato permitir. Nenhum arquivo foi enviado ao servidor.");
+      status("Arquivo local pelo LiveKit, com áudio quando o formato permitir. Nenhum arquivo foi enviado ao servidor.");
     }catch(e){
       status("Falha no arquivo local: "+e.message);
       stopLocal();
@@ -536,7 +523,7 @@
     $("jfTvEmpty").hidden=!!state;
     if(!state){status(joined?(admin?"Escolha YouTube, vídeo local ou jogo para começar.":"Aguardando o administrador abrir a TV."):"Entre em uma sala para usar a TV.");}
     else if(state.mode==="youtube"){status("YouTube sincronizado. Apenas o ADM controla o vídeo; tráfego do vídeo fora da Metered.ca.");}
-    else status(admin?"Vídeo P2P sem TURN. Fechar a janela encerra a captura.":viewerRequested?"Aguardando conexão P2P direta...":"Clique em Assistir para receber a transmissão.");
+    else status(admin?"Vídeo LiveKit. Fechar a janela encerra a captura.":viewerRequested?"Aguardando conexão LiveKit...":"Clique em Assistir para receber a transmissão.");
     if(admin)showTab(currentTab);
     if(isAdmin()&&sourceStream&&isStream&&state.hostId===socket.id && stage.srcObject!==sourceStream)stage.srcObject=sourceStream;
     if(showYoutube)void ensureYoutube();
