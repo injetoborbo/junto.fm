@@ -704,6 +704,21 @@ body.jf-in-room #jfHomeSocial{display:none!important}
 .jf-admin-github-login svg{display:block;flex:0 0 auto}
 .jf-admin-github-login:hover,.jf-admin-github-login:focus-visible{background:color-mix(in srgb,var(--jf-primary,#ff78d2) 24%,var(--jf-glow,#29295b));border-color:var(--jf-secondary,#a2a5ff);transform:translateY(-1px)}
 body.jf-in-room #jfAdminEntry{display:none!important}
+/* Ações de sala: um dock compacto junto ao player, fora dos participantes. */
+#jfMobileFunBar.jf-mobile-fun-bar{display:flex;align-items:center;justify-content:flex-start;gap:5px;position:fixed;left:9px;bottom:12px;z-index:10021;width:max-content;max-width:calc(100vw - 130px);margin:0;padding:4px 6px;border-radius:15px;background:rgba(9,15,35,.32);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+#jfMobileFunBar .jf-fun-image-btn{position:relative!important;inset:auto!important;flex:0 0 61px;width:61px!important;height:61px!important;min-width:0!important;min-height:0!important;margin:0!important;padding:2px!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:9px;cursor:pointer;display:grid;place-items:center;transition:transform .16s ease,filter .16s ease}
+#jfMobileFunBar .jf-fun-image-btn img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;filter:drop-shadow(0 3px 3px #0008)}
+#jfMobileFunBar .jf-fun-image-btn:not(:disabled):hover{transform:translateY(-4px) scale(1.07)!important}
+#jfMobileFunBar .jf-fun-image-btn:disabled{opacity:.48;cursor:default}
+#jfMobileFunBar #jfBananaThrow.jf-banana-button{position:relative!important;inset:auto!important;left:auto!important;bottom:auto!important;flex:0 0 70px;width:70px!important;height:70px!important;margin:0!important;transform:none}
+#jfMobileFunBar #jfClubTomato.jf-tomato-launcher{position:relative!important;inset:auto!important;left:auto!important;bottom:auto!important;flex:0 0 61px;width:61px!important;height:61px!important;margin:0!important;transform:none}
+#jfMobileFunBar #jfOpenDance.jf-dance-launch{position:relative!important;inset:auto!important;bottom:auto!important;left:auto!important;right:auto!important;z-index:auto!important}
+@media(max-width:760px){
+ body.jf-in-room #jfMobileFunBar.jf-mobile-fun-bar{position:relative!important;inset:auto!important;left:auto!important;bottom:auto!important;margin:10px 0 4px!important;padding:0!important;max-width:100%;width:100%;min-height:55px;gap:7px;background:transparent;backdrop-filter:none}
+ body.jf-in-room #jfMobileFunBar .jf-fun-image-btn{flex-basis:52px;width:52px!important;height:52px!important}
+ body.jf-in-room #jfMobileFunBar #jfBananaThrow.jf-banana-button{flex-basis:53px;width:53px!important;height:53px!important}
+ body.jf-in-room #jfMobileFunBar #jfClubTomato.jf-tomato-launcher{flex-basis:52px;width:52px!important;height:52px!important}
+}
 </style>
 <!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
 <link rel="stylesheet" href="/kodoku.css">
@@ -764,8 +779,10 @@ body.jf-in-room #jfAdminEntry{display:none!important}
         </div>
       </div>
     </div>
-    <div id="jfMobileFunBar" class="jf-mobile-fun-bar" aria-label="Arremessos na sala">
+    <div id="jfMobileFunBar" class="jf-mobile-fun-bar" aria-label="Ações da sala">
       <button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
+      <button type="button" id="jfTvLaunch" class="jf-fun-image-btn" aria-label="Abrir Junto.fm TV" title="Abrir Junto.fm TV" disabled><img id="jfTvLaunchIcon" alt="" width="60" height="60"></button>
+      <button type="button" id="jfOpenDance" class="jf-fun-image-btn jf-dance-launch" aria-label="Abrir pista de dança" title="Abrir pista de dança"><img id="jfDanceLaunchIcon" alt="" width="60" height="60"></button>
     </div>
     <div class="spotify-actions">
       <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Conectar Spotify</a>
@@ -816,7 +833,6 @@ body.jf-in-room #jfAdminEntry{display:none!important}
   </section>
   <aside class="panel jf-room-people" aria-labelledby="jfPeopleHeading">
     <h2 id="jfPeopleHeading" style="margin:0 0 10px">Quem está na sala</h2>
-    <button type="button" class="btn jf-dance-launch" id="jfOpenDance">🪩 Abrir pista de dança</button>
     <p class="small" style="margin-top:0">Participantes conectados agora.</p>
     <div id="jfPeople" class="jf-people"><p class="small">Entre em uma sala para ver os participantes.</p></div>
   </aside>
@@ -2720,9 +2736,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
  }
  fetch("/api/admin/status",{credentials:"same-origin"}).then(r=>r.json()).then(data=>{
   status.textContent=data.admin?"Administrador autenticado":data.configured?"Acesso livre — sem login necessário":"Login administrativo ainda não configurado";
-  login.hidden=!data.configured||data.admin;entry.hidden=login.hidden;logout.hidden=!data.admin;wrap.hidden=!data.admin;
+  // O ícone é sempre apresentado no hall; somente o servidor concede acesso.
+  login.hidden=Boolean(data.admin);entry.hidden=Boolean(data.admin);
+  login.title=data.configured?"Entrar como administrador pelo GitHub":"GitHub administrativo não configurado neste servidor";
+  logout.hidden=!data.admin;wrap.hidden=!data.admin;
   if(data.admin){check.checked=sessionStorage.getItem("jf-admin-skin")==="capitao-patria";apply(check.checked?"capitao-patria":"default");window.dispatchEvent(new CustomEvent("jf-admin-skin-changed",{detail:{skin:check.checked?"capitao-patria":"default"}}));}
- }).catch(()=>{status.textContent="Não foi possível verificar o administrador";});
+ }).catch(()=>{status.textContent="Não foi possível verificar o administrador";login.hidden=false;entry.hidden=false;});
  login.addEventListener("click",()=>{location.href="/auth/github";});
  logout.addEventListener("click",async()=>{await fetch("/api/admin/logout",{method:"POST"});sessionStorage.removeItem("jf-admin-skin");location.reload();});
  check.addEventListener("change",async()=>{
@@ -2739,6 +2758,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 <script type="module" src="/banana-barrel.js"></script>
 <script defer src="/social-account-ui.js"></script>
 <script defer src="/kodoku-skip.js"></script>
+<script defer src="/junto-tv-icons.js"></script>
 <script defer src="/junto-tv.js"></script>
 </body>
 </html>
