@@ -361,7 +361,9 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 #jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(568px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
 #jfDanceModal[hidden]{display:none!important}
 #jfDanceModal .jf-dance-modal{box-shadow:0 16px 55px #10254388,0 0 0 2px #cbe7ff;max-height:calc(100dvh - 28px);overflow:auto}
-#jfDanceModal .jf-dance-modal .jf-modal-head{position:sticky;top:0;z-index:2;padding:4px 0 7px;background:var(--jf-panel,#f1f7ff)}
+#jfDanceModal .jf-dance-modal .jf-modal-head{position:sticky;top:0;z-index:2;padding:4px 0 7px;background:transparent;color:inherit}
+#jfDanceModal .jf-dance-modal .jf-modal-head h2{color:inherit}
+#jfDanceModal .jf-dance-modal .jf-modal-head .small{color:inherit;opacity:.78}
 
 .jf-dance-modal{width:100%;max-width:100%;overflow:auto;padding:13px!important}
 .jf-dance-modal .jf-modal-head{margin-bottom:9px}
@@ -1077,7 +1079,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
-<script type="module" src="/dance-floor.js"></script>
+<script type="module" src="/dance-floor.js?v=club-walk-2"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
