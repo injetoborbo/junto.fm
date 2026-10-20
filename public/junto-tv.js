@@ -23,7 +23,7 @@
     "#jfTvOverlay .jf-tv-tabs button{flex:1;min-width:100px;background:#252d56;border:1px solid #7c8bbf;color:#dce4ff;border-radius:8px;padding:10px 8px;cursor:pointer;font-size:12px;font-weight:bold}",
     "#jfTvOverlay .jf-tv-tabs button[aria-selected=true]{background:#4779c8;color:#fff;border-color:#a6d1ff}",
     "#jfTvOverlay .jf-tv-screen{aspect-ratio:16/9;background:#070914;border-radius:9px;border:1px solid #55608c;display:grid;place-items:center;position:relative;min-height:185px;overflow:hidden}",
-    "#jfTvOverlay .jf-tv-screen video,#jfTvOverlay .jf-tv-screen iframe,#jfTvOverlay #jfTvYoutubeFrame{width:100%;height:100%;display:block;object-fit:contain}",
+    "#jfTvOverlay .jf-tv-screen video,#jfTvOverlay .jf-tv-screen iframe,#jfTvOverlay #jfTvYoutubeWrapper{width:100%;height:100%;display:block;object-fit:contain}",
     "#jfTvOverlay .jf-tv-empty{text-align:center;display:grid;gap:7px;justify-items:center;padding:18px;color:#cbd3ec;font-size:13px}",
     "#jfTvOverlay .jf-tv-empty span{font-size:34px}",
     "#jfTvOverlay .jf-tv-tools{display:grid;gap:10px}",
@@ -61,7 +61,7 @@
         '</div>',
         '<div class="jf-tv-screen">',
           '<div class="jf-tv-empty" id="jfTvEmpty"><span>📺</span><strong>Nada na telinha ainda</strong><small>O administrador escolhe o que assistir.</small></div>',
-          '<div id="jfTvYoutubeFrame" hidden></div>',
+          '<div id="jfTvYoutubeWrapper" hidden><div id="jfTvYoutubeFrame"></div></div>',
           '<video id="jfTvStreamVideo" autoplay playsinline hidden></video>',
         '</div>',
         '<div class="jf-tv-tools" id="jfTvAdminTools" hidden>',
@@ -89,7 +89,7 @@
   ].join("");
   document.body.appendChild(overlay);
   const $=id=>document.getElementById(id);
-  const stage=$("jfTvStreamVideo"), frame=$("jfTvYoutubeFrame");
+  const stage=$("jfTvStreamVideo"), frame=$("jfTvYoutubeFrame"), ytWrapper=$("jfTvYoutubeWrapper");
   let joined=false, room="", ownerId=null, state=null, currentTab="youtube";
   let player=null, playerReady=false, loadedId="", ytLoading=null, opened=false;
   let sourceStream=null, localVideo=null, localUrl="", viewerRequested=false;
@@ -177,7 +177,7 @@
   }
   async function ensureYoutube(){
     if(!opened||state?.mode!=="youtube")return;
-    frame.hidden=false;
+    ytWrapper.hidden=false;
     try{
       const YT=await loadYoutubeApi();
       if(!opened||state?.mode!=="youtube")return;
@@ -335,13 +335,14 @@
     $("jfTvWatch").disabled=viewerRequested;
     $("jfTvSound").hidden=!state;
     const showYoutube=state?.mode==="youtube"&&opened;
-    frame.hidden=!showYoutube;
+    ytWrapper.hidden=!showYoutube;
     stage.hidden=!isStream||!opened;
     $("jfTvEmpty").hidden=!!state;
     if(!state){status(joined?(admin?"Escolha YouTube, vídeo local ou jogo para começar.":"Aguardando o administrador abrir a TV."):"Entre em uma sala para usar a TV.");}
     else if(state.mode==="youtube"){status("YouTube sincronizado. Apenas o ADM controla o vídeo; tráfego do vídeo fora da Metered.ca.");}
     else status(admin?"Vídeo P2P sem TURN. Fechar a janela encerra a captura.":viewerRequested?"Aguardando conexão P2P direta...":"Clique em Assistir para receber a transmissão.");
     if(admin)showTab(currentTab);
+    if(isAdmin()&&sourceStream&&isStream&&state.hostId===socket.id && stage.srcObject!==sourceStream)stage.srcObject=sourceStream;
     if(showYoutube)void ensureYoutube();
   }
   socket.on("tv:state",incoming=>{
