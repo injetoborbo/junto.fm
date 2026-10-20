@@ -28,7 +28,7 @@ html[data-jf-theme="tsimiomi"] body::after {
 html[data-jf-theme="tsimiomi"] body::before {
   z-index:0 !important;
   left:50% !important;
-  bottom:0 !important;
+  bottom:18vh !important;
   width:clamp(180px,26vw,420px) !important;
   height:min(76vh,720px) !important;
   translate:-50% 0;
@@ -86,7 +86,7 @@ html[data-jf-theme="tsimiomi"] .small{color:#f1cac6;}
   html[data-jf-theme="tsimiomi"] body::before{
     width:min(58vw,285px) !important;
     height: min(53vh,470px) !important;
-    bottom:0 !important;
+    bottom:13vh !important;
   }
   html[data-jf-theme="tsimiomi"] body::after{
     height:auto !important;
@@ -97,6 +97,6 @@ html[data-jf-theme="tsimiomi"] .small{color:#f1cac6;}
   }
 }
 @media(max-height:500px) and (orientation:landscape){
-  html[data-jf-theme="tsimiomi"] body::before{height:65vh !important;width:20vw !important;}
+  html[data-jf-theme="tsimiomi"] body::before{height:65vh !important;width:20vw !important;bottom:10vh !important;}
   html[data-jf-theme="tsimiomi"] body::after{height:auto !important;bottom:-20vh !important;}
 }
