@@ -7,7 +7,7 @@ Branch: feature/junto-fm-tv-prototype. **Não foi feito merge na main.**
 * YouTube: cada participante carrega o player **diretamente do YouTube**; o Socket.io sincroniza ID, play/pause, posição e relógio. Os vídeos não atravessam o Render nem o TURN.
 * Transmissão de tela (janela, aba, monitor ou jogo) e vídeo local: conexões WebRTC **separadas** da música, com **somente STUN** (stun:stun.l.google.com:19302) e **sem servidor TURN**. Se o P2P direto não funcionar, o vídeo **não conecta** em vez de usar a Metered.
 * Apenas quem clica **Assistir ao vídeo P2P** recebe um fluxo; no máximo **4 espectadores**. Novo teto de codificação por espectador: **até 6 Mbps de vídeo**, máximo **30 FPS**, resolução ideal **1920 × 1080**, com redução apenas para fonte acima de 1080p. Valores reais são adaptativos e dependem da rede, origem e navegador.
-* Nenhum arquivo local é enviado ou armazenado no backend. Áudio de arquivos locais é capturado com Web Audio quando disponível; captura de jogo é **sem áudio**, preservando a transmissão musical atual.
+* Nenhum arquivo local é enviado ou armazenado no backend. Áudio de arquivos locais é capturado com Web Audio quando disponível; captura de tela pede **áudio ativado por padrão**, mas depende do navegador oferecer e o ADM selecionar **Compartilhar áudio**; é possível desativar para evitar duplicação da música.
 * A infraestrutura **da música** permanece como estava e **ainda pode usar TURN**. Não há teto de uso mensal imposto pelo protótipo para essa parte.
 * P2P pode exigir até cerca de **24 Mbps de upload** do transmissor para quatro espectadores (6 Mbps por destino), além da música e sinalização. **600 Mbps de download não garantem 600 Mbps de upload.** Na ausência de banda suficiente o WebRTC reduz a qualidade. O relay TURN de vídeo continua desativado.
 
@@ -17,7 +17,7 @@ Os ícones **📺 TV PS1** e **🪩 bola de balada PS1** aparecem no dock ao lad
 
 1. **YouTube:** ADM cola link e controla iniciar/pausar/posição. Outros só assistem. Entradas tardias carregam o estado atual; sincronização periódica tenta corrigir diferenças.
 2. **Vídeo local:** ADM escolhe um arquivo de vídeo no próprio PC e transmite sua reprodução por P2P. Áudio e vídeo dependem dos codecs e da capacidade do navegador. Prévia local fica sem áudio para evitar duplicação.
-3. **Transmissão de tela:** ADM clica em **Compartilhar tela ou janela** e, no seletor nativo do navegador, escolhe **aba, janela ou tela inteira** (jogos inclusive). Por segurança, **fechar a janelinha encerra a captura**. O áudio dessa captura fica desligado para não se misturar com a música; vídeo é 1080p/30 FPS com teto de 6 Mbps por espectador, quando suportado.
+3. **Transmissão de tela:** ADM clica em **Compartilhar tela ou janela** e, no seletor nativo do navegador, escolhe **aba, janela ou tela inteira** (jogos inclusive). Por segurança, **fechar a janelinha encerra a captura**. O áudio da captura fica **ligado por padrão** (opção desmarcável). No seletor do navegador, o ADM deve também habilitar **Compartilhar áudio**, quando aparecer. Se o navegador não disponibilizar áudio, a interface informa. Vídeo é 1080p/30 FPS com teto de 6 Mbps por espectador, quando suportado.
 
 Os espectadores não veem comandos administrativos. Eles escolhem se desejam assistir a um stream P2P (para não aumentar upload sem necessidade). Se o navegador bloquear autoplay, clicam em **Ativar reprodução/som**.
 
@@ -74,7 +74,15 @@ Depois dos testes no localhost com delay e o ouvinte continuando a assistir dura
 ## Perfil de vídeo aprimorado (transmissão de tela)
 
 * Nova aba **Transmissão de tela** substitui o antigo rótulo **Jogo**, preservando o modo interno `screen` no servidor.
-* `getDisplayMedia`: resolução *ideal* 1920 × 1080, no máximo 30 FPS, sem áudio da captura.
+* `getDisplayMedia`: resolução *ideal* 1920 × 1080, no máximo 30 FPS, **áudio opcional (ativado por padrão)** e indicações para áudio da aba, janela ou sistema conforme o navegador permitir. AudioTracks capturados entram no mesmo MediaStream P2P do vídeo.
 * `RTCRtpSender.setParameters`: teto de 6.000.000 bits/s por espectador; evitar reduzir 1080p para 720p; capturas superiores a 1080p são limitadas antes da codificação quando suportado.
 * ICE do vídeo continua somente STUN (`iceTransportPolicy: all`, `iceServers` apenas com STUN). **Não** foi alterado o ICE/TURN da transmissão de música. Não há relay de vídeo pelo túnel Cloudflare: o túnel carrega o site e o Socket.io; mídia P2P continua direta.
 * Se o cliente remoto não conseguir estabelecer P2P, o vídeo pode falhar em redes mais restritas. Não há fallback TURN justamente para evitar uso da cota.
+
+## Captura de áudio de tela (atualização)
+
+1. Marque **Transmitir áudio da tela/aba** na janelinha da Junto.fm (vem marcada).
+2. Clique em **Compartilhar tela ou janela** e, no seletor do Chrome/Edge, selecione uma **aba com áudio** e ative **Compartilhar áudio da aba**. Para áudio de sistema, use as opções que o navegador/sistema operacional oferecer; nem toda janela tem essa possibilidade.
+3. Se a Junto.fm informar **Tela transmitindo SEM áudio**, o navegador não forneceu uma faixa de áudio; é necessário encerrar e iniciar nova captura escolhendo uma superfície com suporte a áudio e marcando a opção no seletor nativo.
+4. O espectador deve clicar em **Assistir ao vídeo P2P**. Se o autoplay com som for bloqueado, o botão **Ativar reprodução/som** libera a reprodução no navegador do espectador.
+5. Evite compartilhar a própria aba da Junto.fm ou capturar a mesma música que já está no WebRTC musical: pode causar eco/duplicação. A captura de áudio da tela **não usa TURN**; a transmissão musical separada pode usar.
