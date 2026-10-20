@@ -1,7 +1,15 @@
 "use strict";
 // Junto.fm TV — somente sinais/estado passam pelo Socket.io.
 // NENHUM vídeo, arquivo ou frame é enviado ao Render ou à Metered.ca.
+const crypto = require("crypto");
+const { AccessToken } = require("livekit-server-sdk");
 module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
+  const livekitUrl = process.env.LIVEKIT_URL || "";
+  const livekitKey = process.env.LIVEKIT_API_KEY || "";
+  const livekitSecret = process.env.LIVEKIT_API_SECRET || "";
+  const livekitReady = /^wss:\/\//.test(livekitUrl) && !!livekitKey && !!livekitSecret;
+  const lkRoomName = room => "jf-tv-" + crypto.createHash("sha256").update(room).digest("hex").slice(0, 32);
+
   const states = new Map();
   const viewers = new Map();
   const MAX_VIEWERS = 4;
@@ -41,6 +49,36 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   function fail(socket, message) { socket.emit("tv:error", { message }); }
 
   io.on("connection", socket => {
+    socket.on("tv:livekit-token", async (data, reply) => {
+      if (typeof reply !== "function") return;
+      const room = socket.data.room;
+      const state = states.get(room);
+      if (!livekitReady) return reply({ ok: false, error: "LiveKit não configurado no servidor." });
+      if (!room || !state || !allowedModes.has(state.mode))
+        return reply({ ok: false, error: "Não existe transmissão ativa nesta sala." });
+      if (isRateLimited(socket, "tv:livekit-token", 6, 10000))
+        return reply({ ok: false, error: "Muitas tentativas. Aguarde um instante." });
+      const publisher = isRoomOwner(socket, room) && state.hostId === socket.id;
+      if (data?.publish === true && !publisher)
+        return reply({ ok: false, error: "Só o administrador transmite." });
+      if (!publisher && !viewers.get(room)?.has(socket.id))
+        return reply({ ok: false, error: "Clique em Assistir primeiro." });
+      try {
+        const token = new AccessToken(livekitKey, livekitSecret, {
+          identity: socket.id,
+          name: publisher ? "Junto.fm TV ADM" : "Junto.fm TV espectador",
+          ttl: "10m"
+        });
+        token.addGrant({
+          roomJoin: true, room: lkRoomName(room), canPublish: publisher,
+          canSubscribe: true, canPublishData: false
+        });
+        reply({ ok: true, url: livekitUrl, token: await token.toJwt(), publisher });
+      } catch (error) {
+        console.error("Falha ao emitir token LiveKit:", error.message);
+        reply({ ok: false, error: "Não foi possível autorizar o LiveKit." });
+      }
+    });
     socket.on("tv:set-youtube", data => {
       const room = socket.data.room;
       if (!isRoomOwner(socket, room)) return fail(socket, "Só o administrador pode controlar a TV.");
