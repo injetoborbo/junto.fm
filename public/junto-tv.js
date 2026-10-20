@@ -35,6 +35,8 @@
     "#jfTvOverlay .jf-tv-empty span{font-size:34px}",
     "#jfTvOverlay .jf-tv-tools{display:grid;gap:10px}",
     "#jfTvOverlay .jf-tv-tools label{display:grid;gap:5px;font-size:12px;font-weight:700}",
+    "#jfTvOverlay .jf-tv-tools label.jf-tv-audio-choice{display:flex;align-items:center;gap:8px;font-weight:700}",
+    "#jfTvOverlay .jf-tv-audio-choice input{width:17px;height:17px;accent-color:#80b9ff}",
     "#jfTvOverlay input[type=url],#jfTvOverlay input[type=file]{width:100%;background:#090f2d;border:1px solid #6979bc;border-radius:7px;color:#fff;padding:10px;min-width:0;font-size:13px}",
     "#jfTvOverlay .jf-tv-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}",
     "#jfTvOverlay .jf-tv-actions button{border:1px solid #8dafe3;border-radius:7px;background:#33589a;color:#fff;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;min-height:36px}",
@@ -81,14 +83,15 @@
             '<p class="jf-tv-note">O arquivo fica no seu PC. A reprodução (vídeo e áudio) segue por P2P direto. Prévia do ADM silenciosa para evitar áudio duplicado.</p>',
           '</section>',
           '<section id="jfTvGameTools" class="jf-tv-tools" hidden>',
+            '<label class="jf-tv-audio-choice"><input id="jfTvCaptureAudio" type="checkbox" checked> 🔊 Transmitir áudio da tela/aba</label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartGame">🖥️ Compartilhar tela ou janela</button></div>',
-            '<p class="jf-tv-note">Escolha uma <strong>janela, aba ou tela inteira</strong> no seletor do navegador. Até 1080p / 30 FPS / 6 Mbps por ouvinte, adaptável à conexão. Áudio da tela desligado para não misturar com a música. Para evitar efeito espelho, não compartilhe a janela da Junto.fm.</p>',
+            '<p class="jf-tv-note">Escolha <strong>aba, janela ou tela inteira</strong>. Para transmitir som, marque também <strong>Compartilhar áudio</strong> no seletor do navegador (se disponível). O Chrome/Edge costuma oferecer áudio de abas e, no Windows, pode oferecer áudio do sistema ou de janelas. Nem toda janela/navegador permite captura de som. Até 1080p / 30 FPS / 6 Mbps por ouvinte. Se a música já estiver sendo transmitida separadamente, evite capturá-la outra vez.</p>',
           '</section>',
           '<div class="jf-tv-actions"><button type="button" class="jf-tv-danger" id="jfTvStop">■ Encerrar TV</button></div>',
         '</div>',
         '<div class="jf-tv-actions" id="jfTvViewerTools" hidden><button type="button" id="jfTvWatch">▶ Assistir ao vídeo P2P</button><button type="button" id="jfTvSound">🔊 Ativar reprodução/som</button></div>',
         '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
-        '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela e arquivos: somente STUN/P2P, sem credenciais TURN nem vídeo enviado ao servidor. Se a conexão direta falhar, não haverá retransmissão pela Metered.ca.</p>',
+        '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: somente STUN/P2P, sem credenciais TURN nem mídia enviada ao servidor. Se a conexão direta falhar, não haverá retransmissão pela Metered.ca.</p>',
       '</div>',
     '</section>'
   ].join("");
@@ -449,12 +452,25 @@
     try{
       // A pessoa escolhe tela inteira, aba ou janela no diálogo do navegador.
       // "ideal" não força upscale se a fonte não tiver resolução Full HD.
+      const wantAudio=$("jfTvCaptureAudio").checked;
       const stream=await navigator.mediaDevices.getDisplayMedia({
         video:{frameRate:{ideal:VIDEO_MAX_FPS,max:VIDEO_MAX_FPS},
           width:{ideal:1920},height:{ideal:VIDEO_MAX_HEIGHT}},
-        audio:false
+        // Sem permissão para capturar áudio se o ADM desativar esta opção.
+        // Com som ligado, o navegador ainda exige "Compartilhar áudio" no seletor.
+        audio:wantAudio,
+        systemAudio:wantAudio?"include":"exclude",
+        windowAudio:wantAudio?"window":"exclude"
       });
+      const hasAudio=stream.getAudioTracks().some(track=>track.readyState!=="ended");
       await publishStream(stream,"screen");
+      if(wantAudio && hasAudio){
+        status("🟢 Tela + áudio capturados. Transmitindo diretamente por P2P, sem TURN.");
+      }else if(wantAudio){
+        status("⚠️ Tela transmitindo SEM áudio: o navegador não forneceu faixa de som. Compartilhe uma aba com 'Compartilhar áudio' marcado ou selecione áudio do sistema, se disponível, e reinicie a transmissão.");
+      }else{
+        status("🖥️ Tela transmitindo sem áudio por escolha do administrador (P2P, sem TURN).");
+      }
     }catch(e){if(e.name!=="NotAllowedError")status("Não foi possível capturar a tela: "+e.message);}
   };
   $("jfTvStartLocal").onclick=async()=>{
