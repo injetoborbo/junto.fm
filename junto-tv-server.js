@@ -4,7 +4,7 @@
 module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   const states = new Map();
   const viewers = new Map();
-  const MAX_VIEWERS = 8;
+  const MAX_VIEWERS = 4;
   const allowedModes = new Set(["local", "screen"]);
 
   function snapshot(room) {
