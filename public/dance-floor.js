@@ -218,9 +218,11 @@ function switchDance(member,style){
 let active=false,room=null,renderer=null,scene=null,camera=null,board=null,frame=0,sequence=0;
 let down=null;
 // Teto de render: menor carga na GPU sem limitar as animações do restante do site.
-const CLUB_FPS=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?30:45;
+const CLUB_MOBILE=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+const CLUB_FPS=CLUB_MOBILE?30:40;
 const CLUB_FRAME_MS=1000/CLUB_FPS;
-let lastClubFrame=0;
+const CLUB_RENDER_SCALE=CLUB_MOBILE?.8:.9;
+let lastClubFrame=0,clubVisualTick=0;
 const people=new Map();
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
@@ -443,9 +445,9 @@ function sceneSetup(){
   scene.userData.signNeon={halo,haloTexture,signLight};
   camera=new THREE.OrthographicCamera(-6.35,6.35,4.25,-4.25,.1,100);
   camera.position.set(9,12,9);camera.lookAt(0,.55,0);
-  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
+  renderer=new THREE.WebGLRenderer({antialias:!CLUB_MOBILE,alpha:false,powerPreference:"low-power"});
   renderer.outputColorSpace=THREE.SRGBColorSpace;
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1));
+  renderer.setPixelRatio(CLUB_RENDER_SCALE);
   viewport.replaceChildren(renderer.domElement);
   const resize=()=>{
     if(!renderer||!active)return;
@@ -483,8 +485,10 @@ async function putMember(id,details){
     // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
     if(id===socket.id)entry.setSeatGlassesCalibration?.(PUBLISHED_SEAT_GLASSES_FIT);
     entry.restBones=new Map();
+    entry.animationBones=[];
     entry.rig.traverse(obj=>{
       if(!obj.isBone)return;
+      entry.animationBones.push(obj);
       entry.restBones.set(obj.uuid,obj.quaternion.clone());
       // Memorizar a pose natural ANTES da primeira animacao.
       // Se a pessoa sentar antes de dancar, nao capturar a pose deformada
@@ -570,6 +574,8 @@ function animate(now=performance.now()){
   lastClubFrame=now;
   const dt=Math.min(clock.getDelta(),.065);
   const time=clock.elapsedTime;
+  // Luzes decorativas atualizadas em metade dos quadros; danças permanecem fluidas.
+  if((++clubVisualTick&1)===0){
   for(const {beam,phase} of scene.userData.beams||[]){
     beam.rotation.z=.16*Math.sin(time*.55+phase);
     beam.rotation.x=.16*Math.cos(time*.43+phase);
@@ -584,6 +590,7 @@ function animate(now=performance.now()){
     const neon=scene.userData.signNeon;
     neon.halo.material.opacity=.77+.09*Math.sin(time*1.3);
     neon.signLight.intensity=3.5+.6*Math.sin(time*1.3);
+  }
   }
   for(const [id,p] of people){
     if(!p.root)continue;
@@ -645,8 +652,7 @@ function animate(now=performance.now()){
     if(p.rig&&!p.action){
       const seatedTime=p.sitDuration>0?
         ((time%p.sitDuration)+p.sitDuration)%p.sitDuration:0;
-      p.rig.traverse(obj=>{
-        if(!obj.isBone)return;
+      for(const obj of p.animationBones||[]){
         // Retarget Mixamo nao garante os MESMOS eixos de ombro e cotovelo.
         // Nesta versao de teste, preserve inteiramente o bind pose dos
         // bracos/maos e da cabeca durante a animacao sentada. Assim nao ha
@@ -718,7 +724,7 @@ function animate(now=performance.now()){
           if(torso){y+=.18*Math.sin(phase);z+=.08*Math.sin(phase/2);}
         }
         obj.rotation.set(x,y,z);
-      });
+      }
     }
     // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
     p.updateAccessories?.(Boolean(d.seated));
@@ -734,7 +740,7 @@ function open(){
   void sittingPose();
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
-  try{sceneSetup();clock.start();lastClubFrame=0;animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
+  try{sceneSetup();clock.start();lastClubFrame=0;clubVisualTick=0;animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
   catch(error){console.error(error);setStatus("Não foi possível abrir a pista 3D.");close();}
 }
 function close(){
