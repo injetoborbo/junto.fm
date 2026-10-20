@@ -115,3 +115,35 @@ test("Comandos imediatos trazem revisões; sync antigo não desfaz pause", () =>
   api.joined(guest);
   assert.equal(guest.outgoing.at(-1).payload.playing,true);
 });
+
+test("Pausa gera evento prioritário de reprodução e confirmação para o ADM", () => {
+  const { api, connect, messages } = setup();
+  const owner=connect("owner"), guest=connect("guest");
+  owner.send("tv:set-youtube",{videoId:"dQw4w9WgXcQ"});
+  owner.send("tv:control",{action:"play",seconds:23});
+  const before=messages.length;
+  owner.send("tv:control",{action:"pause",seconds:24.2});
+  const newMessages=messages.slice(before);
+  const fast=newMessages.find(m=>m.event==="tv:playback");
+  const slow=newMessages.find(m=>m.event==="tv:state");
+  assert.ok(fast, "Ouvintes precisam receber pausa prioritária");
+  assert.equal(fast.room,"teste");
+  assert.equal(fast.payload.action,"pause");
+  assert.equal(fast.payload.playing,false);
+  assert.equal(fast.payload.seconds,24.2);
+  assert.ok(newMessages.indexOf(fast)<newMessages.indexOf(slow),"Pause prioritário antes do estado padrão");
+  assert.equal(owner.outgoing.at(-1).event,"tv:control-result");
+  assert.equal(owner.outgoing.at(-1).payload.ok,true);
+  assert.equal(owner.outgoing.at(-1).payload.revision,fast.payload.revision);
+  api.joined(guest);
+  assert.equal(guest.outgoing.at(-1).payload.playing,false);
+});
+test("Comando de ouvinte é rejeitado e não gera falso pause", () => {
+  const { connect, messages } = setup();
+  const owner=connect("owner"), guest=connect("guest");
+  owner.send("tv:set-youtube",{videoId:"dQw4w9WgXcQ"});
+  const before=messages.length;
+  guest.send("tv:control",{action:"pause",seconds:99});
+  assert.equal(guest.outgoing.some(m=>m.event==="tv:control-result"&&m.payload.ok===false),true);
+  assert.equal(messages.slice(before).some(m=>m.event==="tv:playback"),false);
+});
