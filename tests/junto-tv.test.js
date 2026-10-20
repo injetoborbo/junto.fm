@@ -81,9 +81,11 @@ test("Parar a TV e sair da sala limpam o estado", () => {
   api.joined(guest);
   assert.equal(guest.outgoing.at(-1).payload, null);
   owner.send("tv:set-youtube", { videoId: "dQw4w9WgXcQ" });
-  owner.send("tv:stop");
   api.joined(guest);
   assert.ok(guest.outgoing.at(-1).payload);
+  owner.send("tv:stop");
+  api.joined(guest);
+  assert.equal(guest.outgoing.at(-1).payload, null);
   owner.send("tv:start-stream", { mode: "local" });
   owner.send("tv:stop");
   api.joined(guest);
