@@ -5,7 +5,13 @@
   const socket = window.jfSocialSocket;
   const dance = document.getElementById("jfOpenDance");
   if (!socket || !dance) return;
+  // Vídeo é P2P direto (STUN, sem fallback TURN), separado da música.
+  // A taxa abaixo é um teto por espectador, não uma reserva ou bitrate garantido.
   const ICE = Object.freeze({iceServers:[{urls:"stun:stun.l.google.com:19302"}],iceTransportPolicy:"all"});
+  const VIDEO_MAX_HEIGHT = 1080;
+  const VIDEO_MAX_FPS = 30;
+  const VIDEO_MAX_BITRATE = 6000000; // até 6 Mbps por espectador, WebRTC adapta à rede
+
   const style = document.createElement("style");
   style.textContent = [
     "#jfTvLaunch.jf-tv-live img{filter:drop-shadow(0 0 6px #ff83c9) drop-shadow(0 2px 3px #0009)!important}",
@@ -55,7 +61,7 @@
         '<div class="jf-tv-tabs" id="jfTvTabs" role="tablist" aria-label="Tipo de vídeo">',
           '<button type="button" data-tv-tab="youtube" role="tab" aria-selected="true">▶ YouTube</button>',
           '<button type="button" data-tv-tab="local" role="tab" aria-selected="false">📁 Vídeo local</button>',
-          '<button type="button" data-tv-tab="screen" role="tab" aria-selected="false">🎮 Jogo</button>',
+          '<button type="button" data-tv-tab="screen" role="tab" aria-selected="false">🖥️ Transmissão de tela</button>',
         '</div>',
         '<div class="jf-tv-screen">',
           '<div class="jf-tv-empty" id="jfTvEmpty"><span>📺</span><strong>Nada na telinha ainda</strong><small>O administrador escolhe o que assistir.</small></div>',
@@ -75,14 +81,14 @@
             '<p class="jf-tv-note">O arquivo fica no seu PC. A reprodução (vídeo e áudio) segue por P2P direto. Prévia do ADM silenciosa para evitar áudio duplicado.</p>',
           '</section>',
           '<section id="jfTvGameTools" class="jf-tv-tools" hidden>',
-            '<div class="jf-tv-actions"><button type="button" id="jfTvStartGame">🎮 Escolher janela do jogo</button></div>',
-            '<p class="jf-tv-note">No seletor do navegador, escolha <strong>Janela</strong> e selecione seu jogo. 720p / até 30 FPS; áudio do jogo desligado para não misturar com a música.</p>',
+            '<div class="jf-tv-actions"><button type="button" id="jfTvStartGame">🖥️ Compartilhar tela ou janela</button></div>',
+            '<p class="jf-tv-note">Escolha uma <strong>janela, aba ou tela inteira</strong> no seletor do navegador. Até 1080p / 30 FPS / 6 Mbps por ouvinte, adaptável à conexão. Áudio da tela desligado para não misturar com a música. Para evitar efeito espelho, não compartilhe a janela da Junto.fm.</p>',
           '</section>',
           '<div class="jf-tv-actions"><button type="button" class="jf-tv-danger" id="jfTvStop">■ Encerrar TV</button></div>',
         '</div>',
         '<div class="jf-tv-actions" id="jfTvViewerTools" hidden><button type="button" id="jfTvWatch">▶ Assistir ao vídeo P2P</button><button type="button" id="jfTvSound">🔊 Ativar reprodução/som</button></div>',
         '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
-        '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Jogo e arquivos: somente STUN/P2P, sem credenciais TURN e sem upload de arquivos. Se o P2P falhar, não haverá retransmissão pela Metered.ca.</p>',
+        '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela e arquivos: somente STUN/P2P, sem credenciais TURN nem vídeo enviado ao servidor. Se a conexão direta falhar, não haverá retransmissão pela Metered.ca.</p>',
       '</div>',
     '</section>'
   ].join("");
@@ -352,11 +358,14 @@
       const sender=pc.addTrack(track,sourceStream);
       if(track.kind==="video"){
         const p=sender.getParameters();if(!p.encodings?.length)p.encodings=[{}];
-        p.encodings[0].maxBitrate=1500000;
-        p.encodings[0].maxFramerate=30;
+        p.encodings[0].maxBitrate=VIDEO_MAX_BITRATE;
+        p.encodings[0].maxFramerate=VIDEO_MAX_FPS;
         const h=track.getSettings?.().height||0;
-        if(h>720)p.encodings[0].scaleResolutionDownBy=Math.max(1,h/720);
-        sender.setParameters(p).catch(()=>{});
+        // Nunca reduzir capturas 1080p para 720p; só comprimir se a fonte
+        // for maior que Full HD. O navegador continua ajustando à rede.
+        if(h>VIDEO_MAX_HEIGHT)p.encodings[0].scaleResolutionDownBy=h/VIDEO_MAX_HEIGHT;
+        Promise.resolve(sender.setParameters(p)).catch(error=>
+          console.warn("Junto.fm TV: navegador não aceitou o perfil Full HD:",error));
       }
     }
     try{
@@ -438,12 +447,15 @@
   $("jfTvStartGame").onclick=async()=>{
     if(!isAdmin()||!navigator.mediaDevices?.getDisplayMedia)return status("Seu navegador não suporta compartilhar janela.");
     try{
-      // Escolha de janela obrigatoriamente feita pelo usuário na caixa do navegador.
+      // A pessoa escolhe tela inteira, aba ou janela no diálogo do navegador.
+      // "ideal" não força upscale se a fonte não tiver resolução Full HD.
       const stream=await navigator.mediaDevices.getDisplayMedia({
-        video:{frameRate:{ideal:30,max:30},width:{ideal:1280},height:{ideal:720}},audio:false
+        video:{frameRate:{ideal:VIDEO_MAX_FPS,max:VIDEO_MAX_FPS},
+          width:{ideal:1920},height:{ideal:VIDEO_MAX_HEIGHT}},
+        audio:false
       });
       await publishStream(stream,"screen");
-    }catch(e){if(e.name!=="NotAllowedError")status("Não foi possível capturar a janela: "+e.message);}
+    }catch(e){if(e.name!=="NotAllowedError")status("Não foi possível capturar a tela: "+e.message);}
   };
   $("jfTvStartLocal").onclick=async()=>{
     if(!isAdmin())return;
