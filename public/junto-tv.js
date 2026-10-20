@@ -8,9 +8,7 @@
   const ICE = Object.freeze({iceServers:[{urls:"stun:stun.l.google.com:19302"}],iceTransportPolicy:"all"});
   const style = document.createElement("style");
   style.textContent = [
-    ".jf-tv-dock{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px;min-width:0}",
-    ".jf-tv-dock #jfOpenDance,.jf-tv-dock #jfTvLaunch{width:100%;margin:0;min-width:0;padding:9px 5px;font-size:12px;min-height:38px}",
-    ".jf-tv-dock #jfTvLaunch.jf-tv-live{border-color:#f79fbe;box-shadow:0 0 0 1px #ff638b66 inset}",
+    "#jfTvLaunch.jf-tv-live img{filter:drop-shadow(0 0 6px #ff83c9) drop-shadow(0 2px 3px #0009)!important}",
     "body:not(.jf-in-room) #jfTvLaunch{display:none!important}",
     "#jfTvOverlay[hidden],#jfTvOverlay [hidden]{display:none!important}",
     "#jfTvOverlay{position:fixed;inset:0;z-index:12050;display:grid;place-items:center;padding:16px;background:#040514ae;backdrop-filter:blur(5px)}",
@@ -40,13 +38,10 @@
   ].join("\n");
   document.head.appendChild(style);
 
-  const dock=document.createElement("div");
-  dock.className="jf-tv-dock";
-  dance.before(dock);
-  dock.appendChild(dance);
-  const launch=document.createElement("button");
-  launch.type="button";launch.id="jfTvLaunch";launch.className="btn secondary";
-  launch.textContent="📺 TV";launch.disabled=true;dock.appendChild(launch);
+  // Botão estático ao lado do tomate, banana 3D e disco no dock do player.
+  // Não deslocar a pista para a lateral, nem adicionar botões à lista de pessoas.
+  const launch=document.getElementById("jfTvLaunch");
+  if(!launch)return;
 
   const overlay=document.createElement("div");
   overlay.id="jfTvOverlay";overlay.hidden=true;
@@ -92,6 +87,7 @@
   const stage=$("jfTvStreamVideo"), frame=$("jfTvYoutubeFrame"), ytWrapper=$("jfTvYoutubeWrapper");
   let joined=false, room="", ownerId=null, state=null, currentTab="youtube";
   let player=null, playerReady=false, loadedId="", ytLoading=null, opened=false;
+  let stateReceivedAt=Date.now(), syncAttempt=0, lastAdminSyncAt=0;
   let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, viewerRequested=false;
   const peers=new Map(), pendingIce=new Map();
   let activeStreamHost=null;
@@ -162,19 +158,44 @@
   }
   function targetTime(){
     if(!state)return 0;
-    return Math.max(0, (state.seconds||0)+(state.playing?Math.max(0,(Date.now()-state.updatedAt)/1000):0));
+    // Usar relógio relativo à recepção para evitar diferenças de fuso/relógio entre PCs.
+    const baseline=(Number(state.seconds)||0)+
+      (state.playing?Math.max(0,((Number(state.serverNow)||Number(state.updatedAt))-(Number(state.updatedAt)||0))/1000):0);
+    return Math.max(0, baseline+(state.playing?Math.max(0,(Date.now()-stateReceivedAt)/1000):0));
   }
-  function syncYoutube(){
+  function syncYoutube(force=false){
     if(!playerReady||!state||state.mode!=="youtube"||!opened)return;
     try{
-      if(loadedId!==state.videoId){loadedId=state.videoId;player.cueVideoById({videoId:loadedId,startSeconds:targetTime()});}
-      if(Math.abs(player.getCurrentTime()-targetTime())>1.4)player.seekTo(targetTime(),true);
-      if(state.playing && player.getPlayerState()!==1)player.playVideo();
-      if(!state.playing && player.getPlayerState()===1)player.pauseVideo();
+      const wanted=targetTime();
+      const changed=loadedId!==state.videoId;
+      if(changed){
+        loadedId=state.videoId;
+        // cueVideoById + playVideo no mesmo tick podia não iniciar o vídeo.
+        if(state.playing)player.loadVideoById({videoId:loadedId,startSeconds:wanted});
+        else player.cueVideoById({videoId:loadedId,startSeconds:wanted});
+      }else{
+        const current=player.getCurrentTime();
+        const drift=Math.abs(current-wanted);
+        if(drift>(state.playing?1.15:.40))player.seekTo(wanted,true);
+        if(state.playing){
+          if(force||player.getPlayerState()!==1)player.playVideo();
+        }else if(force||player.getPlayerState()!==2){
+          // PAUSE incondicional ao chegar o evento, inclusive quando ainda buffering.
+          player.pauseVideo();
+        }
+      }
       $("jfTvSeek").max=String(Math.max(1,Math.floor(player.getDuration()||100)));
-      $("jfTvSeek").value=String(Math.min(Number($("jfTvSeek").max),Math.floor(targetTime())));
-      $("jfTvTime").textContent=fmt(targetTime());
-    }catch(_){}
+      $("jfTvSeek").value=String(Math.min(Number($("jfTvSeek").max),Math.floor(wanted)));
+      $("jfTvTime").textContent=fmt(wanted);
+    }catch(error){console.debug("Junto TV: espera pelo player",error);}
+  }
+  function retryYoutubePlayback(){
+    const rev=state?.revision,vid=state?.videoId,token=++syncAttempt;
+    // Curtas tentativas apenas para play; pause posterior invalida automaticamente.
+    [160,460,1100].forEach(wait=>setTimeout(()=>{
+      if(token!==syncAttempt||!opened||state?.revision!==rev||state?.videoId!==vid||!state?.playing)return;
+      syncYoutube(false);
+    },wait));
   }
   async function ensureYoutube(){
     if(!opened||state?.mode!=="youtube")return;
@@ -185,7 +206,12 @@
       if(!player){
         player=new YT.Player(frame,{height:"360",width:"640",videoId:state.videoId,
           playerVars:{playsinline:1,controls:0,disablekb:1,rel:0,autoplay:0},
-          events:{onReady:()=>{playerReady=true;loadedId="";syncYoutube();},
+          events:{onReady:()=>{
+              playerReady=true;loadedId="";
+              if(!isAdmin())try{player.mute();}catch(_){}
+              syncYoutube(true);
+              if(state?.playing)retryYoutubePlayback();
+            },
             onError:()=>status("Este vídeo não permite reprodução incorporada ou não está disponível.")}});
       }else syncYoutube();
     }catch(e){status(e.message||"Não foi possível abrir o YouTube.");}
@@ -197,9 +223,20 @@
     stopLocal();socket.emit("tv:set-youtube",{videoId:id});
     status("Carregando vídeo para a sala...");
   };
-  $("jfTvPlay").onclick=()=>{if(isAdmin()&&state?.mode==="youtube")socket.emit("tv:control",{action:"play"});};
-  $("jfTvPause").onclick=()=>{if(isAdmin()&&state?.mode==="youtube")socket.emit("tv:control",{action:"pause"});};
-  $("jfTvSeek").addEventListener("change",()=>{if(isAdmin()&&state?.mode==="youtube")socket.emit("tv:control",{action:"seek",seconds:Number($("jfTvSeek").value)});});
+  function sendYoutubeControl(action,seconds){
+    if(!isAdmin()||state?.mode!=="youtube")return;
+    const exact=Number.isFinite(seconds)?seconds:(playerReady&&loadedId===state.videoId?Number(player.getCurrentTime()):NaN);
+    if(action==="pause"){
+      ++syncAttempt;
+      if(playerReady)try{player.pauseVideo();}catch(_){}
+    }else if(action==="play"){
+      if(playerReady)try{player.playVideo();}catch(_){}
+    }
+    socket.emit("tv:control",{action,...(Number.isFinite(exact)?{seconds:exact}:{})});
+  }
+  $("jfTvPlay").onclick=()=>sendYoutubeControl("play");
+  $("jfTvPause").onclick=()=>sendYoutubeControl("pause");
+  $("jfTvSeek").addEventListener("change",()=>sendYoutubeControl("seek",Number($("jfTvSeek").value)));
 
   function sendSignal(to,data){if(joined)socket.emit("tv:signal",{to,data});}
   function makePeer(id){
@@ -278,8 +315,15 @@
     $("jfTvWatch").disabled=true;
   };
   $("jfTvSound").onclick=()=>{
-    if(state?.mode==="youtube"){try{player?.unMute();player?.playVideo();}catch(_){}}
-    else stage.play().catch(()=>status("Não foi possível iniciar a reprodução."));
+    if(state?.mode==="youtube"){
+      if(!playerReady)return status("Aguarde o player do YouTube carregar.");
+      try{
+        player.unMute();
+        if(state.playing)player.playVideo();
+        else player.pauseVideo();
+        status("Som liberado. Play e pause são controlados pelo ADM.");
+      }catch(_){status("Toque de novo para liberar o som.");}
+    }else stage.play().catch(()=>status("Não foi possível iniciar a reprodução."));
   };
   async function publishStream(stream,mode){
     if(!isAdmin()){stream.getTracks().forEach(t=>t.stop());return;}
@@ -356,7 +400,7 @@
   };
   function updateUi(){
     launch.disabled=!joined;launch.classList.toggle("jf-tv-live",!!state);
-    launch.textContent=state?"📺 TV · NO AR":"📺 TV";
+    launch.title=state?"Abrir Junto.fm TV (no ar)":"Abrir Junto.fm TV";
     const admin=isAdmin();
     $("jfTvTabs").hidden=!admin;
     $("jfTvAdminTools").hidden=!admin;
@@ -378,7 +422,12 @@
   }
   socket.on("tv:state",incoming=>{
     const prior=state;
+    if(incoming?.mode==="youtube" && prior?.mode==="youtube" && prior.videoId===incoming.videoId &&
+        Number.isFinite(incoming.revision) && Number.isFinite(prior.revision) &&
+        incoming.revision<prior.revision)return;
     state=incoming||null;
+    stateReceivedAt=Date.now();
+    ++syncAttempt;
     if(!state||state.mode!=="youtube"){
       if(playerReady)try{player.pauseVideo()}catch(_){}
     }
@@ -388,7 +437,10 @@
     }
     if(isAdmin()&&sourceStream && (!state||state.hostId!==socket.id||state.mode==="youtube"))stopLocal();
     if(state?.mode==="youtube"&&prior?.videoId!==state.videoId){loadedId="";if(isAdmin())showTab("youtube");}
-    updateUi();syncYoutube();
+    updateUi();
+    // Controles são aplicados assim que o evento chega, não no próximo intervalo de sync.
+    syncYoutube(true);
+    if(state?.mode==="youtube"&&state.playing)retryYoutubePlayback();
   });
   socket.on("tv:error",data=>{status(data?.message||"Falha na TV.");});
   socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;updateUi();});
@@ -400,10 +452,12 @@
   }
   socket.on("left-room",reset);socket.on("room-kicked",reset);socket.on("disconnect",reset);
   setInterval(()=>{
-    if(!opened||!state||state.mode!=="youtube"||!playerReady)return;
+    if(!opened||!state||state.mode!=="youtube"||!playerReady||!state.playing)return;
     if(isAdmin()){
-      try{socket.emit("tv:sync",{seconds:player.getCurrentTime(),playing:player.getPlayerState()===1});}catch(_){}
-    }else syncYoutube();
-  },9000);
+      if(Date.now()-lastAdminSyncAt<16000||player.getPlayerState()!==1)return;
+      lastAdminSyncAt=Date.now();
+      try{socket.emit("tv:sync",{seconds:player.getCurrentTime(),playing:true,revision:state.revision});}catch(_){}
+    }else syncYoutube(false);
+  },2500);
   updateUi();
 })();
