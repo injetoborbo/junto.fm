@@ -217,6 +217,10 @@ function switchDance(member,style){
 }
 let active=false,room=null,renderer=null,scene=null,camera=null,board=null,frame=0,sequence=0;
 let down=null;
+// Teto de render: menor carga na GPU sem limitar as animações do restante do site.
+const CLUB_FPS=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)?30:45;
+const CLUB_FRAME_MS=1000/CLUB_FPS;
+let lastClubFrame=0;
 const people=new Map();
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
@@ -441,7 +445,7 @@ function sceneSetup(){
   camera.position.set(9,12,9);camera.lookAt(0,.55,0);
   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
   renderer.outputColorSpace=THREE.SRGBColorSpace;
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.3));
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,1));
   viewport.replaceChildren(renderer.domElement);
   const resize=()=>{
     if(!renderer||!active)return;
@@ -557,9 +561,13 @@ function updateChoices(){
   const selected=people.get(socket.id)?.data.dance||"idle";
   for(const b of choices){b.setAttribute("aria-pressed",String(b.dataset.jfDance===selected));b.classList.toggle("active",b.dataset.jfDance===selected);}
 }
-function animate(){
+function animate(now=performance.now()){
   if(!active||!renderer)return;
   frame=requestAnimationFrame(animate);
+  // Não renderizar se a aba estiver oculta. Reiniciar o relógio evita saltos.
+  if(document.hidden){lastClubFrame=0;clock.getDelta();return;}
+  if(lastClubFrame && now-lastClubFrame<CLUB_FRAME_MS-1)return;
+  lastClubFrame=now;
   const dt=Math.min(clock.getDelta(),.065);
   const time=clock.elapsedTime;
   for(const {beam,phase} of scene.userData.beams||[]){
@@ -726,12 +734,12 @@ function open(){
   void sittingPose();
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
-  try{sceneSetup();clock.start();animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
+  try{sceneSetup();clock.start();lastClubFrame=0;animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
   catch(error){console.error(error);setStatus("Não foi possível abrir a pista 3D.");close();}
 }
 function close(){
   if(!active)return;
-  const oldRoom=room;active=false;room=null;sequence++;
+  const oldRoom=room;active=false;room=null;sequence++;lastClubFrame=0;
   cancelAnimationFrame(frame);
   socket.emit("dance-exit");
   for(const id of [...people.keys()])removeMember(id);
