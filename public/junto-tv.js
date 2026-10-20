@@ -450,7 +450,7 @@
         if(state.playing)retryYoutubePlayback();
         else enforceYoutubePause();
       }
-      if(!isAdmin() && !state.playing)status("⏸ Pausa recebida do administrador.");
+      if(!isAdmin())status(state.playing?"▶ Reprodução recebida do administrador.":"⏸ Pausa recebida do administrador.");
       return;
     }
     if(!state||state.mode!=="youtube"){
@@ -472,7 +472,10 @@
   socket.on("tv:playback",incoming=>receiveTvState(incoming,true));
   socket.on("tv:state",incoming=>receiveTvState(incoming,false));
   socket.on("tv:control-result",result=>{
-    if(!result?.ok){
+    if(result?.ok){
+      status(result.action==="pause"?"✓ Pausa confirmada pelo servidor e enviada à sala."
+        :result.action==="play"?"✓ Reprodução confirmada pelo servidor.":"✓ Posição sincronizada.");
+    }else{
       status(result?.message||"O servidor recusou o comando da TV.");
       console.warn("Junto.fm TV: controle recusado",result?.message);
     }
