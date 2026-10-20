@@ -168,21 +168,26 @@
     try{
       const wanted=targetTime();
       const changed=loadedId!==state.videoId;
-      if(changed){
+      if(!state.playing){
+        // Primeiro PAUSAR, depois ajustar o relógio, por último PAUSAR de novo.
+        // Um seek do YouTube pode iniciar buffering e religar playback se veio
+        // logo após loadVideoById. Isso também cobre PAUSE recebido no carregamento.
+        if(!isAdmin())player.mute();
+        player.pauseVideo();
+        if(changed){
+          loadedId=state.videoId;
+          player.cueVideoById({videoId:loadedId,startSeconds:wanted});
+        }else if(Math.abs(player.getCurrentTime()-wanted)>.65){
+          player.seekTo(wanted,true);
+        }
+        player.pauseVideo();
+      }else if(changed){
         loadedId=state.videoId;
-        // cueVideoById + playVideo no mesmo tick podia não iniciar o vídeo.
-        if(state.playing)player.loadVideoById({videoId:loadedId,startSeconds:wanted});
-        else player.cueVideoById({videoId:loadedId,startSeconds:wanted});
+        player.loadVideoById({videoId:loadedId,startSeconds:wanted});
       }else{
         const current=player.getCurrentTime();
-        const drift=Math.abs(current-wanted);
-        if(drift>(state.playing?1.15:.40))player.seekTo(wanted,true);
-        if(state.playing){
-          if(force||player.getPlayerState()!==1)player.playVideo();
-        }else if(force||player.getPlayerState()!==2){
-          // PAUSE incondicional ao chegar o evento, inclusive quando ainda buffering.
-          player.pauseVideo();
-        }
+        if(Math.abs(current-wanted)>1.15)player.seekTo(wanted,true);
+        if(force||player.getPlayerState()!==1)player.playVideo();
       }
       $("jfTvSeek").max=String(Math.max(1,Math.floor(player.getDuration()||100)));
       $("jfTvSeek").value=String(Math.min(Number($("jfTvSeek").max),Math.floor(wanted)));
@@ -191,9 +196,17 @@
   }
   function retryYoutubePlayback(){
     const rev=state?.revision,vid=state?.videoId,token=++syncAttempt;
-    // Curtas tentativas apenas para play; pause posterior invalida automaticamente.
     [160,460,1100].forEach(wait=>setTimeout(()=>{
       if(token!==syncAttempt||!opened||state?.revision!==rev||state?.videoId!==vid||!state?.playing)return;
+      syncYoutube(false);
+    },wait));
+  }
+  function enforceYoutubePause(){
+    const rev=state?.revision,vid=state?.videoId,token=++syncAttempt;
+    // A IFrame API envia postMessage ao player, de forma assíncrona.
+    // Reforçar PAUSE durante buffering e ignorar reforços após um PLAY novo.
+    [90,250,650,1200].forEach(wait=>setTimeout(()=>{
+      if(token!==syncAttempt||!opened||state?.revision!==rev||state?.videoId!==vid||state?.playing!==false)return;
       syncYoutube(false);
     },wait));
   }
@@ -211,6 +224,7 @@
               if(!isAdmin())try{player.mute();}catch(_){}
               syncYoutube(true);
               if(state?.playing)retryYoutubePlayback();
+              else if(state?.mode==="youtube")enforceYoutubePause();
             },
             onError:()=>status("Este vídeo não permite reprodução incorporada ou não está disponível.")}});
       }else syncYoutube();
@@ -420,14 +434,25 @@
     if(isAdmin()&&sourceStream&&isStream&&state.hostId===socket.id && stage.srcObject!==sourceStream)stage.srcObject=sourceStream;
     if(showYoutube)void ensureYoutube();
   }
-  socket.on("tv:state",incoming=>{
+  function receiveTvState(incoming,immediate=false){
     const prior=state;
     if(incoming?.mode==="youtube" && prior?.mode==="youtube" && prior.videoId===incoming.videoId &&
         Number.isFinite(incoming.revision) && Number.isFinite(prior.revision) &&
-        incoming.revision<prior.revision)return;
+        incoming.revision<=prior.revision)return; // inclusive duplicação TV PLAYBACK / TV STATE
     state=incoming||null;
     stateReceivedAt=Date.now();
     ++syncAttempt;
+    // Aplicar o comando de mídia ANTES de atualizar toda a interface.
+    // A notificação rápida do servidor ignora o caminho mais pesado de UI.
+    if(immediate && state?.mode==="youtube"){
+      if(opened){
+        syncYoutube(true);
+        if(state.playing)retryYoutubePlayback();
+        else enforceYoutubePause();
+      }
+      if(!isAdmin() && !state.playing)status("⏸ Pausa recebida do administrador.");
+      return;
+    }
     if(!state||state.mode!=="youtube"){
       if(playerReady)try{player.pauseVideo()}catch(_){}
     }
@@ -438,9 +463,19 @@
     if(isAdmin()&&sourceStream && (!state||state.hostId!==socket.id||state.mode==="youtube"))stopLocal();
     if(state?.mode==="youtube"&&prior?.videoId!==state.videoId){loadedId="";if(isAdmin())showTab("youtube");}
     updateUi();
-    // Controles são aplicados assim que o evento chega, não no próximo intervalo de sync.
     syncYoutube(true);
-    if(state?.mode==="youtube"&&state.playing)retryYoutubePlayback();
+    if(state?.mode==="youtube"){
+      if(state.playing)retryYoutubePlayback();
+      else enforceYoutubePause();
+    }
+  }
+  socket.on("tv:playback",incoming=>receiveTvState(incoming,true));
+  socket.on("tv:state",incoming=>receiveTvState(incoming,false));
+  socket.on("tv:control-result",result=>{
+    if(!result?.ok){
+      status(result?.message||"O servidor recusou o comando da TV.");
+      console.warn("Junto.fm TV: controle recusado",result?.message);
+    }
   });
   socket.on("tv:error",data=>{status(data?.message||"Falha na TV.");});
   socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;updateUi();});
