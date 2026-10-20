@@ -229,7 +229,17 @@
   async function offerToViewer(id){
     if(!isAdmin()||!sourceStream||state?.hostId!==socket.id)return;
     const pc=makePeer(id);
-    for(const track of sourceStream.getTracks())pc.addTrack(track,sourceStream);
+    for(const track of sourceStream.getTracks()){
+      const sender=pc.addTrack(track,sourceStream);
+      if(track.kind==="video"){
+        const p=sender.getParameters();if(!p.encodings?.length)p.encodings=[{}];
+        p.encodings[0].maxBitrate=1500000;
+        p.encodings[0].maxFramerate=30;
+        const h=track.getSettings?.().height||0;
+        if(h>720)p.encodings[0].scaleResolutionDownBy=Math.max(1,h/720);
+        sender.setParameters(p).catch(()=>{});
+      }
+    }
     try{
       const offer=await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -271,7 +281,11 @@
   };
   async function publishStream(stream,mode){
     if(!isAdmin()){stream.getTracks().forEach(t=>t.stop());return;}
-    stopLocal();
+    if(mode==="local"){
+      // Já limpamos a sessão anterior antes de selecionar o arquivo.
+      // Não fechar o AudioContext/URL do NOVO arquivo aqui.
+      releasePeers();
+    }else stopLocal();
     sourceStream=stream;
     for(const track of stream.getVideoTracks()){
       track.contentHint="motion";
@@ -305,30 +319,28 @@
     localVideo=video;video.playsInline=true;video.muted=false;video.preload="auto";
     video.src=localUrl;video.onended=()=>{if(localVideo===video)stopBroadcast();};
     try{
-      await new Promise((resolve,reject)=>{video.addEventListener("loadeddata",resolve,{once:true});video.addEventListener("error",()=>reject(new Error("Arquivo não pôde ser aberto.")),{once:true});video.load();});
       // O som vai direto ao MediaStreamDestination: nada sai pelo fone do ADM
       // e não duplicamos as faixas de áudio do captureStream.
       let audioStream=null;
       const AudioEngine=window.AudioContext||window.webkitAudioContext;
+      let audioReady=Promise.resolve();
       if(AudioEngine){
         localAudioContext=new AudioEngine();
         const sourceNode=localAudioContext.createMediaElementSource(video);
         const destination=localAudioContext.createMediaStreamDestination();
         sourceNode.connect(destination);
         audioStream=destination.stream;
-        await localAudioContext.resume();
+        audioReady=localAudioContext.resume();
       }else video.muted=true;
-      await video.play();
+      // play() e resume() começam enquanto o gesto do clique ainda está ativo.
+      await Promise.all([audioReady,video.play()]);
       const direct=(video.captureStream||video.mozCaptureStream).call(video);
       const captured=new MediaStream([
         ...direct.getVideoTracks(),
         ...(audioStream?audioStream.getAudioTracks():direct.getAudioTracks())
       ]);
       if(!captured.getVideoTracks().length)throw new Error("Vídeo não disponível para captura.");
-      // publishStream limpa a captura anterior; preservar este elemento local.
-      localVideo=null;localUrl="";
       await publishStream(captured,"local");
-      localVideo=video;localUrl=video.src;
       stage.muted=true;
       status("Arquivo local por P2P, com áudio quando o formato permitir. Nenhum arquivo foi enviado ao servidor.");
     }catch(e){
