@@ -40,7 +40,7 @@ html[data-jf-theme="tsimiomi"] body::after {
   z-index:1 !important;
   left:0 !important;
   right:0 !important;
-  bottom:-1px !important;
+  bottom:-22vh !important;
   width:100% !important;
   height:auto !important;
   aspect-ratio: 1648 / 930 !important;
@@ -90,6 +90,7 @@ html[data-jf-theme="tsimiomi"] .small{color:#f1cac6;}
   }
   html[data-jf-theme="tsimiomi"] body::after{
     height:auto !important;
+    bottom:-12vh !important;
     aspect-ratio:1648 / 930 !important;
     background-size:100% auto !important;
     background-position:center bottom !important;
@@ -97,5 +98,5 @@ html[data-jf-theme="tsimiomi"] .small{color:#f1cac6;}
 }
 @media(max-height:500px) and (orientation:landscape){
   html[data-jf-theme="tsimiomi"] body::before{height:65vh !important;width:20vw !important;}
-  html[data-jf-theme="tsimiomi"] body::after{height:auto !important;}
+  html[data-jf-theme="tsimiomi"] body::after{height:auto !important;bottom:-20vh !important;}
 }
