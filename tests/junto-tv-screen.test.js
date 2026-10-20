@@ -9,10 +9,10 @@ const source = fs.readFileSync(path.join(__dirname, "../public/junto-tv.js"), "u
 
 // Isolamento: simula só a API nativa do navegador. Usa o cliente real,
 // inclusive a captura, o RTCRtpSender e o callback tv:viewer-joined.
-async function setup(height = 1080) {
+async function setup(height = 1080, {shareAudio = true, provideAudio = true} = {}) {
   const elements = new Map(), events = new Map(), outbound = [], peers = [];
   let captureConstraints = null;
-  let track = null;
+  let track = null, audioTrack = null;
   const el = id => {
     if (!elements.has(id)) elements.set(id, {
       id, hidden:false, disabled:false, value:"", style:{}, title:"",
@@ -58,9 +58,13 @@ async function setup(height = 1080) {
           getSettings(){return {height,width:Math.round(height*16/9)};},
           stop(){}
         };
+        audioTrack=options.audio && provideAudio?{
+          kind:"audio",readyState:"live",stop(){},
+        }:null;
         return {
-          getTracks(){return [track];},
-          getVideoTracks(){return [track];}
+          getTracks(){return audioTrack?[track,audioTrack]:[track];},
+          getVideoTracks(){return [track];},
+          getAudioTracks(){return audioTrack?[audioTrack]:[];}
         };
       }
     }
@@ -81,19 +85,24 @@ async function setup(height = 1080) {
   },{filename:"public/junto-tv.js"});
   events.get("joined-room")({room:"qualidade",ownerId:"host"});
   el("jfTvLaunch").onclick();
+  el("jfTvCaptureAudio").checked=shareAudio;
   await el("jfTvStartGame").onclick();
   events.get("tv:viewer-joined")({viewerId:"guest"});
   // A oferta e o SDP são assíncronos; aguardar conclusão antes de retornar.
   await Promise.resolve();await Promise.resolve();await Promise.resolve();
-  return {peers,track,outbound,events,el,get constraints(){return captureConstraints;}};
+  return {peers,track,audioTrack,outbound,events,el,get constraints(){return captureConstraints;}};
 }
 
-test("Transmissão de tela captura Full HD/30 FPS, sem áudio e sem TURN",async()=>{
+test("Transmissão de tela captura Full HD/30 FPS com áudio e sem TURN",async()=>{
   const app=await setup();
   assert.equal(app.constraints.video.width.ideal,1920);
   assert.equal(app.constraints.video.height.ideal,1080);
   assert.equal(app.constraints.video.frameRate.max,30);
-  assert.equal(app.constraints.audio,false);
+  assert.equal(app.constraints.audio,true);
+  assert.equal(app.constraints.systemAudio,"include");
+  assert.equal(app.constraints.windowAudio,"window");
+  assert.ok(app.audioTrack,"O navegador deve poder devolver áudio junto com vídeo");
+  assert.equal(app.peers[0].senders.some(sender=>sender.track.kind==="audio"),true,"O áudio precisa ser adicionado ao WebRTC");
   assert.equal(app.outbound.some(x=>x.name==="tv:start-stream" && x.payload.mode==="screen"),true);
   assert.equal(app.peers.length,1);
   assert.equal(app.peers[0].ice.iceServers.length,1);
@@ -124,4 +133,20 @@ test("Rótulos da interface: Transmissão de tela e compartilhamento amplo",()=>
   assert.ok(source.includes("Compartilhar tela ou janela"));
   assert.ok(source.includes("janela, aba ou tela inteira"));
   assert.equal(source.includes('data-tv-tab="screen"'),true);
+});
+
+test("Sem áudio do navegador, transmitir vídeo e avisar o administrador",async()=>{
+  const app=await setup(1080,{provideAudio:false});
+  assert.equal(app.constraints.audio,true);
+  assert.equal(app.peers[0].senders.length,1);
+  assert.ok(app.el("jfTvStatus").textContent.includes("SEM áudio"));
+  assert.equal(app.outbound.some(x=>x.name==="tv:start-stream"),true);
+});
+test("ADM pode desativar captura de som para evitar áudio duplicado",async()=>{
+  const app=await setup(1080,{shareAudio:false});
+  assert.equal(app.constraints.audio,false);
+  assert.equal(app.constraints.systemAudio,"exclude");
+  assert.equal(app.audioTrack,null);
+  assert.equal(app.peers[0].senders.some(sender=>sender.track.kind==="audio"),false);
+  assert.ok(app.el("jfTvStatus").textContent.includes("sem áudio por escolha"));
 });
