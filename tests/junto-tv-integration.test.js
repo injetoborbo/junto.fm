@@ -39,7 +39,7 @@ async function createRoom(){
       if(!elements.has(name))elements.set(name,{
         id:name,hidden:false,disabled:false,value:"",title:"",style:{},
         classList:{toggle(){},contains(){return false}},
-        addEventListener(){},setAttribute(){},getAttribute(){return null},appendChild(){},focus(){},
+        addEventListener(name,fn){this["on_"+name]=fn;},setAttribute(){},getAttribute(){return null},appendChild(){},focus(){},
         querySelectorAll(){return[]},
         set innerHTML(v){this.html=v;},
         set textContent(v){this.text=v;},
@@ -99,12 +99,7 @@ async function createRoom(){
 test("Dois navegadores: play → pausa imediata → play → seek → pausa",async()=>{
   const app=await createRoom();
   const host=app.connect("host"),guest=app.connect("guest");
-  host.sent.push({name:"start"});
-  // O servidor envia o estado para AMBOS os clientes.
-  const hostSocket=app.clients.get("host");
-  const guestSocket=app.clients.get("guest");
-  function command(action,seconds){host.serverEmit("tv:not-a-real-event");host.el("jfTv"+action).onclick();}
-  // Usar ação original via frontend (não emitir evento artificial do servidor).
+  // Usar os botões originais da interface e sinalização real do módulo.
   // O link é definido pelo próprio ADM, como na interface.
   host.el("jfTvYoutubeUrl").value="https://youtu.be/dQw4w9WgXcQ";
   host.el("jfTvLoad").onclick();
@@ -129,6 +124,10 @@ test("Dois navegadores: play → pausa imediata → play → seek → pausa",asy
   host.el("jfTvPlay").onclick();
   assert.equal(gp.getPlayerState(),1,"O PLAY seguinte precisa retomar a reprodução");
   assert.equal(guest.el("jfTvYoutubeShield").hidden,true);
+  host.el("jfTvSeek").value="38";
+  host.el("jfTvSeek").on_change();
+  assert.ok(gp.getCurrentTime()>37&&gp.getCurrentTime()<40,
+    "Avanço ordenado pelo ADM deve ir à posição correta no ouvinte");
   host.el("jfTvPause").onclick();
   assert.equal(gp.getPlayerState(),2);
   assert.ok(gp.calls.length>count&&after>count);
