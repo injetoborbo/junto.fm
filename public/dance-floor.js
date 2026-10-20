@@ -580,7 +580,6 @@ function animate(){
   for(const [id,p] of people){
     if(!p.root)continue;
     const d=p.data,style=d.seated?"idle":d.dance||"idle";
-    switchDance(p,style);
     const targetX=d.x-2.5,targetZ=d.z-2.5;
     // A cadeira usa um deslocamento visual. O destino da caminhada
     // precisa ser o mesmo para não provocar oscilação infinita.
@@ -593,6 +592,9 @@ function animate(){
     const dx=poseX-p.root.position.x,dz=poseZ-p.root.position.z;
     const distance=Math.hypot(dx,dz);
     const walking=distance>.025;
+    // Interrompe a dança enquanto se desloca; retoma a dança escolhida ao chegar.
+    // "idle" libera o rig para a animação procedural de caminhada abaixo.
+    switchDance(p,walking?"idle":style);
     // 0.7 casa por segundo: um caminhar leve, sem teleportar.
     if(walking){
       const step=Math.min(.70*dt,distance);
