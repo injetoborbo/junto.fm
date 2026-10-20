@@ -402,7 +402,7 @@
     $("jfTvWatch").disabled=true;
     status("Conectando à transmissão LiveKit...");
     try{await connectLivekit(false);}
-    catch(error){viewerRequested=false;releasePeers();status("Falha ao assistir: "+error.message);updateUi();}
+    catch(error){socket.emit("tv:unwatch");viewerRequested=false;releasePeers();status("Falha ao assistir: "+error.message);updateUi();}
   };
   $("jfTvSound").onclick=()=>{
     if(state?.mode==="youtube"){
