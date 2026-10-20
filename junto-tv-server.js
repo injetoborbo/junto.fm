@@ -12,6 +12,19 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
   const states = new Map();
   const viewers = new Map();
+  const idleTimers = new Map();
+  function clearIdle(room) {
+    if (idleTimers.has(room)) { clearTimeout(idleTimers.get(room)); idleTimers.delete(room); }
+  }
+  function scheduleIdle(room, delay = 90000) {
+    clearIdle(room);
+    const timer = setTimeout(() => {
+      idleTimers.delete(room);
+      if (states.get(room) && states.get(room).mode !== "youtube" && !(viewers.get(room)?.size)) stop(room);
+    }, delay);
+    timer.unref?.();
+    idleTimers.set(room, timer);
+  }
   const MAX_VIEWERS = 4;
   const allowedModes = new Set(["local", "screen"]);
   let revisionCounter = 0;
@@ -28,6 +41,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     io.to(room).emit("tv:state", snapshot(room));
   }
   function stop(room) {
+    clearIdle(room);
     const s = states.get(room);
     if (!s) return;
     states.delete(room);
@@ -40,7 +54,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     const set = viewers.get(room);
     if (set?.delete(id)) {
       io.to(states.get(room)?.hostId).emit("tv:viewer-left", { viewerId: id });
-      if (!set.size) viewers.delete(room);
+      if (!set.size) { viewers.delete(room); scheduleIdle(room, 60000); }
     }
   }
   function joined(socket) {
@@ -150,6 +164,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       stop(room);
       states.set(room, { mode: data.mode, hostId: socket.id, playing: true, updatedAt: Date.now() });
       broadcast(room);
+      scheduleIdle(room);
     });
 
     socket.on("tv:stop", () => {
@@ -165,6 +180,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       if (!set) { set = new Set(); viewers.set(room, set); }
       if (!set.has(socket.id) && set.size >= MAX_VIEWERS) return fail(socket, "Limite de espectadores do protótipo atingido.");
       set.add(socket.id);
+      clearIdle(room);
       io.to(s.hostId).emit("tv:viewer-joined", { viewerId: socket.id });
     });
 
