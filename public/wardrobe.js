@@ -61,7 +61,7 @@ const FIT_DEFAULTS=Object.freeze({
   escuros:{width:.56,offset:[0,.16,.32]},
   redondos:{width:.56,offset:[0,.16,.29]},
   // Modelo Meshy normalizado pela largura e ancorado ao osso da cabeça.
-  botao:{width:.40,offset:[0,.11,.30]},
+  botao:{width:.68,offset:[0,.23,.43]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
   vestido_novo:{width:.70,offset:[0,-.24,0]}
 });
