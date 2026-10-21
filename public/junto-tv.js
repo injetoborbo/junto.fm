@@ -16,14 +16,14 @@
     "body:not(.jf-in-room) #jfTvLaunch{display:none!important}",
     "#jfTvOverlay[hidden],#jfTvOverlay [hidden]{display:none!important}",
     "#jfTvOverlay{position:fixed;inset:0;z-index:12050;display:grid;place-items:center;padding:16px;background:#040514ae;backdrop-filter:blur(5px)}",
-    "#jfTvOverlay .jf-tv-window{width:min(920px,100%);max-height:min(93dvh,900px);overflow:auto;border-radius:14px;border:2px solid #a2b5ff;background:linear-gradient(155deg,#282e66,#151935 60%,#0e1731);box-shadow:0 24px 75px #000b, inset 0 1px #ffffff55;color:#f6f8ff;font-family:Tahoma,Verdana,Arial,sans-serif}",
-    "#jfTvOverlay .jf-tv-head{background:linear-gradient(180deg,#8bbdfd,#3562b0 55%,#20477f);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:11px 11px 0 0;color:#fff}",
+    "#jfTvOverlay .jf-tv-window{width:min(920px,100%);max-height:min(93dvh,900px);overflow:auto;border-radius:14px;border:2px solid var(--jf-secondary,#a2b5ff);background:linear-gradient(155deg,color-mix(in srgb,var(--jf-primary,#282e66) 40%,#111425),color-mix(in srgb,var(--jf-glow,#151935) 24%,#090d1b));box-shadow:0 24px 75px #000b,inset 0 1px #ffffff35;color:#f6f8ff;font-family:Tahoma,Verdana,Arial,sans-serif}",
+    "#jfTvOverlay .jf-tv-head{background:linear-gradient(180deg,color-mix(in srgb,var(--jf-secondary,#8bbdfd) 75%,#fff),var(--jf-primary,#3562b0) 55%,color-mix(in srgb,var(--jf-primary,#20477f) 70%,#090d1b));padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:11px 11px 0 0;color:#fff}",
     "#jfTvOverlay .jf-tv-head strong{font-size:15px;text-shadow:0 1px 2px #122c70}",
     "#jfTvOverlay .jf-tv-close{background:#c73b58;border:1px solid #ffc3d4;border-radius:5px;color:#fff;font-weight:bold;font-size:15px;min-width:34px;min-height:30px;cursor:pointer}",
     "#jfTvOverlay .jf-tv-inner{padding:14px;display:grid;gap:11px}",
     "#jfTvOverlay .jf-tv-tabs{display:flex;gap:7px;flex-wrap:wrap}",
-    "#jfTvOverlay .jf-tv-tabs button{flex:1;min-width:100px;background:#252d56;border:1px solid #7c8bbf;color:#dce4ff;border-radius:8px;padding:10px 8px;cursor:pointer;font-size:12px;font-weight:bold}",
-    "#jfTvOverlay .jf-tv-tabs button[aria-selected=true]{background:#4779c8;color:#fff;border-color:#a6d1ff}",
+    "#jfTvOverlay .jf-tv-tabs button{flex:1;min-width:100px;background:color-mix(in srgb,var(--jf-primary,#252d56) 32%,#111527);border:1px solid var(--jf-secondary,#7c8bbf);color:#f5f7ff;border-radius:8px;padding:10px 8px;cursor:pointer;font-size:12px;font-weight:bold}",
+    "#jfTvOverlay .jf-tv-tabs button[aria-selected=true]{background:var(--jf-primary,#4779c8);color:#fff;border-color:var(--jf-secondary,#a6d1ff)}",
     "#jfTvOverlay .jf-tv-screen{aspect-ratio:16/9;background:#070914;border-radius:9px;border:1px solid #55608c;display:grid;place-items:center;position:relative;min-height:185px;overflow:hidden}",
     "#jfTvOverlay .jf-tv-screen video,#jfTvOverlay .jf-tv-screen iframe,#jfTvOverlay #jfTvYoutubeWrapper{width:100%;height:100%;display:block;object-fit:contain}",
     "#jfTvOverlay #jfTvYoutubeWrapper iframe{pointer-events:none!important}",
@@ -37,12 +37,15 @@
     "#jfTvOverlay .jf-tv-audio-choice input{width:17px;height:17px;accent-color:#80b9ff}",
     "#jfTvOverlay input[type=url],#jfTvOverlay input[type=file]{width:100%;background:#090f2d;border:1px solid #6979bc;border-radius:7px;color:#fff;padding:10px;min-width:0;font-size:13px}",
     "#jfTvOverlay .jf-tv-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}",
-    "#jfTvOverlay .jf-tv-actions button{border:1px solid #8dafe3;border-radius:7px;background:#33589a;color:#fff;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;min-height:36px}",
+    "#jfTvOverlay .jf-tv-actions button{border:1px solid var(--jf-secondary,#8dafe3);border-radius:7px;background:var(--jf-primary,#33589a);color:#fff;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;min-height:36px}",
     "#jfTvOverlay .jf-tv-actions button:disabled{opacity:.45;cursor:default}",
     "#jfTvOverlay .jf-tv-actions button.jf-tv-danger{background:#6b3156;border-color:#be7fa0}",
     "#jfTvOverlay .jf-tv-actions input[type=range]{flex:1 1 120px;min-width:90px;max-width:350px}",
     "#jfTvOverlay .jf-tv-note{font-size:11px;line-height:1.55;color:#bdc8e8;margin:0}",
-    "#jfTvOverlay .jf-tv-status{padding:9px 10px;background:#0b1735;border:1px solid #445c9a;border-radius:8px;color:#cfdef9;font-size:12px;line-height:1.5}",
+    "#jfTvOverlay .jf-tv-status{padding:9px 10px;background:color-mix(in srgb,var(--jf-primary,#0b1735) 25%,#090d1b);border:1px solid var(--jf-secondary,#445c9a);border-radius:8px;color:#cfdef9;font-size:12px;line-height:1.5}",
+    "body:has(#jfTvOverlay:not([hidden])) #jfChatLauncher{z-index:12080!important;visibility:visible!important}",
+    "body:has(#jfTvOverlay:not([hidden])) #jfChatWindow{z-index:12079!important;visibility:visible!important}",
+    "#jfTvOverlay .jf-tv-live-badge{display:inline-flex;align-items:center;background:#c51f34;color:#fff;border-radius:5px;padding:4px 7px;font:800 11px/1 Tahoma,Arial,sans-serif;letter-spacing:.6px;white-space:nowrap;box-shadow:0 1px 5px #0005}",
     "@media(max-width:540px){#jfTvOverlay{padding:5px}#jfTvOverlay .jf-tv-window{max-height:97dvh;border-radius:9px}#jfTvOverlay .jf-tv-inner{padding:9px;gap:8px}#jfTvOverlay .jf-tv-tabs button{min-width:70px;font-size:11px;padding:8px 4px}#jfTvOverlay .jf-tv-screen{min-height:165px}.jf-tv-dock #jfOpenDance,.jf-tv-dock #jfTvLaunch{font-size:11px}}"
   ].join("\n");
   document.head.appendChild(style);
@@ -56,7 +59,7 @@
   overlay.id="jfTvOverlay";overlay.hidden=true;
   overlay.innerHTML=[
     '<section class="jf-tv-window" role="dialog" aria-modal="true" aria-labelledby="jfTvTitle">',
-      '<header class="jf-tv-head"><strong id="jfTvTitle">📺 Junto.fm TV · Protótipo</strong><button type="button" class="jf-tv-close" id="jfTvClose" aria-label="Fechar TV">✕</button></header>',
+      '<header class="jf-tv-head"><strong id="jfTvTitle">📺 Junto.TV</strong><span id="jfTvLiveBadge" class="jf-tv-live-badge" hidden>AO VIVO</span><button type="button" class="jf-tv-close" id="jfTvClose" aria-label="Fechar TV">✕</button></header>',
       '<div class="jf-tv-inner">',
         '<div class="jf-tv-tabs" id="jfTvTabs" role="tablist" aria-label="Tipo de vídeo">',
           '<button type="button" data-tv-tab="youtube" role="tab" aria-selected="true">▶ YouTube</button>',
@@ -523,7 +526,8 @@
   };
   function updateUi(){
     launch.disabled=!joined;launch.classList.toggle("jf-tv-live",!!state);
-    launch.title=state?"Abrir Junto.fm TV (no ar)":"Abrir Junto.fm TV";
+    launch.title=state?"Abrir Junto.TV (no ar)":"Abrir Junto.TV";
+    $("jfTvLiveBadge").hidden=!(state&&(state.mode!=="youtube"||state.playing));
     const admin=isAdmin();
     $("jfTvTabs").hidden=!admin;
     $("jfTvAdminTools").hidden=!admin;
@@ -592,7 +596,7 @@
         :result.action==="play"?"✓ Reprodução confirmada pelo servidor.":"✓ Posição sincronizada.");
     }else{
       status(result?.message||"O servidor recusou o comando da TV.");
-      console.warn("Junto.fm TV: controle recusado",result?.message);
+      console.warn("Junto.TV: controle recusado",result?.message);
     }
   });
   socket.on("tv:error",data=>{status(data?.message||"Falha na TV.");});
