@@ -6,7 +6,7 @@ import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/
 
 const OPTIONS={
   hat:["nenhum","bone","gorro","palha","branco","caveira"],
-  glasses:["nenhum","escuros","redondos","sem_aro"],
+  glasses:["nenhum","escuros","redondos","sem_aro","botao"],
   headphones:["nenhum","azul","rosa","preto"],
   outfit:["padrao","rosa","rosa_novo"]
 };
@@ -43,6 +43,7 @@ const ASSETS={
   gorro:"/touca_preta.glb",
   escuros:"/oculos_escuros.glb",
   redondos:"/oculos_redondos.glb",
+  botao:"/olhos-botao-leve.glb",
   fone:"/fone_preto.glb",
   vestido:"/vestido_rosa.glb",
   caveira:"/toucaveira.glb",
@@ -59,6 +60,8 @@ const FIT_DEFAULTS=Object.freeze({
   sem_aro:{width:.56,offset:[0,.16,.06]},
   escuros:{width:.56,offset:[0,.16,.32]},
   redondos:{width:.56,offset:[0,.16,.29]},
+  // Modelo Meshy normalizado pela largura e ancorado ao osso da cabeça.
+  botao:{width:.40,offset:[0,.11,.30]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
   vestido_novo:{width:.70,offset:[0,-.24,0]}
 });
@@ -384,7 +387,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   if(selection.hat==="caveira")installNewWearable("caveira",newHeadBone,{
     seatedOffset:{y:-.00015}
   });
-  if(selection.glasses==="sem_aro"||
+  if(selection.glasses==="sem_aro"||selection.glasses==="botao"||
      (!animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
     installNewWearable(selection.glasses,newHeadBone,{
       seatedOffset:{z:.00015}
@@ -928,6 +931,7 @@ const fitInputs=Object.fromEntries(fitInputNames.map(name=>[name,$("jfFit"+name)
 const fitOptions={
   caveira:["hat","caveira"],
   sem_aro:["glasses","sem_aro"],
+  botao:["glasses","botao"],
   escuros:["glasses","escuros"],
   redondos:["glasses","redondos"],
   fone_novo:["headphones","preto"],
@@ -967,7 +971,7 @@ function preferredFitItem(){
   // Priorizar o último item selecionado no guarda-roupa.
   if(editing.headphones==="preto")return "fone_novo";
   if(editing.outfit==="rosa_novo")return "vestido_novo";
-  if(["sem_aro","escuros","redondos"].includes(editing.glasses))return editing.glasses;
+  if(["sem_aro","escuros","redondos","botao"].includes(editing.glasses))return editing.glasses;
   if(editing.hat==="caveira")return "caveira";
   return "fone_novo";
 }
