@@ -43,8 +43,8 @@
     "#jfTvOverlay .jf-tv-actions input[type=range]{flex:1 1 120px;min-width:90px;max-width:350px}",
     "#jfTvOverlay .jf-tv-note{font-size:11px;line-height:1.55;color:#bdc8e8;margin:0}",
     "#jfTvOverlay .jf-tv-status{padding:9px 10px;background:color-mix(in srgb,var(--jf-primary,#0b1735) 25%,#090d1b);border:1px solid var(--jf-secondary,#445c9a);border-radius:8px;color:#cfdef9;font-size:12px;line-height:1.5}",
-    "body:has(#jfTvOverlay:not([hidden])) #jfChatLauncher{z-index:12080!important;visibility:visible!important}",
-    "body:has(#jfTvOverlay:not([hidden])) #jfChatWindow{z-index:12079!important;visibility:visible!important}",
+    "#jfTvOverlay #jfChatLauncher{z-index:25!important;visibility:visible!important;pointer-events:auto!important}",
+    "#jfTvOverlay #jfChatWindow{z-index:24!important;visibility:visible!important;pointer-events:auto!important}",
     "#jfTvOverlay .jf-tv-live-badge{display:inline-flex;align-items:center;background:#c51f34;color:#fff;border-radius:5px;padding:4px 7px;font:800 11px/1 Tahoma,Arial,sans-serif;letter-spacing:.6px;white-space:nowrap;box-shadow:0 1px 5px #0005}",
     "@media(max-width:540px){#jfTvOverlay{padding:5px}#jfTvOverlay .jf-tv-window{max-height:97dvh;border-radius:9px}#jfTvOverlay .jf-tv-inner{padding:9px;gap:8px}#jfTvOverlay .jf-tv-tabs button{min-width:70px;font-size:11px;padding:8px 4px}#jfTvOverlay .jf-tv-screen{min-height:165px}.jf-tv-dock #jfOpenDance,.jf-tv-dock #jfTvLaunch{font-size:11px}}"
   ].join("\n");
@@ -97,7 +97,24 @@
     '</section>'
   ].join("");
   document.body.appendChild(overlay);
-  const $=id=>document.getElementById(id);
+  // Chat dentro da camada da TV: z-index externo não atravessa todos os contextos
+  // de empilhamento dos temas. Mover os mesmos nós mantém listeners e histórico.
+  const tvChatNodes=["jfChatLauncher","jfChatWindow"].map(id=>document.getElementById(id)).filter(Boolean);
+  const tvChatAnchors=new Map();
+  for(const node of tvChatNodes){
+    const anchor=document.createComment("jf-tv-chat-original-position");
+    node.parentNode.insertBefore(anchor,node);
+    tvChatAnchors.set(node,anchor);
+  }
+  function placeChatInTv(){
+    for(const node of tvChatNodes)overlay.appendChild(node);
+  }
+  function restoreChatFromTv(){
+    for(const [node,anchor] of tvChatAnchors){
+      if(anchor.parentNode)anchor.parentNode.insertBefore(node,anchor);
+    }
+  }
+    const $=id=>document.getElementById(id);
   const stage=$("jfTvStreamVideo"), frame=$("jfTvYoutubeFrame"), ytWrapper=$("jfTvYoutubeWrapper"), pauseShield=$("jfTvYoutubeShield");
   let joined=false, room="", ownerId=null, state=null, currentTab="youtube";
   let player=null, playerReady=false, loadedId="", ytLoading=null, opened=false;
@@ -148,7 +165,7 @@
     stopLocal();
   }
   function closeTv(){
-    overlay.hidden=true;opened=false;
+    restoreChatFromTv();overlay.hidden=true;opened=false;
     if(isAdmin()&&sourceStream) stopBroadcast(); // nunca compartilhar uma tela com a janela fechada
     if(!isAdmin() && viewerRequested){socket.emit("tv:unwatch");viewerRequested=false;releasePeers();}
     if(playerReady && state?.mode==="youtube")try{player.pauseVideo()}catch(_){}
@@ -158,7 +175,7 @@
   overlay.addEventListener("click",event=>{if(event.target===overlay)closeTv();});
   launch.onclick=()=>{
     if(!joined)return;
-    opened=true;overlay.hidden=false;updateUi();
+    opened=true;overlay.hidden=false;placeChatInTv();updateUi();
     socket.emit("tv:request-state");
     if(state?.mode==="youtube")void ensureYoutube();
     $("jfTvClose").focus();
@@ -606,7 +623,7 @@
     joined=false;room="";ownerId=null;state=null;viewerRequested=false;
     viewerAudioEnabled=true;viewerAudioBlocked=false;
     if(sourceStream)stopLocal();else releasePeers();
-    overlay.hidden=true;opened=false;updateUi();
+    restoreChatFromTv();overlay.hidden=true;opened=false;updateUi();
   }
   socket.on("left-room",reset);socket.on("room-kicked",reset);socket.on("disconnect",reset);
   setInterval(()=>{
