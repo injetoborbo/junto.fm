@@ -311,7 +311,7 @@
       if(!opened||state?.mode!=="youtube")return;
       if(!player){
         player=new YT.Player(frame,{height:"360",width:"640",videoId:state.videoId,
-          playerVars:{playsinline:1,controls:0,disablekb:1,fs:0,rel:0,autoplay:0},
+          playerVars:{playsinline:1,controls:0,disablekb:1,fs:0,rel:0,autoplay:0,cc_load_policy:0},
           events:{onReady:()=>{
               playerReady=true;loadedId="";youtubeHardStopped=false;
               try{player.getIframe()?.setAttribute("tabindex","-1");}catch(_){}
