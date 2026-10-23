@@ -329,63 +329,70 @@ function showDanceSpeech(message){
   if(!active||!message?.text)return;
   const member=people.get(message.senderId);
   if(!member?.root)return;
-  const old=member.speech;
-  if(old){old.parent?.remove(old);old.material.map?.dispose();old.material.dispose();member.speech=null;}
+  if(member.speech){member.speech.parent?.remove(member.speech);member.speech.material.map?.dispose();member.speech.material.dispose();}
   clearTimeout(danceSpeechTimers.get(member));
   const name=String(message.name||"Macaco").slice(0,24);
   const content=String(message.text||"").trim().slice(0,500);
   if(!content)return;
-  // Tipografia legível e bolha dimensionada pelo conteúdo, inspirada no Habbo.
-  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
-  const fontSize=45,lineHeight=56,padX=38,padY=23,tail=25;
-  const maxLineWidth=650;
-  ctx.font=fontSize+"px Arial,sans-serif";
-  const lines=[];
-  let line="";
+  const themes={
+    classic:{bg:"#ffffff",border:"#333846",ink:"#252830",name:"#3d5265"},
+    pink:{bg:"#ffe4f1",border:"#b74280",ink:"#5e2245",name:"#8b2f63"},
+    blue:{bg:"#d9f2ff",border:"#3179bd",ink:"#1e405d",name:"#27639b"},
+    green:{bg:"#dcffe4",border:"#38915a",ink:"#225536",name:"#287d49"},
+    dark:{bg:"#303649",border:"#a6bbdb",ink:"#ffffff",name:"#b6d9ff"}
+  };
+  const style=themes[message.bubbleStyle]||themes.classic;
+  const canvas=document.createElement("canvas"),measure=canvas.getContext("2d");
+  const size=45,lineH=58,pad=28,iconW=54,gap=12,maxWidth=770;
+  measure.font="bold 41px Arial,sans-serif";
+  const prefixWidth=iconW+gap+measure.measureText(name+":").width+18;
+  measure.font=size+"px Arial,sans-serif";
+  const firstMax=Math.max(100,maxWidth-prefixWidth-pad*2),otherMax=maxWidth-pad*2;
+  const lines=[""];
   for(const word of content.split(/\s+/)){
-    if(ctx.measureText(word).width>maxLineWidth){
-      if(line){lines.push(line);line="";}
-      let chunk="";
-      for(const char of word){
-        if(ctx.measureText(chunk+char).width>maxLineWidth&&chunk){lines.push(chunk);chunk=char;}
-        else chunk+=char;
-      }
-      line=chunk;
-    }else{
-      const candidate=line?line+" "+word:word;
-      if(ctx.measureText(candidate).width>maxLineWidth&&line){lines.push(line);line=word;}
-      else line=candidate;
+    let remain=word;
+    while(remain){
+      const i=lines.length-1,limit=i===0?firstMax:otherMax;
+      const candidate=lines[i]?lines[i]+" "+remain:remain;
+      if(measure.measureText(candidate).width<=limit){lines[i]=candidate;break;}
+      if(lines[i]){lines.push("");continue;}
+      let piece="";
+      for(const ch of remain){if(measure.measureText(piece+ch).width>limit&&piece)break;piece+=ch;}
+      if(!piece)piece=remain[0];
+      lines[i]=piece;remain=remain.slice(piece.length);
+      if(remain)lines.push("");
     }
   }
-  if(line)lines.push(line);
-  ctx.font="bold 42px Arial,sans-serif";
-  const nameWidth=ctx.measureText(name).width;
-  ctx.font=fontSize+"px Arial,sans-serif";
-  const widest=Math.max(nameWidth,...lines.map(t=>ctx.measureText(t).width));
-  const width=Math.ceil(Math.max(210,Math.min(740,widest+padX*2)));
-  const height=Math.ceil(padY*2+49+12+lines.length*lineHeight);
-  const margin=10;
-  canvas.width=width+margin*2;canvas.height=height+tail+margin*2;
+  const firstContent=measure.measureText(lines[0]).width+prefixWidth;
+  const otherContent=lines.slice(1).map(v=>measure.measureText(v).width);
+  const widest=Math.max(firstContent,...otherContent,0);
+  const bodyW=Math.ceil(Math.min(maxWidth,Math.max(225,widest+pad*2)));
+  const bodyH=pad*2+Math.max(1,lines.length)*lineH;
+  const tail=24,margin=8;
+  canvas.width=bodyW+margin*2;canvas.height=bodyH+tail+margin*2;
   const g=canvas.getContext("2d");
-  g.fillStyle="#252b35";
-  g.beginPath();g.roundRect(margin,margin,width,height,11);g.fill();
-  g.fillStyle="#fff";
-  g.beginPath();g.roundRect(margin+5,margin+5,width-10,height-10,7);g.fill();
-  const center=margin+width/2;
-  g.fillStyle="#252b35";g.beginPath();g.moveTo(center-22,margin+height-2);g.lineTo(center,margin+height+tail);g.lineTo(center+22,margin+height-2);g.closePath();g.fill();
-  g.fillStyle="#fff";g.beginPath();g.moveTo(center-15,margin+height-6);g.lineTo(center,margin+height+tail-10);g.lineTo(center+15,margin+height-6);g.closePath();g.fill();
-  g.textAlign="center";g.textBaseline="top";
-  g.font="bold 42px Arial,sans-serif";g.fillStyle="#505866";g.fillText(name,center,margin+padY,width-20);
-  g.font=fontSize+"px Arial,sans-serif";g.fillStyle="#20242d";
-  lines.forEach((txt,i)=>g.fillText(txt,center,margin+padY+61+i*lineHeight,width-20));
-  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
-  tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;tex.generateMipmaps=false;
-  const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
-  // A largura muda de acordo com as letras; altura cresce com as linhas.
-  const worldScale=.005;
-  bubble.scale.set(canvas.width*worldScale,canvas.height*worldScale,1);
-  bubble.position.set(0,2.65+canvas.height*worldScale/2,0);
-  bubble.renderOrder=260;member.root.add(bubble);member.speech=bubble;
+  g.fillStyle=style.border;g.beginPath();g.roundRect(margin,margin,bodyW,bodyH,10);g.fill();
+  g.fillStyle=style.bg;g.beginPath();g.roundRect(margin+5,margin+5,bodyW-10,bodyH-10,6);g.fill();
+  const mid=margin+bodyW/2;
+  g.fillStyle=style.border;g.beginPath();g.moveTo(mid-20,margin+bodyH-1);g.lineTo(mid,margin+bodyH+tail);g.lineTo(mid+20,margin+bodyH-1);g.closePath();g.fill();
+  g.fillStyle=style.bg;g.beginPath();g.moveTo(mid-13,margin+bodyH-6);g.lineTo(mid,margin+bodyH+tail-9);g.lineTo(mid+13,margin+bodyH-6);g.closePath();g.fill();
+  const firstY=margin+pad+4;
+  g.textBaseline="top";g.textAlign="left";
+  g.font="43px Arial,sans-serif";g.fillText("🐵",margin+pad,firstY-4);
+  g.font="bold 41px Arial,sans-serif";g.fillStyle=style.name;
+  const nameX=margin+pad+iconW+gap;
+  g.fillText(name+":",nameX,firstY);
+  const textX=nameX+g.measureText(name+":").width+18;
+  g.font=size+"px Arial,sans-serif";g.fillStyle=style.ink;
+  g.fillText(lines[0],textX,firstY);
+  lines.slice(1).forEach((line,i)=>g.fillText(line,margin+pad,firstY+(i+1)*lineH));
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  texture.minFilter=THREE.LinearFilter;texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=false;
+  const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
+  const scale=.005;
+  bubble.scale.set(canvas.width*scale,canvas.height*scale,1);
+  bubble.position.set(0,2.65+canvas.height*scale/2,0);bubble.renderOrder=260;
+  member.root.add(bubble);member.speech=bubble;
   danceSpeechTimers.set(member,setTimeout(()=>{
     if(member.speech===bubble){member.root?.remove(bubble);bubble.material.map?.dispose();bubble.material.dispose();member.speech=null;}
     danceSpeechTimers.delete(member);
@@ -840,8 +847,8 @@ function animate(now=performance.now()){
         p.root.updateMatrixWorld(true);
         const head=p.headBone.getWorldPosition(new THREE.Vector3());
         p.root.worldToLocal(head);
-        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.48,.6+.035*Math.sin(time*2),0));
-      }else p.bananaMarker.position.set(-.48,1.85+.035*Math.sin(time*2),0);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.20,.6+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(-.20,1.85+.035*Math.sin(time*2),0);
       p.bananaMarker.rotation.y=time*.8;
     }
 
