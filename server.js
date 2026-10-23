@@ -411,7 +411,7 @@ const wardrobeOptions = Object.freeze({
   hat: ["nenhum", "bone", "apocaliptico", "gorro", "palha", "branco", "caveira"],
   glasses: ["nenhum", "escuros", "redondos", "sem_aro"],
   headphones: ["nenhum", "azul", "rosa", "preto"],
-  outfit: ["padrao", "rosa", "rosa_novo"]
+  outfit: ["padrao", "rosa", "rosa_novo", "punk"]
 });
 function cleanWardrobe(input) {
   const source = input && typeof input === "object" && !Array.isArray(input) ? input : {};
