@@ -361,6 +361,8 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 #jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(1100px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
 #jfDanceModal[hidden]{display:none!important}
 #jfDanceModal.jf-dance-expanded{inset:1.5dvh!important;width:calc(100vw - 3dvh)!important;max-height:97dvh!important;z-index:12040}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatLauncher{z-index:12120!important;position:fixed!important;pointer-events:auto!important}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatWindow{z-index:12121!important;position:fixed!important;pointer-events:auto!important}
 #jfDanceModal.jf-dance-expanded .jf-dance-modal{max-height:97dvh!important}
 #jfDanceModal.jf-dance-expanded .jf-dance-stage{aspect-ratio:auto;max-height:none;height:min(76dvh,960px)}
 #jfDanceModal .jf-dance-modal .jf-modal-head{display:flex;align-items:center;gap:8px}
@@ -1104,7 +1106,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
-<script type="module" src="/dance-floor.js?v=simios-bubbles-theme-5"></script>
+<script type="module" src="/dance-floor.js?v=simios-chat-visible-6"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
