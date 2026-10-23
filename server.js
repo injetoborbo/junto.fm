@@ -496,7 +496,22 @@ function danceLeave(room,id){
   io.to(room).emit("dance-left",{id});
   if(!floor.size)danceFloors.delete(room);
 }
+// Conta dança ativa em intervalos de 15 segundos, nunca enquanto o avatar está parado ou sentado.
+const danceAwardTimer=setInterval(()=>{
+  const active=new Set();
+  for(const floor of danceFloors.values())for(const [id,member] of floor){
+    if(member.seated||member.dance==="idle")continue;
+    const client=io.sockets.sockets.get(id);
+    if(client?.data.room&&client.data.account?.id)active.add(client.data.account.id);
+  }
+  for(const accountId of active)void achievements.increment(accountId,"dance_seconds",15).catch(error=>console.error("Conquista dança:",error.message));
+},15000);
+danceAwardTimer.unref();
 io.on("connection", socket => {
+  const achievement=(method,...args)=>{
+    const id=socket.data.account?.id;
+    if(id)void achievements[method](id,...args,socket).catch(error=>console.error("Conquista:",error.message));
+  };
   socket.on("dance-enter",()=>{
     const room=socket.data.room;
     if(!room)return socket.emit("dance-error",{message:"Entre numa sala de música primeiro."});
@@ -541,7 +556,11 @@ io.on("connection", socket => {
     if(!["idle","shake","macarena","party","capoeira","groove"].includes(dance))return;
     const member=floor.get(socket.id);
     member.dance=dance;
-    if(dance!=="idle")member.seated=false;
+    if(dance!=="idle"){
+      member.seated=false;
+      achievement("event","dance1");
+      achievement("danceStyle",dance);
+    }
     io.to(room).emit("dance-updated",{id:socket.id,...member});
   });
   // Duas cadeiras no lounge; a escolha e a ocupação são validadas no servidor.
@@ -606,6 +625,8 @@ io.on("connection", socket => {
     const old=roomBananaCounts.get(room)||0;
     if(old>=15)return socket.emit("banana-error",{message:"Barril cheio!"});
     const count=old+1;roomBananaCounts.set(room,count);
+    achievement("increment","banana",1);
+    if(count===15)achievement("event","banana_mvp");
     io.to(room).emit("banana-thrown",{room,count,from:socket.id});
     if(count===15){
       const timer=setTimeout(()=>{
@@ -643,6 +664,7 @@ io.on("connection", socket => {
     hit={x:Number(hit.x.toFixed(4)),y:Number(hit.y.toFixed(4))};
     roomTomatoImpacts.set(room,[...nearby,{...hit,time:now}].slice(-4));
     io.to(room).emit("club-tomato-fired",{from:socket.id,to:targetId,hit});
+    achievement("increment","tomato",1);
   });
   socket.on("dance-exit",()=>{if(socket.data.room)danceLeave(socket.data.room,socket.id);});
 
@@ -695,6 +717,7 @@ io.on("connection", socket => {
       roomAccess.set(room, null);
     }
     roomOwners.set(room,socket.id);
+    achievement("event","firstroom");
     socket.emit("room-created", { room });
   });
 
@@ -787,6 +810,10 @@ io.on("connection", socket => {
     try{
       const found=await accountAuth.respond(account.id,from,Boolean(payload?.accepted));
       if(!found)return socket.emit("friends-error",{message:"Solicitação não encontrada."});
+      if(payload?.accepted===true){
+        achievement("checkFriends");
+        void achievements.checkFriends(from).catch(error=>console.error("Conquista amigos:",error.message));
+      }
       await notifyFriends(from);await notifyFriends(account.id);
     }catch(error){socket.emit("friends-error",{message:"Falha ao responder."});}
   });
@@ -882,6 +909,11 @@ io.on("connection", socket => {
     const avatarSkins=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.avatarSkin==="capitao-patria"?"capitao-patria":"default"]));
     const clientIds=Object.fromEntries(peers.map(id=>[id,io.sockets.sockets.get(id)?.data.clientId||null]));
     const registeredPeers=Object.fromEntries(peers.map(id=>[id,Boolean(io.sockets.sockets.get(id)?.data.account)]));
+    achievement("visit",room);
+    if(roomOwners.get(room)&&((io.sockets.adapter.rooms.get(room)?.size)||0)>=4){
+      const owner=io.sockets.sockets.get(roomOwners.get(room));
+      if(owner?.data.account?.id)void achievements.event(owner.data.account.id,"planet",owner).catch(error=>console.error("Conquista sala:",error.message));
+    }
     socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null, bananaCount:roomBananaCounts.get(room)||0 });
     emitSkip(room);
     juntoTv.joined(socket);
@@ -910,6 +942,7 @@ io.on("connection", socket => {
     const transmitter = { id: socket.id, name: String(profile.name || "DJ ao vivo").slice(0, 24) };
     socket.data.isTransmitting = true;
     roomTransmitters.set(room, transmitter);
+    achievement("event","firstdj");
     // A fila começa habilitada para DJs com Spotify autorizado, mas o próprio
     // DJ pode desativá-la. Não concedemos acesso a tokens de outros participantes.
     const spotifySession=getSession(socket.request,null);
@@ -977,6 +1010,10 @@ io.on("connection", socket => {
     const motto = String(payload.profile.motto || "").trim().replace(/\s+/g, " ").slice(0, 90);
     const profile = { name, avatar: safeAvatar, motto, wardrobe: cleanWardrobe(payload.profile.wardrobe) };
     socket.data.profile = profile;
+    const w=profile.wardrobe;
+    const filled=[w.hat!=="nenhum",w.glasses!=="nenhum",w.headphones!=="nenhum",w.outfit!=="padrao"];
+    if(filled.some(Boolean))achievement("event","outfit1");
+    if(filled.every(Boolean))achievement("event","outfit_all");
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
     if (socket.data.isTransmitting) {
       const transmitter = { id: socket.id, name: profile.name };
@@ -1008,6 +1045,7 @@ io.on("connection", socket => {
     if (history.length > 50) history.splice(0, history.length - 50);
     roomChatMessages.set(room, history);
     io.to(room).emit("chat-message", message);
+    achievement("event","firstchat");
   });
 
   socket.on("suggestion-settings", payload => {
