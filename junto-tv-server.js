@@ -12,6 +12,10 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
   const states = new Map();
   const viewers = new Map();
+  const youtubeQueues = new Map(); // pedidos temporários por sala, independentes do Spotify
+  const queueFor = room => youtubeQueues.get(room) || [];
+  const sendQueue = room => io.to(room).emit("tv:queue",queueFor(room));
+
   const idleTimers = new Map();
   function clearIdle(room) {
     if (idleTimers.has(room)) { clearTimeout(idleTimers.get(room)); idleTimers.delete(room); }
@@ -58,6 +62,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     }
   }
   function joined(socket) {
+    socket.emit("tv:queue",queueFor(socket.data.room));
     socket.emit("tv:state", snapshot(socket.data.room));
   }
   function fail(socket, message) { socket.emit("tv:error", { message }); }
@@ -92,6 +97,38 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
         console.error("Falha ao emitir token LiveKit:", error.message);
         reply({ ok: false, error: "Não foi possível autorizar o LiveKit." });
       }
+    });
+    socket.on("tv:queue-add", data => {
+      const room=socket.data.room;
+      if(!room)return;
+      if(isRateLimited(socket,"tv:queue-add",3,30000))return fail(socket,"Aguarde para enviar outra sugestão.");
+      const id=String(data?.videoId||"");
+      if(!/^[A-Za-z0-9_-]{11}$/.test(id))return fail(socket,"Link do YouTube inválido.");
+      const queue=queueFor(room);
+      if(queue.length>=30)return fail(socket,"Fila cheia (30 vídeos).");
+      if(queue.some(item=>item.videoId===id))return fail(socket,"Esse vídeo já está na fila.");
+      queue.push({id:crypto.randomUUID(),videoId:id,from:String(socket.data.profile?.name||"Participante").slice(0,32)});
+      youtubeQueues.set(room,queue);
+      sendQueue(room);
+    });
+    socket.on("tv:queue-remove", data => {
+      const room=socket.data.room;
+      if(!room||!isRoomOwner(socket,room))return;
+      const queue=queueFor(room),at=queue.findIndex(item=>item.id===data?.id);
+      if(at<0)return;
+      queue.splice(at,1);sendQueue(room);
+    });
+    socket.on("tv:queue-play", data => {
+      const room=socket.data.room;
+      if(!room||!isRoomOwner(socket,room))return fail(socket,"Só o dono pode reproduzir pedidos.");
+      if(isRateLimited(socket,"tv:queue-play",5,10000))return;
+      const queue=queueFor(room),at=queue.findIndex(item=>item.id===data?.id);
+      if(at<0)return;
+      const [item]=queue.splice(at,1);sendQueue(room);
+      stop(room);
+      states.set(room,{mode:"youtube",videoId:item.videoId,hostId:socket.id,
+        playing:true,seconds:0,updatedAt:Date.now(),revision:nextRevision()});
+      broadcast(room);
     });
     socket.on("tv:set-youtube", data => {
       const room = socket.data.room;
