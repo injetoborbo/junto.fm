@@ -34,6 +34,16 @@
     "#jfTvOverlay .jf-tv-tools{display:grid;gap:10px}",
     "#jfTvOverlay .jf-tv-tools label{display:grid;gap:5px;font-size:12px;font-weight:700}",
     "#jfTvOverlay .jf-tv-tools label.jf-tv-audio-choice{display:flex;align-items:center;gap:8px;font-weight:700}",
+    "#jfTvOverlay .jf-tv-youtube-extras{display:flex;gap:8px;flex-wrap:wrap;align-items:center}",
+    "#jfTvOverlay .jf-tv-youtube-extras button{border:1px solid #8dafe3;border-radius:7px;background:#27477e;color:white;padding:8px 12px;cursor:pointer}",
+    "#jfTvOverlay .jf-tv-recent{display:grid;gap:5px;margin-top:5px}",
+    "#jfTvOverlay .jf-tv-request-panel{display:grid;gap:8px;border:1px solid #536c9c;border-radius:8px;padding:10px;background:color-mix(in srgb,var(--jf-primary,#101b3b) 40%,var(--jf-glow,#101b3b));color:var(--ink,#fff)}",
+    "#jfTvOverlay .jf-tv-request-panel input{width:100%;min-width:0;padding:9px;border-radius:6px;border:1px solid #6979bc;background:#080f28;color:white}",
+    "#jfTvOverlay .jf-tv-queue-item{display:flex;gap:7px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid #465b82;padding:7px 0;font-size:12px}",
+    "#jfTvOverlay .jf-tv-queue-item button,#jfTvOverlay .jf-tv-request-panel>button{padding:7px 10px;border-radius:6px;background:var(--jf-primary,#3563a4);color:var(--ink,#fff);border:1px solid var(--jf-secondary,#87a9e2);cursor:pointer}",
+
+    "#jfTvOverlay .jf-tv-recent button{width:100%;text-align:left;border:1px solid #536c9c;border-radius:6px;background:#172a55;color:white;padding:7px;cursor:pointer}",
+
     "#jfTvOverlay .jf-tv-audio-choice input{width:17px;height:17px;accent-color:#80b9ff}",
     "#jfTvOverlay input[type=url],#jfTvOverlay input[type=file]{width:100%;background:#090f2d;border:1px solid #6979bc;border-radius:7px;color:#fff;padding:10px;min-width:0;font-size:13px}",
     "#jfTvOverlay .jf-tv-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}",
@@ -76,6 +86,7 @@
           '<section id="jfTvYoutubeTools" class="jf-tv-tools" hidden>',
             '<label>Link do YouTube<input type="url" id="jfTvYoutubeUrl" placeholder="https://youtu.be/..." autocomplete="off"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvLoad">Carregar vídeo</button><button type="button" id="jfTvPlay">▶ Play</button><button type="button" id="jfTvPause">Ⅱ Pausar</button></div>',
+             '<div id="jfTvYoutubeRecent" class="jf-tv-recent" aria-label="Vídeos reproduzidos recentemente"></div>',
             '<label>Posição do vídeo <span id="jfTvTime">0:00</span><input type="range" id="jfTvSeek" min="0" max="100" value="0" step="1"></label>',
           '</section>',
           '<section id="jfTvLocalTools" class="jf-tv-tools" hidden>',
@@ -91,7 +102,15 @@
           '<div class="jf-tv-actions"><button type="button" class="jf-tv-danger" id="jfTvStop">■ Encerrar TV</button></div>',
         '</div>',
         '<div class="jf-tv-actions" id="jfTvViewerTools" hidden><button type="button" id="jfTvWatch">▶ Assistir ao vídeo</button><button type="button" id="jfTvSound">🔊 Ativar reprodução/som</button></div>',
-        '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
+        '<section id="jfTvRequests" class="jf-tv-request-panel" hidden>',
+           '<strong>📺 Sugestões do YouTube <span id="jfTvQueueCount"></span></strong>',
+           '<label>Enviar vídeo para a fila<input id="jfTvRequestUrl" type="text" placeholder="Cole o link do YouTube" maxlength="240"></label>',
+           '<button type="button" id="jfTvRequestAdd">Enviar sugestão</button>',
+           '<button type="button" id="jfTvQueueToggle" aria-expanded="false">📋 Abrir fila de vídeos</button>',
+           '<div id="jfTvQueueList" hidden></div>',
+         '</section>',
+         '<div class="jf-tv-youtube-extras" id="jfTvYoutubeExtras" hidden><button type="button" id="jfTvCaptions" aria-pressed="false">CC: Desligadas</button><span class="jf-tv-note">Legendas só no seu player (quando o vídeo permitir).</span></div>',
+         '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
         '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: LiveKit Cloud para tela e arquivos, sem enviar o arquivo ao Render. A música continua independente.</p>',
       '</div>',
     '</section>'
@@ -202,6 +221,75 @@
       (state.playing?Math.max(0,((Number(state.serverNow)||Number(state.updatedAt))-(Number(state.updatedAt)||0))/1000):0);
     return Math.max(0, baseline+(state.playing?Math.max(0,(Date.now()-stateReceivedAt)/1000):0));
   }
+  // Fila compartilhada; apenas o proprietário pode aprovar/reproduzir/remover.
+  let youtubeQueue=[];
+  let queueOpen=false;
+  function renderYoutubeQueue(){
+    $("jfTvQueueCount").textContent="("+youtubeQueue.length+")";
+    $("jfTvQueueToggle").textContent=(queueOpen?"▾ Fechar":"▸ Abrir")+" fila de vídeos";
+    $("jfTvQueueToggle").setAttribute("aria-expanded",String(queueOpen));
+    const list=$("jfTvQueueList");list.hidden=!queueOpen;
+    list.replaceChildren();
+    if(!youtubeQueue.length){const empty=document.createElement("small");empty.textContent="Nenhum pedido ainda.";list.appendChild(empty);return;}
+    for(const item of youtubeQueue){
+      const row=document.createElement("div");row.className="jf-tv-queue-item";
+      const label=document.createElement("span");
+      label.textContent="▶ "+item.videoId+" — pedido por "+item.from;
+      row.appendChild(label);
+      if(isAdmin()){
+        const play=document.createElement("button");play.textContent="▶ Reproduzir";
+        play.onclick=()=>socket.emit("tv:queue-play",{id:item.id});
+        const remove=document.createElement("button");remove.textContent="✕";
+        remove.title="Remover pedido";remove.onclick=()=>socket.emit("tv:queue-remove",{id:item.id});
+        row.append(play,remove);
+      }
+      list.appendChild(row);
+    }
+  }
+  $("jfTvQueueToggle").onclick=()=>{queueOpen=!queueOpen;renderYoutubeQueue()};
+  $("jfTvRequestAdd").onclick=()=>{
+    if(!joined)return;
+    const id=youtubeId($("jfTvRequestUrl").value);
+    if(!/^[A-Za-z0-9_-]{11}$/.test(id))return status("Cole um link válido do YouTube para sugerir.");
+    socket.emit("tv:queue-add",{videoId:id});
+    $("jfTvRequestUrl").value="";
+    status("Sugestão enviada para a fila.");
+  };
+  socket.on("tv:queue",items=>{youtubeQueue=Array.isArray(items)?items:[];renderYoutubeQueue()});
+  // Preferência individual: não modifica o estado compartilhado da sala.
+  let captionsWanted=false;
+  function applyYoutubeCaptions(){
+    if(!playerReady||!player)return;
+    try{
+      if(!captionsWanted){
+        player.setOption("captions","track",{});
+      }else{
+        player.setOption("captions","track",{languageCode:"pt"});
+      }
+    }catch(_){/* O vídeo pode não oferecer faixas de legenda. */}
+  }
+  $("jfTvCaptions").addEventListener("click",()=>{
+    captionsWanted=!captionsWanted;
+    $("jfTvCaptions").textContent=captionsWanted?"CC: Ligadas":"CC: Desligadas";
+    $("jfTvCaptions").setAttribute("aria-pressed",String(captionsWanted));
+    applyYoutubeCaptions();
+  });
+  const jfRecentYoutubeKey="jf-tv-youtube-recentes-v1";
+  function getYoutubeRecents(){try{return JSON.parse(localStorage.getItem(jfRecentYoutubeKey)||"[]").filter(x=>/^[a-zA-Z0-9_-]{11}$/.test(x)).slice(0,8)}catch(_){return []}}
+  function renderYoutubeRecents(){
+    const el=$("jfTvYoutubeRecent");
+    el.replaceChildren();
+    const ids=getYoutubeRecents();
+    if(!ids.length)return;
+    const heading=document.createElement("small");heading.textContent="Reproduzidos recentemente (neste navegador):";el.appendChild(heading);
+    for(const id of ids){
+      const button=document.createElement("button");button.type="button";
+      button.textContent="▶ youtube.com/watch?v="+id;
+      button.onclick=()=>{$("jfTvYoutubeUrl").value="https://www.youtube.com/watch?v="+id;};
+      el.appendChild(button);
+    }
+  }
+  renderYoutubeRecents();
   function updateYoutubePauseShield(){
     pauseShield.hidden=!opened||state?.mode!=="youtube"||Boolean(state.playing);
   }
@@ -314,6 +402,7 @@
           playerVars:{playsinline:1,controls:0,disablekb:1,fs:0,rel:0,autoplay:0,cc_load_policy:0},
           events:{onReady:()=>{
               playerReady=true;loadedId="";youtubeHardStopped=false;
+              applyYoutubeCaptions();
               try{player.getIframe()?.setAttribute("tabindex","-1");}catch(_){}
               if(!isAdmin()&&viewerAudioEnabled)try{player.unMute();}catch(_){}
               syncYoutube(true);
@@ -321,6 +410,7 @@
               else if(state?.mode==="youtube")enforceYoutubePause();
             },
             onStateChange:onYoutubePlayerState,
+            onApiChange:applyYoutubeCaptions,
             onAutoplayBlocked:onYoutubeAutoplayBlocked,
             onError:()=>status("Este vídeo não permite reprodução incorporada ou não está disponível.")}});
       }else syncYoutube();
@@ -330,6 +420,8 @@
     if(!isAdmin())return;
     const id=youtubeId($("jfTvYoutubeUrl").value);
     if(!/^[a-zA-Z0-9_-]{11}$/.test(id)){status("Cole um link válido do YouTube.");return;}
+    try{localStorage.setItem(jfRecentYoutubeKey,JSON.stringify([id,...getYoutubeRecents().filter(x=>x!==id)].slice(0,8)));}catch(_){}
+    renderYoutubeRecents();
     stopLocal();socket.emit("tv:set-youtube",{videoId:id});
     status("Carregando vídeo para a sala...");
   };
@@ -554,6 +646,9 @@
     $("jfTvWatch").disabled=viewerRequested;
     $("jfTvSound").hidden=!state||state.mode==="youtube"&&!viewerAudioBlocked;
     const showYoutube=state?.mode==="youtube"&&opened;
+    $("jfTvYoutubeExtras").hidden=!showYoutube;
+    $("jfTvRequests").hidden=!joined||!opened;
+    renderYoutubeQueue();
     ytWrapper.hidden=!showYoutube;
     updateYoutubePauseShield();
     stage.hidden=!isStream||!opened;
@@ -617,7 +712,7 @@
     }
   });
   socket.on("tv:error",data=>{status(data?.message||"Falha na TV.");});
-  socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;updateUi();});
+  socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;youtubeQueue=[];updateUi();});
   socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;updateUi();});
   function reset(){
     joined=false;room="";ownerId=null;state=null;viewerRequested=false;

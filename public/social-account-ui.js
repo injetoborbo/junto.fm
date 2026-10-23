@@ -126,7 +126,13 @@
 
     const details=document.createElement("div"),title=document.createElement("strong"),description=document.createElement("p"),percent=document.createElement("small");
     title.textContent=item.title+(item.unlocked?" ✓":" 🔒");
-    description.textContent=item.description;percent.textContent=item.percent+"% dos usuários cadastrados desbloquearam";
+    description.textContent=item.description;
+     if(typeof item.target==="number"&&!item.unlocked){
+       const isTime=["listen1","listen10","listen50","listen100","dj10","dance_hour"].includes(item.id);
+       const display=n=>isTime?(Math.round(n/36)/100).toLocaleString("pt-BR",{maximumFractionDigits:2})+" h":String(n);
+       description.textContent+=" • Progresso: "+display(item.progress||0)+" / "+display(item.target);
+     }
+     percent.textContent=item.percent+"% dos usuários cadastrados desbloquearam";
     details.append(title,description,percent);row.append(medal,details);list.appendChild(row);
    }
   }catch(err){list.textContent=err.message}
@@ -150,8 +156,18 @@
   if(kind&&!visited.has(kind)){visited.add(kind);socket?.emit("achievement-interaction",{button:kind})}
  },true);
  socket?.on("joined-room",()=>visited.clear());
- socket?.on("achievement-unlocked",data=>{
-  const names={welcome:"Bem-vindo a bordo",jorge:"Jorge, ô curioso"};
+ // Som de conquista; ignora bloqueios de autoplay sem quebrar o aviso.
+  const achievementSound=new Audio("/achievement-unlock.mp3");
+  achievementSound.preload="auto";
+  achievementSound.volume=0.55;
+  socket?.on("achievement-unlocked",data=>{
+   try{
+    achievementSound.pause();
+    achievementSound.currentTime=0;
+    const playing=achievementSound.play();
+    if(playing&&typeof playing.catch==="function")playing.catch(()=>{});
+   }catch(_){}
+  const names={"welcome":"Bem-vindo a bordo","listen1":"Só mais uma música","listen10":"Uno mas...","listen50":"To fritando","listen100":"AYYY!","firstdj":"Solta o som","dj10":"Respeita o DJ","firstroom":"Cada macaco no seu galho","planet":"Planeta Macaco","nomad":"Nomade","friend1":"Macaco amigo","friend10":"Bando formado","firstchat":"Sinais de evolucao","days7":"Emocionado","streak7":"Ponto marcado","banana1":"Agindo como tal","banana_mvp":"MVP","banana100":"Fornecedor da feira","tomato1":"Na cara nao","tomato50":"Desperdicio...","dance1":"Dança gatinhe...","dance_hour":"Nao ta puro","dance_all":"Molejo","outfit1":"Feio arrumado","outfit_all":"Exagerado"};
   const toast=document.createElement("div");toast.className="jf-social-toast";
   if(data.id==="welcome"){
    toast.style.display="flex";toast.style.alignItems="center";toast.style.gap="10px";

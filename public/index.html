@@ -358,8 +358,18 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
 .jf-dance-launch{position:fixed;bottom:16px;left:90px;z-index:940;width:auto;min-width:174px;margin:0;font-size:12px;box-shadow:0 6px 26px #142e5770}
 .jf-dance-launch[hidden]{display:none!important}
-#jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(568px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
+#jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(1100px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
 #jfDanceModal[hidden]{display:none!important}
+#jfDanceModal.jf-dance-expanded{inset:1.5dvh!important;width:calc(100vw - 3dvh)!important;max-height:97dvh!important;z-index:12040}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatLauncher{z-index:12120!important;position:fixed!important;pointer-events:auto!important}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatWindow{z-index:12121!important;position:fixed!important;pointer-events:auto!important}
+#jfDanceModal.jf-dance-expanded .jf-dance-modal{max-height:97dvh!important}
+#jfDanceChat{position:relative;z-index:3;white-space:nowrap}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatWindow:not([hidden]){z-index:2147483000!important;position:fixed!important;right:18px!important;bottom:80px!important}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatLauncher{z-index:2147482999!important}
+#jfDanceModal.jf-dance-expanded .jf-dance-stage{aspect-ratio:auto;max-height:none;height:min(76dvh,960px)}
+#jfDanceModal .jf-dance-modal .jf-modal-head{display:flex;align-items:center;gap:8px}
+#jfDanceModal .jf-dance-modal .jf-modal-head>div{margin-right:auto}
 #jfDanceModal .jf-dance-modal{box-shadow:0 16px 55px #10254388,0 0 0 2px #cbe7ff;max-height:calc(100dvh - 28px);overflow:auto}
 #jfDanceModal .jf-dance-modal .jf-modal-head{position:sticky;top:0;z-index:2;padding:4px 0 7px;background:transparent;color:inherit}
 #jfDanceModal .jf-dance-modal .jf-modal-head h2{color:inherit}
@@ -368,7 +378,7 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 .jf-dance-modal{width:100%;max-width:100%;overflow:auto;padding:13px!important}
 .jf-dance-modal .jf-modal-head{margin-bottom:9px}
 .jf-dance-toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 10px 10px}
-.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:48vh;min-height:235px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
+.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:72vh;min-height:315px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
 .jf-dance-viewport,.jf-dance-viewport canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 .jf-dance-actions{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0 4px}
 .jf-dance-actions button{font-size:12px;padding:8px 11px}
@@ -929,10 +939,10 @@ body.jf-in-room #jfAdminEntry{display:none!important}
     <div class="jf-wardrobe-layout">
       <div><div id="jfWardrobePreview" class="jf-wardrobe-preview" aria-label="Prévia do seu macaco 3D"></div><p id="jfWardrobeAssetStatus" class="small" style="margin:8px 0;color:#914515" role="status" aria-live="polite"></p></div>
       <div class="jf-wardrobe-fields">
-        <label>Chapéu<select id="jfWardrobeHat"><option value="nenhum">Sem chapéu</option><option value="bone">Boné</option><option value="gorro">Gorro</option><option value="palha">Chapéu de palha (faixa vermelha)</option><option value="branco">Chapéu branco de sol</option><option value="caveira">Touca Caveira (novo)</option></select></label>
+        <label>Chapéu<select id="jfWardrobeHat"><option value="nenhum">Sem chapéu</option><option value="bone">Boné</option><option value="apocaliptico">Boné apocalíptico</option><option value="gorro">Gorro</option><option value="palha">Chapéu de palha (faixa vermelha)</option><option value="branco">Chapéu branco de sol</option><option value="caveira">Touca Caveira (novo)</option></select></label>
         <label>Óculos<select id="jfWardrobeGlasses"><option value="nenhum">Sem óculos</option><option value="escuros">Escuros</option><option value="redondos">Redondos</option><option value="sem_aro">Óculos 3D novo</option><option value="botao">Olhos de botão 🧵</option></select></label>
         <label>Fones<select id="jfWardrobeHeadphones"><option value="nenhum">Sem fones</option><option value="azul">Azuis</option><option value="rosa">Rosas</option><option value="preto">Preto (novo)</option></select></label>
-        <label>Roupa<select id="jfWardrobeOutfit"><option value="padrao">Original</option><option value="rosa">Rosa</option><option value="rosa_novo">Vestido rosa 3D (novo)</option></select></label>
+        <label>Roupa<select id="jfWardrobeOutfit"><option value="padrao">Original</option><option value="rosa">Rosa</option><option value="rosa_novo">Vestido rosa 3D (novo)</option><option value="punk">Regata punk</option></select></label>
       </div>
     </div>
     <details id="jfWardrobeFitEditor" class="jf-fit-editor" hidden>
@@ -941,7 +951,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
       <label class="jf-fit-item-label" for="jfFitItem">Peça a ajustar
         <select id="jfFitItem">
           <option value="fone_novo">🎧 Fone preto 3D</option>
-          <option value="vestido_novo">👗 Vestido rosa 3D</option>
+          <option value="vestido_novo">👗 Vestido rosa 3D</option><option value="regatapunk">🎸 Regata punk</option>
           <option value="escuros">🕶 Óculos escuros (clássicos)</option>
           <option value="redondos">👓 Óculos redondos (clássicos)</option>
           <option value="sem_aro">🕶 Óculos 3D novo</option>
@@ -974,7 +984,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 </div>
 <div class="jf-modal-backdrop" id="jfDanceModal" hidden>
   <section class="panel jf-dance-modal" role="dialog" aria-modal="false" aria-labelledby="jfDanceTitle">
-    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 The Símios</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
+    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 The Símios</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary" type="button" id="jfDanceChat" aria-label="Abrir chat da sala na The Símios">💬 Chat</button><button class="btn secondary" type="button" id="jfDanceExpand" aria-pressed="false">⤢ Ampliar</button><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
     <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
     <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
     <div class="jf-dance-actions" aria-label="Escolha sua dança">
@@ -998,6 +1008,8 @@ body.jf-in-room #jfAdminEntry{display:none!important}
         <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
         <label for="jfMotto">Lema do perfil (opcional)</label>
         <input id="jfMotto" type="text" maxlength="90" placeholder="Uma frase que te representa">
+        <label for="jfBubbleStyle">Balão de conversa na The Símios</label>
+        <select id="jfBubbleStyle"><option value="classic">Clássico (branco)</option><option value="pink">Rosa</option><option value="blue">Azul</option><option value="green">Verde</option><option value="dark">Escuro</option></select>
         <input id="jfAvatarFile" type="file" accept="image/*" aria-label="Escolher foto ou avatar" class="jf-avatar-file">
       </div>
     </div>
@@ -1096,8 +1108,8 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script type="module" src="/wardrobe.js"></script>
-<script type="module" src="/dance-floor.js?v=club-gpu-2"></script>
+<script type="module" src="/wardrobe.js?v=punk-fit-2"></script>
+<script type="module" src="/dance-floor.js?v=simios-profile-avatar-10"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
@@ -2088,7 +2100,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
   const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"],kodoku:["#ffffff","#d8d8d8","#777777"],tsimiomi:["#ff3324","#d7d7d7","#7d0505"]};
-  let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
+  let jfProfile={name:"Ouvinte",avatar:"",motto:"",bubbleStyle:"classic",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
   const jfPeerClientIds=new Map();
   const jfPeerRegistered=new Map();
@@ -2118,8 +2130,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfRenderPeople();
   });
   socket.on("avatar-skin-error",({message}={})=>setStatus(message||"Skin não autorizada."));
-  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
+  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);jfProfile.bubbleStyle=["classic","pink","blue","green","dark"].includes(saved.bubbleStyle)?saved.bubbleStyle:"classic";if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
+  let jfAccountLoaded=false;
+  let jfPendingWardrobeSave=false;
+  let jfProfileSaveQueue=Promise.resolve();
   window.addEventListener("jf-wardrobe-save",event=>{
+    if(!jfAccountLoaded)jfPendingWardrobeSave=true;
     jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
     try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
     if(joined)socket.emit("profile-update",{profile:jfProfile});
@@ -2127,12 +2143,15 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfNotifyTransmitterAppearance();
     jfRenderPeople();
   });
-  async function jfPersistAccountProfile(){
-    if(!jfCanUseFriends())return;
+  function jfPersistAccountProfile(){
+    if(!jfCanUseFriends())return Promise.resolve();
+    const body=JSON.stringify({profile:jfProfile});
+    // Serializar gravações: uma resposta lenta não pode restaurar um traje antigo.
+    jfProfileSaveQueue=jfProfileSaveQueue.then(async()=>{
     try{
       const response=await fetch("/api/account/profile",{
         method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({profile:jfProfile})
+        body
       });
       if(!response.ok)throw Error("Não foi possível salvar sua conta.");
       const data=await response.json();
@@ -2142,7 +2161,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }catch(error){
       const status=document.getElementById("jfProfileStatus");
       if(status)status.textContent="Falha ao salvar na conta. Tente novamente.";
+      setStatus("Não foi possível salvar o traje/perfil na conta. Abra Trajes e salve novamente.");
     }
+    });
+    return jfProfileSaveQueue;
   }
   function jfUpdateFavoriteButton(){
     const button=$("spotifyFavorite");
@@ -2190,7 +2212,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         jfProfile.name=jfAccount.name||"Macaco";
         jfProfile.avatar=jfAccount.avatar||"";
         jfProfile.motto=jfAccount.motto||"";
-        jfProfile.wardrobe=jfAccount.wardrobe||jfProfile.wardrobe;
+        // Uma escolha feita durante o carregamento da conta tem prioridade.
+        if(!jfPendingWardrobeSave)jfProfile.wardrobe=jfAccount.wardrobe||jfProfile.wardrobe;
+        try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
         window.dispatchEvent(new CustomEvent("jf-local-profile-updated",{detail:{wardrobe:jfProfile.wardrobe}}));
         $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;
         jfRenderAvatar();
@@ -2203,6 +2227,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       $("jfGoogleLogout").hidden=true;
       $("jfEntryAccountLoggedIn").hidden=true;
       $("jfEntryAccountHint").hidden=false;
+    }
+    jfAccountLoaded=true;
+    if(jfPendingWardrobeSave&&jfCanUseFriends()){
+      jfPendingWardrobeSave=false;
+      void jfPersistAccountProfile();
     }
     jfRenderPeople();jfRenderFriends();
   }
@@ -2358,7 +2387,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("friends-notice",({message}={})=>{$("jfFriendsStatus").textContent=message||"Solicitação enviada.";});
   function jfInit(){
-    $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";jfRenderAvatar();
+    $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";$("jfBubbleStyle").value=jfProfile.bubbleStyle||"classic";jfRenderAvatar();
     const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
     const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
     $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
@@ -2402,7 +2431,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
       const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
     });
-    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo neste navegador.";if(jfCanUseFriends())jfPersistAccountProfile();});
+    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);jfProfile.bubbleStyle=$("jfBubbleStyle").value;$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo neste navegador.";if(jfCanUseFriends())jfPersistAccountProfile();});
   }
   socket.on("profile-update",({id,profile})=>{
     if(!id||id===socket.id||!profile)return;
@@ -2438,6 +2467,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(open){launcher.classList.remove("has-unread");$("jfChatUnread").removeAttribute("title");$("jfChatInput").focus();const log=$("jfChatLog");log.scrollTop=log.scrollHeight;}
   }
   $("jfChatLauncher").addEventListener("click",()=>jfSetChatOpen($("jfChatWindow").hidden));
+  $("jfDanceChat")?.addEventListener("click",()=>{
+    jfSetChatOpen($("jfChatWindow").hidden);
+    if(!$("jfChatWindow").hidden)$("jfChatInput").focus();
+  });
   $("jfChatClose").addEventListener("click",()=>jfSetChatOpen(false));
   document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("jfChatWindow").hidden)jfSetChatOpen(false);});
 
@@ -2784,6 +2817,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 <script defer src="/kodoku-skip.js"></script>
 <link rel="stylesheet" href="/tsimiomi.css?v=5">
 <script defer src="/junto-tv-icons.js"></script>
-<script defer src="/junto-tv.js?v=tv-no-captions-1"></script>
+<script defer src="/junto-tv.js?v=theme-requests-3"></script>
 </body>
 </html>
+

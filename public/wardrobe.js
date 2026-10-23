@@ -5,10 +5,10 @@ import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLo
 import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 
 const OPTIONS={
-  hat:["nenhum","bone","gorro","palha","branco","caveira"],
+  hat:["nenhum","bone","apocaliptico","gorro","palha","branco","caveira"],
   glasses:["nenhum","escuros","redondos","sem_aro","botao"],
   headphones:["nenhum","azul","rosa","preto"],
-  outfit:["padrao","rosa","rosa_novo"]
+  outfit:["padrao","rosa","rosa_novo","punk"]
 };
 const defaults=()=>({hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"});
 const sanitize=x=>Object.fromEntries(Object.entries(OPTIONS).map(([key,list])=>[key,list.includes(x?.[key])?x[key]:defaults()[key]]));
@@ -40,6 +40,7 @@ const ASSETS={
   palha:"/Meshy_AI_Straw_Hat_with_Red_Ri_1018034335_texture.glb",
   branco:"/chapeu_sol_branco_corrigido.glb",
   bone:"/bone_azul.glb",
+  apocaliptico:"/boneapocaliptico_otimizado.glb",
   gorro:"/touca_preta.glb",
   escuros:"/oculos_escuros.glb",
   redondos:"/oculos_redondos.glb",
@@ -50,6 +51,7 @@ const ASSETS={
   sem_aro:"/oculossemolo.glb",
   fone_novo:"/fonepreto.glb",
   vestido_novo:"/vestidorosa.glb",
+  regatapunk:"/regatapunk_512_ultraleve.glb",
   hero:"/patrianocape_pose_heroica_final.glb",
   heroCape:"/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb"
 };
@@ -63,7 +65,8 @@ const FIT_DEFAULTS=Object.freeze({
   // Modelo Meshy normalizado pela largura e ancorado ao osso da cabeça.
   botao:{width:.68,offset:[0,.23,.31],scale:[.78,1,1]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
-  vestido_novo:{width:.70,offset:[0,-.24,0]}
+  vestido_novo:{width:.70,offset:[0,-.24,0]},
+  regatapunk:{width:.45,offset:[0,-.01,0]}
 });
 const FIT_STORAGE="jf_wardrobe_private_fit_v1";
 const FIT_SEATED_STORAGE="jf_wardrobe_private_fit_seated_v1";
@@ -347,9 +350,14 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
         const target=restInRoot(bone).add(new THREE.Vector3(...params.offset));
         tmpRotation.setFromAxisAngle(new THREE.Vector3(1,0,0),
           THREE.MathUtils.degToRad(file==="vestido_novo"?(params.pitch||0):0));
-        centerOffset.copy(measure.center).multiplyScalar(sc).applyQuaternion(tmpRotation);
+        centerOffset.copy(measure.center).multiplyScalar(sc);
+        if(file==="regatapunk")centerOffset.y*=.74;
+        centerOffset.applyQuaternion(tmpRotation);
         tmpPosition.copy(target).sub(centerOffset);
         tmpScale.setScalar(sc);
+        // Regata Meshy veio comprida como vestido; reduzir apenas a altura.
+        // É uma peça rígida (GLB sem skin), mantendo os acessórios antigos intactos.
+        if(file==="regatapunk")tmpScale.y*=.74;
         matrix.compose(tmpPosition,tmpRotation,tmpScale);
       };
       const update=()=>{
@@ -395,17 +403,20 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
     seatedOffset:{y:-.00010}
   });
+  if(selection.outfit==="punk")installNewWearable("regatapunk",newTorsoBone,{
+    seatedOffset:{y:.00010}
+  });
   if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
     seatedOffset:{y:.00010}
   });
-  if(selection.hat==="palha"||selection.hat==="branco"){
+  if(["palha","branco","apocaliptico"].includes(selection.hat)){
     const type=selection.hat;
     getAsset(type).then(asset=>{
       if(!asset||!state.userData.active)return;
       const hat=asset.clone(true);
       const measure=getBounds(hat);
       // Meshy: aba = Y mínimo + cerca de 12% da altura. Apoio = topo - 17 cm visuais.
-      const width=type==="palha"?.94:.92;
+      const width=type==="palha"?.94:type==="apocaliptico"?.79:.92;
       const scale=width/Math.max(measure.size.x,measure.size.z,1e-6);
       const brim=measure.box.min.y+measure.size.y*.12;
       hat.scale.setScalar(scale);
@@ -514,7 +525,7 @@ async function dressMiniPlayer(selection,render,monkey,root,isActive){
     render();
   };
   const jobs=[];
-  if(selection.hat==="palha"||selection.hat==="branco"){
+  if(["palha","branco","apocaliptico"].includes(selection.hat)){
     const type=selection.hat;
     jobs.push((async()=>{
       const asset=await getAsset(type);
@@ -526,7 +537,7 @@ async function dressMiniPlayer(selection,render,monkey,root,isActive){
       hat.name="jfMiniHat_"+type;
       const measure=getBounds(hat);
       const worldScale=head.getWorldScale(new THREE.Vector3()).x||1;
-      const desiredWidth=type==="palha"?.94:.92;
+      const desiredWidth=type==="palha"?.94:type==="apocaliptico"?.79:.92;
       const nativeScale=desiredWidth/
         (Math.max(measure.size.x,measure.size.z,1e-6)*worldScale);
       const topLocal=head.worldToLocal(top.getWorldPosition(new THREE.Vector3()));
@@ -846,6 +857,8 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
 // Não sobrepor o macaco do guarda-roupa neste palco; os acessórios do
 // guarda-roupa continuam normalmente na prévia e nos participantes.
 function readSaved(){
+  const current=window.jfDanceBridge?.getProfile?.();
+  if(current?.wardrobe)return sanitize(current.wardrobe);
   try{return sanitize(JSON.parse(localStorage.getItem("junto_profile")||"{}").wardrobe);}catch{return defaults();}
 }
 let selection=readSaved();
@@ -860,7 +873,7 @@ function prefetchWardrobeAssets(){
     selection.hat,
     selection.glasses,
     selection.headphones==="preto"?"fone_novo":selection.headphones!=="nenhum"?"fone":null,
-    selection.outfit==="rosa_novo"?"vestido_novo":selection.outfit==="rosa"?"vestido":null
+    selection.outfit==="punk"?"regatapunk":selection.outfit==="rosa_novo"?"vestido_novo":selection.outfit==="rosa"?"vestido":null
   ].filter(name=>ASSETS[name]);
   // Evita pré-baixar dezenas de MiB de roupas que ninguém está usando.
   const queue=[...new Set(preferred)];
@@ -935,7 +948,8 @@ const fitOptions={
   escuros:["glasses","escuros"],
   redondos:["glasses","redondos"],
   fone_novo:["headphones","preto"],
-  vestido_novo:["outfit","rosa_novo"]
+  vestido_novo:["outfit","rosa_novo"],
+  regatapunk:["outfit","punk"]
 };
 function setFitStatus(message){if(fitStatus)fitStatus.textContent=message;}
 function showFitValues(){
@@ -970,6 +984,7 @@ function focusFitItem(file,{equip=false}={}){
 function preferredFitItem(){
   // Priorizar o último item selecionado no guarda-roupa.
   if(editing.headphones==="preto")return "fone_novo";
+  if(editing.outfit==="punk")return "regatapunk";
   if(editing.outfit==="rosa_novo")return "vestido_novo";
   if(["sem_aro","escuros","redondos","botao"].includes(editing.glasses))return editing.glasses;
   if(editing.hat==="caveira")return "caveira";
@@ -1055,6 +1070,7 @@ for(const [key,element] of Object.entries(selectors)){
 }
 const modal=$("jfWardrobeModal");
 $("jfOpenWardrobe")?.addEventListener("click",()=>{
+  selection=readSaved();
   editing={...selection};
   for(const [k,e] of Object.entries(selectors))if(e)e.value=editing[k];
   modal.hidden=false;document.body.style.overflow="hidden";
@@ -1093,6 +1109,11 @@ const observer=new MutationObserver(()=>{queueMicrotask(refreshPeople);});
 const people=$("jfPeople");
 if(people)observer.observe(people,{childList:true,subtree:false});
 window.addEventListener("jf-wardrobe-save",()=>{selection=readSaved();refreshPeople();});
+window.addEventListener("jf-local-profile-updated",()=>{
+  selection=readSaved();
+  if(!modal||modal.hidden)editing={...selection};
+  refreshPeople();
+});
 refreshPeople();
 // Após entrar numa sala, liberar o avatar 3D dos participantes sem disputar
 // imediatamente o download do mascote principal do player.
@@ -1141,3 +1162,4 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   }
   return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }
+
