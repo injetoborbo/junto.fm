@@ -975,7 +975,8 @@ io.on("connection", socket => {
     const allowedImage = ["data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,", "data:image/gif;base64,"].includes(prefix);
     const safeAvatar = avatar.length <= 220000 && allowedImage && comma < avatar.length - 1 ? avatar : "";
     const motto = String(payload.profile.motto || "").trim().replace(/\s+/g, " ").slice(0, 90);
-    const profile = { name, avatar: safeAvatar, motto, wardrobe: cleanWardrobe(payload.profile.wardrobe) };
+    const bubbleStyle=["classic","pink","blue","green","dark"].includes(payload.profile.bubbleStyle)?payload.profile.bubbleStyle:"classic";
+    const profile = { name, avatar: safeAvatar, motto, bubbleStyle, wardrobe: cleanWardrobe(payload.profile.wardrobe) };
     socket.data.profile = profile;
     socket.to(socket.data.room).emit("profile-update", { id: socket.id, profile });
     if (socket.data.isTransmitting) {
@@ -1001,7 +1002,8 @@ io.on("connection", socket => {
       avatar: typeof profile.avatar === "string" && profile.avatar.length <= 220000 ? profile.avatar : "",
       text,
       time: Date.now(),
-      senderId:socket.id
+      senderId:socket.id,
+      bubbleStyle:profile.bubbleStyle||"classic"
     };
     const history = roomChatMessages.get(room) || [];
     history.push(message);
