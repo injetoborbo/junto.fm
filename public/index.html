@@ -788,7 +788,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
         <div class="jf-track-info">
           <div class="track-kicker" id="trackKicker">✦ NOW PLAYING</div>
           <h3 class="track-title" id="trackTitle">A música aparece aqui</h3>
-          <p class="track-artist" id="trackArtist">Conecte o Spotify para mostrar os metadados</p>
+          <p class="track-artist" id="trackArtist">Aguardando informações da faixa do DJ</p>
           <p class="track-album" id="trackAlbum">JUNTO.FM · Y2K RADIO</p>
           <div class="progress-wrap" role="progressbar" aria-label="Progresso da música" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="trackProgress"><div class="progress-fill" id="trackProgressFill"></div></div>
           <div class="track-times"><span id="trackElapsed">0:00</span><span id="trackDuration">0:00</span></div>
@@ -804,16 +804,16 @@ body.jf-in-room #jfAdminEntry{display:none!important}
       <button type="button" id="jfTvLaunch" class="jf-fun-image-btn" aria-label="Abrir Junto.TV" title="Abrir Junto.TV" disabled><img id="jfTvLaunchIcon" alt="" width="60" height="60"></button>
       <button type="button" id="jfOpenDance" class="jf-fun-image-btn jf-dance-launch" aria-label="Abrir pista de dança" title="Abrir pista de dança"><img id="jfDanceLaunchIcon" alt="" width="60" height="60"></button>
     </div>
-    <div class="spotify-actions">
-      <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Conectar Spotify</a>
+    <div class="spotify-actions" id="jfDjSpotifyOptions" hidden>
+      <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Vincular Spotify (opcional)</a>
       <button class="btn secondary" id="spotifyDisconnect" type="button" hidden>Desconectar Spotify</button>
       <button class="btn" id="spotifyFavorite" type="button" hidden>♡ Favoritar música</button>
-      <span class="small" id="spotifyStatus">Conecte o Spotify no dispositivo que está transmitindo.</span>
+      <span class="small" id="spotifyStatus">Opcional para o DJ: identifica a faixa e permite usar recursos do Spotify.</span>
     </div>
-    <p class="spotify-note">A capa e o progresso são lidos da sua conta Spotify. Conecte sua conta para favoritar a faixa atual na sua biblioteca. Cada pessoa precisa conectar o próprio Spotify; os metadados da música são compartilhados pela sala.</p>
+    <p class="spotify-note" id="jfDjSpotifyNote" hidden>Somente o DJ precisa vincular Spotify se quiser exibir capa, progresso e faixa atual ou usar a fila automática. A transmissão de áudio da aba funciona sem conectar Spotify na Junto.fm; os ouvintes não precisam de conta.</p>
     <p class="small" id="spotifyFavoriteStatus" aria-live="polite"></p>
     <section class="jf-lyrics" aria-labelledby="jfLyricsHeading"><div class="jf-lyrics-head"><h3 id="jfLyricsHeading">♫ Letra da música</h3><span id="jfLyricsMode" class="small">Sincronizada quando disponível</span></div><div id="jfLyricsContent" class="jf-lyrics-content" aria-live="polite"><p class="small">A letra aparecerá aqui quando disponível.</p></div></section>
-    <label for="jfAudioSource" class="small" style="display:block;margin-top:18px;margin-bottom:6px">Fonte do áudio</label>
+    <label for="jfAudioSource" class="small" style="display:block;margin-top:18px;margin-bottom:6px">Fonte do áudio (somente DJ)</label>
     <select id="jfAudioSource" class="jf-audio-source">
       <option value="tab">Transmitir áudio da aba (web)</option>
       <option value="system">Transmitir áudio de app externo (VB-CABLE)</option>
@@ -1044,9 +1044,9 @@ body.jf-in-room #jfAdminEntry{display:none!important}
     <div class="steps">
       <div class="step"><div class="num">1</div><div><strong>Abra esta página nos dois aparelhos</strong><span>O PC e o Android precisam acessar a mesma versão hospedada do site.</span></div></div>
       <div class="step"><div class="num">2</div><div><strong>Entrem com o mesmo nome de sala</strong><span>Por exemplo, “noite”. Escolham um nome difícil de adivinhar se quiserem privacidade básica.</span></div></div>
-      <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissão</strong><span>Compartilhe a aba do Spotify Web Player com áudio. No Android, aceite tocar o áudio quando solicitado.</span></div></div>
+      <div class="step"><div class="num">3</div><div><strong>O PC inicia a transmissão</strong><span>O DJ escolhe uma aba e compartilha seu áudio. No Android, aceite tocar o áudio quando solicitado.</span></div></div>
     </div>
-    <div class="notice"><strong>Como transmitir o Spotify:</strong> abra o Spotify Web Player em outra aba. No Chrome/Edge, volte aqui, clique em “Transmitir áudio” e escolha a aba do Spotify. Marque “Compartilhar áudio da aba”.</div>
+    <div class="notice"><strong>Como transmitir áudio de aba:</strong> no Chrome/Edge, clique em “Transmitir áudio da aba”, escolha a aba desejada e marque “Compartilhar áudio”. Respeite os direitos e termos aplicáveis ao conteúdo.</div>
     <div class="notice">Importante: este é um protótipo experimental. Para funcionar entre redes diferentes, o projeto precisa ser hospedado num servidor com HTTPS; em algumas redes, será necessário configurar um servidor TURN para a conexão de áudio.</div>
   </section>
 <section id="jfAdminPanel" aria-label="Administração e skin exclusiva">
@@ -1315,7 +1315,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       $("spotifyFavorite").textContent = "♡ Favoritar música";
       $("spotifyFavoriteStatus").textContent = "";
       $("trackTitle").textContent = "A música aparece aqui";
-      $("trackArtist").textContent = "Conecte o Spotify para mostrar os metadados";
+      $("trackArtist").textContent = "Aguardando informações da faixa do DJ";
       $("trackAlbum").textContent = "JUNTO.FM · Y2K RADIO";
       $("trackArt").hidden = true; $("trackArt").removeAttribute("src"); $("trackPlaceholder").hidden = false;
       $("trackProgressFill").style.width = "0%"; $("trackElapsed").textContent = "0:00"; $("trackDuration").textContent = "0:00";
@@ -1424,6 +1424,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   }
   function enableControls() {
     jfUpdateRoomView();
+    // Só o dono da sala vê a vinculação opcional do Spotify.
+    const djSpotifyVisible=joined&&jfRoomOwner;
+    $("jfDjSpotifyOptions").hidden=!djSpotifyVisible;
+    $("jfDjSpotifyNote").hidden=!djSpotifyVisible;
     $("join").disabled = !socket.connected;
     $("createRoom").disabled = !socket.connected;
     $("start").disabled = !joined || !jfRoomOwner || isSender;
@@ -1872,7 +1876,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   $("start").onclick = async () => {
     try {
       if (!joined) { setStatus('Entre ou crie uma sala antes de transmitir.'); return; }
-      if (!jfRoomOwner) { setStatus('Somente o dono da sala pode transmitir o Spotify.'); return; }
+      if (!jfRoomOwner) { setStatus('Somente o dono da sala pode transmitir áudio.'); return; }
       const external=jfAudioMode.value==="system";
       if(external&&!navigator.mediaDevices?.getUserMedia){setStatus("O VB-CABLE exige acesso ao microfone em HTTPS/localhost.");return;}
       if(!external&&!navigator.mediaDevices?.getDisplayMedia){setStatus("A captura da aba exige Chrome/Edge em HTTPS/localhost.");return;}
