@@ -66,7 +66,7 @@ const FIT_DEFAULTS=Object.freeze({
   botao:{width:.68,offset:[0,.23,.31],scale:[.78,1,1]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
   vestido_novo:{width:.70,offset:[0,-.24,0]},
-  regatapunk:{width:.76,offset:[0,-.13,0]}
+  regatapunk:{width:.60,offset:[0,.075,.01]}
 });
 const FIT_STORAGE="jf_wardrobe_private_fit_v1";
 const FIT_SEATED_STORAGE="jf_wardrobe_private_fit_seated_v1";
@@ -350,9 +350,14 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
         const target=restInRoot(bone).add(new THREE.Vector3(...params.offset));
         tmpRotation.setFromAxisAngle(new THREE.Vector3(1,0,0),
           THREE.MathUtils.degToRad(file==="vestido_novo"?(params.pitch||0):0));
-        centerOffset.copy(measure.center).multiplyScalar(sc).applyQuaternion(tmpRotation);
+        centerOffset.copy(measure.center).multiplyScalar(sc);
+        if(file==="regatapunk")centerOffset.y*=.74;
+        centerOffset.applyQuaternion(tmpRotation);
         tmpPosition.copy(target).sub(centerOffset);
         tmpScale.setScalar(sc);
+        // Regata Meshy veio comprida como vestido; reduzir apenas a altura.
+        // É uma peça rígida (GLB sem skin), mantendo os acessórios antigos intactos.
+        if(file==="regatapunk")tmpScale.y*=.74;
         matrix.compose(tmpPosition,tmpRotation,tmpScale);
       };
       const update=()=>{
