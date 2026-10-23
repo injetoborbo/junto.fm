@@ -156,7 +156,17 @@
   if(kind&&!visited.has(kind)){visited.add(kind);socket?.emit("achievement-interaction",{button:kind})}
  },true);
  socket?.on("joined-room",()=>visited.clear());
- socket?.on("achievement-unlocked",data=>{
+ // Som de conquista; ignora bloqueios de autoplay sem quebrar o aviso.
+  const achievementSound=new Audio("/achievement-unlock.mp3");
+  achievementSound.preload="auto";
+  achievementSound.volume=0.55;
+  socket?.on("achievement-unlocked",data=>{
+   try{
+    achievementSound.pause();
+    achievementSound.currentTime=0;
+    const playing=achievementSound.play();
+    if(playing&&typeof playing.catch==="function")playing.catch(()=>{});
+   }catch(_){}
   const names={"welcome":"Bem-vindo a bordo","listen1":"Só mais uma música","listen10":"Uno mas...","listen50":"To fritando","listen100":"AYYY!","firstdj":"Solta o som","dj10":"Respeita o DJ","firstroom":"Cada macaco no seu galho","planet":"Planeta Macaco","nomad":"Nomade","friend1":"Macaco amigo","friend10":"Bando formado","firstchat":"Sinais de evolucao","days7":"Emocionado","streak7":"Ponto marcado","banana1":"Agindo como tal","banana_mvp":"MVP","banana100":"Fornecedor da feira","tomato1":"Na cara nao","tomato50":"Desperdicio...","dance1":"Dança gatinhe...","dance_hour":"Nao ta puro","dance_all":"Molejo","outfit1":"Feio arrumado","outfit_all":"Exagerado"};
   const toast=document.createElement("div");toast.className="jf-social-toast";
   if(data.id==="welcome"){
