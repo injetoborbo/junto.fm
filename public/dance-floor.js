@@ -495,8 +495,20 @@ async function putMember(id,details){
       const box=new THREE.Box3().setFromObject(marker);
       const dims=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
       const longest=Math.max(dims.x,dims.y,dims.z,0.0001);
-      marker.scale.setScalar(.36/longest);
-      marker.position.copy(center).multiplyScalar(-.36/longest);
+      marker.scale.setScalar(.68/longest);
+      marker.position.copy(center).multiplyScalar(-.68/longest);
+      marker.traverse(obj=>{
+        if(!obj.isMesh)return;
+        obj.material=(Array.isArray(obj.material)?obj.material:[obj.material]).map(material=>{
+          const m=material.clone();
+          if(m.color)m.color.multiplyScalar(1.65);
+          if("roughness" in m)m.roughness=Math.min(m.roughness,.2);
+          if("metalness" in m)m.metalness=Math.min(m.metalness,.15);
+          if("emissive" in m){m.emissive.set(0x45ff22);m.emissiveIntensity=.28;}
+          return m;
+        });
+        if(obj.material.length===1)obj.material=obj.material[0];
+      });
       const pivot=new THREE.Group();
       pivot.add(marker);entry.root.add(pivot);entry.bananaMarker=pivot;
     });
@@ -752,8 +764,8 @@ function animate(now=performance.now()){
         p.root.updateMatrixWorld(true);
         const head=p.headBone.getWorldPosition(new THREE.Vector3());
         p.root.worldToLocal(head);
-        p.bananaMarker.position.copy(head).add(new THREE.Vector3(0,.42+.035*Math.sin(time*2),0));
-      }else p.bananaMarker.position.set(0,1.6+.035*Math.sin(time*2),0);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(0,.58+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(0,1.85+.035*Math.sin(time*2),0);
       p.bananaMarker.rotation.y=time*.8;
     }
 
