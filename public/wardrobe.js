@@ -8,7 +8,7 @@ const OPTIONS={
   hat:["nenhum","bone","apocaliptico","gorro","palha","branco","caveira"],
   glasses:["nenhum","escuros","redondos","sem_aro","botao"],
   headphones:["nenhum","azul","rosa","preto"],
-  outfit:["padrao","rosa","rosa_novo"]
+  outfit:["padrao","rosa","rosa_novo","punk"]
 };
 const defaults=()=>({hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"});
 const sanitize=x=>Object.fromEntries(Object.entries(OPTIONS).map(([key,list])=>[key,list.includes(x?.[key])?x[key]:defaults()[key]]));
@@ -51,6 +51,7 @@ const ASSETS={
   sem_aro:"/oculossemolo.glb",
   fone_novo:"/fonepreto.glb",
   vestido_novo:"/vestidorosa.glb",
+  regatapunk:"/regatapunk_512_ultraleve.glb",
   hero:"/patrianocape_pose_heroica_final.glb",
   heroCape:"/Meshy_AI_Crimson_Champion_Cape_1018025832_texture.glb"
 };
@@ -64,7 +65,8 @@ const FIT_DEFAULTS=Object.freeze({
   // Modelo Meshy normalizado pela largura e ancorado ao osso da cabeça.
   botao:{width:.68,offset:[0,.23,.31],scale:[.78,1,1]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
-  vestido_novo:{width:.70,offset:[0,-.24,0]}
+  vestido_novo:{width:.70,offset:[0,-.24,0]},
+  regatapunk:{width:.76,offset:[0,-.13,0]}
 });
 const FIT_STORAGE="jf_wardrobe_private_fit_v1";
 const FIT_SEATED_STORAGE="jf_wardrobe_private_fit_seated_v1";
@@ -395,6 +397,9 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
     });
   if(selection.headphones==="preto")installNewWearable("fone_novo",newHeadBone,{
     seatedOffset:{y:-.00010}
+  });
+  if(selection.outfit==="punk")installNewWearable("regatapunk",newTorsoBone,{
+    seatedOffset:{y:.00010}
   });
   if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
     seatedOffset:{y:.00010}
@@ -861,7 +866,7 @@ function prefetchWardrobeAssets(){
     selection.hat,
     selection.glasses,
     selection.headphones==="preto"?"fone_novo":selection.headphones!=="nenhum"?"fone":null,
-    selection.outfit==="rosa_novo"?"vestido_novo":selection.outfit==="rosa"?"vestido":null
+    selection.outfit==="punk"?"regatapunk":selection.outfit==="rosa_novo"?"vestido_novo":selection.outfit==="rosa"?"vestido":null
   ].filter(name=>ASSETS[name]);
   // Evita pré-baixar dezenas de MiB de roupas que ninguém está usando.
   const queue=[...new Set(preferred)];
@@ -971,6 +976,7 @@ function focusFitItem(file,{equip=false}={}){
 function preferredFitItem(){
   // Priorizar o último item selecionado no guarda-roupa.
   if(editing.headphones==="preto")return "fone_novo";
+  if(editing.outfit==="punk")return "regatapunk";
   if(editing.outfit==="rosa_novo")return "vestido_novo";
   if(["sem_aro","escuros","redondos","botao"].includes(editing.glasses))return editing.glasses;
   if(editing.hat==="caveira")return "caveira";
