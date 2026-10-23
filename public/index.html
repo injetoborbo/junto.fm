@@ -358,7 +358,7 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
 .jf-dance-launch{position:fixed;bottom:16px;left:90px;z-index:940;width:auto;min-width:174px;margin:0;font-size:12px;box-shadow:0 6px 26px #142e5770}
 .jf-dance-launch[hidden]{display:none!important}
-#jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(760px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
+#jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(1100px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
 #jfDanceModal[hidden]{display:none!important}
 #jfDanceModal.jf-dance-expanded{inset:1.5dvh!important;width:calc(100vw - 3dvh)!important;max-height:97dvh!important;z-index:12040}
 #jfDanceModal.jf-dance-expanded .jf-dance-modal{max-height:97dvh!important}
@@ -373,7 +373,7 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 .jf-dance-modal{width:100%;max-width:100%;overflow:auto;padding:13px!important}
 .jf-dance-modal .jf-modal-head{margin-bottom:9px}
 .jf-dance-toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 10px 10px}
-.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:58vh;min-height:235px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
+.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:72vh;min-height:315px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
 .jf-dance-viewport,.jf-dance-viewport canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 .jf-dance-actions{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0 4px}
 .jf-dance-actions button{font-size:12px;padding:8px 11px}
@@ -1102,7 +1102,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
-<script type="module" src="/dance-floor.js?v=simios-habbo-room-3"></script>
+<script type="module" src="/dance-floor.js?v=simios-habbo-room-4"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
