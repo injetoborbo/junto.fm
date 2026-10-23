@@ -405,17 +405,17 @@ function showDanceSpeech(message){
   g.fillStyle=style.bg;g.beginPath();g.moveTo(mid-13,margin+bodyH-6);g.lineTo(mid,margin+bodyH+tail-9);g.lineTo(mid+13,margin+bodyH-6);g.closePath();g.fill();
   const innerX=margin+pad+iconW+gap,innerY=margin+pad;
   const innerH=bodyH-pad*2;
-  // Só o início da fala fica visível: curva esquerda e rabinho.
+  // Divisória ligada às bordas externas, com o rabinho voltado à foto.
   // O restante compartilha o fundo e o contorno do balão externo.
   const mouthY=innerY+innerH/2;
   g.beginPath();
-  g.moveTo(innerX+12,innerY);
-  g.quadraticCurveTo(innerX,innerY,innerX,innerY+12);
+  g.moveTo(innerX+12,margin);
+  g.quadraticCurveTo(innerX,margin,innerX,margin+12);
   g.lineTo(innerX,mouthY-14);
   g.lineTo(innerX-18,mouthY+8);
   g.lineTo(innerX,mouthY+14);
-  g.lineTo(innerX,innerY+innerH-12);
-  g.quadraticCurveTo(innerX,innerY+innerH,innerX+12,innerY+innerH);
+  g.lineTo(innerX,margin+bodyH-12);
+  g.quadraticCurveTo(innerX,margin+bodyH,innerX+12,margin+bodyH);
   g.strokeStyle=style.border;g.lineWidth=4;g.lineJoin="round";g.lineCap="round";g.stroke();
   const firstY=innerY+pad;
   g.textBaseline="top";g.textAlign="left";
