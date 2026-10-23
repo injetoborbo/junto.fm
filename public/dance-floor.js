@@ -249,7 +249,7 @@ function layoutDanceSpeech(member){
   for(let i=stack.length-1;i>=0;i--){
     const item=stack[i];
     item.targetY=3.15+item.sprite.scale.y/2+offset;
-    offset+=item.sprite.scale.y*.78+.12;
+    offset+=item.sprite.scale.y+.12;
   }
 }
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
@@ -363,11 +363,12 @@ function showDanceSpeech(message){
   };
   const style=themes[message.bubbleStyle]||themes.classic;
   const canvas=document.createElement("canvas"),measure=canvas.getContext("2d");
-  const size=45,lineH=58,pad=28,iconW=54,gap=12,maxWidth=770;
+  const size=45,lineH=58,pad=22,iconW=76,gap=24,maxWidth=770;
   measure.font="bold 41px Arial,sans-serif";
-  const prefixWidth=iconW+gap+measure.measureText(name+":").width+18;
+  const prefixWidth=measure.measureText(name+":").width+18;
   measure.font=size+"px Arial,sans-serif";
-  const firstMax=Math.max(100,maxWidth-prefixWidth-pad*2),otherMax=maxWidth-pad*2;
+  const otherMax=maxWidth-iconW-gap-pad*4;
+  const firstMax=Math.max(100,otherMax-prefixWidth);
   const lines=[""];
   for(const word of content.split(/\s+/)){
     let remain=word;
@@ -386,35 +387,48 @@ function showDanceSpeech(message){
   const firstContent=measure.measureText(lines[0]).width+prefixWidth;
   const otherContent=lines.slice(1).map(v=>measure.measureText(v).width);
   const widest=Math.max(firstContent,...otherContent,0);
-  const bodyW=Math.ceil(Math.min(maxWidth,Math.max(225,widest+pad*2)));
-  const bodyH=pad*2+Math.max(1,lines.length)*lineH;
+  const innerW=Math.ceil(Math.max(180,widest+pad*2));
+  const bodyW=iconW+gap+pad*2+innerW;
+  const bodyH=pad*4+Math.max(1,lines.length)*lineH;
   const tail=24,margin=8;
   canvas.width=bodyW+margin*2;canvas.height=bodyH+tail+margin*2;
   const g=canvas.getContext("2d");
-  g.fillStyle=style.border;g.beginPath();g.roundRect(margin,margin,bodyW,bodyH,10);g.fill();
-  g.fillStyle=style.bg;g.beginPath();g.roundRect(margin+5,margin+5,bodyW-10,bodyH-10,6);g.fill();
+  // Contorno externo arredondado; a fala tem seu próprio contorno e cauda
+  // dentro dele, apontando para o retrato de quem enviou a mensagem.
+  const rounded=(x,y,w,h,r,fill,stroke)=>{
+    g.beginPath();g.roundRect(x,y,w,h,r);g.fillStyle=fill;g.fill();
+    g.lineWidth=4;g.strokeStyle=stroke;g.stroke();
+  };
+  rounded(margin,margin,bodyW,bodyH,28,style.bg,style.border);
   const mid=margin+bodyW/2;
   g.fillStyle=style.border;g.beginPath();g.moveTo(mid-20,margin+bodyH-1);g.lineTo(mid,margin+bodyH+tail);g.lineTo(mid+20,margin+bodyH-1);g.closePath();g.fill();
   g.fillStyle=style.bg;g.beginPath();g.moveTo(mid-13,margin+bodyH-6);g.lineTo(mid,margin+bodyH+tail-9);g.lineTo(mid+13,margin+bodyH-6);g.closePath();g.fill();
-  const firstY=margin+pad+4;
+  const innerX=margin+pad+iconW+gap,innerY=margin+pad;
+  const innerH=bodyH-pad*2;
+  rounded(innerX,innerY,innerW,innerH,22,style.bg,style.border);
+  const mouthY=innerY+innerH/2;
+  g.beginPath();g.moveTo(innerX+2,mouthY-14);g.lineTo(innerX-18,mouthY+8);g.lineTo(innerX+2,mouthY+14);
+  g.fillStyle=style.bg;g.fill();g.strokeStyle=style.border;g.lineWidth=4;g.stroke();
+  // Apagar somente a emenda: a cauda pertence ao balão interno.
+  g.fillRect(innerX-1,mouthY-12,6,24);
+  const firstY=innerY+pad;
   g.textBaseline="top";g.textAlign="left";
-  // Foto do perfil dentro de um quadrado, com fallback para visitante sem foto.
-  const avatarX=margin+pad,avatarY=firstY-4,avatarSide=48;
+  const avatarX=margin+pad,avatarSide=iconW,avatarY=margin+(bodyH-avatarSide)/2;
   const avatarSrc=typeof message.avatar==="string"&&/^data:image\/(?:png|jpeg|webp|gif);base64,/i.test(message.avatar)?message.avatar:"";
   const drawAvatarFallback=()=>{
-    g.fillStyle="#d9e3ef";g.fillRect(avatarX,avatarY,avatarSide,avatarSide);
-    g.fillStyle="#52617b";g.font="bold 32px Arial,sans-serif";g.textAlign="center";
-    g.fillText("☺",avatarX+avatarSide/2,avatarY+5);
+    rounded(avatarX,avatarY,avatarSide,avatarSide,8,"#d9e3ef",style.border);
+    g.fillStyle="#52617b";g.font="bold 44px Arial,sans-serif";g.textAlign="center";
+    g.fillText(name.slice(0,1).toUpperCase(),avatarX+avatarSide/2,avatarY+15);
     g.textAlign="left";
   };
   drawAvatarFallback();
   g.font="bold 41px Arial,sans-serif";g.fillStyle=style.name;
-  const nameX=margin+pad+iconW+gap;
+  const nameX=innerX+pad;
   g.fillText(name+":",nameX,firstY);
   const textX=nameX+g.measureText(name+":").width+18;
   g.font=size+"px Arial,sans-serif";g.fillStyle=style.ink;
   g.fillText(lines[0],textX,firstY);
-  lines.slice(1).forEach((line,i)=>g.fillText(line,margin+pad,firstY+(i+1)*lineH));
+  lines.slice(1).forEach((line,i)=>g.fillText(line,nameX,firstY+(i+1)*lineH));
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
   texture.minFilter=THREE.LinearFilter;texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=false;
   const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
