@@ -398,7 +398,16 @@ function showDanceSpeech(message){
   g.fillStyle=style.bg;g.beginPath();g.moveTo(mid-13,margin+bodyH-6);g.lineTo(mid,margin+bodyH+tail-9);g.lineTo(mid+13,margin+bodyH-6);g.closePath();g.fill();
   const firstY=margin+pad+4;
   g.textBaseline="top";g.textAlign="left";
-  g.font="43px Arial,sans-serif";g.fillText("🐵",margin+pad,firstY-4);
+  // Foto do perfil dentro de um quadrado, com fallback para visitante sem foto.
+  const avatarX=margin+pad,avatarY=firstY-4,avatarSide=48;
+  const avatarSrc=typeof message.avatar==="string"&&/^data:image\/(?:png|jpeg|webp|gif);base64,/i.test(message.avatar)?message.avatar:"";
+  const drawAvatarFallback=()=>{
+    g.fillStyle="#d9e3ef";g.fillRect(avatarX,avatarY,avatarSide,avatarSide);
+    g.fillStyle="#52617b";g.font="bold 32px Arial,sans-serif";g.textAlign="center";
+    g.fillText("☺",avatarX+avatarSide/2,avatarY+5);
+    g.textAlign="left";
+  };
+  drawAvatarFallback();
   g.font="bold 41px Arial,sans-serif";g.fillStyle=style.name;
   const nameX=margin+pad+iconW+gap;
   g.fillText(name+":",nameX,firstY);
@@ -413,6 +422,20 @@ function showDanceSpeech(message){
   bubble.scale.set(canvas.width*scale,canvas.height*scale,1);
   bubble.position.set(0,3.15+canvas.height*scale/2,0);bubble.renderOrder=260;
   member.root.add(bubble);
+  if(avatarSrc){
+    const photo=new Image();
+    photo.onload=()=>{
+      if(!bubble.parent)return;
+      const ratio=Math.max(avatarSide/photo.naturalWidth,avatarSide/photo.naturalHeight);
+      const drawW=photo.naturalWidth*ratio,drawH=photo.naturalHeight*ratio;
+      g.fillStyle=style.border;g.fillRect(avatarX-3,avatarY-3,avatarSide+6,avatarSide+6);
+      g.save();g.beginPath();g.rect(avatarX,avatarY,avatarSide,avatarSide);g.clip();
+      g.drawImage(photo,avatarX+(avatarSide-drawW)/2,avatarY+(avatarSide-drawH)/2,drawW,drawH);
+      g.restore();texture.needsUpdate=true;
+    };
+    photo.onerror=()=>{};
+    photo.src=avatarSrc;
+  }
   if(!member.speechStack)member.speechStack=[];
   const item={sprite:bubble,targetY:bubble.position.y};
   member.speechStack.push(item);
