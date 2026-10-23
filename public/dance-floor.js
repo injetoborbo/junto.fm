@@ -343,7 +343,7 @@ function showDanceSpeech(message){
   ctx.fillStyle="#292c34";ctx.font="bold 41px Arial,sans-serif";
   ctx.fillText(String(message.name||"Macaco").slice(0,24),512,81,920);
   ctx.font="39px Arial,sans-serif";
-  const words=String(message.text||"").slice(0,180).split(/\\s+/),lines=[];
+  const words=String(message.text||"").slice(0,180).split(/\s+/),lines=[];
   let line="";
   for(const word of words){
     const next=line?line+" "+word:word;
