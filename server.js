@@ -524,7 +524,7 @@ io.on("connection", socket => {
     if(!floor?.has(socket.id))return;
     if(isRateLimited(socket,"dance-move",12,1000))return;
     const x=Number(payload?.x),z=Number(payload?.z);
-    if(!Number.isInteger(x)||!Number.isInteger(z)||x<0||x>5||z<0||z>5)return;
+    if(!Number.isInteger(x)||!Number.isInteger(z)||x< -2||x>7||z< -2||z>7)return;
     if(isClubFurnitureTile(x,z))
       return socket.emit("dance-error",{message:"Espaço do lounge: clique numa cadeira para sentar."});
     if([...floor].some(([id,p])=>id!==socket.id&&p.x===x&&p.z===z))
