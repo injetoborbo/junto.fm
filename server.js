@@ -409,7 +409,7 @@ app.get("/api/music/validate-suggestion", async (req, res) => {
 // A skin Capitão Pátria permanece restrita ao fluxo de autenticação admin.
 const wardrobeOptions = Object.freeze({
   hat: ["nenhum", "bone", "apocaliptico", "gorro", "palha", "branco", "caveira"],
-  glasses: ["nenhum", "escuros", "redondos", "sem_aro"],
+  glasses: ["nenhum", "escuros", "redondos", "sem_aro", "botao"],
   headphones: ["nenhum", "azul", "rosa", "preto"],
   outfit: ["padrao", "rosa", "rosa_novo", "punk"]
 });
@@ -1099,3 +1099,4 @@ io.on("connection", socket => {
 });
 
 server.listen(PORT, () => console.log(`Junto.fm rodando na porta ${PORT}`));
+

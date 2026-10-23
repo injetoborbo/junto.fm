@@ -2131,7 +2131,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("avatar-skin-error",({message}={})=>setStatus(message||"Skin não autorizada."));
   try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);jfProfile.bubbleStyle=["classic","pink","blue","green","dark"].includes(saved.bubbleStyle)?saved.bubbleStyle:"classic";if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
+  let jfAccountLoaded=false;
+  let jfPendingWardrobeSave=false;
+  let jfProfileSaveQueue=Promise.resolve();
   window.addEventListener("jf-wardrobe-save",event=>{
+    if(!jfAccountLoaded)jfPendingWardrobeSave=true;
     jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
     try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
     if(joined)socket.emit("profile-update",{profile:jfProfile});
@@ -2139,12 +2143,15 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfNotifyTransmitterAppearance();
     jfRenderPeople();
   });
-  async function jfPersistAccountProfile(){
-    if(!jfCanUseFriends())return;
+  function jfPersistAccountProfile(){
+    if(!jfCanUseFriends())return Promise.resolve();
+    const body=JSON.stringify({profile:jfProfile});
+    // Serializar gravações: uma resposta lenta não pode restaurar um traje antigo.
+    jfProfileSaveQueue=jfProfileSaveQueue.then(async()=>{
     try{
       const response=await fetch("/api/account/profile",{
         method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({profile:jfProfile})
+        body
       });
       if(!response.ok)throw Error("Não foi possível salvar sua conta.");
       const data=await response.json();
@@ -2154,7 +2161,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     }catch(error){
       const status=document.getElementById("jfProfileStatus");
       if(status)status.textContent="Falha ao salvar na conta. Tente novamente.";
+      setStatus("Não foi possível salvar o traje/perfil na conta. Abra Trajes e salve novamente.");
     }
+    });
+    return jfProfileSaveQueue;
   }
   function jfUpdateFavoriteButton(){
     const button=$("spotifyFavorite");
@@ -2202,7 +2212,9 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         jfProfile.name=jfAccount.name||"Macaco";
         jfProfile.avatar=jfAccount.avatar||"";
         jfProfile.motto=jfAccount.motto||"";
-        jfProfile.wardrobe=jfAccount.wardrobe||jfProfile.wardrobe;
+        // Uma escolha feita durante o carregamento da conta tem prioridade.
+        if(!jfPendingWardrobeSave)jfProfile.wardrobe=jfAccount.wardrobe||jfProfile.wardrobe;
+        try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
         window.dispatchEvent(new CustomEvent("jf-local-profile-updated",{detail:{wardrobe:jfProfile.wardrobe}}));
         $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;
         jfRenderAvatar();
@@ -2215,6 +2227,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       $("jfGoogleLogout").hidden=true;
       $("jfEntryAccountLoggedIn").hidden=true;
       $("jfEntryAccountHint").hidden=false;
+    }
+    jfAccountLoaded=true;
+    if(jfPendingWardrobeSave&&jfCanUseFriends()){
+      jfPendingWardrobeSave=false;
+      void jfPersistAccountProfile();
     }
     jfRenderPeople();jfRenderFriends();
   }
@@ -2803,3 +2820,4 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 <script defer src="/junto-tv.js?v=theme-requests-3"></script>
 </body>
 </html>
+

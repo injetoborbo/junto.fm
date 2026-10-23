@@ -1043,6 +1043,7 @@ function refreshDancer(id){
 socket?.on("profile-update",({id})=>{if(id)setTimeout(()=>refreshDancer(id),0);});
 socket?.on("avatar-skin-update",({id})=>{if(id)setTimeout(()=>refreshDancer(id),0);});
 window.addEventListener("jf-wardrobe-save",()=>refreshDancer(socket.id));
+window.addEventListener("jf-local-profile-updated",()=>refreshDancer(socket.id));
 window.addEventListener("jf-admin-skin-changed",()=>refreshDancer(socket.id));
 
 socket?.on("dance-error",({message})=>{if(active)setStatus(message||"Não foi possível mover.");});
@@ -1050,3 +1051,4 @@ socket?.on("room-kicked",close);
 socket?.on("left-room",close);
 socket?.on("disconnect",close);
 window.addEventListener("jf-dance-room-left",close);
+

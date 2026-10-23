@@ -857,6 +857,8 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
 // Não sobrepor o macaco do guarda-roupa neste palco; os acessórios do
 // guarda-roupa continuam normalmente na prévia e nos participantes.
 function readSaved(){
+  const current=window.jfDanceBridge?.getProfile?.();
+  if(current?.wardrobe)return sanitize(current.wardrobe);
   try{return sanitize(JSON.parse(localStorage.getItem("junto_profile")||"{}").wardrobe);}catch{return defaults();}
 }
 let selection=readSaved();
@@ -946,7 +948,8 @@ const fitOptions={
   escuros:["glasses","escuros"],
   redondos:["glasses","redondos"],
   fone_novo:["headphones","preto"],
-  vestido_novo:["outfit","rosa_novo"]
+  vestido_novo:["outfit","rosa_novo"],
+  regatapunk:["outfit","punk"]
 };
 function setFitStatus(message){if(fitStatus)fitStatus.textContent=message;}
 function showFitValues(){
@@ -1067,6 +1070,7 @@ for(const [key,element] of Object.entries(selectors)){
 }
 const modal=$("jfWardrobeModal");
 $("jfOpenWardrobe")?.addEventListener("click",()=>{
+  selection=readSaved();
   editing={...selection};
   for(const [k,e] of Object.entries(selectors))if(e)e.value=editing[k];
   modal.hidden=false;document.body.style.overflow="hidden";
@@ -1105,6 +1109,11 @@ const observer=new MutationObserver(()=>{queueMicrotask(refreshPeople);});
 const people=$("jfPeople");
 if(people)observer.observe(people,{childList:true,subtree:false});
 window.addEventListener("jf-wardrobe-save",()=>{selection=readSaved();refreshPeople();});
+window.addEventListener("jf-local-profile-updated",()=>{
+  selection=readSaved();
+  if(!modal||modal.hidden)editing={...selection};
+  refreshPeople();
+});
 refreshPeople();
 // Após entrar numa sala, liberar o avatar 3D dos participantes sem disputar
 // imediatamente o download do mascote principal do player.
@@ -1153,3 +1162,4 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   }
   return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }
+

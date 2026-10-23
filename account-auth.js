@@ -222,7 +222,7 @@ module.exports=function setupAccounts(app){
     const avatar=String(input.avatar||"");
     // Somente foto enviada e compactada pelo usuário. Nunca usar foto do Google.
     const valid=/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(avatar)&&avatar.length<=220000;
-    const allowed={hat:["nenhum","bone","gorro","palha","branco","caveira"],glasses:["nenhum","escuros","redondos","sem_aro"],headphones:["nenhum","azul","rosa","preto"],outfit:["padrao","rosa","rosa_novo"]};
+    const allowed={hat:["nenhum","bone","apocaliptico","gorro","palha","branco","caveira"],glasses:["nenhum","escuros","redondos","sem_aro","botao"],headphones:["nenhum","azul","rosa","preto"],outfit:["padrao","rosa","rosa_novo","punk"]};
     const wardrobe=Object.fromEntries(Object.entries(allowed).map(([k,values])=>[k,values.includes(input.wardrobe?.[k])?input.wardrobe[k]:values[0]]));
     return {name,motto,avatar:valid?avatar:"",wardrobe};
   }
@@ -275,3 +275,4 @@ module.exports=function setupAccounts(app){
   setInterval(()=>{const now=Date.now();for(const [k,v] of states)if(v.expires<now)states.delete(k);if(pool)pool.query("DELETE FROM junto_sessions WHERE expires_at<NOW()").catch(()=>{});},3600000).unref();
   return {accountFromRequest,friends,requests,request,respond,remove,safeAccount,ready};
 };
+
