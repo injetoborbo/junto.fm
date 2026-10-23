@@ -230,7 +230,28 @@ const CLUB_FRAME_MS=1000/CLUB_FPS;
 const CLUB_RENDER_SCALE=CLUB_MOBILE?.8:.9;
 let lastClubFrame=0,clubVisualTick=0;
 const people=new Map();
-const danceSpeechTimers=new Map();
+const danceSpeechTimers=new Map(); // Map<avatar, Set<timeout>>
+function clearDanceSpeech(member){
+  for(const timer of danceSpeechTimers.get(member)||[])clearTimeout(timer);
+  danceSpeechTimers.delete(member);
+  for(const item of member.speechStack||[]){
+    item.sprite.parent?.remove(item.sprite);
+    item.sprite.material.map?.dispose();
+    item.sprite.material.dispose();
+  }
+  member.speechStack=[];
+  member.speech=null;
+}
+function layoutDanceSpeech(member){
+  const stack=member.speechStack||[];
+  let offset=0;
+  // Novas mensagens embaixo; as anteriores sobem sem reiniciar seus 7 segundos.
+  for(let i=stack.length-1;i>=0;i--){
+    const item=stack[i];
+    item.targetY=3.15+item.sprite.scale.y/2+offset;
+    offset+=item.sprite.scale.y*.78+.12;
+  }
+}
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
 const sittingFrameQuaternion=new THREE.Quaternion();
@@ -329,8 +350,7 @@ function showDanceSpeech(message){
   if(!active||!message?.text)return;
   const member=people.get(message.senderId);
   if(!member?.root)return;
-  if(member.speech){member.speech.parent?.remove(member.speech);member.speech.material.map?.dispose();member.speech.material.dispose();}
-  clearTimeout(danceSpeechTimers.get(member));
+
   const name=String(message.name||"Macaco").slice(0,24);
   const content=String(message.text||"").trim().slice(0,500);
   if(!content)return;
@@ -391,12 +411,25 @@ function showDanceSpeech(message){
   const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
   const scale=.0102;
   bubble.scale.set(canvas.width*scale,canvas.height*scale,1);
-  bubble.position.set(0,2.65+canvas.height*scale/2,0);bubble.renderOrder=260;
-  member.root.add(bubble);member.speech=bubble;
-  danceSpeechTimers.set(member,setTimeout(()=>{
-    if(member.speech===bubble){member.root?.remove(bubble);bubble.material.map?.dispose();bubble.material.dispose();member.speech=null;}
-    danceSpeechTimers.delete(member);
-  },7000));
+  bubble.position.set(0,3.15+canvas.height*scale/2,0);bubble.renderOrder=260;
+  member.root.add(bubble);
+  if(!member.speechStack)member.speechStack=[];
+  const item={sprite:bubble,targetY:bubble.position.y};
+  member.speechStack.push(item);
+  member.speech=bubble;
+  layoutDanceSpeech(member);
+  const timer=setTimeout(()=>{
+    const stack=member.speechStack||[];
+    const index=stack.indexOf(item);
+    if(index!==-1)stack.splice(index,1);
+    bubble.parent?.remove(bubble);bubble.material.map?.dispose();bubble.material.dispose();
+    if(member.speech===bubble)member.speech=stack.at(-1)?.sprite||null;
+    danceSpeechTimers.get(member)?.delete(timer);
+    if(!danceSpeechTimers.get(member)?.size)danceSpeechTimers.delete(member);
+    layoutDanceSpeech(member);
+  },7000);
+  if(!danceSpeechTimers.has(member))danceSpeechTimers.set(member,new Set());
+  danceSpeechTimers.get(member).add(timer);
 }
 socket?.on("chat-message",showDanceSpeech);
 function sceneSetup(){
@@ -665,8 +698,7 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
 }
 function removeMember(id){
   const member=people.get(id);if(!member)return;
-  clearTimeout(danceSpeechTimers.get(member));danceSpeechTimers.delete(member);
-  if(member.speech){member.speech.material.map?.dispose();member.speech.material.dispose();}
+  clearDanceSpeech(member);
   member.mixer?.stopAllAction();
   member.mixer?.uncacheRoot(member.rig);
   member.dispose?.();
@@ -708,6 +740,9 @@ function animate(now=performance.now()){
   }
   for(const [id,p] of people){
     if(!p.root)continue;
+    for(const item of p.speechStack||[]){
+      item.sprite.position.y+= (item.targetY-item.sprite.position.y)*Math.min(1,dt*9);
+    }
     const d=p.data,style=d.seated?"idle":d.dance||"idle";
     const targetX=d.x-2.5,targetZ=d.z-2.5;
     // A cadeira usa um deslocamento visual. O destino da caminhada
