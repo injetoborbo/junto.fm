@@ -243,10 +243,16 @@ const SEATED_DEFAULTS=Object.freeze({x:.10,y:.85,z:.28,yaw:0,lean:0,hip:0});
 // uma mesa centralizada e folga para os macacos sentados.
 // IDs lógicos seguem idênticos aos validados pelo servidor.
 const CLUB_SEATS=Object.freeze([
-  Object.freeze({id:0,x:0,z:1,yaw:Math.PI/2,wx:-2.5,wz:-2.18}),
-  Object.freeze({id:1,x:2,z:1,yaw:-Math.PI/2,wx:-.5,wz:-2.18})
+  Object.freeze({id:0,x:-3,z:-3,yaw:Math.PI/2,wx:-5.5,wz:-5.18}),
+  Object.freeze({id:1,x:-1,z:-3,yaw:-Math.PI/2,wx:-3.5,wz:-5.18}),
+  Object.freeze({id:2,x:-3,z:0,yaw:Math.PI/2,wx:-5.5,wz:-2.18}),
+  Object.freeze({id:3,x:-1,z:0,yaw:-Math.PI/2,wx:-3.5,wz:-2.18})
 ]);
-const CLUB_TABLE=Object.freeze({x:1,z:1,wx:-1.5,wz:-2.18});
+const CLUB_TABLES=Object.freeze([
+  Object.freeze({x:-2,z:-3,wx:-4.5,wz:-5.18}),
+  Object.freeze({x:-2,z:0,wx:-4.5,wz:-2.18})
+]);
+const isTableTile=(x,z)=>CLUB_TABLES.some(t=>t.x===x&&t.z===z);
 const clubSeatAt=(x,z)=>CLUB_SEATS.find(seat=>seat.x===x&&seat.z===z)||null;
 // A calibração X/Z pertence à orientação do assento: acompanhá-la
 // quando a cadeira gira, para o macaco continuar encaixado.
@@ -324,19 +330,32 @@ function showDanceSpeech(message){
   const member=people.get(message.senderId);
   if(!member)return;
   if(member.speech){member.speech.parent?.remove(member.speech);member.speech.material.map?.dispose();member.speech.material.dispose();}
-  const canvas=document.createElement("canvas");canvas.width=512;canvas.height=160;
+  const canvas=document.createElement("canvas");canvas.width=1024;canvas.height=420;
   const ctx=canvas.getContext("2d");
-  ctx.fillStyle="#ffffff";ctx.strokeStyle="#343a46";ctx.lineWidth=6;
-  ctx.beginPath();ctx.roundRect(12,8,488,116,20);ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.moveTo(230,123);ctx.lineTo(251,150);ctx.lineTo(271,123);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle="#202633";ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.font="bold 23px Arial";ctx.fillText(String(message.name||"").slice(0,22),256,34,450);
-  ctx.font="21px Arial";const words=String(message.text||"").slice(0,95).split(/\s+/),lines=[""];
-  for(const word of words){const i=lines.length-1;if(ctx.measureText(lines[i]+" "+word).width>435&&lines.length<2)lines.push(word);else lines[i]+=(lines[i]?" ":"")+word;}
-  lines.forEach((line,i)=>ctx.fillText(line,256,74+i*25,450));
+  // Inspiração no Habbo: balão branco plano, contorno pixelado escuro,
+  // nome em negrito, texto grande e rabinho integrado.
+  ctx.clearRect(0,0,1024,420);
+  ctx.fillStyle="#252b37";ctx.fillRect(18,18,988,293);
+  ctx.fillStyle="#ffffff";ctx.fillRect(27,27,970,275);
+  ctx.fillStyle="#252b37";ctx.beginPath();ctx.moveTo(463,307);ctx.lineTo(512,374);ctx.lineTo(561,307);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#ffffff";ctx.beginPath();ctx.moveTo(474,297);ctx.lineTo(512,355);ctx.lineTo(550,297);ctx.closePath();ctx.fill();
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillStyle="#292c34";ctx.font="bold 41px Arial,sans-serif";
+  ctx.fillText(String(message.name||"Macaco").slice(0,24),512,81,920);
+  ctx.font="39px Arial,sans-serif";
+  const words=String(message.text||"").slice(0,180).split(/\\s+/),lines=[];
+  let line="";
+  for(const word of words){
+    const next=line?line+" "+word:word;
+    if(ctx.measureText(next).width>890&&line){lines.push(line);line=word;}else line=next;
+    if(lines.length===3)break;
+  }
+  if(line&&lines.length<3)lines.push(line);
+  lines.forEach((txt,i)=>ctx.fillText(txt,512,161+i*58,900));
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
-  const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
-  bubble.scale.set(2.5,.8,1);bubble.position.set(0,2.65,0);bubble.renderOrder=250;
+  tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;tex.generateMipmaps=false;
+  const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
+  bubble.scale.set(4.2,1.72,1);bubble.position.set(0,3.0,0);bubble.renderOrder=260;
   member.root.add(bubble);member.speech=bubble;
   clearTimeout(danceSpeechTimers.get(member));
   danceSpeechTimers.set(member,setTimeout(()=>{if(member.speech===bubble){member.root?.remove(bubble);bubble.material.map?.dispose();bubble.material.dispose();member.speech=null;}},6500));
@@ -358,10 +377,10 @@ function sceneSetup(){
   };
   const cube=(w,h,d,material,x,y,z,parent=scene)=>mesh(new THREE.BoxGeometry(w,h,d),material,x,y,z,parent);
   board=new THREE.Group();scene.add(board);
-  cube(10.65,.26,10.65,edge,0,-.34,0,board);
+  cube(14.65,.26,14.65,edge,0,-.34,0,board);
   const tileGeo=new THREE.BoxGeometry(.982,.09,.982);
   const tilesMats=[mat(0x252044,.45,.27),mat(0x112c44,.42,.25),mat(0x24203c,.4,.28),mat(0x163546,.46,.25)];
-  for(let x=-2;x<8;x++)for(let z=-2;z<8;z++){
+  for(let x=-4;x<10;x++)for(let z=-4;z<10;z++){
     const tile=new THREE.Mesh(tileGeo,tilesMats[(x+z)%4]);
     tile.position.set(x-2.5,-.13,z-2.5);tile.userData.tile={x,z};
     board.add(tile);tiles.push(tile);
@@ -376,33 +395,33 @@ function sceneSetup(){
     file:"cadeirabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
     x:seat.wx,z:seat.wz,height:1.16,rotation:seat.yaw,seatId:seat.id
   });
-  installClubFurniture({
+  for(const table of CLUB_TABLES)installClubFurniture({
     file:"mesabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
-    x:CLUB_TABLE.wx,z:CLUB_TABLE.wz,height:.78
+    x:table.wx,z:table.wz,height:.78
   });
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
-  cube(6.7,2.35,.18,wall,0,.96,-3.12);
-  cube(.18,2.35,6.7,wall,-3.12,.96,0);
-  cube(6.7,.18,.25,wood,0,2.19,-3.12);
-  cube(.25,.18,6.7,wood,-3.12,2.19,0);
-  cube(6.65,.24,.3,edge,0,-.01,-3.08);
-  cube(.3,.24,6.65,edge,-3.08,-.01,0);
+  cube(14.7,2.35,.18,wall,0,.96,-7.12);
+  cube(.18,2.35,14.7,wall,-7.12,.96,0);
+  cube(14.7,.18,.25,wood,0,2.19,-7.12);
+  cube(.25,.18,14.7,wood,-7.12,2.19,0);
+  cube(14.65,.24,.3,edge,0,-.01,-7.08);
+  cube(.3,.24,14.65,edge,-7.08,-.01,0);
   // Painel de DJ, telas iluminadas e botões de mixagem fora das casas da pista.
-  cube(2.5,.9,.42,wood,1.55,.53,-2.83);
-  cube(1.22,.58,.12,mat(0x182846,.15,.28),1.55,1.19,-2.92);
-  for(let k=0;k<7;k++)cube(.09,.08+(k%3)*.11,.03,k%2?mat(0x78f2dd):mat(0xff87b6),1.11+k*.15,1.02,-2.84);
-  for(const x of [.65,2.45]){
-    mesh(new THREE.CylinderGeometry(.27,.27,.035,24),mat(0x18243b,.6,.25),x,1.01,-2.66);
-    mesh(new THREE.CylinderGeometry(.12,.12,.045,24),gold,x,1.05,-2.66);
+  cube(2.5,.9,.42,wood,4.3,.53,-6.83);
+  cube(1.22,.58,.12,mat(0x182846,.15,.28),4.3,1.19,-6.92);
+  for(let k=0;k<7;k++)cube(.09,.08+(k%3)*.11,.03,k%2?mat(0x78f2dd):mat(0xff87b6),3.86+k*.15,1.02,-6.84);
+  for(const x of [3.4,5.2]){
+    mesh(new THREE.CylinderGeometry(.27,.27,.035,24),mat(0x18243b,.6,.25),x,1.01,-6.66);
+    mesh(new THREE.CylinderGeometry(.12,.12,.045,24),gold,x,1.05,-6.66);
   }
   // Luminárias redondas e arabescos discretos nas paredes, estilo club retrô.
-  for(const [x,z] of [[-2.82,-2.82],[2.82,-2.82],[-2.82,2.82]]){
+  for(const [x,z] of [[-6.72,-6.72],[6.72,-6.72],[-6.72,6.72],[6.72,6.72]]){
     const stand=mesh(new THREE.CylinderGeometry(.07,.09,1.34,12),wood,x,.56,z);
     const globe=mesh(new THREE.SphereGeometry(.25,20,12),glass,x,1.48,z);
     const glow=new THREE.PointLight(x<0?0xff3cac:0x24dfff,9,4);glow.position.set(x,1.55,z);scene.add(glow);
   }
   // Globo espelhado em pequenos quadrados, sem partículas pesadas.
-  const disco=new THREE.Group();disco.position.set(-1.5,2.45,-1.5);
+  const disco=new THREE.Group();disco.position.set(.3,3.0,.2);
   disco.add(new THREE.Mesh(new THREE.IcosahedronGeometry(.31,2),mat(0xe9f5fd,.92,.11)));
   const mirror=mat(0xffffff,.85,.1);
   for(let j=0;j<18;j++){
@@ -415,7 +434,7 @@ function sceneSetup(){
   const beamGeometry=new THREE.ConeGeometry(.46,4.7,14,1,true);
   beamGeometry.translate(0,-2.35,0);
   const beams=[];
-  for(const [x,z,color,phase] of [[-2.1,-2.3,0xff3caa,0],[2.25,-2.4,0x24d9ff,1.8],[.4,2.25,0x9a65ff,3.1]]){
+  for(const [x,z,color,phase] of [[-5.4,-5.4,0xff3caa,0],[5.3,-5.4,0x24d9ff,1.8],[.4,5.3,0x9a65ff,3.1]]){
     const beam=new THREE.Mesh(beamGeometry,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.095,depthWrite:false,side:THREE.DoubleSide}));
     beam.position.set(x,2.85,z);beam.rotation.x=.18;beam.rotation.z=.14;
     scene.add(beam);beams.push({beam,phase});
@@ -467,10 +486,10 @@ function sceneSetup(){
     toneMapped:false,opacity:.77
   });
   const halo=new THREE.Mesh(new THREE.PlaneGeometry(2.85,.89),haloMaterial);
-  halo.position.set(-1.25,1.3,-2.963);
+  halo.position.set(3.9,1.3,-6.963);
   scene.add(halo);
   const signLight=new THREE.PointLight(0xff55c1,3.5,2.8,2);
-  signLight.position.set(-1.25,1.3,-2.67);
+  signLight.position.set(3.9,1.3,-6.67);
   scene.add(signLight);
   scene.userData.signNeon={halo,haloTexture,signLight};
   camera=new THREE.OrthographicCamera(-6.35,6.35,4.25,-4.25,.1,100);
@@ -483,7 +502,7 @@ function sceneSetup(){
     if(!renderer||!active)return;
     const width=Math.max(220,viewport.clientWidth),height=Math.max(220,viewport.clientHeight);
     renderer.setSize(width,height,false);
-    const aspect=width/height,halfH=4.55;
+    const aspect=width/height,halfH=9.1;
     camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;
     camera.updateProjectionMatrix();
   };
@@ -790,8 +809,8 @@ function animate(now=performance.now()){
         p.root.updateMatrixWorld(true);
         const head=p.headBone.getWorldPosition(new THREE.Vector3());
         p.root.worldToLocal(head);
-        p.bananaMarker.position.copy(head).add(new THREE.Vector3(0,.58+.035*Math.sin(time*2),0));
-      }else p.bananaMarker.position.set(0,1.85+.035*Math.sin(time*2),0);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.48,.6+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(-.48,1.85+.035*Math.sin(time*2),0);
       p.bananaMarker.rotation.y=time*.8;
     }
 
@@ -862,7 +881,7 @@ viewport?.addEventListener("pointerup",e=>{
     const {x,z}=hit.object.userData.tile;
     const seat=clubSeatAt(x,z);
     if(seat)socket.emit("dance-sit",{seat:seat.id});
-    else if(x===CLUB_TABLE.x&&z===CLUB_TABLE.z)
+    else if(isTableTile(x,z))
       setStatus("Essa casa está ocupada pela mesinha da balada.");
     else socket.emit("dance-move",{x,z});
   }
