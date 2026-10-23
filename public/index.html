@@ -364,6 +364,9 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatLauncher{z-index:12120!important;position:fixed!important;pointer-events:auto!important}
 body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatWindow{z-index:12121!important;position:fixed!important;pointer-events:auto!important}
 #jfDanceModal.jf-dance-expanded .jf-dance-modal{max-height:97dvh!important}
+#jfDanceChat{position:relative;z-index:3;white-space:nowrap}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatWindow:not([hidden]){z-index:2147483000!important;position:fixed!important;right:18px!important;bottom:80px!important}
+body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatLauncher{z-index:2147482999!important}
 #jfDanceModal.jf-dance-expanded .jf-dance-stage{aspect-ratio:auto;max-height:none;height:min(76dvh,960px)}
 #jfDanceModal .jf-dance-modal .jf-modal-head{display:flex;align-items:center;gap:8px}
 #jfDanceModal .jf-dance-modal .jf-modal-head>div{margin-right:auto}
@@ -981,7 +984,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 </div>
 <div class="jf-modal-backdrop" id="jfDanceModal" hidden>
   <section class="panel jf-dance-modal" role="dialog" aria-modal="false" aria-labelledby="jfDanceTitle">
-    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 The Símios</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary" type="button" id="jfDanceExpand" aria-pressed="false">⤢ Ampliar</button><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
+    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 The Símios</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary" type="button" id="jfDanceChat" aria-label="Abrir chat da sala na The Símios">💬 Chat</button><button class="btn secondary" type="button" id="jfDanceExpand" aria-pressed="false">⤢ Ampliar</button><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
     <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
     <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
     <div class="jf-dance-actions" aria-label="Escolha sua dança">
@@ -1006,7 +1009,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
         <label for="jfMotto">Lema do perfil (opcional)</label>
         <input id="jfMotto" type="text" maxlength="90" placeholder="Uma frase que te representa">
         <label for="jfBubbleStyle">Balão de conversa na The Símios</label>
-        <select id="jfBubbleStyle"><option value="classic">Clássico Habbo (branco)</option><option value="pink">Rosa</option><option value="blue">Azul</option><option value="green">Verde</option><option value="dark">Escuro</option></select>
+        <select id="jfBubbleStyle"><option value="classic">Clássico (branco)</option><option value="pink">Rosa</option><option value="blue">Azul</option><option value="green">Verde</option><option value="dark">Escuro</option></select>
         <input id="jfAvatarFile" type="file" accept="image/*" aria-label="Escolher foto ou avatar" class="jf-avatar-file">
       </div>
     </div>
@@ -1106,7 +1109,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
-<script type="module" src="/dance-floor.js?v=simios-chat-visible-6"></script>
+<script type="module" src="/dance-floor.js?v=simios-readable-chat-7"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
@@ -2447,6 +2450,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(open){launcher.classList.remove("has-unread");$("jfChatUnread").removeAttribute("title");$("jfChatInput").focus();const log=$("jfChatLog");log.scrollTop=log.scrollHeight;}
   }
   $("jfChatLauncher").addEventListener("click",()=>jfSetChatOpen($("jfChatWindow").hidden));
+  $("jfDanceChat")?.addEventListener("click",()=>{
+    jfSetChatOpen($("jfChatWindow").hidden);
+    if(!$("jfChatWindow").hidden)$("jfChatInput").focus();
+  });
   $("jfChatClose").addEventListener("click",()=>jfSetChatOpen(false));
   document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!$("jfChatWindow").hidden)jfSetChatOpen(false);});
 
