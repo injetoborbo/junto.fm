@@ -460,7 +460,7 @@ function showDanceSpeech(message){
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
   texture.minFilter=THREE.LinearFilter;texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=false;
   const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
-  const scale=.0102;
+  const scale=.0076; // Balões cerca de 25% menores, preservando a nitidez da textura.
   bubble.scale.set(canvas.width*scale,canvas.height*scale,1);
   bubble.position.set(0,3.15+canvas.height*scale/2,0);bubble.renderOrder=260;
   member.root.add(bubble);
