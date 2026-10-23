@@ -37,6 +37,11 @@
     "#jfTvOverlay .jf-tv-youtube-extras{display:flex;gap:8px;flex-wrap:wrap;align-items:center}",
     "#jfTvOverlay .jf-tv-youtube-extras button{border:1px solid #8dafe3;border-radius:7px;background:#27477e;color:white;padding:8px 12px;cursor:pointer}",
     "#jfTvOverlay .jf-tv-recent{display:grid;gap:5px;margin-top:5px}",
+    "#jfTvOverlay .jf-tv-request-panel{display:grid;gap:8px;border:1px solid #536c9c;border-radius:8px;padding:10px;background:#101b3b}",
+    "#jfTvOverlay .jf-tv-request-panel input{width:100%;min-width:0;padding:9px;border-radius:6px;border:1px solid #6979bc;background:#080f28;color:white}",
+    "#jfTvOverlay .jf-tv-queue-item{display:flex;gap:7px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid #465b82;padding:7px 0;font-size:12px}",
+    "#jfTvOverlay .jf-tv-queue-item button,#jfTvOverlay .jf-tv-request-panel>button{padding:7px 10px;border-radius:6px;background:#3563a4;color:#fff;border:1px solid #87a9e2;cursor:pointer}",
+
     "#jfTvOverlay .jf-tv-recent button{width:100%;text-align:left;border:1px solid #536c9c;border-radius:6px;background:#172a55;color:white;padding:7px;cursor:pointer}",
 
     "#jfTvOverlay .jf-tv-audio-choice input{width:17px;height:17px;accent-color:#80b9ff}",
@@ -97,7 +102,14 @@
           '<div class="jf-tv-actions"><button type="button" class="jf-tv-danger" id="jfTvStop">■ Encerrar TV</button></div>',
         '</div>',
         '<div class="jf-tv-actions" id="jfTvViewerTools" hidden><button type="button" id="jfTvWatch">▶ Assistir ao vídeo</button><button type="button" id="jfTvSound">🔊 Ativar reprodução/som</button></div>',
-        '<div class="jf-tv-youtube-extras" id="jfTvYoutubeExtras" hidden><button type="button" id="jfTvCaptions" aria-pressed="false">CC: Desligadas</button><span class="jf-tv-note">Legendas só no seu player (quando o vídeo permitir).</span></div>',
+        '<section id="jfTvRequests" class="jf-tv-request-panel" hidden>',
+           '<strong>📺 Sugestões do YouTube <span id="jfTvQueueCount"></span></strong>',
+           '<label>Enviar vídeo para a fila<input id="jfTvRequestUrl" type="text" placeholder="Cole o link do YouTube" maxlength="240"></label>',
+           '<button type="button" id="jfTvRequestAdd">Enviar sugestão</button>',
+           '<button type="button" id="jfTvQueueToggle" aria-expanded="false">📋 Abrir fila de vídeos</button>',
+           '<div id="jfTvQueueList" hidden></div>',
+         '</section>',
+         '<div class="jf-tv-youtube-extras" id="jfTvYoutubeExtras" hidden><button type="button" id="jfTvCaptions" aria-pressed="false">CC: Desligadas</button><span class="jf-tv-note">Legendas só no seu player (quando o vídeo permitir).</span></div>',
          '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
         '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: LiveKit Cloud para tela e arquivos, sem enviar o arquivo ao Render. A música continua independente.</p>',
       '</div>',
@@ -209,6 +221,41 @@
       (state.playing?Math.max(0,((Number(state.serverNow)||Number(state.updatedAt))-(Number(state.updatedAt)||0))/1000):0);
     return Math.max(0, baseline+(state.playing?Math.max(0,(Date.now()-stateReceivedAt)/1000):0));
   }
+  // Fila compartilhada; apenas o proprietário pode aprovar/reproduzir/remover.
+  let youtubeQueue=[];
+  let queueOpen=false;
+  function renderYoutubeQueue(){
+    $("jfTvQueueCount").textContent="("+youtubeQueue.length+")";
+    $("jfTvQueueToggle").textContent=(queueOpen?"▾ Fechar":"▸ Abrir")+" fila de vídeos";
+    $("jfTvQueueToggle").setAttribute("aria-expanded",String(queueOpen));
+    const list=$("jfTvQueueList");list.hidden=!queueOpen;
+    list.replaceChildren();
+    if(!youtubeQueue.length){const empty=document.createElement("small");empty.textContent="Nenhum pedido ainda.";list.appendChild(empty);return;}
+    for(const item of youtubeQueue){
+      const row=document.createElement("div");row.className="jf-tv-queue-item";
+      const label=document.createElement("span");
+      label.textContent="▶ "+item.videoId+" — pedido por "+item.from;
+      row.appendChild(label);
+      if(isAdmin()){
+        const play=document.createElement("button");play.textContent="▶ Reproduzir";
+        play.onclick=()=>socket.emit("tv:queue-play",{id:item.id});
+        const remove=document.createElement("button");remove.textContent="✕";
+        remove.title="Remover pedido";remove.onclick=()=>socket.emit("tv:queue-remove",{id:item.id});
+        row.append(play,remove);
+      }
+      list.appendChild(row);
+    }
+  }
+  $("jfTvQueueToggle").onclick=()=>{queueOpen=!queueOpen;renderYoutubeQueue()};
+  $("jfTvRequestAdd").onclick=()=>{
+    if(!joined)return;
+    const id=youtubeId($("jfTvRequestUrl").value);
+    if(!/^[A-Za-z0-9_-]{11}$/.test(id))return status("Cole um link válido do YouTube para sugerir.");
+    socket.emit("tv:queue-add",{videoId:id});
+    $("jfTvRequestUrl").value="";
+    status("Sugestão enviada para a fila.");
+  };
+  socket.on("tv:queue",items=>{youtubeQueue=Array.isArray(items)?items:[];renderYoutubeQueue()});
   // Preferência individual: não modifica o estado compartilhado da sala.
   let captionsWanted=false;
   function applyYoutubeCaptions(){
@@ -600,6 +647,8 @@
     $("jfTvSound").hidden=!state||state.mode==="youtube"&&!viewerAudioBlocked;
     const showYoutube=state?.mode==="youtube"&&opened;
     $("jfTvYoutubeExtras").hidden=!showYoutube;
+    $("jfTvRequests").hidden=!joined||!opened;
+    renderYoutubeQueue();
     ytWrapper.hidden=!showYoutube;
     updateYoutubePauseShield();
     stage.hidden=!isStream||!opened;
@@ -663,7 +712,7 @@
     }
   });
   socket.on("tv:error",data=>{status(data?.message||"Falha na TV.");});
-  socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;updateUi();});
+  socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;youtubeQueue=[];updateUi();});
   socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;updateUi();});
   function reset(){
     joined=false;room="";ownerId=null;state=null;viewerRequested=false;
