@@ -1003,6 +1003,8 @@ body.jf-in-room #jfAdminEntry{display:none!important}
         <input id="jfName" type="text" maxlength="24" autocomplete="nickname" placeholder="Seu nome na sala">
         <label for="jfMotto">Lema do perfil (opcional)</label>
         <input id="jfMotto" type="text" maxlength="90" placeholder="Uma frase que te representa">
+        <label for="jfBubbleStyle">Balão de conversa na The Símios</label>
+        <select id="jfBubbleStyle"><option value="classic">Clássico Habbo (branco)</option><option value="pink">Rosa</option><option value="blue">Azul</option><option value="green">Verde</option><option value="dark">Escuro</option></select>
         <input id="jfAvatarFile" type="file" accept="image/*" aria-label="Escolher foto ou avatar" class="jf-avatar-file">
       </div>
     </div>
@@ -1102,7 +1104,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js"></script>
-<script type="module" src="/dance-floor.js?v=simios-habbo-room-4"></script>
+<script type="module" src="/dance-floor.js?v=simios-bubbles-theme-5"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
@@ -2093,7 +2095,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 
   // Perfil local e temas visuais: mudanças isoladas nesta branch de teste.
   const jfThemes={y2k:["#ff78d2","#70f4ff","#5656a8"],pastel:["#F4B8D8","#B8E8E0","#8B80B8"],lavender:["#DCCBFF","#B9D5FF","#8272B8"],peach:["#FFC9B9","#FFE2A9","#B86E72"],mint:["#BDEFD9","#D5F4C7","#5B9C88"],"baby-pink":["#F8C8DC","#FFE3EE","#B86D91"],ocean:["#65cfff","#8fffe0","#245b9b"],sunset:["#ff986b","#ffd166","#9a3d7a"],lime:["#c4ff5e","#62ffd3","#416b68"],mono:["#f0f0f0","#aeb8c7","#626c7b"],aero:["#36c9e4","#b1fff0","#087fb5"],classic:["#000080","#c0c0c0","#008080"],kodoku:["#ffffff","#d8d8d8","#777777"],tsimiomi:["#ff3324","#d7d7d7","#7d0505"]};
-  let jfProfile={name:"Ouvinte",avatar:"",motto:"",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
+  let jfProfile={name:"Ouvinte",avatar:"",motto:"",bubbleStyle:"classic",wardrobe:{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"}};
   const jfPeerProfiles=new Map();
   const jfPeerClientIds=new Map();
   const jfPeerRegistered=new Map();
@@ -2123,7 +2125,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfRenderPeople();
   });
   socket.on("avatar-skin-error",({message}={})=>setStatus(message||"Skin não autorizada."));
-  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
+  try{const saved=JSON.parse(localStorage.getItem("junto_profile")||"{}");jfProfile.name=String(saved.name||"Ouvinte").slice(0,24);jfProfile.avatar=typeof saved.avatar==="string"?saved.avatar:"";jfProfile.motto=String(saved.motto||"").slice(0,90);jfProfile.bubbleStyle=["classic","pink","blue","green","dark"].includes(saved.bubbleStyle)?saved.bubbleStyle:"classic";if(saved.wardrobe)jfProfile.wardrobe=saved.wardrobe;}catch(_){}
   window.addEventListener("jf-wardrobe-save",event=>{
     jfProfile.wardrobe=event.detail?.wardrobe||{hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
     try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
@@ -2363,7 +2365,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   });
   socket.on("friends-notice",({message}={})=>{$("jfFriendsStatus").textContent=message||"Solicitação enviada.";});
   function jfInit(){
-    $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";jfRenderAvatar();
+    $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto||"";$("jfBubbleStyle").value=jfProfile.bubbleStyle||"classic";jfRenderAvatar();
     const openModal=id=>{const modal=$(id);if(modal){modal.hidden=false;document.body.style.overflow="hidden";const first=modal.querySelector("input,select,button");if(first)first.focus();}};
     const closeModal=id=>{const modal=$(id);if(modal)modal.hidden=true;if(!document.querySelector(".jf-modal-backdrop:not([hidden])"))document.body.style.overflow="";};
     $("jfOpenTheme").addEventListener("click",()=>openModal("jfThemeModal"));
@@ -2407,7 +2409,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
       const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
     });
-    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo neste navegador.";if(jfCanUseFriends())jfPersistAccountProfile();});
+    $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);jfProfile.bubbleStyle=$("jfBubbleStyle").value;$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo neste navegador.";if(jfCanUseFriends())jfPersistAccountProfile();});
   }
   socket.on("profile-update",({id,profile})=>{
     if(!id||id===socket.id||!profile)return;
