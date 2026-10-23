@@ -389,7 +389,7 @@ function showDanceSpeech(message){
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
   texture.minFilter=THREE.LinearFilter;texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=false;
   const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
-  const scale=.005;
+  const scale=.0072;
   bubble.scale.set(canvas.width*scale,canvas.height*scale,1);
   bubble.position.set(0,2.65+canvas.height*scale/2,0);bubble.renderOrder=260;
   member.root.add(bubble);member.speech=bubble;
@@ -847,8 +847,8 @@ function animate(now=performance.now()){
         p.root.updateMatrixWorld(true);
         const head=p.headBone.getWorldPosition(new THREE.Vector3());
         p.root.worldToLocal(head);
-        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.20,.6+.035*Math.sin(time*2),0));
-      }else p.bananaMarker.position.set(-.20,1.85+.035*Math.sin(time*2),0);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.12,.6+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(-.12,1.85+.035*Math.sin(time*2),0);
       p.bananaMarker.rotation.y=time*.8;
     }
 
