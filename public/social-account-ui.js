@@ -21,7 +21,10 @@
  .jf-achievement-row.locked{opacity:.65}
  .jf-achievement-row strong{display:block;margin-bottom:4px}
  .jf-achievement-row p{margin:0 0 4px;font-size:12px;line-height:1.5}
- .jf-social-toast{position:fixed;right:14px;bottom:84px;z-index:19001;background:#52341f;color:#ffebbb;border:2px ridge #dca753;border-radius:10px;padding:10px 15px;max-width:310px;box-shadow:0 5px 22px #0008}
+ .jf-social-toast-stack{position:fixed;right:14px;bottom:84px;z-index:19001;display:flex;flex-direction:column;align-items:flex-end;gap:8px;width:min(310px,calc(100vw - 28px));max-height:calc(100dvh - 100px);pointer-events:none}
+ .jf-social-toast{box-sizing:border-box;width:100%;background:#52341f;color:#ffebbb;border:2px ridge #dca753;border-radius:10px;padding:10px 15px;box-shadow:0 5px 22px #0008;pointer-events:none;animation:jf-achievement-appear .28s ease-out both}
+ @keyframes jf-achievement-appear{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+ @media(prefers-reduced-motion:reduce){.jf-social-toast{animation:none}}
  .jf-social-account-actions{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(420px,100%);margin:0 auto}
  .jf-social-account-actions .jf-have-account{width:100%;text-align:center}
  .jf-have-account-link{border:0;background:transparent;color:var(--ink,#24466e);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:8px}
@@ -160,6 +163,25 @@
   const achievementSound=new Audio("/achievement-unlock.mp3");
   achievementSound.preload="auto";
   achievementSound.volume=0.55;
+  // Somente conquistas desbloqueadas recentemente ficam na pilha.
+  // Anima o deslocamento dos avisos existentes quando chega um novo.
+  const achievementToastStack=document.createElement("div");
+  achievementToastStack.className="jf-social-toast-stack";
+  achievementToastStack.setAttribute("aria-live","polite");
+  achievementToastStack.setAttribute("aria-relevant","additions");
+  document.body.appendChild(achievementToastStack);
+  function stackAchievementToast(toast){
+   const previous=[...achievementToastStack.children];
+   const positions=new Map(previous.map(el=>[el,el.getBoundingClientRect().top]));
+   achievementToastStack.appendChild(toast);
+   for(const el of previous){
+    const offset=positions.get(el)-el.getBoundingClientRect().top;
+    if(Math.abs(offset)>1&&typeof el.animate==="function"&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+     el.animate([{transform:"translateY("+offset+"px)"},{transform:"translateY(0)"}],{duration:260,easing:"ease-out"});
+    }
+   }
+   setTimeout(()=>toast.remove(),6000);
+  }
   socket?.on("achievement-unlocked",data=>{
    try{
     achievementSound.pause();
@@ -175,7 +197,7 @@
    if(ship){const icon=ship.cloneNode(true);icon.style.width="42px";icon.style.height="42px";toast.appendChild(icon);}
   }
   const label=document.createElement("span");label.textContent="🏆 Conquista desbloqueada: "+(names[data.id]||data.id);toast.appendChild(label);
-  document.body.appendChild(toast);setTimeout(()=>toast.remove(),6000);
+  stackAchievementToast(toast);
  });
  window.addEventListener("keydown",e=>{if(e.key==="Escape"){overlay.hidden=true;achievements.hidden=true}});
 })();
