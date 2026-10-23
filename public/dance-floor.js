@@ -363,10 +363,10 @@ function showDanceSpeech(message){
   };
   const style=themes[message.bubbleStyle]||themes.classic;
   const canvas=document.createElement("canvas"),measure=canvas.getContext("2d");
-  const size=45,lineH=58,pad=22,iconW=76,gap=24,maxWidth=770;
+  const size=45,lineH=58,pad=22,iconW=76,gap=24,maxWidth=1140;
   measure.font="bold 41px Arial,sans-serif";
   const prefixWidth=measure.measureText(name+":").width+18;
-  measure.font=size+"px Arial,sans-serif";
+  measure.font="700 "+size+"px Arial,sans-serif";
   const otherMax=maxWidth-iconW-gap-pad*4;
   const firstMax=Math.max(100,otherMax-prefixWidth);
   const lines=[""];
@@ -454,7 +454,7 @@ function showDanceSpeech(message){
   const nameX=innerX+pad;
   g.fillText(name+":",nameX,firstY);
   const textX=nameX+g.measureText(name+":").width+18;
-  g.font=size+"px Arial,sans-serif";g.fillStyle=style.ink;
+  g.font="700 "+size+"px Arial,sans-serif";g.fillStyle=style.ink;
   g.fillText(lines[0],textX,firstY);
   lines.slice(1).forEach((line,i)=>g.fillText(line,nameX,firstY+(i+1)*lineH));
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
