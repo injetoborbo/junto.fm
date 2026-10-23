@@ -230,6 +230,7 @@ const CLUB_FRAME_MS=1000/CLUB_FPS;
 const CLUB_RENDER_SCALE=CLUB_MOBILE?.8:.9;
 let lastClubFrame=0,clubVisualTick=0;
 const people=new Map();
+const danceSpeechTimers=new Map();
 const tiles=[],chairs=[],raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const clock=new THREE.Clock();
 const sittingFrameQuaternion=new THREE.Quaternion();
@@ -318,6 +319,29 @@ function nameSprite(name){
   sprite.renderOrder=200;
   return sprite;
 }
+function showDanceSpeech(message){
+  if(!active||!message?.text)return;
+  const member=[...people.values()].find(p=>p.root&&p.profileName===String(message.name||""));
+  if(!member)return;
+  if(member.speech){member.speech.parent?.remove(member.speech);member.speech.material.map?.dispose();member.speech.material.dispose();}
+  const canvas=document.createElement("canvas");canvas.width=512;canvas.height=160;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#ffffff";ctx.strokeStyle="#343a46";ctx.lineWidth=6;
+  ctx.beginPath();ctx.roundRect(12,8,488,116,20);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(230,123);ctx.lineTo(251,150);ctx.lineTo(271,123);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle="#202633";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.font="bold 23px Arial";ctx.fillText(String(message.name||"").slice(0,22),256,34,450);
+  ctx.font="21px Arial";const words=String(message.text||"").slice(0,95).split(/\s+/),lines=[""];
+  for(const word of words){const i=lines.length-1;if(ctx.measureText(lines[i]+" "+word).width>435&&lines.length<2)lines.push(word);else lines[i]+=(lines[i]?" ":"")+word;}
+  lines.forEach((line,i)=>ctx.fillText(line,256,74+i*25,450));
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
+  const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  bubble.scale.set(2.5,.8,1);bubble.position.set(0,2.65,0);bubble.renderOrder=250;
+  member.root.add(bubble);member.speech=bubble;
+  clearTimeout(danceSpeechTimers.get(member));
+  danceSpeechTimers.set(member,setTimeout(()=>{if(member.speech===bubble){member.root?.remove(bubble);bubble.material.map?.dispose();bubble.material.dispose();member.speech=null;}},6500));
+}
+socket?.on("chat-message",showDanceSpeech);
 function sceneSetup(){
   scene=new THREE.Scene();
   scene.background=new THREE.Color(0x090d20);
@@ -334,10 +358,10 @@ function sceneSetup(){
   };
   const cube=(w,h,d,material,x,y,z,parent=scene)=>mesh(new THREE.BoxGeometry(w,h,d),material,x,y,z,parent);
   board=new THREE.Group();scene.add(board);
-  cube(6.65,.26,6.65,edge,0,-.34,0,board);
+  cube(10.65,.26,10.65,edge,0,-.34,0,board);
   const tileGeo=new THREE.BoxGeometry(.982,.09,.982);
   const tilesMats=[mat(0x252044,.45,.27),mat(0x112c44,.42,.25),mat(0x24203c,.4,.28),mat(0x163546,.46,.25)];
-  for(let x=0;x<6;x++)for(let z=0;z<6;z++){
+  for(let x=-2;x<8;x++)for(let z=-2;z<8;z++){
     const tile=new THREE.Mesh(tileGeo,tilesMats[(x+z)%4]);
     tile.position.set(x-2.5,-.13,z-2.5);tile.userData.tile={x,z};
     board.add(tile);tiles.push(tile);
@@ -487,6 +511,7 @@ async function putMember(id,details){
   try{
     const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{local:id===socket.id});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
+    entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
     entry.rig.traverse(node=>{if(node.isBone&&/^(?:mixamorig:)?head$/i.test(node.name))entry.headBone=node;});
     jfBananaMarkerPromise.then(template=>{
@@ -577,13 +602,14 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
     });
     entry.root.rotation.y=.65;
     entry.root.position.set(entry.data.x-2.5,.77,entry.data.z-2.5);
-    const tag=nameSprite(profile.name);
-    entry.root.add(tag);entry.name=tag;
+    // Nome flutuante removido: plumbob de banana livre.
     scene.add(entry.root);
   }catch(error){console.warn("Falha no avatar da pista:",error);if(people.get(id)===entry)people.delete(id);}
 }
 function removeMember(id){
   const member=people.get(id);if(!member)return;
+  clearTimeout(danceSpeechTimers.get(member));danceSpeechTimers.delete(member);
+  if(member.speech){member.speech.material.map?.dispose();member.speech.material.dispose();}
   member.mixer?.stopAllAction();
   member.mixer?.uncacheRoot(member.rig);
   member.dispose?.();
@@ -803,11 +829,19 @@ function close(){
   for(const t of nameMaterialCache.values())t.dispose();nameMaterialCache.clear();
   scene=null;camera=null;renderer=null;board=null;tiles.length=0;chairs.length=0;
   modal.hidden=true;
+  modal.classList.remove("jf-dance-expanded");
   if(openButton)openButton.hidden=false;
   if(oldRoom)setStatus("Saiu da pista.");
 }
 openButton?.addEventListener("click",open);
 closeButton?.addEventListener("click",close);
+document.getElementById("jfDanceExpand")?.addEventListener("click",()=>{
+  const expanded=modal.classList.toggle("jf-dance-expanded");
+  const button=document.getElementById("jfDanceExpand");
+  button.textContent=expanded?"⤡ Retrair":"⤢ Ampliar";
+  button.setAttribute("aria-pressed",String(expanded));
+  window.dispatchEvent(new Event("resize"));
+});
 modal?.addEventListener("click",e=>{if(e.target===modal)close();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&active)close();});
 for(const button of choices)button.addEventListener("click",()=>{if(!active)return;socket.emit("dance-style",{dance:button.dataset.jfDance});});
