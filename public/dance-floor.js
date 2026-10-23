@@ -24,6 +24,12 @@ const animationFiles={
 // Danças Mixamo reais: transferir variações da pose de descanso em espaço global,
 // em vez de copiar diretamente quaternions locais entre rigs diferentes.
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
+// Assets independentes: o indicador não altera o esqueleto nem animações do avatar.
+const jfBananaMarkerPromise=gltfLoader.loadAsync("/club/bananasims_otimizada.glb").then(gltf=>gltf.scene).catch(error=>{
+  console.warn("The Símios: adicione public/club/bananasims_otimizada.glb para ativar o marcador.",error);
+  return null;
+});
+
 const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 // Animacao sentadobalanca.fbx (enviada pelo criador).
 // O FBX fica fora do GitHub ate instalar o pacote de teste em public/poses.
@@ -481,7 +487,20 @@ async function putMember(id,details){
   try{
     const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{local:id===socket.id});
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
-    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;entry.getGlassesDiagnostics=avatar.getGlassesDiagnostics;
+    entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    entry.rig.traverse(node=>{if(node.isBone&&/^(?:mixamorig:)?head$/i.test(node.name))entry.headBone=node;});
+    jfBananaMarkerPromise.then(template=>{
+      if(!template||!active||people.get(id)!==entry||!entry.root)return;
+      const marker=template.clone(true);
+      const box=new THREE.Box3().setFromObject(marker);
+      const dims=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+      const longest=Math.max(dims.x,dims.y,dims.z,0.0001);
+      marker.scale.setScalar(.36/longest);
+      marker.position.copy(center).multiplyScalar(-.36/longest);
+      const pivot=new THREE.Group();
+      pivot.add(marker);entry.root.add(pivot);entry.bananaMarker=pivot;
+    });
+entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration=avatar.setSeatGlassesCalibration;entry.getGlassesDiagnostics=avatar.getGlassesDiagnostics;
     // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
     if(id===socket.id)entry.setSeatGlassesCalibration?.(PUBLISHED_SEAT_GLASSES_FIT);
     entry.restBones=new Map();
@@ -728,6 +747,16 @@ function animate(now=performance.now()){
     }
     // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
     p.updateAccessories?.(Boolean(d.seated));
+    if(p.bananaMarker){
+      if(p.headBone){
+        p.root.updateMatrixWorld(true);
+        const head=p.headBone.getWorldPosition(new THREE.Vector3());
+        p.root.worldToLocal(head);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(0,.42+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(0,1.6+.035*Math.sin(time*2),0);
+      p.bananaMarker.rotation.y=time*.8;
+    }
+
   }
   renderer.render(scene,camera);
 }
