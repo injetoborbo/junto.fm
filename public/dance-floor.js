@@ -321,7 +321,7 @@ function nameSprite(name){
 }
 function showDanceSpeech(message){
   if(!active||!message?.text)return;
-  const member=[...people.values()].find(p=>p.root&&p.profileName===String(message.name||""));
+  const member=people.get(message.senderId);
   if(!member)return;
   if(member.speech){member.speech.parent?.remove(member.speech);member.speech.material.map?.dispose();member.speech.material.dispose();}
   const canvas=document.createElement("canvas");canvas.width=512;canvas.height=160;
