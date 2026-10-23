@@ -37,10 +37,10 @@
     "#jfTvOverlay .jf-tv-youtube-extras{display:flex;gap:8px;flex-wrap:wrap;align-items:center}",
     "#jfTvOverlay .jf-tv-youtube-extras button{border:1px solid #8dafe3;border-radius:7px;background:#27477e;color:white;padding:8px 12px;cursor:pointer}",
     "#jfTvOverlay .jf-tv-recent{display:grid;gap:5px;margin-top:5px}",
-    "#jfTvOverlay .jf-tv-request-panel{display:grid;gap:8px;border:1px solid #536c9c;border-radius:8px;padding:10px;background:#101b3b}",
+    "#jfTvOverlay .jf-tv-request-panel{display:grid;gap:8px;border:1px solid #536c9c;border-radius:8px;padding:10px;background:color-mix(in srgb,var(--jf-primary,#101b3b) 40%,var(--jf-glow,#101b3b));color:var(--ink,#fff)}",
     "#jfTvOverlay .jf-tv-request-panel input{width:100%;min-width:0;padding:9px;border-radius:6px;border:1px solid #6979bc;background:#080f28;color:white}",
     "#jfTvOverlay .jf-tv-queue-item{display:flex;gap:7px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-bottom:1px solid #465b82;padding:7px 0;font-size:12px}",
-    "#jfTvOverlay .jf-tv-queue-item button,#jfTvOverlay .jf-tv-request-panel>button{padding:7px 10px;border-radius:6px;background:#3563a4;color:#fff;border:1px solid #87a9e2;cursor:pointer}",
+    "#jfTvOverlay .jf-tv-queue-item button,#jfTvOverlay .jf-tv-request-panel>button{padding:7px 10px;border-radius:6px;background:var(--jf-primary,#3563a4);color:var(--ink,#fff);border:1px solid var(--jf-secondary,#87a9e2);cursor:pointer}",
 
     "#jfTvOverlay .jf-tv-recent button{width:100%;text-align:left;border:1px solid #536c9c;border-radius:6px;background:#172a55;color:white;padding:7px;cursor:pointer}",
 
