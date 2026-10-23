@@ -34,6 +34,11 @@
     "#jfTvOverlay .jf-tv-tools{display:grid;gap:10px}",
     "#jfTvOverlay .jf-tv-tools label{display:grid;gap:5px;font-size:12px;font-weight:700}",
     "#jfTvOverlay .jf-tv-tools label.jf-tv-audio-choice{display:flex;align-items:center;gap:8px;font-weight:700}",
+    "#jfTvOverlay .jf-tv-youtube-extras{display:flex;gap:8px;flex-wrap:wrap;align-items:center}",
+    "#jfTvOverlay .jf-tv-youtube-extras button{border:1px solid #8dafe3;border-radius:7px;background:#27477e;color:white;padding:8px 12px;cursor:pointer}",
+    "#jfTvOverlay .jf-tv-recent{display:grid;gap:5px;margin-top:5px}",
+    "#jfTvOverlay .jf-tv-recent button{width:100%;text-align:left;border:1px solid #536c9c;border-radius:6px;background:#172a55;color:white;padding:7px;cursor:pointer}",
+
     "#jfTvOverlay .jf-tv-audio-choice input{width:17px;height:17px;accent-color:#80b9ff}",
     "#jfTvOverlay input[type=url],#jfTvOverlay input[type=file]{width:100%;background:#090f2d;border:1px solid #6979bc;border-radius:7px;color:#fff;padding:10px;min-width:0;font-size:13px}",
     "#jfTvOverlay .jf-tv-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center}",
@@ -76,6 +81,7 @@
           '<section id="jfTvYoutubeTools" class="jf-tv-tools" hidden>',
             '<label>Link do YouTube<input type="url" id="jfTvYoutubeUrl" placeholder="https://youtu.be/..." autocomplete="off"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvLoad">Carregar vídeo</button><button type="button" id="jfTvPlay">▶ Play</button><button type="button" id="jfTvPause">Ⅱ Pausar</button></div>',
+             '<div id="jfTvYoutubeRecent" class="jf-tv-recent" aria-label="Vídeos reproduzidos recentemente"></div>',
             '<label>Posição do vídeo <span id="jfTvTime">0:00</span><input type="range" id="jfTvSeek" min="0" max="100" value="0" step="1"></label>',
           '</section>',
           '<section id="jfTvLocalTools" class="jf-tv-tools" hidden>',
@@ -91,7 +97,8 @@
           '<div class="jf-tv-actions"><button type="button" class="jf-tv-danger" id="jfTvStop">■ Encerrar TV</button></div>',
         '</div>',
         '<div class="jf-tv-actions" id="jfTvViewerTools" hidden><button type="button" id="jfTvWatch">▶ Assistir ao vídeo</button><button type="button" id="jfTvSound">🔊 Ativar reprodução/som</button></div>',
-        '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
+        '<div class="jf-tv-youtube-extras" id="jfTvYoutubeExtras" hidden><button type="button" id="jfTvCaptions" aria-pressed="false">CC: Desligadas</button><span class="jf-tv-note">Legendas só no seu player (quando o vídeo permitir).</span></div>',
+         '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
         '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: LiveKit Cloud para tela e arquivos, sem enviar o arquivo ao Render. A música continua independente.</p>',
       '</div>',
     '</section>'
@@ -202,6 +209,40 @@
       (state.playing?Math.max(0,((Number(state.serverNow)||Number(state.updatedAt))-(Number(state.updatedAt)||0))/1000):0);
     return Math.max(0, baseline+(state.playing?Math.max(0,(Date.now()-stateReceivedAt)/1000):0));
   }
+  // Preferência individual: não modifica o estado compartilhado da sala.
+  let captionsWanted=false;
+  function applyYoutubeCaptions(){
+    if(!playerReady||!player)return;
+    try{
+      if(!captionsWanted){
+        player.setOption("captions","track",{});
+      }else{
+        player.setOption("captions","track",{languageCode:"pt"});
+      }
+    }catch(_){/* O vídeo pode não oferecer faixas de legenda. */}
+  }
+  $("jfTvCaptions").addEventListener("click",()=>{
+    captionsWanted=!captionsWanted;
+    $("jfTvCaptions").textContent=captionsWanted?"CC: Ligadas":"CC: Desligadas";
+    $("jfTvCaptions").setAttribute("aria-pressed",String(captionsWanted));
+    applyYoutubeCaptions();
+  });
+  const jfRecentYoutubeKey="jf-tv-youtube-recentes-v1";
+  function getYoutubeRecents(){try{return JSON.parse(localStorage.getItem(jfRecentYoutubeKey)||"[]").filter(x=>/^[a-zA-Z0-9_-]{11}$/.test(x)).slice(0,8)}catch(_){return []}}
+  function renderYoutubeRecents(){
+    const el=$("jfTvYoutubeRecent");
+    el.replaceChildren();
+    const ids=getYoutubeRecents();
+    if(!ids.length)return;
+    const heading=document.createElement("small");heading.textContent="Reproduzidos recentemente (neste navegador):";el.appendChild(heading);
+    for(const id of ids){
+      const button=document.createElement("button");button.type="button";
+      button.textContent="▶ youtube.com/watch?v="+id;
+      button.onclick=()=>{$("jfTvYoutubeUrl").value="https://www.youtube.com/watch?v="+id;};
+      el.appendChild(button);
+    }
+  }
+  renderYoutubeRecents();
   function updateYoutubePauseShield(){
     pauseShield.hidden=!opened||state?.mode!=="youtube"||Boolean(state.playing);
   }
@@ -314,6 +355,7 @@
           playerVars:{playsinline:1,controls:0,disablekb:1,fs:0,rel:0,autoplay:0,cc_load_policy:0},
           events:{onReady:()=>{
               playerReady=true;loadedId="";youtubeHardStopped=false;
+              applyYoutubeCaptions();
               try{player.getIframe()?.setAttribute("tabindex","-1");}catch(_){}
               if(!isAdmin()&&viewerAudioEnabled)try{player.unMute();}catch(_){}
               syncYoutube(true);
@@ -321,6 +363,7 @@
               else if(state?.mode==="youtube")enforceYoutubePause();
             },
             onStateChange:onYoutubePlayerState,
+            onApiChange:applyYoutubeCaptions,
             onAutoplayBlocked:onYoutubeAutoplayBlocked,
             onError:()=>status("Este vídeo não permite reprodução incorporada ou não está disponível.")}});
       }else syncYoutube();
@@ -330,6 +373,8 @@
     if(!isAdmin())return;
     const id=youtubeId($("jfTvYoutubeUrl").value);
     if(!/^[a-zA-Z0-9_-]{11}$/.test(id)){status("Cole um link válido do YouTube.");return;}
+    try{localStorage.setItem(jfRecentYoutubeKey,JSON.stringify([id,...getYoutubeRecents().filter(x=>x!==id)].slice(0,8)));}catch(_){}
+    renderYoutubeRecents();
     stopLocal();socket.emit("tv:set-youtube",{videoId:id});
     status("Carregando vídeo para a sala...");
   };
@@ -554,6 +599,7 @@
     $("jfTvWatch").disabled=viewerRequested;
     $("jfTvSound").hidden=!state||state.mode==="youtube"&&!viewerAudioBlocked;
     const showYoutube=state?.mode==="youtube"&&opened;
+    $("jfTvYoutubeExtras").hidden=!showYoutube;
     ytWrapper.hidden=!showYoutube;
     updateYoutubePauseShield();
     stage.hidden=!isStream||!opened;
