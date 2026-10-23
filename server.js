@@ -480,11 +480,11 @@ io.use(async (socket,next)=>{
 });
 // Lounge no canto posterior da Junto Club: duas cadeiras frente a frente,
 // mesinha no centro. Nunca gerar avatares ou permitir caminhada nos móveis.
-const CLUB_SEATS=Object.freeze([{x:0,z:1},{x:2,z:1}]);
-const CLUB_TABLE=Object.freeze({x:1,z:1});
+const CLUB_SEATS=Object.freeze([{x:-3,z:-3},{x:-1,z:-3},{x:-3,z:0},{x:-1,z:0}]);
+const CLUB_TABLES=Object.freeze([{x:-2,z:-3},{x:-2,z:0}]);
 const isClubFurnitureTile=(x,z)=>
   CLUB_SEATS.some(seat=>seat.x===x&&seat.z===z)||
-  (x===CLUB_TABLE.x&&z===CLUB_TABLE.z);
+  CLUB_TABLES.some(table=>table.x===x&&table.z===z);
 // Impactos recentes por sala, para evitar sobreposicao das explosoes.
 const roomTomatoImpacts=new Map();
 function danceSnapshot(room){
@@ -506,7 +506,7 @@ io.on("connection", socket => {
     if(!floor.has(socket.id)){
       const taken=new Set([...floor.values()].map(v=>v.x+","+v.z));
       for(const seat of CLUB_SEATS)taken.add(seat.x+","+seat.z);
-      taken.add(CLUB_TABLE.x+","+CLUB_TABLE.z);
+      for(const table of CLUB_TABLES)taken.add(table.x+","+table.z);
       let x=0,z=0;
       outer:for(let r=0;r<5;r++)for(let ix=0;ix<6;ix++)for(let iz=0;iz<6;iz++){
         if(Math.abs(ix-2.5)+Math.abs(iz-2.5)>r+2)continue;
@@ -524,7 +524,7 @@ io.on("connection", socket => {
     if(!floor?.has(socket.id))return;
     if(isRateLimited(socket,"dance-move",12,1000))return;
     const x=Number(payload?.x),z=Number(payload?.z);
-    if(!Number.isInteger(x)||!Number.isInteger(z)||x< -2||x>7||z< -2||z>7)return;
+    if(!Number.isInteger(x)||!Number.isInteger(z)||x< -4||x>9||z< -4||z>9)return;
     if(isClubFurnitureTile(x,z))
       return socket.emit("dance-error",{message:"Espaço do lounge: clique numa cadeira para sentar."});
     if([...floor].some(([id,p])=>id!==socket.id&&p.x===x&&p.z===z))
