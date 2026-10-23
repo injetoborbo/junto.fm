@@ -405,12 +405,18 @@ function showDanceSpeech(message){
   g.fillStyle=style.bg;g.beginPath();g.moveTo(mid-13,margin+bodyH-6);g.lineTo(mid,margin+bodyH+tail-9);g.lineTo(mid+13,margin+bodyH-6);g.closePath();g.fill();
   const innerX=margin+pad+iconW+gap,innerY=margin+pad;
   const innerH=bodyH-pad*2;
-  rounded(innerX,innerY,innerW,innerH,22,style.bg,style.border);
+  // Só o início da fala fica visível: curva esquerda e rabinho.
+  // O restante compartilha o fundo e o contorno do balão externo.
   const mouthY=innerY+innerH/2;
-  g.beginPath();g.moveTo(innerX+2,mouthY-14);g.lineTo(innerX-18,mouthY+8);g.lineTo(innerX+2,mouthY+14);
-  g.fillStyle=style.bg;g.fill();g.strokeStyle=style.border;g.lineWidth=4;g.stroke();
-  // Apagar somente a emenda: a cauda pertence ao balão interno.
-  g.fillRect(innerX-1,mouthY-12,6,24);
+  g.beginPath();
+  g.moveTo(innerX+12,innerY);
+  g.quadraticCurveTo(innerX,innerY,innerX,innerY+12);
+  g.lineTo(innerX,mouthY-14);
+  g.lineTo(innerX-18,mouthY+8);
+  g.lineTo(innerX,mouthY+14);
+  g.lineTo(innerX,innerY+innerH-12);
+  g.quadraticCurveTo(innerX,innerY+innerH,innerX+12,innerY+innerH);
+  g.strokeStyle=style.border;g.lineWidth=4;g.lineJoin="round";g.lineCap="round";g.stroke();
   const firstY=innerY+pad;
   g.textBaseline="top";g.textAlign="left";
   const avatarX=margin+pad,avatarSide=iconW,avatarY=margin+(bodyH-avatarSide)/2;
