@@ -328,37 +328,68 @@ function nameSprite(name){
 function showDanceSpeech(message){
   if(!active||!message?.text)return;
   const member=people.get(message.senderId);
-  if(!member)return;
-  if(member.speech){member.speech.parent?.remove(member.speech);member.speech.material.map?.dispose();member.speech.material.dispose();}
-  const canvas=document.createElement("canvas");canvas.width=1024;canvas.height=420;
-  const ctx=canvas.getContext("2d");
-  // Inspiração no Habbo: balão branco plano, contorno pixelado escuro,
-  // nome em negrito, texto grande e rabinho integrado.
-  ctx.clearRect(0,0,1024,420);
-  ctx.fillStyle="#252b37";ctx.fillRect(18,18,988,293);
-  ctx.fillStyle="#ffffff";ctx.fillRect(27,27,970,275);
-  ctx.fillStyle="#252b37";ctx.beginPath();ctx.moveTo(463,307);ctx.lineTo(512,374);ctx.lineTo(561,307);ctx.closePath();ctx.fill();
-  ctx.fillStyle="#ffffff";ctx.beginPath();ctx.moveTo(474,297);ctx.lineTo(512,355);ctx.lineTo(550,297);ctx.closePath();ctx.fill();
-  ctx.textAlign="center";ctx.textBaseline="middle";
-  ctx.fillStyle="#292c34";ctx.font="bold 41px Arial,sans-serif";
-  ctx.fillText(String(message.name||"Macaco").slice(0,24),512,81,920);
-  ctx.font="39px Arial,sans-serif";
-  const words=String(message.text||"").slice(0,180).split(/\s+/),lines=[];
+  if(!member?.root)return;
+  const old=member.speech;
+  if(old){old.parent?.remove(old);old.material.map?.dispose();old.material.dispose();member.speech=null;}
+  clearTimeout(danceSpeechTimers.get(member));
+  const name=String(message.name||"Macaco").slice(0,24);
+  const content=String(message.text||"").trim().slice(0,500);
+  if(!content)return;
+  // Tipografia legível e bolha dimensionada pelo conteúdo, inspirada no Habbo.
+  const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+  const fontSize=45,lineHeight=56,padX=38,padY=23,tail=25;
+  const maxLineWidth=650;
+  ctx.font=fontSize+"px Arial,sans-serif";
+  const lines=[];
   let line="";
-  for(const word of words){
-    const next=line?line+" "+word:word;
-    if(ctx.measureText(next).width>890&&line){lines.push(line);line=word;}else line=next;
-    if(lines.length===3)break;
+  for(const word of content.split(/\s+/)){
+    if(ctx.measureText(word).width>maxLineWidth){
+      if(line){lines.push(line);line="";}
+      let chunk="";
+      for(const char of word){
+        if(ctx.measureText(chunk+char).width>maxLineWidth&&chunk){lines.push(chunk);chunk=char;}
+        else chunk+=char;
+      }
+      line=chunk;
+    }else{
+      const candidate=line?line+" "+word:word;
+      if(ctx.measureText(candidate).width>maxLineWidth&&line){lines.push(line);line=word;}
+      else line=candidate;
+    }
   }
-  if(line&&lines.length<3)lines.push(line);
-  lines.forEach((txt,i)=>ctx.fillText(txt,512,161+i*58,900));
+  if(line)lines.push(line);
+  ctx.font="bold 42px Arial,sans-serif";
+  const nameWidth=ctx.measureText(name).width;
+  ctx.font=fontSize+"px Arial,sans-serif";
+  const widest=Math.max(nameWidth,...lines.map(t=>ctx.measureText(t).width));
+  const width=Math.ceil(Math.max(210,Math.min(740,widest+padX*2)));
+  const height=Math.ceil(padY*2+49+12+lines.length*lineHeight);
+  const margin=10;
+  canvas.width=width+margin*2;canvas.height=height+tail+margin*2;
+  const g=canvas.getContext("2d");
+  g.fillStyle="#252b35";
+  g.beginPath();g.roundRect(margin,margin,width,height,11);g.fill();
+  g.fillStyle="#fff";
+  g.beginPath();g.roundRect(margin+5,margin+5,width-10,height-10,7);g.fill();
+  const center=margin+width/2;
+  g.fillStyle="#252b35";g.beginPath();g.moveTo(center-22,margin+height-2);g.lineTo(center,margin+height+tail);g.lineTo(center+22,margin+height-2);g.closePath();g.fill();
+  g.fillStyle="#fff";g.beginPath();g.moveTo(center-15,margin+height-6);g.lineTo(center,margin+height+tail-10);g.lineTo(center+15,margin+height-6);g.closePath();g.fill();
+  g.textAlign="center";g.textBaseline="top";
+  g.font="bold 42px Arial,sans-serif";g.fillStyle="#505866";g.fillText(name,center,margin+padY,width-20);
+  g.font=fontSize+"px Arial,sans-serif";g.fillStyle="#20242d";
+  lines.forEach((txt,i)=>g.fillText(txt,center,margin+padY+61+i*lineHeight,width-20));
   const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
   tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;tex.generateMipmaps=false;
   const bubble=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));
-  bubble.scale.set(4.2,1.72,1);bubble.position.set(0,3.0,0);bubble.renderOrder=260;
-  member.root.add(bubble);member.speech=bubble;
-  clearTimeout(danceSpeechTimers.get(member));
-  danceSpeechTimers.set(member,setTimeout(()=>{if(member.speech===bubble){member.root?.remove(bubble);bubble.material.map?.dispose();bubble.material.dispose();member.speech=null;}},6500));
+  // A largura muda de acordo com as letras; altura cresce com as linhas.
+  const worldScale=.005;
+  bubble.scale.set(canvas.width*worldScale,canvas.height*worldScale,1);
+  bubble.position.set(0,2.65+canvas.height*worldScale/2,0);
+  bubble.renderOrder=260;member.root.add(bubble);member.speech=bubble;
+  danceSpeechTimers.set(member,setTimeout(()=>{
+    if(member.speech===bubble){member.root?.remove(bubble);bubble.material.map?.dispose();bubble.material.dispose();member.speech=null;}
+    danceSpeechTimers.delete(member);
+  },7000));
 }
 socket?.on("chat-message",showDanceSpeech);
 function sceneSetup(){
