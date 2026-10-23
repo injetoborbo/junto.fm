@@ -5,7 +5,7 @@ import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLo
 import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 
 const OPTIONS={
-  hat:["nenhum","bone","gorro","palha","branco","caveira"],
+  hat:["nenhum","bone","apocaliptico","gorro","palha","branco","caveira"],
   glasses:["nenhum","escuros","redondos","sem_aro","botao"],
   headphones:["nenhum","azul","rosa","preto"],
   outfit:["padrao","rosa","rosa_novo"]
@@ -40,6 +40,7 @@ const ASSETS={
   palha:"/Meshy_AI_Straw_Hat_with_Red_Ri_1018034335_texture.glb",
   branco:"/chapeu_sol_branco_corrigido.glb",
   bone:"/bone_azul.glb",
+  apocaliptico:"/boneapocaliptico_otimizado.glb",
   gorro:"/touca_preta.glb",
   escuros:"/oculos_escuros.glb",
   redondos:"/oculos_redondos.glb",
@@ -398,14 +399,14 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   if(selection.outfit==="rosa_novo")installNewWearable("vestido_novo",newTorsoBone,{
     seatedOffset:{y:.00010}
   });
-  if(selection.hat==="palha"||selection.hat==="branco"){
+  if(["palha","branco","apocaliptico"].includes(selection.hat)){
     const type=selection.hat;
     getAsset(type).then(asset=>{
       if(!asset||!state.userData.active)return;
       const hat=asset.clone(true);
       const measure=getBounds(hat);
       // Meshy: aba = Y mínimo + cerca de 12% da altura. Apoio = topo - 17 cm visuais.
-      const width=type==="palha"?.94:.92;
+      const width=type==="palha"?.94:type==="apocaliptico"?.79:.92;
       const scale=width/Math.max(measure.size.x,measure.size.z,1e-6);
       const brim=measure.box.min.y+measure.size.y*.12;
       hat.scale.setScalar(scale);
@@ -514,7 +515,7 @@ async function dressMiniPlayer(selection,render,monkey,root,isActive){
     render();
   };
   const jobs=[];
-  if(selection.hat==="palha"||selection.hat==="branco"){
+  if(["palha","branco","apocaliptico"].includes(selection.hat)){
     const type=selection.hat;
     jobs.push((async()=>{
       const asset=await getAsset(type);
@@ -526,7 +527,7 @@ async function dressMiniPlayer(selection,render,monkey,root,isActive){
       hat.name="jfMiniHat_"+type;
       const measure=getBounds(hat);
       const worldScale=head.getWorldScale(new THREE.Vector3()).x||1;
-      const desiredWidth=type==="palha"?.94:.92;
+      const desiredWidth=type==="palha"?.94:type==="apocaliptico"?.79:.92;
       const nativeScale=desiredWidth/
         (Math.max(measure.size.x,measure.size.z,1e-6)*worldScale);
       const topLocal=head.worldToLocal(top.getWorldPosition(new THREE.Vector3()));
