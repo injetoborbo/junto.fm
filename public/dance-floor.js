@@ -408,26 +408,48 @@ function showDanceSpeech(message){
   // Divisória ligada às bordas externas, com o rabinho voltado à foto.
   // O restante compartilha o fundo e o contorno do balão externo.
   const mouthY=innerY+innerH/2;
-  g.beginPath();
-  g.moveTo(innerX+12,margin);
-  g.quadraticCurveTo(innerX,margin,innerX,margin+12);
-  g.lineTo(innerX,mouthY-14);
-  g.lineTo(innerX-18,mouthY+8);
-  g.lineTo(innerX,mouthY+14);
-  g.lineTo(innerX,margin+bodyH-12);
-  g.quadraticCurveTo(innerX,margin+bodyH,innerX+12,margin+bodyH);
-  g.strokeStyle=style.border;g.lineWidth=4;g.lineJoin="round";g.lineCap="round";g.stroke();
-  const firstY=innerY+pad;
-  g.textBaseline="top";g.textAlign="left";
-  const avatarX=margin+pad,avatarSide=iconW,avatarY=margin+(bodyH-avatarSide)/2;
-  const avatarSrc=typeof message.avatar==="string"&&/^data:image\/(?:png|jpeg|webp|gif);base64,/i.test(message.avatar)?message.avatar:"";
-  const drawAvatarFallback=()=>{
-    rounded(avatarX,avatarY,avatarSide,avatarSide,8,"#d9e3ef",style.border);
-    g.fillStyle="#52617b";g.font="bold 44px Arial,sans-serif";g.textAlign="center";
-    g.fillText(name.slice(0,1).toUpperCase(),avatarX+avatarSide/2,avatarY+15);
-    g.textAlign="left";
+  const dividerPath=()=>{
+    g.beginPath();
+    g.moveTo(innerX+12,margin);
+    g.quadraticCurveTo(innerX,margin,innerX,margin+12);
+    g.lineTo(innerX,mouthY-14);
+    g.lineTo(innerX-18,mouthY+8);
+    g.lineTo(innerX,mouthY+14);
+    g.lineTo(innerX,margin+bodyH-12);
+    g.quadraticCurveTo(innerX,margin+bodyH,innerX+12,margin+bodyH);
   };
-  drawAvatarFallback();
+  const firstY=innerY+pad;
+  const avatarX=margin,avatarY=margin,avatarW=innerX+12-margin,avatarH=bodyH;
+  const avatarSrc=typeof message.avatar==="string"&&/^data:image\/(?:png|jpeg|webp|gif);base64,/i.test(message.avatar)?message.avatar:"";
+  const drawAvatar=(photo=null)=>{
+    g.save();
+    // Interseção entre o contorno externo e a área à esquerda da divisória.
+    g.beginPath();g.roundRect(margin,margin,bodyW,bodyH,28);g.clip();
+    dividerPath();
+    g.lineTo(margin,margin+bodyH);g.lineTo(margin,margin);g.closePath();g.clip();
+    g.fillStyle="#d9e3ef";g.fillRect(avatarX,avatarY,avatarW,avatarH);
+    if(photo){
+      const ratio=Math.max(avatarW/photo.naturalWidth,avatarH/photo.naturalHeight);
+      const drawW=photo.naturalWidth*ratio,drawH=photo.naturalHeight*ratio;
+      g.drawImage(photo,avatarX+(avatarW-drawW)/2,avatarY+(avatarH-drawH)/2,drawW,drawH);
+    }else{
+      g.fillStyle="#52617b";g.font="bold 44px Arial,sans-serif";
+      g.textAlign="center";g.textBaseline="middle";
+      g.fillText(name.slice(0,1).toUpperCase(),avatarX+(innerX-margin)/2,avatarY+avatarH/2);
+    }
+    g.restore();
+    // Repor as linhas sobre a foto, inclusive após o carregamento assíncrono.
+    g.save();g.strokeStyle=style.border;g.lineWidth=4;g.lineJoin="round";g.lineCap="round";
+    dividerPath();g.stroke();
+    // Somente a borda externa do retrato: não fechar a cauda externa da fala.
+    g.beginPath();g.moveTo(innerX+12,margin);g.lineTo(margin+28,margin);
+    g.quadraticCurveTo(margin,margin,margin,margin+28);
+    g.lineTo(margin,margin+bodyH-28);
+    g.quadraticCurveTo(margin,margin+bodyH,margin+28,margin+bodyH);
+    g.lineTo(innerX+12,margin+bodyH);g.stroke();g.restore();
+  };
+  drawAvatar();
+  g.textBaseline="top";g.textAlign="left";
   g.font="bold 41px Arial,sans-serif";g.fillStyle=style.name;
   const nameX=innerX+pad;
   g.fillText(name+":",nameX,firstY);
@@ -446,12 +468,8 @@ function showDanceSpeech(message){
     const photo=new Image();
     photo.onload=()=>{
       if(!bubble.parent)return;
-      const ratio=Math.max(avatarSide/photo.naturalWidth,avatarSide/photo.naturalHeight);
-      const drawW=photo.naturalWidth*ratio,drawH=photo.naturalHeight*ratio;
-      g.fillStyle=style.border;g.fillRect(avatarX-3,avatarY-3,avatarSide+6,avatarSide+6);
-      g.save();g.beginPath();g.rect(avatarX,avatarY,avatarSide,avatarSide);g.clip();
-      g.drawImage(photo,avatarX+(avatarSide-drawW)/2,avatarY+(avatarSide-drawH)/2,drawW,drawH);
-      g.restore();texture.needsUpdate=true;
+      if(!photo.naturalWidth||!photo.naturalHeight)return;
+      drawAvatar(photo);texture.needsUpdate=true;
     };
     photo.onerror=()=>{};
     photo.src=avatarSrc;
