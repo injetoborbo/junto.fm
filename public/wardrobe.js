@@ -66,7 +66,7 @@ const FIT_DEFAULTS=Object.freeze({
   botao:{width:.68,offset:[0,.23,.31],scale:[.78,1,1]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
   vestido_novo:{width:.70,offset:[0,-.24,0]},
-  regatapunk:{width:.60,offset:[0,.075,.01]}
+  regatapunk:{width:.47,offset:[.01,-.07,.01]}
 });
 const FIT_STORAGE="jf_wardrobe_private_fit_v1";
 const FIT_SEATED_STORAGE="jf_wardrobe_private_fit_seated_v1";
