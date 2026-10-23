@@ -358,8 +358,13 @@ html[data-jf-theme="classic"] .jf-popup-top,html[data-jf-theme="classic"] .jf-po
 body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direction:column;justify-content:center;gap:22px}
 .jf-dance-launch{position:fixed;bottom:16px;left:90px;z-index:940;width:auto;min-width:174px;margin:0;font-size:12px;box-shadow:0 6px 26px #142e5770}
 .jf-dance-launch[hidden]{display:none!important}
-#jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(568px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
+#jfDanceModal{position:fixed;inset:auto auto 14px 14px;width:min(760px,calc(100vw - 28px));max-height:calc(100dvh - 28px);padding:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;display:block;z-index:1020;animation:jfModalIn .17s ease-out}
 #jfDanceModal[hidden]{display:none!important}
+#jfDanceModal.jf-dance-expanded{inset:1.5dvh!important;width:calc(100vw - 3dvh)!important;max-height:97dvh!important;z-index:12040}
+#jfDanceModal.jf-dance-expanded .jf-dance-modal{max-height:97dvh!important}
+#jfDanceModal.jf-dance-expanded .jf-dance-stage{aspect-ratio:auto;max-height:none;height:min(76dvh,960px)}
+#jfDanceModal .jf-dance-modal .jf-modal-head{display:flex;align-items:center;gap:8px}
+#jfDanceModal .jf-dance-modal .jf-modal-head>div{margin-right:auto}
 #jfDanceModal .jf-dance-modal{box-shadow:0 16px 55px #10254388,0 0 0 2px #cbe7ff;max-height:calc(100dvh - 28px);overflow:auto}
 #jfDanceModal .jf-dance-modal .jf-modal-head{position:sticky;top:0;z-index:2;padding:4px 0 7px;background:transparent;color:inherit}
 #jfDanceModal .jf-dance-modal .jf-modal-head h2{color:inherit}
@@ -368,7 +373,7 @@ body:not(.jf-in-room) main{min-height:calc(100vh - 48px);display:flex;flex-direc
 .jf-dance-modal{width:100%;max-width:100%;overflow:auto;padding:13px!important}
 .jf-dance-modal .jf-modal-head{margin-bottom:9px}
 .jf-dance-toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:6px 10px 10px}
-.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:48vh;min-height:235px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
+.jf-dance-stage{position:relative;aspect-ratio:16/10;width:100%;max-height:58vh;min-height:235px;overflow:hidden;border:3px solid #749cc7;border-radius:12px;background:#d9ecfb;box-shadow:inset 0 2px 10px #163d6340}
 .jf-dance-viewport,.jf-dance-viewport canvas{width:100%;height:100%;display:block;touch-action:manipulation}
 .jf-dance-actions{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:12px 0 4px}
 .jf-dance-actions button{font-size:12px;padding:8px 11px}
@@ -974,7 +979,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 </div>
 <div class="jf-modal-backdrop" id="jfDanceModal" hidden>
   <section class="panel jf-dance-modal" role="dialog" aria-modal="false" aria-labelledby="jfDanceTitle">
-    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 The Símios</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
+    <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 The Símios</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary" type="button" id="jfDanceExpand" aria-pressed="false">⤢ Ampliar</button><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
     <div class="jf-dance-toolbar"><span class="small" id="jfDanceCount">0/8 macacos</span><span class="small" id="jfDanceStatus" role="status" aria-live="polite">Entre na pista para dançar!</span></div>
     <div class="jf-dance-stage" id="jfDanceStage"><div id="jfDanceViewport" class="jf-dance-viewport" aria-label="Pista de dança 3D interativa"></div></div>
     <div class="jf-dance-actions" aria-label="Escolha sua dança">
