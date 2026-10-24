@@ -790,14 +790,23 @@ async function putMember(id,details){
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    // O GLTFLoader normaliza "mixamorig:Head" para "mixamorigHead".
+    // Comparar sempre nomes normalizados, assim como no retarget das danças.
+    const drinkBones=new Map();
     entry.rig.traverse(node=>{
-      if(!node.isBone)return;
-      const key=boneKey(node.name);
-      if(key==="righthand")entry.drinkHand=node;
-      if(key==="rightarm")entry.drinkUpperArm=node;
-      if(key==="rightforearm")entry.drinkForearm=node;
+      if(node.isBone)drinkBones.set(boneKey(node.name),node);
     });
-    entry.rig.traverse(node=>{if(node.isBone&&/^(?:mixamorig:)?head$/i.test(node.name))entry.headBone=node;});
+    entry.drinkHand=drinkBones.get("righthand")||null;
+    entry.drinkUpperArm=drinkBones.get("rightarm")||drinkBones.get("rightupperarm")||null;
+    entry.drinkForearm=drinkBones.get("rightforearm")||drinkBones.get("rightlowerarm")||null;
+    entry.headBone=drinkBones.get("head")||null;
+    if(!entry.drinkHand||!entry.drinkUpperArm||!entry.drinkForearm||!entry.headBone){
+      console.warn("The Símios: ossos de beber ausentes",{
+        head:!!entry.headBone,hand:!!entry.drinkHand,
+        upperArm:!!entry.drinkUpperArm,forearm:!!entry.drinkForearm,
+        available:[...drinkBones.keys()]
+      });
+    }
     jfBananaMarkerPromise.then(template=>{
       if(!template||!active||people.get(id)!==entry||!entry.root)return;
       const marker=template.clone(true);
