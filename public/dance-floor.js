@@ -380,7 +380,7 @@ async function installCocktailTables(worldScene,sceneBoard){
     anchor.name="jfCocktailTable"+i;
     anchor.position.set(spot.x,-.08,spot.z);
     anchor.rotation.y=spot.rotation;
-    const tabletop=1.85;
+    const tabletop=1.15;
     const table=prepare(models.get("mesinhabalada"),tabletop);
     if(!table)continue;
     anchor.add(table);
@@ -388,7 +388,7 @@ async function installCocktailTables(worldScene,sceneBoard){
     spot.drinks.forEach((name,j)=>{
       const model=models.get(name);
       if(!model)return;
-      const bottle=prepare(model,name==="licorbananal"?.75:.70);
+      const bottle=prepare(model,name==="licorbananal"?.52:.49);
       if(!bottle)return;
       bottle.position.x+=offsets[j][0];
       bottle.position.y+=tabletop;
@@ -918,9 +918,9 @@ function animate(now=performance.now()){
     // "idle" libera o rig para a animação procedural de caminhada abaixo.
     switchDance(p,sipping&&animationClips.has("drinking")?"drinking":walking?"idle":style);
     if(sipping&&!animationClips.has("drinking"))void loadDrinkingClip();
-    // 0.7 casa por segundo: um caminhar leve, sem teleportar.
+    // 1.35 casas por segundo: caminhar mais agil sem teleportar.
     if(walking){
-      const step=Math.min(.70*dt,distance);
+      const step=Math.min(1.35*dt,distance);
       p.root.position.x+=dx/distance*step;
       p.root.position.z+=dz/distance*step;
       // O macaco olha para o destino sem girar bruscamente.
