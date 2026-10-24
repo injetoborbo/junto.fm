@@ -430,7 +430,10 @@ html[data-jf-theme="classic"] .jf-chat-close{width:24px;height:23px;flex-basis:2
 html[data-jf-theme="classic"] .jf-chat-log{background:linear-gradient(#f8fbff,#e8f3ff);gap:8px}
 html[data-jf-theme="classic"] .jf-chat-empty{color:#476b90}
 html[data-jf-theme="classic"] .jf-chat-avatar{border:1px solid #7f9db9;border-radius:4px;background:linear-gradient(#fff,#cde6ff);color:#0757ae}
-html[data-jf-theme="classic"] .jf-chat-bubble{border:1px solid #9ab9d6;border-radius:3px;background:#fff;box-shadow:0 1px 1px #174c8c12}
+html[data-jf-theme="classic"] .jf-audio-recovery{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px}
+ .jf-audio-recovery[hidden]{display:none!important}
+ .jf-audio-recovery .btn{min-width:0}
+ .jf-chat-bubble{border:1px solid #9ab9d6;border-radius:3px;background:#fff;box-shadow:0 1px 1px #174c8c12}
 html[data-jf-theme="classic"] .jf-chat-meta strong{color:#0757ae}
 html[data-jf-theme="classic"] .jf-chat-meta time{color:#65809b}
 html[data-jf-theme="classic"] .jf-chat-text{color:#18345b;font-family:Tahoma,"Segoe UI",sans-serif}
@@ -855,6 +858,10 @@ body.jf-in-room #jfAdminEntry{display:none!important}
       <button class="btn secondary" id="stop" disabled>Parar transmissão</button>
     </div>
     <audio id="remoteAudio" autoplay playsinline></audio>
+    <div id="jfAudioRecovery" class="jf-audio-recovery" hidden>
+      <button type="button" id="jfResumeAudio" class="btn secondary">▶ Ativar áudio</button>
+      <span id="jfAudioRecoveryHint" class="small" aria-live="polite">Ouvintes não precisam conectar o Spotify.</span>
+    </div>
     <p id="audioDiagnostics" class="small">
   Diagnóstico do áudio: aguardando conexão...
 </p>
@@ -1278,6 +1285,64 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
     return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
   }
+  // Permite liberar autoplay com clique e pedir uma nova conexão ao DJ.
+  let jfLastAudioRecoveryRequest=0;
+  function jfUpdateAudioRecoveryUI(){
+    const box=$("jfAudioRecovery"),button=$("jfResumeAudio"),hint=$("jfAudioRecoveryHint");
+    if(!box||!button||!hint)return;
+    const hasDJ=joined&&!isSender&&Boolean(jfCurrentTransmitter?.id);
+    box.hidden=!hasDJ;
+    if(!hasDJ)return;
+    const audio=$("remoteAudio"),stream=audio.srcObject;
+    const hasTrack=Boolean(stream?.getAudioTracks?.().some(t=>t.readyState==="live"));
+    const peer=peers.get(jfCurrentTransmitter.id);
+    const disconnected=peer&&["failed","closed","disconnected"].includes(peer.connectionState);
+    if(!hasTrack||disconnected){
+      button.textContent="↻ Reconectar áudio";
+      hint.textContent="Sem áudio? Reconecte sem precisar de Spotify.";
+    }else if(audio.paused){
+      button.textContent="▶ Ativar áudio";
+      hint.textContent="O navegador pode exigir um clique para liberar o som.";
+    }else{
+      button.textContent="↻ Sem som? Reconectar";
+      hint.textContent=audio.volume===0||audio.muted?"Verifique o volume nas Opções.":"Som conectado. Reconecte se estiver em silêncio.";
+    }
+  }
+  function jfRequestFreshAudioOffer(){
+    if(!joined||isSender||!jfCurrentTransmitter?.id||!socket.connected)return;
+    const now=Date.now();
+    if(now-jfLastAudioRecoveryRequest<8000){
+      setStatus("Pedido já enviado. Aguarde alguns segundos antes de tentar novamente.");return;
+    }
+    jfLastAudioRecoveryRequest=now;
+    socket.emit("audio-recovery-request");
+    setStatus("Solicitando nova conexão de áudio ao DJ…",true);
+  }
+  $("jfResumeAudio").addEventListener("click",()=>{
+    if(!joined||isSender||!jfCurrentTransmitter?.id)return;
+    const audio=$("remoteAudio");
+    const hasTrack=Boolean(audio.srcObject?.getAudioTracks?.().some(t=>t.readyState==="live"));
+    const peer=peers.get(jfCurrentTransmitter.id);
+    if(!hasTrack||!peer||["failed","closed","disconnected"].includes(peer.connectionState)||!audio.paused){
+      jfRequestFreshAudioOffer();return;
+    }
+    // Chamada imediata dentro do clique: preserva a ativação exigida pelo browser.
+    audio.muted=false;
+    audio.play().then(()=>{
+      setStatus("Áudio liberado! Se ainda estiver mudo, clique em Reconectar.",true);
+      jfUpdateAudioRecoveryUI();
+    }).catch(error=>{
+      console.warn("Reprodução de áudio bloqueada:",error);
+      setStatus("Não consegui reproduzir. Verifique o volume e tente novamente.");
+      jfUpdateAudioRecoveryUI();
+    });
+  });
+  $("remoteAudio").addEventListener("playing",jfUpdateAudioRecoveryUI);
+  $("remoteAudio").addEventListener("pause",jfUpdateAudioRecoveryUI);
+  $("remoteAudio").addEventListener("emptied",jfUpdateAudioRecoveryUI);
+  socket.on("audio-recovery-unavailable",({message}={})=>{
+    setStatus(message||"A transmissão do DJ não está ativa.");jfUpdateAudioRecoveryUI();
+  });
   function jfRenderMiniDj(transmitter) {
     const active = Boolean(transmitter && transmitter.active !== false && transmitter.id);
     const miniDj = $("jfMiniDj");
@@ -1289,6 +1354,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     miniDj.hidden = false;
     liveBadge.hidden = !active;
     jfCurrentTransmitter=active?transmitter:null;
+    jfUpdateAudioRecoveryUI();
     $("jfTransmitterName").textContent = transmitterName;
     $("role").textContent=active
       ?(isSender?"Você está transmitindo ao vivo.":"Ouvindo a transmissão de "+transmitterName+".")
@@ -1484,6 +1550,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(typeof jfUpdateSuggestionControls==="function")jfUpdateSuggestionControls();
     $("remoteAudio").pause();
     $("remoteAudio").srcObject = null;
+    jfUpdateAudioRecoveryUI();
     enableControls();
   }
 
@@ -1496,8 +1563,8 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     };
         peer.ontrack = event => {
       if (peers.get(id) !== peer || isSender) return;
-      const stream = event.streams && event.streams[0];
-      if (stream) $("remoteAudio").srcObject = stream;
+      const stream=event.streams?.[0]||(event.track?.kind==="audio"?new MediaStream([event.track]):null);
+      if(stream){$("remoteAudio").srcObject=stream;jfUpdateAudioRecoveryUI();}
 
       let previousStats = null;
 
@@ -1555,15 +1622,20 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         }
       }, 5000);
 
-      $("remoteAudio").play()
-        .then(() => setStatus("Áudio recebido e reproduzindo.", true))
-        .catch(() => setStatus("Conexão pronta. Toque em Play no player para liberar o áudio.", true));
+      if(stream)$("remoteAudio").play()
+        .then(()=>{setStatus("Áudio recebido e reproduzindo.",true);jfUpdateAudioRecoveryUI();})
+        .catch(error=>{
+          console.info("Autoplay bloqueado ao entrar/atualizar a página:",error?.name||error);
+          setStatus("Áudio conectado. Clique em Ativar áudio para ouvir.",true);
+          jfUpdateAudioRecoveryUI();
+        });
     };
     peer.onconnectionstatechange = () => {
       if (peers.get(id) !== peer) return;
       if (peer.connectionState === "connected") setStatus(isSender ? "Transmissão conectada a um ouvinte." : "Áudio conectado.", true);
       else if (peer.connectionState === "disconnected") setStatus("Conexão instável; tentando recuperar o áudio.");
-      else if (peer.connectionState === "failed") setStatus("A conexão falhou. Algumas redes precisam de um servidor TURN.");
+      else if (peer.connectionState === "failed") setStatus("A conexão falhou. Use Reconectar áudio para tentar novamente.");
+      jfUpdateAudioRecoveryUI();
     };
     return peer;
   }
@@ -1723,9 +1795,21 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     enableControls();
     if (track) renderTrack(track, true); else renderTrack(null);
     jfRenderMiniDj(transmitter);
-    if (isSender && localStream) for (const id of existingPeers) await createSenderOffer(id);
+    if(isSender&&localStream)for(const id of existingPeers)await createSenderOffer(id);
+    jfUpdateAudioRecoveryUI();
+    setTimeout(()=>{
+      if(!joined||room!==joinedRoom||isSender)return;
+      jfUpdateAudioRecoveryUI();
+      // Se o F5 interrompeu a negociação inicial, tentar recuperá-la só uma vez.
+      if(jfCurrentTransmitter?.id&&!$("remoteAudio").srcObject)jfRequestFreshAudioOffer();
+    },9000);
   });
   socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
+  socket.on("audio-recovery-request",async({listenerId}={})=>{
+    if(!joined||!isSender||!localStream?.getAudioTracks().some(t=>t.readyState==="live"))return;
+    if(typeof listenerId!=="string"||!listenerId||listenerId===socket.id)return;
+    await createSenderOffer(listenerId);
+  });
   socket.on("room-owner-update",({ownerId}={})=>{jfRoomOwnerId=ownerId||null;jfSyncRoomOwnership();jfRenderPeople();enableControls();});
   socket.on("transmission-denied",({message}={})=>{
     if(isSender){resetSession();if(spotifyPollTimer)clearInterval(spotifyPollTimer);}
@@ -1742,6 +1826,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   socket.on('peer-left', ({id}) => {
     closePeer(id);
     if (!isSender && peers.size === 0) { $("remoteAudio").pause(); $("remoteAudio").srcObject = null; }
+    jfUpdateAudioRecoveryUI();
     setStatus(isSender ? `Um participante saiu. A transmissão continua; ouvintes conectados: ${peers.size}.` : 'Um participante saiu da sala.');
   });
   socket.on('signal', async ({from, data}) => {
@@ -1767,6 +1852,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       } else if (data.type === 'transmission-stopped' && !isSender) {
         closePeer(from);
         if (peers.size === 0) { $("remoteAudio").pause(); $("remoteAudio").srcObject = null; }
+        jfUpdateAudioRecoveryUI();
         setStatus('O transmissor encerrou o áudio.');
       }
     } catch (error) { console.error('Falha na sinalização WebRTC:', error); setStatus('Falha ao conectar o áudio. Tente entrar novamente na sala.'); }
