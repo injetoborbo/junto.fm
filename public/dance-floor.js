@@ -273,6 +273,14 @@ const CLUB_TABLES=Object.freeze([
   Object.freeze({x:-2,z:-3,wx:-4.5,wz:-5.18}),
   Object.freeze({x:-2,z:0,wx:-4.5,wz:-2.18})
 ]);
+// Mesas de coquetel nas bordas livres da pista; longe do lounge e do DJ.
+// Nao ocupam tiles de circulacao central. Objetos decorativos sem colisao.
+const CLUB_COCKTAIL_SPOTS=Object.freeze([
+  {x:6.45,z:-3.5,rotation:-.22,drinks:["licorbanana","licorbananal"]},
+  {x:6.45,z:2.35,rotation:.31,drinks:["licorbananal"]},
+  {x:1.55,z:6.35,rotation:-.14,drinks:["licorbanana","licorbanana"]}
+]);
+const isCocktailTile=(x,z)=>CLUB_COCKTAIL_SPOTS.some(t=>Math.abs((x-2.5)-t.x)<.55&&Math.abs((z-2.5)-t.z)<.55);
 const isTableTile=(x,z)=>CLUB_TABLES.some(t=>t.x===x&&t.z===z);
 const clubSeatAt=(x,z)=>CLUB_SEATS.find(seat=>seat.x===x&&seat.z===z)||null;
 // A calibração X/Z pertence à orientação do assento: acompanhá-la
@@ -324,6 +332,49 @@ function installClubFurniture({file,sceneBoard,worldScene,x,z,height,rotation=0,
     console.warn("Junto Club: nao foi possivel carregar "+file,error);
     if(active&&scene===worldScene)setStatus("Móvel 3D ausente: public/club/"+file+". Extraia o pacote de móveis no projeto.");
   });
+}
+// Modelos otimizados compartilhados entre mesas; geometria e texturas em cache.
+async function installCocktailTables(worldScene,sceneBoard){
+  const assets=["mesinhabalada_otimizado.glb","licorbanana_otimizado.glb","licorbananal_otimizado.glb"];
+  let loaded;
+  try{loaded=await Promise.all(assets.map(file=>getClubFurniture(file)));}
+  catch(error){console.warn("The Simios: modelos das mesinhas indisponiveis",error);return;}
+  if(!active||scene!==worldScene||board!==sceneBoard)return;
+  const models=new Map(assets.map((f,i)=>[f.split("_")[0],loaded[i].scene]));
+  // Encaixa o fundo da garrafa no tampo, independentemente do pivo Meshy.
+  const prepare=(model,targetHeight)=>{
+    const copy=model.clone(true),bounds=new THREE.Box3().setFromObject(copy);
+    if(bounds.isEmpty())return null;
+    const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+    const scale=targetHeight/Math.max(size.y,.001);
+    copy.scale.setScalar(scale);
+    copy.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);
+    return copy;
+  };
+  for(let i=0;i<CLUB_COCKTAIL_SPOTS.length;i++){
+    const spot=CLUB_COCKTAIL_SPOTS[i];
+    const anchor=new THREE.Group();
+    anchor.name="jfCocktailTable"+i;
+    anchor.position.set(spot.x,-.08,spot.z);
+    anchor.rotation.y=spot.rotation;
+    const tabletop=.89;
+    const table=prepare(models.get("mesinhabalada"),tabletop);
+    if(!table)continue;
+    anchor.add(table);
+    const offsets=spot.drinks.length===1?[[0,0]]:[[-.17,.035],[.17,-.025]];
+    spot.drinks.forEach((name,j)=>{
+      const model=models.get(name);
+      if(!model)return;
+      const bottle=prepare(model,name==="licorbananal"?.36:.33);
+      if(!bottle)return;
+      bottle.position.x+=offsets[j][0];
+      bottle.position.y+=tabletop;
+      bottle.position.z+=offsets[j][1];
+      bottle.rotation.y=j?-.4:.3;
+      anchor.add(bottle);
+    });
+    sceneBoard.add(anchor);
+  }
 }
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
@@ -531,6 +582,7 @@ function sceneSetup(){
     file:"mesabalada.glb",sceneBoard:furnitureBoard,worldScene:furnitureScene,
     x:table.wx,z:table.wz,height:.78
   });
+  void installCocktailTables(furnitureScene,furnitureBoard);
   // Teto aberto: duas paredes em perspectiva Habbo, molduras e rodapés.
   cube(14.7,2.35,.18,wall,0,.96,-7.12);
   cube(.18,2.35,14.7,wall,-7.12,.96,0);
@@ -1015,7 +1067,7 @@ viewport?.addEventListener("pointerup",e=>{
     const {x,z}=hit.object.userData.tile;
     const seat=clubSeatAt(x,z);
     if(seat)socket.emit("dance-sit",{seat:seat.id});
-    else if(isTableTile(x,z))
+    else if(isTableTile(x,z)||isCocktailTile(x,z))
       setStatus("Essa casa está ocupada pela mesinha da balada.");
     else socket.emit("dance-move",{x,z});
   }
