@@ -511,6 +511,29 @@ io.on("connection", socket => {
     const id=socket.data.account?.id;
     if(id)void achievements[method](id,...args,socket).catch(error=>console.error("Conquista:",error.message));
   };
+  // Bebidas de The Simios: valida sala, avatar e estado equipado no servidor.
+  socket.on("club-drink-pickup",({type}={})=>{
+    const floor=danceFloors.get(socket.data.room);
+    const member=floor?.get(socket.id);
+    if(!member||!["licorbanana","licorbananal"].includes(type))return;
+    if(isRateLimited(socket,"club-drink-pickup",1,700))return;
+    member.drink=type;member.drinkingUntil=0;
+    io.to(socket.data.room).emit("dance-updated",{id:socket.id,...member});
+  });
+  socket.on("club-drink-sip",()=>{
+    const floor=danceFloors.get(socket.data.room),member=floor?.get(socket.id);
+    if(!member?.drink)return socket.emit("dance-error",{message:"Pegue uma garrafa antes de beber."});
+    if(member.drinkingUntil>Date.now())return;
+    if(isRateLimited(socket,"club-drink-sip",1,2000))return;
+    member.drinkingUntil=Date.now()+2900;
+    io.to(socket.data.room).emit("dance-updated",{id:socket.id,...member});
+  });
+  socket.on("club-drink-drop",()=>{
+    const member=danceFloors.get(socket.data.room)?.get(socket.id);
+    if(!member?.drink)return;
+    member.drink=null;member.drinkingUntil=0;
+    io.to(socket.data.room).emit("dance-updated",{id:socket.id,...member});
+  });
   socket.on("dance-enter",()=>{
     const room=socket.data.room;
     if(!room)return socket.emit("dance-error",{message:"Entre numa sala de música primeiro."});
