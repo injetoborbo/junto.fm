@@ -231,6 +231,20 @@ function switchDance(member,style){
   if(action){action.reset().fadeIn(.24).play();member.action=action;}
 }
 let active=false,room=null,renderer=null,scene=null,camera=null,board=null,frame=0,sequence=0;
+const drinkControls=document.createElement("div");
+drinkControls.style.cssText="position:absolute;right:15px;bottom:55px;display:none;gap:8px;z-index:6;pointer-events:auto";
+const drinkButton=document.createElement("button"),dropButton=document.createElement("button");
+drinkButton.type=dropButton.type="button";
+drinkButton.textContent="🥤 Beber";dropButton.textContent="Soltar garrafa";
+drinkButton.className="btn";dropButton.className="btn secondary";
+drinkControls.append(drinkButton,dropButton);stage?.appendChild(drinkControls);
+function refreshDrinkControls(){
+ const entry=people.get(socket?.id),equipped=Boolean(entry?.data?.drink);
+ drinkControls.style.display=active&&equipped?"flex":"none";
+ drinkButton.disabled=Date.now()<(entry?.data?.drinkingUntil||0);
+}
+drinkButton.onclick=()=>{if(people.get(socket.id)?.data?.drink)socket.emit("club-drink-sip");};
+dropButton.onclick=()=>socket.emit("club-drink-drop");
 let down=null;
 // Teto de render: menor carga na GPU sem limitar as animações do restante do site.
 const CLUB_MOBILE=/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
@@ -302,7 +316,7 @@ function chairRelativeOffset(settings,seat){
 const seatSettingsFor=()=>SEATED_DEFAULTS;
 // Os modelos novos sao assets independentes. O clone protege o cache ao
 // reabrir a Junto Club; descartamos carregamentos de cenas ja fechadas.
-const furnitureAssets=new Map();
+const furnitureAssets=new Map(),cocktailTargets=[];
 function getClubFurniture(file){
   if(!furnitureAssets.has(file)){
     const loading=gltfLoader.loadAsync("/club/"+file).catch(error=>{
@@ -380,6 +394,7 @@ async function installCocktailTables(worldScene,sceneBoard){
       bottle.position.y+=tabletop;
       bottle.position.z+=offsets[j][1];
       bottle.rotation.y=j?-.4:.3;
+      bottle.traverse(node=>{if(node.isMesh){node.userData.jfDrinkType=name;cocktailTargets.push(node);}});
       anchor.add(bottle);
     });
     sceneBoard.add(anchor);
@@ -725,6 +740,7 @@ async function putMember(id,details){
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    entry.rig.traverse(node=>{if(node.isBone&&boneKey(node.name)==="righthand")entry.drinkHand=node;});
     entry.rig.traverse(node=>{if(node.isBone&&/^(?:mixamorig:)?head$/i.test(node.name))entry.headBone=node;});
     jfBananaMarkerPromise.then(template=>{
       if(!template||!active||people.get(id)!==entry||!entry.root)return;
@@ -866,6 +882,25 @@ function animate(now=performance.now()){
       item.sprite.position.y+= (item.targetY-item.sprite.position.y)*Math.min(1,dt*9);
     }
     const d=p.data,style=d.seated?"idle":d.dance||"idle";
+    const sipping=Boolean(d.drink&&d.drinkingUntil>Date.now());
+    if(p.drinkShown!==d.drink){
+      p.drinkShown=d.drink||null;
+      if(p.heldDrink){p.heldDrink.parent?.remove(p.heldDrink);p.heldDrink=null;}
+      if(d.drink&&p.drinkHand){
+        const desired=d.drink;
+        getClubFurniture(desired+"_otimizado.glb").then(gltf=>{
+          if(!active||people.get(id)!==p||p.drinkShown!==desired||!p.drinkHand)return;
+          const model=gltf.scene.clone(true),bounds=new THREE.Box3().setFromObject(model);
+          const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+          const factor=.50/Math.max(size.y,.001);
+          model.scale.setScalar(factor);model.position.set(-center.x*factor,-center.y*factor,-center.z*factor);
+          const holder=new THREE.Group();
+          holder.position.set(.02,-.08,.045);holder.rotation.set(Math.PI/2,0,Math.PI/2);
+          holder.add(model);p.drinkHand.add(holder);p.heldDrink=holder;
+        }).catch(()=>{});
+      }
+    }
+    if(id===socket.id)refreshDrinkControls();
     const targetX=d.x-2.5,targetZ=d.z-2.5;
     // A cadeira usa um deslocamento visual. O destino da caminhada
     // precisa ser o mesmo para não provocar oscilação infinita.
@@ -880,7 +915,8 @@ function animate(now=performance.now()){
     const walking=distance>.025;
     // Interrompe a dança enquanto se desloca; retoma a dança escolhida ao chegar.
     // "idle" libera o rig para a animação procedural de caminhada abaixo.
-    switchDance(p,walking?"idle":style);
+    switchDance(p,sipping&&animationClips.has("drinking")?"drinking":walking?"idle":style);
+    if(sipping&&!animationClips.has("drinking"))void loadDrinkingClip();
     // 0.7 casa por segundo: um caminhar leve, sem teleportar.
     if(walking){
       const step=Math.min(.70*dt,distance);
@@ -1019,6 +1055,7 @@ function open(){
   if(active)return;
   active=true;sequence++;people.clear();
   void sittingPose();
+  void loadDrinkingClip();
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
   try{sceneSetup();clock.start();lastClubFrame=0;clubVisualTick=0;animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
@@ -1040,6 +1077,7 @@ function close(){
   for(const tile of scene?.userData.glowingTiles||[])tile.material.dispose();
   for(const {beam} of scene?.userData.beams||[])beam.material.dispose();
   renderer?.dispose();renderer?.forceContextLoss();renderer?.domElement.remove();
+   cocktailTargets.length=0;drinkControls.style.display="none";
   for(const t of nameMaterialCache.values())t.dispose();nameMaterialCache.clear();
   scene=null;camera=null;renderer=null;board=null;tiles.length=0;chairs.length=0;
   modal.hidden=true;
@@ -1066,6 +1104,11 @@ viewport?.addEventListener("pointerup",e=>{
   const bounds=renderer.domElement.getBoundingClientRect();
   pointer.set((e.clientX-bounds.left)/bounds.width*2-1,-(e.clientY-bounds.top)/bounds.height*2+1);
   raycaster.setFromCamera(pointer,camera);
+  const drinkHit=raycaster.intersectObjects(cocktailTargets,false)[0];
+  if(drinkHit){
+    const type=drinkHit.object.userData.jfDrinkType;
+    if(type){socket.emit("club-drink-pickup",{type});setStatus("Garrafa equipada! Use Beber para consumir.");return;}
+  }
   const chairHit=raycaster.intersectObjects(chairs)[0];
   if(chairHit){
     socket.emit("dance-sit",{seat:chairHit.object.userData.jfClubSeatId});
@@ -1085,14 +1128,14 @@ socket?.on("dance-state",({room:joinedRoom,participants=[]})=>{
   if(!active||joinedRoom!==room)return;
   for(const entry of participants)putMember(entry.id,entry);
   count.textContent=people.size+"/8 macacos";
-  setStatus("Clique no chão para andar ou na cadeira para sentar.");
+  setStatus("Clique nas garrafas para pegar, no chão para andar ou na cadeira para sentar.");
   updateChoices();
 });
 socket?.on("dance-updated",entry=>{
   if(!active||!entry?.id)return;
   putMember(entry.id,entry);
   count.textContent=people.size+"/8 macacos";
-  if(entry.id===socket.id)updateChoices();
+  if(entry.id===socket.id){updateChoices();refreshDrinkControls();}
 });
 socket?.on("dance-left",({id})=>{if(active)removeMember(id);});
 function refreshDancer(id){
