@@ -517,7 +517,7 @@ io.on("connection", socket => {
     const member=floor?.get(socket.id);
     if(!member||!["licorbanana","licorbananal"].includes(type))return;
     if(isRateLimited(socket,"club-drink-pickup",1,700))return;
-    member.drink=type;member.drinkingUntil=0;
+    member.drink=type;member.drinkSips=5;member.drinkingUntil=0;
     io.to(socket.data.room).emit("dance-updated",{id:socket.id,...member});
   });
   socket.on("club-drink-sip",()=>{
@@ -526,12 +526,23 @@ io.on("connection", socket => {
     if(member.drinkingUntil>Date.now())return;
     if(isRateLimited(socket,"club-drink-sip",1,2000))return;
     member.drinkingUntil=Date.now()+2900;
-    io.to(socket.data.room).emit("dance-updated",{id:socket.id,...member});
+    member.drinkSips=Math.max(0,(member.drinkSips||0)-1);
+    const drinkingUntil=member.drinkingUntil;
+    const drinkingRoom=socket.data.room;
+    io.to(drinkingRoom).emit("dance-updated",{id:socket.id,...member});
+    if(member.drinkSips===0){
+      setTimeout(()=>{
+        const current=danceFloors.get(drinkingRoom)?.get(socket.id);
+        if(current!==member||current.drinkingUntil!==drinkingUntil||current.drinkSips!==0)return;
+        current.drink=null;current.drinkingUntil=0;
+        io.to(drinkingRoom).emit("dance-updated",{id:socket.id,...current});
+      },2900).unref?.();
+    }
   });
   socket.on("club-drink-drop",()=>{
     const member=danceFloors.get(socket.data.room)?.get(socket.id);
     if(!member?.drink)return;
-    member.drink=null;member.drinkingUntil=0;
+    member.drink=null;member.drinkSips=0;member.drinkingUntil=0;
     io.to(socket.data.room).emit("dance-updated",{id:socket.id,...member});
   });
   socket.on("dance-enter",()=>{
