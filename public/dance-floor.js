@@ -24,6 +24,15 @@ const animationFiles={
 // Danças Mixamo reais: transferir variações da pose de descanso em espaço global,
 // em vez de copiar diretamente quaternions locais entre rigs diferentes.
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
+let drinkingClipPromise=null;
+function loadDrinkingClip(){
+ if(!drinkingClipPromise)drinkingClipPromise=new FBXLoader().loadAsync("/poses/Drinking.fbx").then(source=>{
+   const clip=(source.animations||[]).filter(c=>c.tracks?.length).sort((a,b)=>b.tracks.filter(t=>t.name.endsWith(".quaternion")).length-a.tracks.filter(t=>t.name.endsWith(".quaternion")).length)[0];
+   if(clip)animationClips.set("drinking",{clip,scene:source});
+   return clip||null;
+ }).catch(error=>{console.warn("Animacao Drinking.fbx nao instalada:",error);return null;});
+ return drinkingClipPromise;
+}
 // Assets independentes: o indicador não altera o esqueleto nem animações do avatar.
 const jfBananaMarkerPromise=gltfLoader.loadAsync("/club/bananasims_otimizada.glb").then(gltf=>gltf.scene).catch(error=>{
   console.warn("The Símios: adicione public/club/bananasims_otimizada.glb para ativar o marcador.",error);
@@ -357,15 +366,15 @@ async function installCocktailTables(worldScene,sceneBoard){
     anchor.name="jfCocktailTable"+i;
     anchor.position.set(spot.x,-.08,spot.z);
     anchor.rotation.y=spot.rotation;
-    const tabletop=1.35;
+    const tabletop=1.85;
     const table=prepare(models.get("mesinhabalada"),tabletop);
     if(!table)continue;
     anchor.add(table);
-    const offsets=spot.drinks.length===1?[[0,0]]:[[-.25,.045],[.25,-.04]];
+    const offsets=spot.drinks.length===1?[[0,0]]:[[-.34,.08],[.34,-.06]];
     spot.drinks.forEach((name,j)=>{
       const model=models.get(name);
       if(!model)return;
-      const bottle=prepare(model,name==="licorbananal"?.54:.50);
+      const bottle=prepare(model,name==="licorbananal"?.75:.70);
       if(!bottle)return;
       bottle.position.x+=offsets[j][0];
       bottle.position.y+=tabletop;
