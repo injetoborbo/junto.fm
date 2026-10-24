@@ -78,6 +78,9 @@ footer{text-align:center;color:#a2a8d8;font-size:11px;letter-spacing:.5px;margin
 .jf-chat-unread{position:absolute;right:1px;top:1px;width:12px;height:12px;border:2px solid #fff;border-radius:50%;background:#ff304f;box-shadow:0 0 0 2px #ff304f;display:none}
 .jf-chat-launcher.has-unread .jf-chat-unread{display:block}
 .jf-chat-window{position:fixed;right:24px;bottom:92px;z-index:10019;width:min(360px,calc(100vw - 28px));height:min(480px,calc(100dvh - 120px));min-height:300px;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--jf-secondary);border-radius:15px;background:color-mix(in srgb,var(--jf-glow) 20%,#080d2b);box-shadow:0 16px 48px #0009;backdrop-filter:blur(18px)}
+.jf-audio-recovery{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px}
+.jf-audio-recovery[hidden]{display:none!important}
+.jf-audio-recovery .btn{min-width:0}
 .jf-chat-window[hidden]{display:none}
 .jf-chat-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 14px;border-bottom:1px solid color-mix(in srgb,var(--jf-secondary) 55%,transparent);background:color-mix(in srgb,var(--jf-primary) 35%,#101333)}
 .jf-chat-heading{margin:0;font-size:15px;font-weight:800}
@@ -430,10 +433,7 @@ html[data-jf-theme="classic"] .jf-chat-close{width:24px;height:23px;flex-basis:2
 html[data-jf-theme="classic"] .jf-chat-log{background:linear-gradient(#f8fbff,#e8f3ff);gap:8px}
 html[data-jf-theme="classic"] .jf-chat-empty{color:#476b90}
 html[data-jf-theme="classic"] .jf-chat-avatar{border:1px solid #7f9db9;border-radius:4px;background:linear-gradient(#fff,#cde6ff);color:#0757ae}
-html[data-jf-theme="classic"] .jf-audio-recovery{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:9px}
- .jf-audio-recovery[hidden]{display:none!important}
- .jf-audio-recovery .btn{min-width:0}
- .jf-chat-bubble{border:1px solid #9ab9d6;border-radius:3px;background:#fff;box-shadow:0 1px 1px #174c8c12}
+html[data-jf-theme="classic"] .jf-chat-bubble{border:1px solid #9ab9d6;border-radius:3px;background:#fff;box-shadow:0 1px 1px #174c8c12}
 html[data-jf-theme="classic"] .jf-chat-meta strong{color:#0757ae}
 html[data-jf-theme="classic"] .jf-chat-meta time{color:#65809b}
 html[data-jf-theme="classic"] .jf-chat-text{color:#18345b;font-family:Tahoma,"Segoe UI",sans-serif}
