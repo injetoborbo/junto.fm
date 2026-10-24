@@ -964,6 +964,21 @@ io.on("connection", socket => {
     target.emit("signal", { from: socket.id, data: payload.data });
   });
 
+  // Pedido do ouvinte: reenviar uma oferta WebRTC sem tocar no Spotify.
+  // O servidor valida sala e DJ atual para impedir requests arbitrarios.
+  socket.on("audio-recovery-request", () => {
+    const currentRoom=socket.data.room;
+    if(!currentRoom||socket.data.isTransmitting)return;
+    if(isRateLimited(socket,"audio-recovery-request",2,15000))return;
+    const transmitter=roomTransmitters.get(currentRoom);
+    const dj=transmitter&&io.sockets.sockets.get(transmitter.id);
+    if(!dj||dj.id===socket.id||dj.data.room!==currentRoom||!dj.data.isTransmitting){
+      socket.emit("audio-recovery-unavailable",{message:"Nenhuma transmissão de áudio ativa nesta sala."});
+      return;
+    }
+    dj.emit("audio-recovery-request",{listenerId:socket.id});
+  });
+
   socket.on("transmission-started", payload => {
     const room = socket.data.room;
     if (!room || !payload || payload.room !== room) return;
