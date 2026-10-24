@@ -894,9 +894,10 @@ function animate(now=performance.now()){
           const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
           const factor=.50/Math.max(size.y,.001);
           model.scale.setScalar(factor);model.position.set(-center.x*factor,-center.y*factor,-center.z*factor);
+          // O osso Mixamo pode ter escala 100x. Nunca parentear a garrafa ao osso:
+          // posicionar sob a raiz, usando somente a posicao/orientacao mundial da mao.
           const holder=new THREE.Group();
-          holder.position.set(.02,-.08,.045);holder.rotation.set(Math.PI/2,0,Math.PI/2);
-          holder.add(model);p.drinkHand.add(holder);p.heldDrink=holder;
+          holder.add(model);p.root.add(holder);p.heldDrink=holder;
         }).catch(()=>{});
       }
     }
@@ -942,6 +943,16 @@ function animate(now=performance.now()){
       p.root.rotation.y+=Math.atan2(Math.sin(targetYaw-p.root.rotation.y),Math.cos(targetYaw-p.root.rotation.y))*Math.min(1,dt*1.6);
     }
     p.mixer?.update(dt);
+    if(p.heldDrink&&p.drinkHand){
+      p.root.updateMatrixWorld(true);
+      const worldPoint=p.drinkHand.getWorldPosition(new THREE.Vector3());
+      const worldRotation=p.drinkHand.getWorldQuaternion(new THREE.Quaternion());
+      p.heldDrink.position.copy(p.root.worldToLocal(worldPoint)).add(new THREE.Vector3(0,-.08,.035));
+      const parentRotation=p.root.getWorldQuaternion(new THREE.Quaternion()).invert();
+      p.heldDrink.quaternion.copy(parentRotation.multiply(worldRotation));
+      // A mao controla a rotacao; a escala continua independente do esqueleto.
+      p.heldDrink.rotateX(Math.PI/2);
+    }
     if(p.sitHips){
       const hip=p.sitHips;
       hip.bone.position.copy(hip.rest);
