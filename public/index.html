@@ -1797,7 +1797,12 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfRenderMiniDj(transmitter);
     if(isSender&&localStream)for(const id of existingPeers)await createSenderOffer(id);
     jfUpdateAudioRecoveryUI();
-    setTimeout(()=>{if(joined&&room===joinedRoom)jfUpdateAudioRecoveryUI();},5000);
+    setTimeout(()=>{
+      if(!joined||room!==joinedRoom||isSender)return;
+      jfUpdateAudioRecoveryUI();
+      // Se o F5 interrompeu a negociação inicial, tentar recuperá-la só uma vez.
+      if(jfCurrentTransmitter?.id&&!$("remoteAudio").srcObject)jfRequestFreshAudioOffer();
+    },9000);
   });
   socket.on('transmitter-update', transmitter => jfRenderMiniDj(transmitter));
   socket.on("audio-recovery-request",async({listenerId}={})=>{
