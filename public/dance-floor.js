@@ -357,15 +357,15 @@ async function installCocktailTables(worldScene,sceneBoard){
     anchor.name="jfCocktailTable"+i;
     anchor.position.set(spot.x,-.08,spot.z);
     anchor.rotation.y=spot.rotation;
-    const tabletop=.89;
+    const tabletop=1.35;
     const table=prepare(models.get("mesinhabalada"),tabletop);
     if(!table)continue;
     anchor.add(table);
-    const offsets=spot.drinks.length===1?[[0,0]]:[[-.17,.035],[.17,-.025]];
+    const offsets=spot.drinks.length===1?[[0,0]]:[[-.25,.045],[.25,-.04]];
     spot.drinks.forEach((name,j)=>{
       const model=models.get(name);
       if(!model)return;
-      const bottle=prepare(model,name==="licorbananal"?.36:.33);
+      const bottle=prepare(model,name==="licorbananal"?.54:.50);
       if(!bottle)return;
       bottle.position.x+=offsets[j][0];
       bottle.position.y+=tabletop;
