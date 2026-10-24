@@ -196,13 +196,27 @@ function buildAnimationAction(member,style){
     const key=boneKey(track.name.slice(0,dot));
     const source=sourceBones.get(key),target=targetBones.get(key);
     if(!source||!target||property!=="quaternion")continue;
+    // Drinking.fbx vem de outro rig Mixamo. Animar apenas braço direito e
+    // clavícula; ignorar quadril, coluna, pernas e pescoço para não deformar o macaco.
+    if(style==="drinking"&&!["rightshoulder","rightarm","rightforearm","righthand"].includes(key))continue;
     const rest=member.restBones?.get(target.uuid)||target.quaternion.clone();
-    invSourceRest.copy(source.quaternion).invert();
+    // FBX muitas vezes armazena o repouso no primeiro keyframe, não no
+    // quaternion do objeto. Aplicar variação relativa ao primeiro quadro.
+    const sourceBaseline=new THREE.Quaternion();
+    if(style==="drinking")sourceBaseline.fromArray(track.values,0);
+    else sourceBaseline.copy(source.quaternion);
+    invSourceRest.copy(sourceBaseline).invert();
     const values=new Float32Array(track.values.length);
     for(let i=0;i<track.values.length;i+=4){
       sample.fromArray(track.values,i);
       // Em repouso, a rotação resultante deve ser exatamente a pose do macaco.
       corrected.copy(invSourceRest).multiply(sample);
+      if(style==="drinking"){
+        // Impedir giros completos nas juntas ao adaptar Mixamo ao avatar menor.
+        const identity=new THREE.Quaternion();
+        const angle=2*Math.acos(Math.min(1,Math.abs(corrected.w)));
+        if(angle>1.25)corrected.slerp(identity,1-1.25/angle);
+      }
       corrected.premultiply(rest).normalize();
       // Evitar saltos entre quaternions equivalentes com sinais opostos.
       if(i>0){
@@ -213,12 +227,16 @@ function buildAnimationAction(member,style){
     }
     tracks.push(new THREE.QuaternionKeyframeTrack(target.name+".quaternion",track.times.slice(),values));
   }
-  if(tracks.length<5){console.warn("Mixamo: ossos correspondentes insuficientes para",style,tracks.length);return null;}
+  if(tracks.length<(style==="drinking"?2:5)){console.warn("Mixamo: ossos correspondentes insuficientes para",style,tracks.length);return null;}
   console.info("Mixamo retarget:",style,tracks.length,"ossos com animação");
   member.mixer ||=new THREE.AnimationMixer(member.rig);
   const clip=new THREE.AnimationClip("junto-retarget-"+style,data.clip.duration,tracks);
   const action=member.mixer.clipAction(clip);
-  action.setLoop(THREE.LoopRepeat,Infinity);
+  if(style==="drinking"){
+    action.setLoop(THREE.LoopOnce,1);
+    action.clampWhenFinished=true;
+    action.setDuration(2.9);
+  }else action.setLoop(THREE.LoopRepeat,Infinity);
   return action;
 }
 function switchDance(member,style){
@@ -916,6 +934,7 @@ function animate(now=performance.now()){
     const walking=distance>.025;
     // Interrompe a dança enquanto se desloca; retoma a dança escolhida ao chegar.
     // "idle" libera o rig para a animação procedural de caminhada abaixo.
+    // Beber suspende a dança somente durante o gole, sem reiniciar a pose a cada frame.
     switchDance(p,sipping&&animationClips.has("drinking")?"drinking":walking?"idle":style);
     if(sipping&&!animationClips.has("drinking"))void loadDrinkingClip();
     // 1.35 casas por segundo: caminhar mais agil sem teleportar.
