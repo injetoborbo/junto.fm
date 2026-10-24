@@ -418,6 +418,38 @@ async function installCocktailTables(worldScene,sceneBoard){
     sceneBoard.add(anchor);
   }
 }
+// CCD: move a mao do PRÓPRIO rig ate um ponto perto da boca.
+ // Resolve no espaco mundial, convertido para o espaco do osso pai,
+ // sem reutilizar quaternions locais de outro esqueleto Mixamo.
+function pointBoneAt(joint,hand,target,strength){
+  joint.updateWorldMatrix(true,true);
+  const pivot=joint.getWorldPosition(new THREE.Vector3());
+  const from=hand.getWorldPosition(new THREE.Vector3()).sub(pivot);
+  const to=target.clone().sub(pivot);
+  if(from.lengthSq()<1e-8||to.lengthSq()<1e-8)return;
+  const delta=new THREE.Quaternion().setFromUnitVectors(from.normalize(),to.normalize());
+  const q=new THREE.Quaternion().identity().slerp(delta,Math.min(.32,strength));
+  const world=joint.getWorldQuaternion(new THREE.Quaternion());
+  const parent=joint.parent.getWorldQuaternion(new THREE.Quaternion());
+  joint.quaternion.copy(parent.invert().multiply(q.multiply(world))).normalize();
+}
+function poseDrinking(member,elapsed,remaining){
+  if(!member.drinkHand||!member.drinkForearm||!member.drinkUpperArm||!member.headBone)return;
+  const p=Math.max(0,Math.min(1,elapsed/2900));
+  const inWeight=Math.min(1,p/.28),outWeight=Math.min(1,(1-p)/.26);
+  const blend=Math.max(0,Math.min(inWeight,outWeight));
+  if(blend<.005)return;
+  member.root.updateMatrixWorld(true);
+  const head=member.headBone;
+  const q=head.getWorldQuaternion(new THREE.Quaternion());
+  // Pequeno deslocamento na frente e abaixo do centro da cabeca.
+  const target=head.getWorldPosition(new THREE.Vector3())
+    .add(new THREE.Vector3(0,-.10,.15).applyQuaternion(q));
+  for(let i=0;i<8;i++){
+    pointBoneAt(member.drinkForearm,member.drinkHand,target,blend);
+    pointBoneAt(member.drinkUpperArm,member.drinkHand,target,blend);
+  }
+}
 const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
@@ -758,7 +790,13 @@ async function putMember(id,details){
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
-    entry.rig.traverse(node=>{if(node.isBone&&boneKey(node.name)==="righthand")entry.drinkHand=node;});
+    entry.rig.traverse(node=>{
+      if(!node.isBone)return;
+      const key=boneKey(node.name);
+      if(key==="righthand")entry.drinkHand=node;
+      if(key==="rightarm")entry.drinkUpperArm=node;
+      if(key==="rightforearm")entry.drinkForearm=node;
+    });
     entry.rig.traverse(node=>{if(node.isBone&&/^(?:mixamorig:)?head$/i.test(node.name))entry.headBone=node;});
     jfBananaMarkerPromise.then(template=>{
       if(!template||!active||people.get(id)!==entry||!entry.root)return;
@@ -935,8 +973,8 @@ function animate(now=performance.now()){
     // Interrompe a dança enquanto se desloca; retoma a dança escolhida ao chegar.
     // "idle" libera o rig para a animação procedural de caminhada abaixo.
     // Beber suspende a dança somente durante o gole, sem reiniciar a pose a cada frame.
-    switchDance(p,sipping&&animationClips.has("drinking")?"drinking":walking?"idle":style);
-    if(sipping&&!animationClips.has("drinking"))void loadDrinkingClip();
+    switchDance(p,sipping?"idle":walking?"idle":style);
+    // O FBX generico usa eixos/rest pose diferentes do rig real: beber via IK do proprio macaco.
     // 1.35 casas por segundo: caminhar mais agil sem teleportar.
     if(walking){
       const step=Math.min(1.35*dt,distance);
@@ -962,16 +1000,6 @@ function animate(now=performance.now()){
       p.root.rotation.y+=Math.atan2(Math.sin(targetYaw-p.root.rotation.y),Math.cos(targetYaw-p.root.rotation.y))*Math.min(1,dt*1.6);
     }
     p.mixer?.update(dt);
-    if(p.heldDrink&&p.drinkHand){
-      p.root.updateMatrixWorld(true);
-      const worldPoint=p.drinkHand.getWorldPosition(new THREE.Vector3());
-      const worldRotation=p.drinkHand.getWorldQuaternion(new THREE.Quaternion());
-      p.heldDrink.position.copy(p.root.worldToLocal(worldPoint)).add(new THREE.Vector3(0,-.08,.035));
-      const parentRotation=p.root.getWorldQuaternion(new THREE.Quaternion()).invert();
-      p.heldDrink.quaternion.copy(parentRotation.multiply(worldRotation));
-      // A mao controla a rotacao; a escala continua independente do esqueleto.
-      p.heldDrink.rotateX(Math.PI/2);
-    }
     if(p.sitHips){
       const hip=p.sitHips;
       hip.bone.position.copy(hip.rest);
@@ -1063,6 +1091,18 @@ function animate(now=performance.now()){
         obj.rotation.set(x,y,z);
       }
     }
+    if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()),d.drinkingUntil-Date.now());
+    if(p.heldDrink&&p.drinkHand){
+      p.root.updateMatrixWorld(true);
+      const worldPoint=p.drinkHand.getWorldPosition(new THREE.Vector3());
+      const worldRotation=p.drinkHand.getWorldQuaternion(new THREE.Quaternion());
+      p.heldDrink.position.copy(p.root.worldToLocal(worldPoint)).add(new THREE.Vector3(0,-.08,.035));
+      const parentRotation=p.root.getWorldQuaternion(new THREE.Quaternion()).invert();
+      p.heldDrink.quaternion.copy(parentRotation.multiply(worldRotation));
+      // A mao controla a rotacao; a escala continua independente do esqueleto.
+      p.heldDrink.rotateX(Math.PI/2);
+    }
+
     // Selecionar perfil de encaixe da cadeira apenas quando chegou ao assento.
     p.updateAccessories?.(Boolean(d.seated));
     if(p.bananaMarker){
@@ -1085,7 +1125,7 @@ function open(){
   if(active)return;
   active=true;sequence++;people.clear();
   void sittingPose();
-  void loadDrinkingClip();
+  // A animacao de beber usa os ossos do avatar sem aplicar quaternions do FBX externo.
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
   try{sceneSetup();clock.start();lastClubFrame=0;clubVisualTick=0;animate();socket.emit("dance-enter");setStatus("Entrando na pista...");}
