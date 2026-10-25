@@ -31,6 +31,48 @@ function ensureBaseModel(){
   });
   return baseLoadPromise;
 }
+// Rig experimental: acessivel apenas para o avatar local da pista.
+let testDanceModel=null;
+export async function setDanceAvatarTestModel(url){
+  if(!url){testDanceModel=null;return false;}
+  const gltf=await new GLTFLoader().loadAsync(url);
+  let skinned=0,bones=0;
+  gltf.scene.traverse(node=>{if(node.isSkinnedMesh)skinned++;if(node.isBone)bones++;});
+  if(!skinned||bones<15)throw new Error("Este GLB não possui rig/skinning completo.");
+  testDanceModel=gltf;
+  console.info("The Símios: Macaco 2.0 carregado:",skinned,"malha(s) com skin,",bones,"ossos");
+  return true;
+}
+// Ajustes exclusivos do AccuRig experimental na pista, salvos localmente.
+const DANCE_TEST_FIT_KEY="jf_macaco2_dance_outfit_fit_v1";
+const DANCE_TEST_FIT_DEFAULTS={
+  head:{offset:[0,-.14,0],scale:.94},
+  torso:{offset:[0,-.02,0],scale:.94}
+};
+let danceTestFit=structuredClone(DANCE_TEST_FIT_DEFAULTS);
+function normalizeDanceTestFit(value){
+  const result=structuredClone(DANCE_TEST_FIT_DEFAULTS);
+  for(const region of ["head","torso"]){
+    const patch=value?.[region]||{};
+    const arr=Array.isArray(patch.offset)?patch.offset:[];
+    result[region].offset=[0,1,2].map(i=>{
+      const v=Number(arr[i]);return Number.isFinite(v)?THREE.MathUtils.clamp(v,-.4,.4):result[region].offset[i];
+    });
+    const sc=Number(patch.scale);
+    if(Number.isFinite(sc))result[region].scale=THREE.MathUtils.clamp(sc,.60,1.40);
+  }
+  return result;
+}
+try{
+  const stored=localStorage.getItem(DANCE_TEST_FIT_KEY);
+  if(stored)danceTestFit=normalizeDanceTestFit(JSON.parse(stored));
+}catch(_){/* armazenamento bloqueado */}
+export function getDanceAvatarTestFit(){return structuredClone(danceTestFit);}
+export function setDanceAvatarTestFit(value){
+  danceTestFit=normalizeDanceTestFit(value);
+  try{localStorage.setItem(DANCE_TEST_FIT_KEY,JSON.stringify(danceTestFit));}catch(_){}
+  return getDanceAvatarTestFit();
+}
 let previewRenderer=null;
 let previewYaw=-.18;
 // Todas as roupas são GLBs ajustados ao corpo original do macaco.
@@ -149,7 +191,7 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false}={}){
+function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false,experimental=false}={}){
   // Capturar o bind pose ANTES das animações. As promessas de GLB podem
   // resolver com o avatar andando/sentado; nesse caso attach() simples
   // preservaria uma posição antiga num esqueleto já animado.
@@ -259,6 +301,11 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   const worldNeck=new THREE.Vector3(-.13,.18,-.05);
   if(headBone)headBone.getWorldPosition(worldHead);
   if(topBone)topBone.getWorldPosition(worldTop);
+  else if(experimental&&headBone){
+    // O rig AccuRig nao tem HeadTop_End: usar o topo real da malha.
+    const bounds=new THREE.Box3().setFromObject(monkey,true);
+    worldTop.set(worldHead.x,bounds.max.y,worldHead.z);
+  }
   if(neckBone)neckBone.getWorldPosition(worldNeck);
 
   // Corrige o desvio lateral do GLB antigo: a cabeça NÃO fica em X=0.
@@ -272,6 +319,13 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       part.name="jfWardrobe_"+file;
       const measure=getBounds(part);
       configure(part,measure);
+      if(experimental){
+        const region=file==="vestido"?"torso":"head";
+        const tune=danceTestFit[region];
+        const inv=Math.max(Math.abs(monkey.scale.x),.0001);
+        part.position.add(new THREE.Vector3(...tune.offset).multiplyScalar(1/inv));
+        part.scale.multiplyScalar(tune.scale);
+      }
       monkey.add(part);
       if(animated){
         if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{},seatedOffset||{});
@@ -346,8 +400,11 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       const tmpPosition=new THREE.Vector3(),tmpScale=new THREE.Vector3();
       const tmpRotation=new THREE.Quaternion(),centerOffset=new THREE.Vector3();
       const buildMatrix=(params,matrix)=>{
-        const sc=params.width/Math.max(measure.size.x,1e-6);
+        const region=file==="regatapunk"||file==="vestido_novo"?"torso":"head";
+        const tune=experimental?danceTestFit[region]:null;
+        const sc=params.width/Math.max(measure.size.x,1e-6)*(tune?.scale??1);
         const target=restInRoot(bone).add(new THREE.Vector3(...params.offset));
+        if(tune)target.add(new THREE.Vector3(...tune.offset));
         tmpRotation.setFromAxisAngle(new THREE.Vector3(1,0,0),
           THREE.MathUtils.degToRad(file==="vestido_novo"?(params.pitch||0):0));
         centerOffset.copy(measure.center).multiplyScalar(sc);
@@ -419,10 +476,12 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       const width=type==="palha"?.94:type==="apocaliptico"?.79:.92;
       const scale=width/Math.max(measure.size.x,measure.size.z,1e-6);
       const brim=measure.box.min.y+measure.size.y*.12;
-      hat.scale.setScalar(scale);
-      hat.position.set(worldHead.x-measure.center.x*scale,
-        worldTop.y-.17-brim*scale,
-        worldHead.z-measure.center.z*scale+.05);
+      const tune=experimental?danceTestFit.head:null;
+      const finalScale=scale*(tune?.scale??1);
+      hat.scale.setScalar(finalScale);
+      hat.position.set(worldHead.x-measure.center.x*finalScale+(tune?.offset[0]||0),
+        worldTop.y-.17-brim*finalScale+(tune?.offset[1]||0),
+        worldHead.z-measure.center.z*finalScale+.05+(tune?.offset[2]||0));
       hat.name="jfWardrobeHat_"+type;
       state.add(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
@@ -1131,7 +1190,8 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   if(!base)await ensureBaseModel();
   if(!base)throw Error("Modelo macaco.glb indisponível.");
   const root=new THREE.Group();
-  const monkey=cloneSkeleton(base.scene);
+  const experimentalUsed=Boolean(options.experimental&&testDanceModel?.scene);
+  const monkey=cloneSkeleton(experimentalUsed?testDanceModel.scene:base.scene);
   const bounds=new THREE.Box3().setFromObject(monkey);
   const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   const scale=1.50/Math.max(size.x,size.y,size.z,.0001);
@@ -1139,7 +1199,11 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   monkey.position.copy(center).multiplyScalar(-scale);
   root.add(monkey);
   let stillActive=true;
-  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey,{animated:true,privateFit:Boolean(options.local&&fitAccess)});
+  // Os trajes antigos têm encaixes próprios do macaco original.
+  const experimentalOutfit=experimentalUsed&&!options.testOutfit?{}:outfit;
+  const disposeClothes=dress(root,sanitize(experimentalOutfit),requestRender,monkey,{
+    animated:true,privateFit:Boolean(options.local&&fitAccess),experimental:experimentalUsed
+  });
   if(skin==="capitao-patria"){
     const asset=await getAsset("hero");
     if(asset&&stillActive){
@@ -1160,6 +1224,6 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
       });
     }
   }
-  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
+  return {group:root,rig:monkey,experimentalUsed,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }
 

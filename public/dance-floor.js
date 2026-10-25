@@ -2,7 +2,7 @@
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
-import {createDanceAvatar} from "./wardrobe.js";
+import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
 const socket=bridge?.socket;
@@ -14,6 +14,159 @@ const count=document.getElementById("jfDanceCount");
 const openButton=document.getElementById("jfOpenDance");
 const closeButton=document.getElementById("jfCloseDance");
 const choices=[...document.querySelectorAll("[data-jf-dance]")];
+
+ // Ferramentas dev somente para localhost ou URL com ?jfDev=1.
+ // Nunca altera o modelo dos outros participantes.
+ const devAllowed=["localhost","127.0.0.1","[::1]"].includes(location.hostname)
+   ||new URLSearchParams(location.search).get("jfDev")==="1";
+ let devZoom=1,devUseNewModel=false,devTestOutfit=true,devShowSkeleton=false,devRigReady=false;
+ // Em producao, o novo macaco so assume a pista se o GLB estiver publicado.
+ // Sem o arquivo, o macaco atual continua funcionando normalmente.
+ let publicRigReady=false,publicRigAttempted=false;
+ async function activatePublishedMacaco2(expectedSequence){
+   if(publicRigAttempted)return;
+   publicRigAttempted=true;
+   const path="/models/magago_junto_rig_teste.glb";
+   try{
+     const check=await fetch(path,{method:"HEAD",cache:"no-store"});
+     const bytes=Number(check.headers.get("content-length")||0);
+     const type=check.headers.get("content-type")||"";
+     if(!check.ok||bytes<50000||/text\/html/i.test(type))return;
+     await setDanceAvatarTestModel(path);
+     publicRigReady=true;devRigReady=true;
+     if(active&&expectedSequence===sequence)
+       for(const id of [...people.keys()])refreshDancer(id);
+     console.info("The Símios: Macaco 2.0 ativo automaticamente; GLB publicado.");
+   }catch(error){
+     console.warn("The Símios: Macaco 2.0 nao disponivel, mantendo macaco original.",error);
+   }
+ }
+ let devStatus=null;
+ function attachDevSkeleton(entry){
+   if(!active||!scene||!entry.rig||entry.devSkeleton)return;
+   const helper=new THREE.SkeletonHelper(entry.rig);
+   helper.material.depthTest=false;helper.material.transparent=true;helper.material.opacity=.9;
+   helper.frustumCulled=false;scene.add(helper);entry.devSkeleton=helper;
+ }
+ function applyDevSkeletons(){
+   for(const entry of people.values()){
+     if(!entry.experimentalRig||!entry.rig)continue;
+     if(devShowSkeleton)attachDevSkeleton(entry);
+     else if(entry.devSkeleton){
+       entry.devSkeleton.parent?.remove(entry.devSkeleton);
+       entry.devSkeleton.geometry.dispose();entry.devSkeleton.material.dispose();entry.devSkeleton=null;
+     }
+   }
+ }
+ function devNotice(message){if(devStatus)devStatus.textContent=message;console.info("The Símios DEV:",message);}
+ if(devAllowed&&stage){
+   const panel=document.createElement("details");
+   panel.className="jf-simios-dev-panel";
+   panel.style.cssText="position:absolute;top:10px;right:10px;z-index:7;width:min(295px,calc(100% - 20px));max-height:90%;overflow:auto;border:1px solid var(--jf-secondary,#77caff);border-radius:10px;background:rgba(13,20,36,.93);color:#fff;padding:9px;font:12px/1.5 system-ui;box-shadow:0 5px 20px #0008;pointer-events:auto";
+   panel.innerHTML=`<summary style="cursor:pointer;font-weight:800">🛠️ DEV · The Símios</summary>
+     <div style="display:grid;gap:8px;margin-top:9px">
+       <label>Zoom <input data-dev="zoom" type="range" min="0.55" max="2.6" value="1" step=".05" style="width:100%;accent-color:#65cfff">
+         <output data-dev="zoom-val">100%</output></label>
+       <button data-dev="reset-zoom" type="button">Restaurar zoom</button>
+       <label>GLB experimental <input data-dev="file" type="file" accept=".glb,model/gltf-binary" style="width:100%"></label>
+       <button data-dev="project-model" type="button">Carregar GLB do projeto</button>
+       <label><input data-dev="model" type="checkbox"> Usar Macaco 2.0 (só meu avatar)</label>
+       <label><input data-dev="outfit" type="checkbox" checked> Exibir roupas do meu macaco</label>
+       <details><summary style="cursor:pointer">👕 Ajustar roupas e acessórios</summary>
+         <div data-dev="fit-controls" style="display:grid;gap:7px;padding:6px 0"></div>
+         <button data-dev="fit-reset" type="button">Restaurar encaixes</button>
+       </details>
+       <label>Altura do macaco sentado
+         <input data-dev="seat-height" type="range" min="-.35" max=".35" value="0" step=".01" style="width:100%">
+         <output data-dev="seat-height-val">0.00</output></label>
+       <label><input data-dev="bones" type="checkbox"> Mostrar esqueleto</label>
+       <button data-dev="inspect" type="button">Inspecionar ossos (F12)</button>
+       <div data-dev="status" role="status" style="font-size:11px;color:#c5f3ff">Escolha o GLB para começar.</div>
+     </div>`;
+   stage.appendChild(panel);
+   const get=id=>panel.querySelector('[data-dev="'+id+'"]');
+   const refreshOwn=()=>{if(active&&socket?.id)refreshDancer(socket.id);};
+   devStatus=get("status");
+   const zoomInput=get("zoom"),zoomOutput=get("zoom-val");
+   const updateZoom=()=>{
+     devZoom=Number(zoomInput.value)||1;
+     zoomOutput.textContent=Math.round(devZoom*100)+"%";
+     if(active)window.dispatchEvent(new Event("resize"));
+   };
+   zoomInput.addEventListener("input",updateZoom);
+   get("reset-zoom").addEventListener("click",()=>{zoomInput.value="1";updateZoom();});
+   const loadTest=async url=>{
+     try{
+       devNotice("Carregando e validando rig...");
+       await setDanceAvatarTestModel(url);
+       devRigReady=true;devUseNewModel=true;get("model").checked=true;
+       refreshOwn();
+       devNotice("Rig carregado! Teste caminhada, danças, sentar e beber.");
+     }catch(error){devNotice("Falha no GLB: "+(error?.message||String(error)));}
+   };
+   get("file").addEventListener("change",async e=>{
+     const file=e.target.files?.[0];if(!file)return;
+     const url=URL.createObjectURL(file);
+     await loadTest(url);URL.revokeObjectURL(url);
+   });
+   get("project-model").addEventListener("click",()=>loadTest("/models/magago_junto_rig_teste.glb"));
+   get("model").addEventListener("change",e=>{
+     devUseNewModel=Boolean(e.target.checked&&devRigReady);
+     e.target.checked=devUseNewModel;
+     if(!devRigReady)devNotice("Primeiro carregue o GLB usando o seletor.");
+     refreshOwn();
+   });
+   get("outfit").addEventListener("change",e=>{devTestOutfit=e.target.checked;refreshOwn();});
+   const fitContainer=get("fit-controls");
+   const fitSliders=[];
+   const createFitControl=(region,axis)=>{
+     const isScale=axis==="scale",label=document.createElement("label");
+     label.style.cssText="display:grid;gap:3px";
+     label.textContent=(region==="head"?"Cabeça / chapéus":"Tronco / roupas")+" · "+(isScale?"Tamanho":axis.toUpperCase());
+     const input=document.createElement("input");
+     input.type="range";input.min=isScale?".6":"-.4";input.max=isScale?"1.4":".4";input.step=".01";input.style.width="100%";
+     const output=document.createElement("output");
+     const read=()=>{
+       const fit=getDanceAvatarTestFit()[region];
+       return isScale?fit.scale:fit.offset[["x","y","z"].indexOf(axis)];
+     };
+     const draw=()=>{input.value=String(read());output.textContent=Number(input.value).toFixed(2);};
+     input.addEventListener("input",()=>{output.textContent=Number(input.value).toFixed(2);});
+     input.addEventListener("change",()=>{
+       const fit=getDanceAvatarTestFit();
+       if(isScale)fit[region].scale=Number(input.value);
+       else fit[region].offset[["x","y","z"].indexOf(axis)]=Number(input.value);
+       setDanceAvatarTestFit(fit);
+       if(devTestOutfit&&devUseNewModel)refreshOwn();
+       devNotice("Encaixe "+region+" ajustado: "+axis+" = "+input.value);
+     });
+     label.append(input,output);fitContainer.appendChild(label);fitSliders.push(draw);draw();
+   };
+   for(const region of ["head","torso"])for(const axis of ["x","y","z","scale"])createFitControl(region,axis);
+   get("fit-reset").addEventListener("click",()=>{
+     setDanceAvatarTestFit({head:{offset:[0,-.14,0],scale:.94},torso:{offset:[0,-.02,0],scale:.94}});
+     fitSliders.forEach(draw=>draw());
+     if(devUseNewModel&&devTestOutfit)refreshOwn();
+     devNotice("Encaixes restaurados.");
+   });
+   get("seat-height").addEventListener("input",e=>{
+     devSeatHeightOffset=Number(e.target.value)||0;
+     get("seat-height-val").textContent=devSeatHeightOffset.toFixed(2);
+   });
+   get("bones").addEventListener("change",e=>{devShowSkeleton=e.target.checked;applyDevSkeletons();});
+   get("inspect").addEventListener("click",()=>{
+     const entry=people.get(socket?.id);
+     if(!entry?.rig){devNotice("Entre na pista antes de inspecionar.");return;}
+     const bones=[];entry.rig.traverse(n=>{if(n.isBone)bones.push(n.name);});
+     console.group("The Símios - Diagnóstico do rig");
+     console.log({experimental:entry.experimentalRig,boneCount:bones.length,
+       head:entry.headBone?.name,hand:entry.drinkHand?.name,
+       shoulder:entry.drinkUpperArm?.name,forearm:entry.drinkForearm?.name,zoom:devZoom});
+     console.log("Ossos:",bones);console.groupEnd();
+     devNotice("Rig inspecionado no console (F12): "+bones.length+" ossos.");
+   });
+ }
+
 const animationFiles={
   shake:"/dance/macacochaqualha.glb",
   macarena:"/dance/macacomacarena.glb",
@@ -44,30 +197,28 @@ const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(
 // O FBX fica fora do GitHub ate instalar o pacote de teste em public/poses.
 // A pose anterior e mantida como fallback para nao quebrar o deploy.
 const seatedFBXLoader=new FBXLoader();
-let sittingPosePromise=null;
-function sittingPose(){
-  if(!sittingPosePromise)sittingPosePromise=(async()=>{
+let sittingPosePromise=null,originalSittingPosePromise=null;
+function sittingPose(requireOriginal=false){
+  const previous=requireOriginal?originalSittingPosePromise:sittingPosePromise;
+  if(previous)return previous;
+  const task=(async()=>{
     let source;
-    try{
-      // sentadotryfix: FBX somente de esqueleto, 49 nós Mixamo e 64 quadros.
-      // Mesma hierarquia do arquivo original, sem malha/câmera extra.
-      const scene=await seatedFBXLoader.loadAsync("/poses/sentadotryfix.fbx");
-      source={scene,animations:scene.animations,filename:"sentadotryfix.fbx"};
-    }catch(error){
-      console.warn("Nova animação sentadotryfix indisponível; tentando versões anteriores.");
+    // O rig novo carrega SOMENTE o FBX original; o antigo mantém seu fallback.
+    const files=requireOriginal?["sentadobalanca.fbx"]
+      :["sentadotryfix.fbx","sentadobalanca.fbx","sitting-idle.glb"];
+    for(const filename of files){
       try{
-        const scene=await seatedFBXLoader.loadAsync("/poses/sentadobalanca.fbx");
-        source={scene,animations:scene.animations,filename:"sentadobalanca.fbx"};
-      }catch(previousError){
-        try{
-          const gltf=await gltfLoader.loadAsync("/poses/sitting-idle.glb");
-          source={scene:gltf.scene,animations:gltf.animations,filename:"sitting-idle.glb"};
-        }catch(fallbackError){
-          console.warn("Nenhuma animação sentada disponível.",fallbackError);
-          return null;
+        if(filename.endsWith(".fbx")){
+          const scene=await seatedFBXLoader.loadAsync("/poses/"+filename);
+          source={scene,animations:scene.animations,filename};
+        }else{
+          const gltf=await gltfLoader.loadAsync("/poses/"+filename);
+          source={scene:gltf.scene,animations:gltf.animations,filename};
         }
-      }
+        break;
+      }catch(error){console.warn("Pose sentada indisponivel:",filename,error);}
     }
+    if(!source)return null;
     const clips=source.animations||[];
     // O FBX do Mixamo contem DUAS tomadas: RootNode|mixamo.com
     // (transforms estaticos) e mixamo.com (64 quadros de movimento).
@@ -159,7 +310,9 @@ function sittingPose(){
       duration:clip.duration,filename:source.filename
     }:null;
   })();
-  return sittingPosePromise;
+  if(requireOriginal)originalSittingPosePromise=task;
+  else sittingPosePromise=task;
+  return task;
 }
 function loadClip(style){
   if(!animationFiles[style])return Promise.resolve(null);
@@ -200,6 +353,13 @@ function buildAnimationAction(member,style){
     // clavícula; ignorar quadril, coluna, pernas e pescoço para não deformar o macaco.
     if(style==="drinking"&&!["rightshoulder","rightarm","rightforearm","righthand"].includes(key))continue;
     const rest=member.restBones?.get(target.uuid)||target.quaternion.clone();
+    // AccuRig e Mixamo usam eixos locais distintos. Converter a variação
+    // de rotação pelo referencial mundial de repouso de cada osso.
+    const sourceWorld=source.getWorldQuaternion(new THREE.Quaternion());
+    const targetWorld=member.restWorldBones?.get(target.uuid)
+      ||target.getWorldQuaternion(new THREE.Quaternion());
+    const sourceToTarget=targetWorld.clone().invert().multiply(sourceWorld);
+    const targetToSource=sourceToTarget.clone().invert();
     // FBX muitas vezes armazena o repouso no primeiro keyframe, não no
     // quaternion do objeto. Aplicar variação relativa ao primeiro quadro.
     const sourceBaseline=new THREE.Quaternion();
@@ -211,6 +371,9 @@ function buildAnimationAction(member,style){
       sample.fromArray(track.values,i);
       // Em repouso, a rotação resultante deve ser exatamente a pose do macaco.
       corrected.copy(invSourceRest).multiply(sample);
+      if(member.experimentalRig){
+        corrected.premultiply(sourceToTarget).multiply(targetToSource);
+      }
       if(style==="drinking"){
         // Impedir giros completos nas juntas ao adaptar Mixamo ao avatar menor.
         const identity=new THREE.Quaternion();
@@ -432,6 +595,117 @@ function pointBoneAt(joint,hand,target,strength){
   const world=joint.getWorldQuaternion(new THREE.Quaternion());
   const parent=joint.parent.getWorldQuaternion(new THREE.Quaternion());
   joint.quaternion.copy(parent.invert().multiply(q.multiply(world))).normalize();
+}
+// Rig AccuRig: pose sentada baseada na geometria dos PRÓPRIOS ossos.
+ // Direciona os segmentos no espaço mundial sem aplicar quaternions Mixamo.
+ let devSeatHeightOffset=0;
+ function pointSegmentAt(joint,child,target){
+   if(!joint||!child)return;
+   joint.updateWorldMatrix(true,true);
+   const pivot=joint.getWorldPosition(new THREE.Vector3());
+   const from=child.getWorldPosition(new THREE.Vector3()).sub(pivot);
+   const toward=target.clone().sub(pivot);
+   if(from.lengthSq()<1e-8||toward.lengthSq()<1e-8)return;
+   const rotation=new THREE.Quaternion().setFromUnitVectors(from.normalize(),toward.normalize());
+   const world=joint.getWorldQuaternion(new THREE.Quaternion());
+   const parent=joint.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+   joint.quaternion.copy(parent.multiply(rotation.multiply(world))).normalize();
+   joint.updateWorldMatrix(true,true);
+ }
+ function prepareExperimentalSeat(entry){
+   const bones=new Map();
+   entry.rig.traverse(obj=>{if(obj.isBone)bones.set(boneKey(obj.name),obj);});
+   const leg=side=>({
+     hip:bones.get(side+"upleg"),knee:bones.get(side+"leg"),foot:bones.get(side+"foot"),
+     shoulder:bones.get(side+"arm"),elbow:bones.get(side+"forearm"),hand:bones.get(side+"hand")
+   });
+   entry.experimentalSeat={left:leg("left"),right:leg("right")};
+   for(const side of ["left","right"]){
+     const parts=entry.experimentalSeat[side];
+     if(!parts.hip||!parts.knee||!parts.foot)console.warn("The Símios: ossos da pose sentada ausentes:",side,parts);
+   }
+ }
+ function poseExperimentalSitting(entry,elapsed){
+   const parts=entry.experimentalSeat;if(!parts)return;
+   // Recria o balanço contínuo de pernas da antiga sentadobalanca no
+   // AccuRig, sem copiar quaternions de ossos com eixos incompatíveis.
+   // As pernas oscilam alternadamente, com entrada suave quando senta.
+   const phase=elapsed*2.9;
+   const fade=THREE.MathUtils.smoothstep(Math.min(elapsed,0.55),0,0.55);
+   entry.root.updateMatrixWorld(true);
+   const rotation=entry.root.getWorldQuaternion(new THREE.Quaternion());
+   const forward=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
+   const sideways=new THREE.Vector3(1,0,0).applyQuaternion(rotation);
+   const down=new THREE.Vector3(0,-1,0);
+   for(const [side,sign] of [["left",1],["right",-1]]){
+     const leg=parts[side];
+     if(!leg.hip||!leg.knee||!leg.foot)continue;
+     // Coxa para a frente; canela pende na beirada da cadeira.
+     const hip=leg.hip.getWorldPosition(new THREE.Vector3());
+     const length=hip.distanceTo(leg.knee.getWorldPosition(new THREE.Vector3()));
+     const swing=Math.sin(phase+(side==="right"?Math.PI:0))*fade;
+     const kneeTarget=hip.clone().addScaledVector(forward,length*(.94+.025*swing))
+       .addScaledVector(down,length*(.25+.045*swing))
+       .addScaledVector(sideways,sign*length*.04);
+     pointSegmentAt(leg.hip,leg.knee,kneeTarget);
+     const knee=leg.knee.getWorldPosition(new THREE.Vector3());
+     const shinLength=knee.distanceTo(leg.foot.getWorldPosition(new THREE.Vector3()));
+     // O joelho permanece na beirada enquanto a canela balança em arco.
+     const shinPitch=.15+.43*swing;
+     const footTarget=knee.clone().addScaledVector(down,shinLength*Math.cos(shinPitch))
+       .addScaledVector(forward,shinLength*Math.sin(shinPitch));
+     pointSegmentAt(leg.knee,leg.foot,footTarget);
+     // Bracos relaxados e maos sobre as coxas.
+     if(leg.shoulder&&leg.elbow&&leg.hand){
+       const shoulder=leg.shoulder.getWorldPosition(new THREE.Vector3());
+       const armLength=shoulder.distanceTo(leg.elbow.getWorldPosition(new THREE.Vector3()));
+       const elbowTarget=shoulder.clone().addScaledVector(down,armLength*.81)
+         .addScaledVector(sideways,sign*armLength*.34)
+         .addScaledVector(forward,armLength*.15);
+       pointSegmentAt(leg.shoulder,leg.elbow,elbowTarget);
+       const elbow=leg.elbow.getWorldPosition(new THREE.Vector3());
+       const foreLength=elbow.distanceTo(leg.hand.getWorldPosition(new THREE.Vector3()));
+       const handTarget=elbow.clone().addScaledVector(forward,foreLength*.68)
+         .addScaledVector(down,foreLength*.28)
+         .addScaledVector(sideways,sign*foreLength*.10);
+       pointSegmentAt(leg.elbow,leg.hand,handTarget);
+     }
+   }
+ }
+// Curvas e tempos originais de sentadobalanca.fbx, com transformacao apenas
+// dos eixos de descanso para o AccuRig (não é uma dança recriada por seno).
+function buildAccuRigSittingTracks(entry,pose){
+  const tracks=new Map();
+  for(const bone of entry.animationBones||[]){
+    const key=boneKey(bone.name),source=pose.sourceWorldBones?.get(key);
+    const sampleTrack=pose.animatedTracks?.get(key);
+    const rest=entry.restBones?.get(bone.uuid);
+    const targetWorld=entry.restWorldBones?.get(bone.uuid);
+    if(!source||!sampleTrack?.interpolant||!rest||!targetWorld)continue;
+    const alignment=targetWorld.clone().invert().multiply(source.worldRest);
+    tracks.set(bone.uuid,{
+      bone,rest:rest.clone(),interpolant:sampleTrack.interpolant,
+      invSource:source.localRest.clone().invert(),
+      alignment,unalign:alignment.clone().invert()
+    });
+  }
+  console.info("The Símios: sentadobalanca.fbx real",tracks.size,"ossos",pose.duration,"s");
+  return tracks.size?{duration:pose.duration,tracks}:null;
+}
+function applyAccuRigSitting(entry,elapsed){
+  const animation=entry.experimentalSit;
+  if(!animation?.tracks?.size)return false;
+  const t=elapsed%Math.max(.1,animation.duration);
+  const sampled=new THREE.Quaternion(),delta=new THREE.Quaternion();
+  for(const track of animation.tracks.values()){
+    const v=track.interpolant.evaluate(t);
+    if(!v||v.length!==4)continue;
+    sampled.fromArray(v);
+    delta.copy(track.invSource).multiply(sampled);
+    track.bone.quaternion.copy(track.rest).multiply(track.alignment)
+      .multiply(delta).multiply(track.unalign).normalize();
+  }
+  return true;
 }
 function poseDrinking(member,elapsed,remaining){
   if(!member.drinkHand||!member.drinkForearm||!member.drinkUpperArm||!member.headBone)return;
@@ -760,7 +1034,7 @@ function sceneSetup(){
     if(!renderer||!active)return;
     const width=Math.max(220,viewport.clientWidth),height=Math.max(220,viewport.clientHeight);
     renderer.setSize(width,height,false);
-    const aspect=width/height,halfH=9.1;
+    const aspect=width/height,halfH=9.1/devZoom;
     camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;
     camera.updateProjectionMatrix();
   };
@@ -786,10 +1060,20 @@ async function putMember(id,details){
   const entry={data:{...details},root:null,rig:null,dispose:null,name:null};
   people.set(id,entry);
   try{
-    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{local:id===socket.id});
+    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{
+      local:id===socket.id,
+      experimental:publicRigReady||(id===socket.id&&devUseNewModel),
+      testOutfit:devTestOutfit
+    });
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    entry.experimentalRig=Boolean(avatar.experimentalUsed);
+    if(entry.experimentalRig)prepareExperimentalSeat(entry);
+    if(entry.experimentalRig){
+      console.info("The Símios: novo rig",publicRigReady?"publicado":"experimental",id);
+      if(devShowSkeleton&&id===socket.id)attachDevSkeleton(entry);
+    }
     // O GLTFLoader normaliza "mixamorig:Head" para "mixamorigHead".
     // Comparar sempre nomes normalizados, assim como no retarget das danças.
     const drinkBones=new Map();
@@ -807,8 +1091,9 @@ async function putMember(id,details){
         available:[...drinkBones.keys()]
       });
     }
-    jfBananaMarkerPromise.then(template=>{
-      if(!template||!active||people.get(id)!==entry||!entry.root)return;
+    // O plumbob é exclusivamente local: nunca criamos marcador sobre amigos.
+    if(id===socket.id)jfBananaMarkerPromise.then(template=>{
+      if(!template||!active||id!==socket.id||people.get(id)!==entry||!entry.root)return;
       const marker=template.clone(true);
       const box=new THREE.Box3().setFromObject(marker);
       const dims=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
@@ -834,18 +1119,25 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
     // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
     if(id===socket.id)entry.setSeatGlassesCalibration?.(PUBLISHED_SEAT_GLASSES_FIT);
     entry.restBones=new Map();
+    entry.restWorldBones=new Map();
     entry.animationBones=[];
+    entry.rig.updateMatrixWorld(true);
     entry.rig.traverse(obj=>{
       if(!obj.isBone)return;
       entry.animationBones.push(obj);
       entry.restBones.set(obj.uuid,obj.quaternion.clone());
+      entry.restWorldBones.set(obj.uuid,obj.getWorldQuaternion(new THREE.Quaternion()));
       // Memorizar a pose natural ANTES da primeira animacao.
       // Se a pessoa sentar antes de dancar, nao capturar a pose deformada
       // como repouso ao se levantar da cadeira.
       obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
     });
-    sittingPose().then(pose=>{
+    sittingPose(entry.experimentalRig).then(pose=>{
       if(!pose||!active||people.get(id)!==entry)return;
+      if(entry.experimentalRig){
+        entry.experimentalSit=buildAccuRigSittingTracks(entry,pose);
+        return;
+      }
       entry.sitRotations=new Map();
       entry.sitTracks=new Map();
       entry.sitDuration=pose.duration;
@@ -902,6 +1194,7 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
 function removeMember(id){
   const member=people.get(id);if(!member)return;
   clearDanceSpeech(member);
+  if(member.devSkeleton){member.devSkeleton.parent?.remove(member.devSkeleton);member.devSkeleton.geometry.dispose();member.devSkeleton.material.dispose();}
   member.mixer?.stopAllAction();
   member.mixer?.uncacheRoot(member.rig);
   member.dispose?.();
@@ -1000,7 +1293,7 @@ function animate(now=performance.now()){
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
     // A pose altera as articulações, não enterra o grupo inteiro no chão.
-    p.root.position.y=(d.seated&&!walking?seatedSettings.y:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.position.y=(d.seated&&!walking?seatedSettings.y+(p.experimentalRig?devSeatHeightOffset:0):.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
 
     p.root.rotation.x=d.seated&&!walking?THREE.MathUtils.degToRad(seatedSettings.lean):0;
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
@@ -1027,6 +1320,11 @@ function animate(now=performance.now()){
       const seatedTime=p.sitDuration>0?
         ((time%p.sitDuration)+p.sitDuration)%p.sitDuration:0;
       for(const obj of p.animationBones||[]){
+        if(p.experimentalRig&&d.seated&&!walking){
+          const rest=p.restBones?.get(obj.uuid);
+          if(rest)obj.quaternion.copy(rest);
+          continue;
+        }
         // Retarget Mixamo nao garante os MESMOS eixos de ombro e cotovelo.
         // Nesta versao de teste, preserve inteiramente o bind pose dos
         // bracos/maos e da cabeca durante a animacao sentada. Assim nao ha
@@ -1100,6 +1398,13 @@ function animate(now=performance.now()){
         obj.rotation.set(x,y,z);
       }
     }
+    if(p.experimentalRig){
+      if(d.seated&&!walking&&!p.action){
+        p.sitSwingElapsed=(p.sitSwingElapsed||0)+Math.min(dt,.05);
+        if(!applyAccuRigSitting(p,p.sitSwingElapsed))
+          poseExperimentalSitting(p,p.sitSwingElapsed);
+      }else p.sitSwingElapsed=0;
+    }
     if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()),d.drinkingUntil-Date.now());
     if(p.heldDrink&&p.drinkHand){
       p.root.updateMatrixWorld(true);
@@ -1119,8 +1424,8 @@ function animate(now=performance.now()){
         p.root.updateMatrixWorld(true);
         const head=p.headBone.getWorldPosition(new THREE.Vector3());
         p.root.worldToLocal(head);
-        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.12,.6+.035*Math.sin(time*2),0));
-      }else p.bananaMarker.position.set(-.12,1.85+.035*Math.sin(time*2),0);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(.04,1.02+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(.04,2.25+.035*Math.sin(time*2),0);
       p.bananaMarker.rotation.y=time*.8;
     }
 
@@ -1134,6 +1439,7 @@ function open(){
   if(active)return;
   active=true;sequence++;people.clear();
   void sittingPose();
+  void activatePublishedMacaco2(sequence);
   // A animacao de beber usa os ossos do avatar sem aplicar quaternions do FBX externo.
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
