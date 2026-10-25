@@ -5,7 +5,7 @@ const crypto=require("crypto");
 const CLOSE_AT=Date.parse("2026-10-27T03:00:00.000Z");
 const START_AT=Date.parse("2026-10-25T00:00:00.000Z");
 const votes=new Map();
-const isOpen=()=>Date.now()>=START_AT&&Date.now()<CLOSE_AT;
+const isOpen=()=>process.env.JF_TEMP_POLL_ENABLED!=="false"&&Date.now()>=START_AT&&Date.now()<CLOSE_AT;
 function summary(){
   let lula=0,flavio=0;
   for(const option of votes.values())if(option==="lula")lula++;else if(option==="flavio")flavio++;
