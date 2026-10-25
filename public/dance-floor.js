@@ -604,8 +604,13 @@ function pointBoneAt(joint,hand,target,strength){
      if(!parts.hip||!parts.knee||!parts.foot)console.warn("The Símios: ossos da pose sentada ausentes:",side,parts);
    }
  }
- function poseExperimentalSitting(entry){
+ function poseExperimentalSitting(entry,elapsed){
    const parts=entry.experimentalSeat;if(!parts)return;
+   // Recria o balanço contínuo de pernas da antiga sentadobalanca no
+   // AccuRig, sem copiar quaternions de ossos com eixos incompatíveis.
+   // As pernas oscilam alternadamente, com entrada suave quando senta.
+   const phase=elapsed*2.9;
+   const fade=THREE.MathUtils.smoothstep(Math.min(elapsed,0.55),0,0.55);
    entry.root.updateMatrixWorld(true);
    const rotation=entry.root.getWorldQuaternion(new THREE.Quaternion());
    const forward=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
@@ -617,13 +622,17 @@ function pointBoneAt(joint,hand,target,strength){
      // Coxa para a frente; canela pende na beirada da cadeira.
      const hip=leg.hip.getWorldPosition(new THREE.Vector3());
      const length=hip.distanceTo(leg.knee.getWorldPosition(new THREE.Vector3()));
-     const kneeTarget=hip.clone().addScaledVector(forward,length*.94)
-       .addScaledVector(down,length*.25).addScaledVector(sideways,sign*length*.04);
+     const swing=Math.sin(phase+(side==="right"?Math.PI:0))*fade;
+     const kneeTarget=hip.clone().addScaledVector(forward,length*(.94+.025*swing))
+       .addScaledVector(down,length*(.25+.045*swing))
+       .addScaledVector(sideways,sign*length*.04);
      pointSegmentAt(leg.hip,leg.knee,kneeTarget);
      const knee=leg.knee.getWorldPosition(new THREE.Vector3());
      const shinLength=knee.distanceTo(leg.foot.getWorldPosition(new THREE.Vector3()));
-     const footTarget=knee.clone().addScaledVector(down,shinLength*.97)
-       .addScaledVector(forward,shinLength*.15);
+     // O joelho permanece na beirada enquanto a canela balança em arco.
+     const shinPitch=.15+.43*swing;
+     const footTarget=knee.clone().addScaledVector(down,shinLength*Math.cos(shinPitch))
+       .addScaledVector(forward,shinLength*Math.sin(shinPitch));
      pointSegmentAt(leg.knee,leg.foot,footTarget);
      // Bracos relaxados e maos sobre as coxas.
      if(leg.shoulder&&leg.elbow&&leg.hand){
@@ -1026,8 +1035,9 @@ async function putMember(id,details){
         available:[...drinkBones.keys()]
       });
     }
-    jfBananaMarkerPromise.then(template=>{
-      if(!template||!active||people.get(id)!==entry||!entry.root)return;
+    // O plumbob é exclusivamente local: nunca criamos marcador sobre amigos.
+    if(id===socket.id)jfBananaMarkerPromise.then(template=>{
+      if(!template||!active||id!==socket.id||people.get(id)!==entry||!entry.root)return;
       const marker=template.clone(true);
       const box=new THREE.Box3().setFromObject(marker);
       const dims=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
@@ -1326,7 +1336,12 @@ function animate(now=performance.now()){
         obj.rotation.set(x,y,z);
       }
     }
-    if(p.experimentalRig&&d.seated&&!walking&&!p.action)poseExperimentalSitting(p);
+    if(p.experimentalRig){
+      if(d.seated&&!walking&&!p.action){
+        p.sitSwingElapsed=(p.sitSwingElapsed||0)+Math.min(dt,.05);
+        poseExperimentalSitting(p,p.sitSwingElapsed);
+      }else p.sitSwingElapsed=0;
+    }
     if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()),d.drinkingUntil-Date.now());
     if(p.heldDrink&&p.drinkHand){
       p.root.updateMatrixWorld(true);
@@ -1346,8 +1361,8 @@ function animate(now=performance.now()){
         p.root.updateMatrixWorld(true);
         const head=p.headBone.getWorldPosition(new THREE.Vector3());
         p.root.worldToLocal(head);
-        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.12,1.02+.035*Math.sin(time*2),0));
-      }else p.bananaMarker.position.set(-.12,2.25+.035*Math.sin(time*2),0);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(.04,1.02+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(.04,2.25+.035*Math.sin(time*2),0);
       p.bananaMarker.rotation.y=time*.8;
     }
 
