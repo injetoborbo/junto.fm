@@ -9,15 +9,50 @@ const INTERVAL_MS=30000;
 const HOST="resultados.tse.jus.br";
 const SOURCE_URL=String(process.env.TSE_2026_PRESIDENT_RESULT_URL||"").trim();
 const ENABLED=process.env.JF_ELECTION_LIVE_ENABLED!=="false";
+// JSON ou JWS: e006258 no arquivo corresponde ao diretorio 6258.
 function validateOfficialUrl(raw){
   if(!raw)return null;
   try{
     const url=new URL(raw);
-    if(url.protocol!=="https:"||url.hostname!==HOST||url.username||url.password||url.search||url.hash)return null;
-    const m=url.pathname.match(/^\/oficial\/ele2026\/(\d+)\/dados\/br\/br-c0001-e(\d+)-v\.json$/);
+    if(url.protocol!=="https:"||url.hostname!==HOST||url.port||url.username||url.password||url.hash)return null;
+    if(url.search&&!/^\?nocache=\d{1,18}$/.test(url.search))return null;
+    const m=url.pathname.match(/^\/oficial\/ele2026\/(\d{1,10})\/dados\/br\/br-c0001-e(\d{1,10})-(v\.json|u\.jws)$/);
     if(!m||Number(m[1])!==Number(m[2]))return null;
-    return url.href;
+    // O cache buster muda a cada consulta; nao confiar em parametros extras.
+    return url.origin+url.pathname;
   }catch(_){return null;}
+}
+// Le o envelope JWS recebido do HTTPS do TSE. Isto nao substitui a
+// verificacao criptografica de assinatura do JWS com chave publica do TSE.
+function decodeTseResponse(raw){
+  if(typeof raw!=="string"||raw.length>2500000)throw Error("Resposta TSE invalida ou grande.");
+  const source=raw.trim();
+  if(!source)throw Error("Resposta vazia do TSE.");
+  let header=null,encoded=null,payload=null;
+  if(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(source)){
+    const parts=source.split(".");
+    header=JSON.parse(Buffer.from(parts[0],"base64url").toString("utf8"));
+    encoded=parts[1];
+  }else{
+    const parsed=JSON.parse(source);
+    if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed)&&
+       typeof parsed.payload==="string"&&(parsed.protected||Array.isArray(parsed.signatures))){
+      const signature=parsed.protected||parsed.signatures?.[0]?.protected;
+      if(typeof signature!=="string")throw Error("Cabecalho protegido JWS ausente.");
+      header=JSON.parse(Buffer.from(signature,"base64url").toString("utf8"));
+      encoded=parsed.payload;
+    }else payload=parsed;
+  }
+  if(encoded!==null){
+    if(!header||typeof header.alg!=="string"||header.alg==="none"||
+       !/^(RS|PS|ES|EdDSA)/.test(header.alg))throw Error("Algoritmo JWS nao reconhecido.");
+    if(!/^[A-Za-z0-9_-]+$/.test(encoded))throw Error("Payload JWS invalido.");
+    payload=JSON.parse(Buffer.from(encoded,"base64url").toString("utf8"));
+  }
+  if(typeof payload==="string")payload=JSON.parse(payload);
+  if(!payload||typeof payload!=="object"||Array.isArray(payload))
+    throw Error("Payload da apuracao nao e um objeto JSON.");
+  return payload;
 }
 function numberOf(value){
   const text=String(value??"").trim();
@@ -85,13 +120,17 @@ module.exports=function registerOfficialElection2026(app,io){
       const controller=new AbortController();
       const timeout=setTimeout(()=>controller.abort(),8000);
       try{
-        const res=await fetch(endpoint,{signal:controller.signal,redirect:"error",headers:{"Accept":"application/json","Cache-Control":"no-cache"}});
+        const isJws=endpoint.endsWith(".jws");
+        const feedUrl=endpoint+(isJws?"?nocache="+Date.now():"");
+        const res=await fetch(feedUrl,{signal:controller.signal,redirect:"error",headers:{
+          "Accept":isJws?"application/jose, application/json, text/plain":"application/json",
+          "Cache-Control":"no-cache"}});
         if(!res.ok)throw Error("TSE retornou HTTP "+res.status);
         const size=Number(res.headers.get("content-length")||0);
         if(size>2500000)throw Error("Resposta do TSE excede limite seguro.");
         const raw=await res.text();
         if(raw.length>2500000)throw Error("Resposta do TSE excede limite seguro.");
-        const parsed=parseOfficialPayload(JSON.parse(raw));
+        const parsed=parseOfficialPayload(decodeTseResponse(raw));
         if(!parsed)throw Error("Fonte nao informou Lula e Flavio com votos validos para presidente do Brasil.");
         latest=parsed;lastSuccess=Date.now();lastError=null;
       }catch(error){
@@ -124,3 +163,4 @@ module.exports=function registerOfficialElection2026(app,io){
 };
 module.exports.parseOfficialPayload=parseOfficialPayload;
 module.exports.validateOfficialUrl=validateOfficialUrl;
+module.exports.decodeTseResponse=decodeTseResponse;
