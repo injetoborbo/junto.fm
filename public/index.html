@@ -826,24 +826,23 @@ body.jf-in-room #jfAdminEntry{display:none!important}
       </div>
     </div>
     <div id="jfMobileFunBar" class="jf-mobile-fun-bar" aria-label="Ações da sala">
-      <button type="button" id="jfCommunityPollLaunch" class="jf-fun-image-btn" hidden aria-expanded="false" title="Enquete Lula × Flávio (não oficial)" aria-label="Abrir enquete da comunidade"><span aria-hidden="true">★</span></button>
+      <button type="button" id="jfCommunityPollLaunch" class="jf-fun-image-btn" hidden aria-expanded="false" title="Apuração presidencial oficial do TSE" aria-label="Abrir contagem oficial de votos do TSE"><span aria-hidden="true">★</span></button>
       <button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
       <button type="button" id="jfTvLaunch" class="jf-fun-image-btn" aria-label="Abrir Junto.TV" title="Abrir Junto.TV" disabled><img id="jfTvLaunchIcon" alt="" width="60" height="60"></button>
       <button type="button" id="jfOpenDance" class="jf-fun-image-btn jf-dance-launch" aria-label="Abrir pista de dança" title="Abrir pista de dança"><img id="jfDanceLaunchIcon" alt="" width="60" height="60"></button>
     </div>
-    <div id="jfCommunityPollModal" hidden role="dialog" aria-modal="true" aria-label="Enquete temporária da comunidade">
+    <div id="jfCommunityPollModal" hidden role="dialog" aria-modal="true" aria-label="Apuração oficial do TSE em tempo real">
       <section class="jf-community-poll-card">
-        <div class="jf-poll-title"><h3>★ Lula × Flávio Bolsonaro</h3><button id="jfPollClose" class="btn secondary" type="button" aria-label="Fechar enquete">✕</button></div>
-        <p class="jf-poll-nonofficial"><strong>ENQUETE INFORMAL DA JUNTO.FM — NÃO SÃO VOTOS OFICIAIS.</strong>
-          Contagem ao vivo dos participantes do site. Uma escolha por conta ou navegador, que pode ser alterada. Encerra em 26/10/2026 às 23h59 (Brasília).</p>
-        <div class="jf-poll-line"><div><strong>Lula</strong><span><b id="jfPollLula">0</b> · <span id="jfPollPctLula">0%</span></span></div>
+        <div class="jf-poll-title"><h3>★ Apuração presidencial 2026</h3><button id="jfPollClose" class="btn secondary" type="button" aria-label="Fechar placar">✕</button></div>
+        <p class="jf-poll-nonofficial"><strong>RESULTADOS OFICIAIS DO TSE — BRASIL.</strong>
+          Contagem de votos informada pelo Tribunal Superior Eleitoral, consultada automaticamente pelo servidor a cada 30 segundos. O resultado só aparece quando a fonte oficial informar dados válidos dos dois candidatos. Não é uma enquete da Junto.fm.</p>
+        <div class="jf-poll-line"><div><strong>Lula</strong><span><b id="jfPollLula">—</b> · <span id="jfPollPctLula">—</span></span></div>
           <div class="jf-poll-meter"><div id="jfPollBarLula" style="width:0%;background:#d9414b"></div></div></div>
-        <div class="jf-poll-line"><div><strong>Flávio Bolsonaro</strong><span><b id="jfPollFlavio">0</b> · <span id="jfPollPctFlavio">0%</span></span></div>
+        <div class="jf-poll-line"><div><strong>Flávio Bolsonaro</strong><span><b id="jfPollFlavio">—</b> · <span id="jfPollPctFlavio">—</span></span></div>
           <div class="jf-poll-meter"><div id="jfPollBarFlavio" style="width:0%;background:#669ce7"></div></div></div>
-        <p id="jfPollTotal">0 voto(s) na comunidade</p>
-        <div class="jf-poll-vote-buttons"><button class="btn secondary" data-community-vote="lula" type="button">Votar Lula</button>
-          <button class="btn secondary" data-community-vote="flavio" type="button">Votar Flávio</button></div>
-        <p id="jfPollStatus" role="status" aria-live="polite">Entre numa sala para participar.</p>
+        <p id="jfPollTotal">Aguardando dados oficiais.</p>
+        <p id="jfPollStatus" role="status" aria-live="polite">Conectando à fonte do TSE…</p>
+        <p class="jf-poll-nonofficial">Fonte: <strong>resultados.tse.jus.br</strong>. O horário da última leitura aparece acima. Dados parciais não significam vitória confirmada.</p>
       </section>
     </div>
     <div class="spotify-actions" id="jfDjSpotifyOptions" hidden>
@@ -2929,7 +2928,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 <script defer src="/kodoku.js?v=normal-o-1"></script>
 <script type="module" src="/banana-barrel.js"></script>
 <script defer src="/social-account-ui.js"></script>
-<script defer src="/temporary-community-poll.js"></script>
+<script defer src="/official-election-results.js"></script>
 <script defer src="/kodoku-skip.js"></script>
 <link rel="stylesheet" href="/tsimiomi.css?v=5">
 <script defer src="/junto-tv-icons.js"></script>
