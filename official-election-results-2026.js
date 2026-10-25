@@ -18,7 +18,7 @@ function validateOfficialUrl(raw){
     const url=new URL(raw);
     if(url.protocol!=="https:"||url.hostname!==HOST||url.port||url.username||url.password||url.hash)return null;
     if(url.search&&!/^\?nocache=\d{1,18}$/.test(url.search))return null;
-    const m=url.pathname.match(/^\/oficial\/ele2026\/(\d{1,10})\/dados\/br\/br-c0001-e(\d{1,10})-(v\.json|u\.jws)$/);
+    const m=url.pathname.match(/^\/oficial\/ele2026\/(\d{1,10})\/dados\/br\/br-c0001-e(\d{1,10})-([uv]\.(?:json|jws))$/);
     if(!m||Number(m[1])!==Number(m[2]))return null;
     // O cache buster muda a cada consulta; nao confiar em parametros extras.
     return url.origin+url.pathname;
@@ -112,11 +112,19 @@ module.exports=function registerOfficialElection2026(app,io){
   // Preferir -v.json, com a apuracao nacional, e tentar o JWS depois.
   // Se o caminho oficial mudar, a variavel de ambiente continua sendo a
   // origem do identificador da eleicao; jamais consultar sites nao-TSE.
-  const prefix=endpoint?.replace(/-(?:u\.jws|v\.json)$/,"");
-  const sources=prefix?[
+  const prefix=endpoint?.replace(/-[uv]\.(?:json|jws)$/,"");
+  // O -u.jws compartilhado pelo usuário é um status, não uma urna.
+  // Procurar primeiro o formato JWS para votos, depois o JSON legado.
+  // Um URL explícito diferente do status tem prioridade sobre heurísticas.
+  const hasOverride=Boolean(process.env.TSE_2026_PRESIDENT_RESULT_URL?.trim());
+  const candidates=prefix?[
+    ...(hasOverride&&endpoint&&!endpoint.endsWith("-u.jws")?[endpoint]:[]),
+    prefix+"-v.jws",
     prefix+"-v.json",
     prefix+"-u.jws"
-  ].filter((item,i,items)=>items.indexOf(item)===i&&Boolean(validateOfficialUrl(item))):[];
+  ]:[];
+  const sources=candidates.filter((item,i,items)=>
+    items.indexOf(item)===i&&Boolean(validateOfficialUrl(item)));
   let latest=null,lastFetch=0,lastSuccess=0,inflight=null,lastError=null;
   let lastSourcePath=null,lastAttempts=[];
   const isOpen=()=>ENABLED&&Date.now()<STOP_AT;
@@ -165,9 +173,12 @@ module.exports=function registerOfficialElection2026(app,io){
           if(!parsed){
             const candidates=Array.isArray(document.cand)?document.cand:
               Array.isArray(document.abr)?document.abr.flatMap(item=>item?.cand||[]):[];
+            // Diagnóstico da ESTRUTURA, não copia o arquivo bruto nem inventa votos.
+            const keys=Object.keys(document).slice(0,12)
+              .filter(k=>/^[a-zA-Z0-9_]{1,35}$/.test(k));
             const summary=candidates.length?
               "sem par Lula/Flavio nos "+candidates.length+" candidatos":
-              "arquivo nao contem lista de candidatos/votos";
+              "sem lista de candidatos (campos: "+(keys.join(",")||"nenhum")+")";
             throw Error(summary);
           }
           latest=parsed;
