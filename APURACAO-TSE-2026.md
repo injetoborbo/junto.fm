@@ -45,6 +45,21 @@ Esse caminho de **2026 ainda não foi confirmado por consulta ao servidor real**
 
 Na janela temporária também adicionamos atalhos para conferir os resultados no Google ou no site do TSE, **como links externos**, sem scraping do Google.
 
+## Diagnóstico resolvido com o JWS capturado (25/10/2026)
+
+O criador enviou o conteúdo de `br-c0001-e006258-u.jws` e ele **continha votos**. O problema não era o endpoint de atualização: o código procurava `cand` apenas na raiz, mas os resultados estão aninhados:
+
+```text
+carg[] (cd = "1", Presidente)
+  agr[] (partido/coligação)
+    par[]
+      cand[] (n, nm, nmu, vap, pvap)
+```
+
+Exemplo **histórico extraído do documento enviado pelo criador**, não o resultado atualizado: às 17:06:27 de 25/10/2026, `LULA` número 13 tinha 193.574 votos (57,66%) e `FLAVIO BOLSONARO` número 22 tinha 142.169 votos (42,34%). O leitor agora aceita esta estrutura, valida eleição 6258, turno 2, abrangência Brasil e cargo Presidente, e prioriza o próprio `-u.jws` antes de tentar outros caminhos.
+
+**Limitação:** o conteúdo foi fornecido na conversa, não buscado ao vivo neste ambiente; o leitor decodifica o JWS recebido por HTTPS mas **não verifica criptograficamente a assinatura com uma chave pública do TSE**. A interface distingue horário da apuração (`dt` e `ht`) de horário de leitura do servidor.
+
 ## Funcionamento
 
 - `official-election-results-2026.js` tenta o JSON nacional de votos do TSE e, se necessário, o JWS de atualização, com HTTPS, timeout 8s por documento, checagem de host/caminho, abrangência nacional e números inteiros.
