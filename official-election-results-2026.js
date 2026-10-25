@@ -18,8 +18,11 @@ function validateOfficialUrl(raw){
     const url=new URL(raw);
     if(url.protocol!=="https:"||url.hostname!==HOST||url.port||url.username||url.password||url.hash)return null;
     if(url.search&&!/^\?nocache=\d{1,18}$/.test(url.search))return null;
-    const m=url.pathname.match(/^\/oficial\/ele2026\/(\d{1,10})\/dados\/br\/br-c0001-e(\d{1,10})-([uv]\.(?:json|jws))$/);
-    if(!m||Number(m[1])!==Number(m[2]))return null;
+    const m=url.pathname.match(/^\/oficial\/ele2026\/(\d{1,10})\/(dados|dados-simplificados)\/br\/br-c0001-e(\d{1,10})-([uvr])\.(json|jws)$/);
+    if(!m||Number(m[1])!==Number(m[3]))return null;
+    // O feed simplificado historico do TSE usa -r.json.
+    if(m[2]==="dados-simplificados"&&(m[4]!=="r"||m[5]!=="json"))return null;
+    if(m[2]==="dados"&&m[4]!=="u"&&m[4]!=="v")return null;
     // O cache buster muda a cada consulta; nao confiar em parametros extras.
     return url.origin+url.pathname;
   }catch(_){return null;}
@@ -112,13 +115,16 @@ module.exports=function registerOfficialElection2026(app,io){
   // Preferir -v.json, com a apuracao nacional, e tentar o JWS depois.
   // Se o caminho oficial mudar, a variavel de ambiente continua sendo a
   // origem do identificador da eleicao; jamais consultar sites nao-TSE.
-  const prefix=endpoint?.replace(/-[uv]\.(?:json|jws)$/,"");
-  // O -u.jws compartilhado pelo usuário é um status, não uma urna.
-  // Procurar primeiro o formato JWS para votos, depois o JSON legado.
-  // Um URL explícito diferente do status tem prioridade sobre heurísticas.
+  const parts=endpoint?.match(/^(https:\/\/resultados\.tse\.jus\.br\/oficial\/ele2026\/\d{1,10})\/(?:dados|dados-simplificados)\/br\/(br-c0001-e\d{1,10})-[uvr]\.(?:json|jws)$/);
+  const base=parts?.[1],fileBase=parts?.[2];
+  // Endpoint de apuracao simplificada usado historicamente pelo proprio TSE.
+  // Nao presumir que exista em 2026: HTTP e esquema serao verificados no fetch.
+  const simplified=base?base+"/dados-simplificados/br/"+fileBase+"-r.json":null;
+  const prefix=base?base+"/dados/br/"+fileBase:null;
   const hasOverride=Boolean(process.env.TSE_2026_PRESIDENT_RESULT_URL?.trim());
   const candidates=prefix?[
     ...(hasOverride&&endpoint&&!endpoint.endsWith("-u.jws")?[endpoint]:[]),
+    simplified,
     prefix+"-v.jws",
     prefix+"-v.json",
     prefix+"-u.jws"
