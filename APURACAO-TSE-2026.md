@@ -16,6 +16,11 @@ O servidor usa a URL compartilhada como **identificador da eleição**, mas agor
 
 **Motivo do conserto:** antes o sistema buscava apenas `-u.jws`, que pode servir como aviso de atualização em vez de apuração detalhada. O novo backend expõe `attempts` (documento consultado e erro específico) e `lastSourcePath` (documento do qual saiu o último resultado válido) em `/api/official-election-2026`. Assim podemos depurar erros reais sem inventar números.
 
+**Diagnóstico observado em 25/10:** a resposta do servidor apontou **HTTP 404** para `-v.json` e **nenhuma lista de candidatos** em `-u.jws`. Por isso a integração passa a testar também `br-c0001-e006258-v.jws` **antes** das duas opções anteriores. O formato é uma hipótese a verificar, não uma URL confirmada ao vivo. O JSON de status mostra os campos-raiz recebidos do documento sem votos, para ajudar a localizar o feed correto.
+
+Se os três caminhos falharem, abra DevTools > Network no site de resultados do TSE e localize a resposta de apuração presidencial nacional cujo conteúdo tenha `cand`, `n` e `vap`. Copie a URL completa para conferência: **não altere números manualmente nem use capturas de Google como fonte de votos**. A variável opcional `TSE_2026_PRESIDENT_RESULT_URL` pode indicar uma variante `-v.jws`, `-v.json` ou `-u.jws` publicada pelo TSE no mesmo diretório oficial.
+
+
 **Atenção:** `-u.jws` é um documento JWS (envelope assinado), e não o `-v.json` que era esperado originalmente. O leitor agora aceita JWS compact e JSON serialization, decodifica o conteúdo recebido por HTTPS e **só mostra números quando o payload efetivamente contiver a estrutura de votos nacionais (`cand`) com Lula 13 e Flávio 22**. O link não foi consultado ao vivo neste ambiente e não é possível afirmar daqui se `-u.jws` traz essa estrutura ou apenas metadados de atualização. Se não trouxer votos, a interface mostra um erro e mantém o último resultado válido; nesse caso precisamos de outra requisição real da aba Network com `cand` e `vap`.
 
 O parser do JWS **ainda não realiza verificação criptográfica independente da assinatura** com uma chave pública do TSE. A origem é protegida por HTTPS e validada por hostname/caminho; para auditoria criptográfica completa, obter e configurar a chave pública oficial do TSE. Não confundir ausência dessa checagem independente com validação da assinatura.
