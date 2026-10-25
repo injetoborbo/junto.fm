@@ -14,6 +14,95 @@ const count=document.getElementById("jfDanceCount");
 const openButton=document.getElementById("jfOpenDance");
 const closeButton=document.getElementById("jfCloseDance");
 const choices=[...document.querySelectorAll("[data-jf-dance]")];
+
+ // Ferramentas dev somente para localhost ou URL com ?jfDev=1.
+ // Nunca altera o modelo dos outros participantes.
+ const devAllowed=["localhost","127.0.0.1","[::1]"].includes(location.hostname)
+   ||new URLSearchParams(location.search).get("jfDev")==="1";
+ let devZoom=1,devUseNewModel=false,devTestOutfit=false,devShowSkeleton=false,devRigReady=false;
+ let devStatus=null;
+ function attachDevSkeleton(entry){
+   if(!active||!scene||!entry.rig||entry.devSkeleton)return;
+   const helper=new THREE.SkeletonHelper(entry.rig);
+   helper.material.depthTest=false;helper.material.transparent=true;helper.material.opacity=.9;
+   helper.frustumCulled=false;scene.add(helper);entry.devSkeleton=helper;
+ }
+ function applyDevSkeletons(){
+   for(const entry of people.values()){
+     if(!entry.experimentalRig||!entry.rig)continue;
+     if(devShowSkeleton)attachDevSkeleton(entry);
+     else if(entry.devSkeleton){
+       entry.devSkeleton.parent?.remove(entry.devSkeleton);
+       entry.devSkeleton.geometry.dispose();entry.devSkeleton.material.dispose();entry.devSkeleton=null;
+     }
+   }
+ }
+ function devNotice(message){if(devStatus)devStatus.textContent=message;console.info("The Símios DEV:",message);}
+ if(devAllowed&&stage){
+   const panel=document.createElement("details");
+   panel.className="jf-simios-dev-panel";
+   panel.style.cssText="position:absolute;top:10px;right:10px;z-index:7;width:min(295px,calc(100% - 20px));max-height:90%;overflow:auto;border:1px solid var(--jf-secondary,#77caff);border-radius:10px;background:rgba(13,20,36,.93);color:#fff;padding:9px;font:12px/1.5 system-ui;box-shadow:0 5px 20px #0008;pointer-events:auto";
+   panel.innerHTML=`<summary style="cursor:pointer;font-weight:800">🛠️ DEV · The Símios</summary>
+     <div style="display:grid;gap:8px;margin-top:9px">
+       <label>Zoom <input data-dev="zoom" type="range" min="0.55" max="2.6" value="1" step=".05" style="width:100%;accent-color:#65cfff">
+         <output data-dev="zoom-val">100%</output></label>
+       <button data-dev="reset-zoom" type="button">Restaurar zoom</button>
+       <label>GLB experimental <input data-dev="file" type="file" accept=".glb,model/gltf-binary" style="width:100%"></label>
+       <button data-dev="project-model" type="button">Carregar GLB do projeto</button>
+       <label><input data-dev="model" type="checkbox"> Usar Macaco 2.0 (só meu avatar)</label>
+       <label><input data-dev="outfit" type="checkbox"> Testar roupas antigas (não calibradas)</label>
+       <label><input data-dev="bones" type="checkbox"> Mostrar esqueleto</label>
+       <button data-dev="inspect" type="button">Inspecionar ossos (F12)</button>
+       <div data-dev="status" role="status" style="font-size:11px;color:#c5f3ff">Escolha o GLB para começar.</div>
+     </div>`;
+   stage.appendChild(panel);
+   const get=id=>panel.querySelector('[data-dev="'+id+'"]');
+   const refreshOwn=()=>{if(active&&socket?.id)refreshDancer(socket.id);};
+   devStatus=get("status");
+   const zoomInput=get("zoom"),zoomOutput=get("zoom-val");
+   const updateZoom=()=>{
+     devZoom=Number(zoomInput.value)||1;
+     zoomOutput.textContent=Math.round(devZoom*100)+"%";
+     if(active)window.dispatchEvent(new Event("resize"));
+   };
+   zoomInput.addEventListener("input",updateZoom);
+   get("reset-zoom").addEventListener("click",()=>{zoomInput.value="1";updateZoom();});
+   const loadTest=async url=>{
+     try{
+       devNotice("Carregando e validando rig...");
+       await setDanceAvatarTestModel(url);
+       devRigReady=true;devUseNewModel=true;get("model").checked=true;
+       refreshOwn();
+       devNotice("Rig carregado! Teste caminhada, danças, sentar e beber.");
+     }catch(error){devNotice("Falha no GLB: "+(error?.message||String(error)));}
+   };
+   get("file").addEventListener("change",async e=>{
+     const file=e.target.files?.[0];if(!file)return;
+     const url=URL.createObjectURL(file);
+     await loadTest(url);URL.revokeObjectURL(url);
+   });
+   get("project-model").addEventListener("click",()=>loadTest("/models/magago_junto_rig_teste.glb"));
+   get("model").addEventListener("change",e=>{
+     devUseNewModel=Boolean(e.target.checked&&devRigReady);
+     e.target.checked=devUseNewModel;
+     if(!devRigReady)devNotice("Primeiro carregue o GLB usando o seletor.");
+     refreshOwn();
+   });
+   get("outfit").addEventListener("change",e=>{devTestOutfit=e.target.checked;refreshOwn();});
+   get("bones").addEventListener("change",e=>{devShowSkeleton=e.target.checked;applyDevSkeletons();});
+   get("inspect").addEventListener("click",()=>{
+     const entry=people.get(socket?.id);
+     if(!entry?.rig){devNotice("Entre na pista antes de inspecionar.");return;}
+     const bones=[];entry.rig.traverse(n=>{if(n.isBone)bones.push(n.name);});
+     console.group("The Símios - Diagnóstico do rig");
+     console.log({experimental:entry.experimentalRig,boneCount:bones.length,
+       head:entry.headBone?.name,hand:entry.drinkHand?.name,
+       shoulder:entry.drinkUpperArm?.name,forearm:entry.drinkForearm?.name,zoom:devZoom});
+     console.log("Ossos:",bones);console.groupEnd();
+     devNotice("Rig inspecionado no console (F12): "+bones.length+" ossos.");
+   });
+ }
+
 const animationFiles={
   shake:"/dance/macacochaqualha.glb",
   macarena:"/dance/macacomacarena.glb",
@@ -770,7 +859,7 @@ function sceneSetup(){
     if(!renderer||!active)return;
     const width=Math.max(220,viewport.clientWidth),height=Math.max(220,viewport.clientHeight);
     renderer.setSize(width,height,false);
-    const aspect=width/height,halfH=9.1;
+    const aspect=width/height,halfH=9.1/devZoom;
     camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;
     camera.updateProjectionMatrix();
   };
@@ -927,7 +1016,7 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
 function removeMember(id){
   const member=people.get(id);if(!member)return;
   clearDanceSpeech(member);
-  member.devSkeleton?.parent?.remove(member.devSkeleton);
+  if(member.devSkeleton){member.devSkeleton.parent?.remove(member.devSkeleton);member.devSkeleton.geometry.dispose();member.devSkeleton.material.dispose();}
   member.mixer?.stopAllAction();
   member.mixer?.uncacheRoot(member.rig);
   member.dispose?.();
