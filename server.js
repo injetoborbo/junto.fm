@@ -473,6 +473,8 @@ function releaseRoomOwnership(room,departingId){
   }
 }
 const juntoTv = require("./junto-tv-server")(io, isRoomOwner, isRateLimited);
+// RESULTADOS OFICIAIS TSE 2026 (TEMPORARIO): reverter o PR depois do evento.
+require("./official-election-results-2026")(app,io);
 io.use(async (socket,next)=>{
   try { socket.data.account=await accountAuth.accountFromRequest(socket.request); }
   catch(error){ console.warn("Conta na conexão:",error.message); socket.data.account=null; }
