@@ -752,6 +752,19 @@ body.jf-in-room #jfAdminEntry{display:none!important}
  body.jf-in-room #jfMobileFunBar #jfBananaThrow.jf-banana-button{flex-basis:53px;width:53px!important;height:53px!important}
  body.jf-in-room #jfMobileFunBar #jfClubTomato.jf-tomato-launcher{flex-basis:52px;width:52px!important;height:52px!important}
 }
+
+/* ENQUETE TEMPORARIA 26/10. Desfazer PR separado apos evento. */
+#jfMobileFunBar #jfCommunityPollLaunch.jf-fun-image-btn{position:fixed!important;left:18px!important;bottom:93px!important;width:58px!important;height:58px!important;flex:0 0 58px!important;border-radius:50%!important;border:2px solid #f66!important;background:radial-gradient(circle,#8d0918,#37050c)!important;box-shadow:0 3px 13px #000a!important;color:#ff4545!important;font-size:42px!important;text-shadow:0 2px 3px #1d0608;z-index:10022}
+#jfCommunityPollLaunch[hidden],#jfCommunityPollModal[hidden]{display:none!important}
+#jfCommunityPollModal{position:fixed;inset:0;z-index:2147483001;display:grid;place-items:center;background:rgba(0,0,0,.75);padding:16px}
+.jf-community-poll-card{width:min(420px,100%);max-height:90dvh;overflow:auto;padding:18px;background:var(--jf-glow,#212144);color:var(--ink,#fff);border:2px solid var(--jf-secondary,#e8788a);border-radius:14px;box-shadow:0 14px 40px #000b}
+.jf-poll-title{display:flex;align-items:center;justify-content:space-between;gap:8px}.jf-poll-title h3{margin:0;font-size:18px}
+.jf-poll-nonofficial{font-size:12px;line-height:1.45;margin:8px 0 14px}
+.jf-poll-line{margin:12px 0}.jf-poll-line>div:first-child{display:flex;justify-content:space-between;gap:10px}
+.jf-poll-meter{margin-top:5px;background:#1117;border-radius:10px;height:12px;overflow:hidden}.jf-poll-meter>div{height:100%;transition:width .25s ease}
+.jf-poll-vote-buttons{display:flex;gap:9px;flex-wrap:wrap}.jf-poll-vote-buttons button{flex:1;min-width:125px}
+#jfPollStatus{min-height:1.3em;font-size:12px}
+@media(max-width:760px){body.jf-in-room #jfMobileFunBar:has(#jfCommunityPollLaunch:not([hidden])){padding-top:55px!important;position:relative!important}body.jf-in-room #jfMobileFunBar #jfCommunityPollLaunch.jf-fun-image-btn{position:absolute!important;left:4px!important;top:0!important;bottom:auto!important;width:49px!important;height:49px!important;font-size:34px!important}}
 </style>
 <!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
 <link rel="stylesheet" href="/kodoku.css">
@@ -813,9 +826,25 @@ body.jf-in-room #jfAdminEntry{display:none!important}
       </div>
     </div>
     <div id="jfMobileFunBar" class="jf-mobile-fun-bar" aria-label="Ações da sala">
+      <button type="button" id="jfCommunityPollLaunch" class="jf-fun-image-btn" hidden aria-expanded="false" title="Enquete Lula × Flávio (não oficial)" aria-label="Abrir enquete da comunidade"><span aria-hidden="true">★</span></button>
       <button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
       <button type="button" id="jfTvLaunch" class="jf-fun-image-btn" aria-label="Abrir Junto.TV" title="Abrir Junto.TV" disabled><img id="jfTvLaunchIcon" alt="" width="60" height="60"></button>
       <button type="button" id="jfOpenDance" class="jf-fun-image-btn jf-dance-launch" aria-label="Abrir pista de dança" title="Abrir pista de dança"><img id="jfDanceLaunchIcon" alt="" width="60" height="60"></button>
+    </div>
+    <div id="jfCommunityPollModal" hidden role="dialog" aria-modal="true" aria-label="Enquete temporária da comunidade">
+      <section class="jf-community-poll-card">
+        <div class="jf-poll-title"><h3>★ Lula × Flávio Bolsonaro</h3><button id="jfPollClose" class="btn secondary" type="button" aria-label="Fechar enquete">✕</button></div>
+        <p class="jf-poll-nonofficial"><strong>ENQUETE INFORMAL DA JUNTO.FM — NÃO SÃO VOTOS OFICIAIS.</strong>
+          Contagem ao vivo dos participantes do site. Uma escolha por conta ou navegador, que pode ser alterada. Encerra em 26/10/2026 às 23h59 (Brasília).</p>
+        <div class="jf-poll-line"><div><strong>Lula</strong><span><b id="jfPollLula">0</b> · <span id="jfPollPctLula">0%</span></span></div>
+          <div class="jf-poll-meter"><div id="jfPollBarLula" style="width:0%;background:#d9414b"></div></div></div>
+        <div class="jf-poll-line"><div><strong>Flávio Bolsonaro</strong><span><b id="jfPollFlavio">0</b> · <span id="jfPollPctFlavio">0%</span></span></div>
+          <div class="jf-poll-meter"><div id="jfPollBarFlavio" style="width:0%;background:#669ce7"></div></div></div>
+        <p id="jfPollTotal">0 voto(s) na comunidade</p>
+        <div class="jf-poll-vote-buttons"><button class="btn secondary" data-community-vote="lula" type="button">Votar Lula</button>
+          <button class="btn secondary" data-community-vote="flavio" type="button">Votar Flávio</button></div>
+        <p id="jfPollStatus" role="status" aria-live="polite">Entre numa sala para participar.</p>
+      </section>
     </div>
     <div class="spotify-actions" id="jfDjSpotifyOptions" hidden>
       <a class="btn" id="spotifyConnect" href="/spotify/login">♫ Vincular Spotify (opcional)</a>
@@ -2900,6 +2929,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 <script defer src="/kodoku.js?v=normal-o-1"></script>
 <script type="module" src="/banana-barrel.js"></script>
 <script defer src="/social-account-ui.js"></script>
+<script defer src="/temporary-community-poll.js"></script>
 <script defer src="/kodoku-skip.js"></script>
 <link rel="stylesheet" href="/tsimiomi.css?v=5">
 <script defer src="/junto-tv-icons.js"></script>
