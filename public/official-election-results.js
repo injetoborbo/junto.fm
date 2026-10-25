@@ -40,8 +40,8 @@
       el.barFlavio.style.width=(data.flavio?.percent??0)+"%";
       el.total.textContent="Votos computados dos candidatos: "+number((data.lula?.votes||0)+(data.flavio?.votes||0));
     }
-    const stamp=state.lastReadAt?new Date(state.lastReadAt).toLocaleTimeString("pt-BR"):"—";
-    const details=state.configured?"Leitura da fonte: "+stamp:"Fonte oficial ainda não configurada no servidor.";
+    const stamp=state.lastSuccessAt?new Date(state.lastSuccessAt).toLocaleTimeString("pt-BR"):"—";
+    const details=state.configured?(data?"Último resultado oficial válido: "+stamp:"Aguardando divulgação de resultados pelo TSE."):"Fonte oficial ainda não configurada no servidor.";
     el.status.textContent=state.error?details+" · "+state.error:details;
   }
   button.addEventListener("click",()=>{
