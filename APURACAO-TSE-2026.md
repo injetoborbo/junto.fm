@@ -33,6 +33,18 @@ TSE_2026_PRESIDENT_RESULT_URL=https://resultados.tse.jus.br/oficial/ele2026/6258
 
 Depois de publicar a branch em um ambiente de teste, abra `/api/official-election-2026`. Confira `configured: true`, `lastSuccessAt` e `result`. **`configured: true` significa URL aceita, não dados confirmados.** Somente `result` com `lula.votes` e `flavio.votes` indica que a resposta foi interpretada como total de votos.
 
+## Terceira tentativa — `dados-simplificados`
+
+Após identificar o HTTP 404 nos caminhos de `dados/`, incluímos como **primeira tentativa** o padrão de resultados simplificados utilizado pelo TSE em pleitos anteriores:
+
+```text
+https://resultados.tse.jus.br/oficial/ele2026/6258/dados-simplificados/br/br-c0001-e006258-r.json
+```
+
+Esse caminho de **2026 ainda não foi confirmado por consulta ao servidor real**. O formato do documento, quando disponível, deve trazer `cand[].n`, `cand[].nm`, `cand[].vap` e `cand[].pvap`, suficientes para um placar real. Se não existir, tentamos os documentos de `dados/` anteriores, registrando as falhas na API. Nenhum número é inventado.
+
+Na janela temporária também adicionamos atalhos para conferir os resultados no Google ou no site do TSE, **como links externos**, sem scraping do Google.
+
 ## Funcionamento
 
 - `official-election-results-2026.js` tenta o JSON nacional de votos do TSE e, se necessário, o JWS de atualização, com HTTPS, timeout 8s por documento, checagem de host/caminho, abrangência nacional e números inteiros.
