@@ -7,7 +7,9 @@
 const STOP_AT=Date.parse("2026-10-27T03:00:00.000Z");
 const INTERVAL_MS=30000;
 const HOST="resultados.tse.jus.br";
-const SOURCE_URL=String(process.env.TSE_2026_PRESIDENT_RESULT_URL||"").trim();
+// Link fornecido pelo criador, sempre consultado pelo servidor e sem nocache fixo.
+const DEFAULT_TSE_URL="https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.jws";
+const SOURCE_URL=String(process.env.TSE_2026_PRESIDENT_RESULT_URL||DEFAULT_TSE_URL).trim();
 const ENABLED=process.env.JF_ELECTION_LIVE_ENABLED!=="false";
 // JSON ou JWS: e006258 no arquivo corresponde ao diretorio 6258.
 function validateOfficialUrl(raw){
