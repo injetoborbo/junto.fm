@@ -29,6 +29,56 @@
     collapseButton.setAttribute("aria-expanded",String(!collapsed));
   }
   collapseButton.addEventListener("click",()=>setCollapsed(!collapsed));
+  // Arraste pelo titulo: funciona com mouse, touch e caneta, sem impedir os
+  // botoes de fechar/recolher nem o uso normal do restante da pagina.
+  const dragHandle=modal.querySelector(".jf-poll-title");
+  const STORAGE_KEY="jf-official-vote-window-position-v1";
+  let drag=null;
+  const clampPosition=(left,top)=>{
+    const rect=modal.getBoundingClientRect();
+    const width=rect.width||300,height=rect.height||80;
+    const x=Math.max(0,Math.min(window.innerWidth-width,left));
+    const y=Math.max(0,Math.min(window.innerHeight-Math.min(height,window.innerHeight),top));
+    modal.style.setProperty("left",x+"px","important");
+    modal.style.setProperty("top",y+"px","important");
+    modal.style.setProperty("right","auto","important");
+    modal.style.setProperty("bottom","auto","important");
+  };
+  const savePosition=()=>{
+    try{
+      const rect=modal.getBoundingClientRect();
+      localStorage.setItem(STORAGE_KEY,JSON.stringify({x:rect.left,y:rect.top}));
+    }catch(_){}
+  };
+  const loadPosition=()=>{
+    try{
+      const pos=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+      if(pos&&Number.isFinite(pos.x)&&Number.isFinite(pos.y))
+        clampPosition(pos.x,pos.y);
+    }catch(_){}
+  };
+  dragHandle?.addEventListener("pointerdown",event=>{
+    if(event.button!==0||event.target.closest("button,a,input,select,textarea"))return;
+    const rect=modal.getBoundingClientRect();
+    drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,left:rect.left,top:rect.top};
+    dragHandle.classList.add("jf-poll-dragging");
+    dragHandle.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  });
+  dragHandle?.addEventListener("pointermove",event=>{
+    if(!drag||event.pointerId!==drag.pointer)return;
+    clampPosition(drag.left+event.clientX-drag.x,drag.top+event.clientY-drag.y);
+  });
+  const finishDrag=event=>{
+    if(!drag||event.pointerId!==drag.pointer)return;
+    drag=null;dragHandle.classList.remove("jf-poll-dragging");savePosition();
+  };
+  dragHandle?.addEventListener("pointerup",finishDrag);
+  dragHandle?.addEventListener("pointercancel",finishDrag);
+  window.addEventListener("resize",()=>{
+    if(!opened||!modal.style.left)return;
+    const rect=modal.getBoundingClientRect();clampPosition(rect.left,rect.top);
+  });
   // As duas artes têm o mesmo enquadramento e movimento. Enquanto não
   // chegarem os PNGs, exibir iniciais sem ícone de imagem quebrada.
   for(const candidate of ["Lula","Flavio"]){
@@ -72,7 +122,7 @@
     el.status.textContent=state.error?details+" · "+state.error:details;
   }
   button.addEventListener("click",()=>{
-    modal.hidden=false;opened=true;setCollapsed(false);
+    modal.hidden=false;opened=true;setCollapsed(false);loadPosition();
     button.setAttribute("aria-expanded","true");
     socket?.emit("jf-election-official-get");
     void refresh();
