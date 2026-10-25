@@ -119,8 +119,12 @@
     }
     const stamp=state.lastSuccessAt?new Date(state.lastSuccessAt).toLocaleTimeString("pt-BR"):"—";
     const sourceFile=typeof state.lastSourcePath==="string"?state.lastSourcePath.split("/").pop():null;
+    const reportTime=typeof data?.reportedAt==="string"&&
+      /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}$/.test(data.reportedAt)
+      ?data.reportedAt:null;
     const details=state.configured?
-      (data?"Último resultado TSE validado: "+stamp+(sourceFile?" · "+sourceFile:"")
+      (data?"Dados TSE: "+(reportTime||"horário indisponível")+
+        " · última leitura: "+stamp+(sourceFile?" · "+sourceFile:"")
         :"Conferindo arquivos de votos do TSE."):
       "Fonte oficial ainda não configurada no servidor.";
     el.status.textContent=state.error?details+" · "+state.error:details;
