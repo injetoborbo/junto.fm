@@ -74,8 +74,12 @@ function parseOfficialPayload(payload){
   // O endpoint de apuracao geral do TSE precisa conter candidatos,
   // nao totais de municipios, de deputado ou uma pesquisa eleitoral.
   if(!payload||typeof payload!=="object"||Array.isArray(payload))return null;
-  if(payload.carper!=null&&String(payload.carper)!=="1")return null;
-  const rows=Array.isArray(payload.cand)?payload.cand:null;
+  // carper nao identifica o turno de maneira uniforme entre feeds do TSE;
+  // nao descartar uma apuracao legitima baseada apenas nesse campo.
+  const national=Array.isArray(payload.abr)?
+    payload.abr.find(item=>String(item?.cdabr??item?.abr??"").toLowerCase()==="br"):null;
+  const rows=Array.isArray(payload.cand)?payload.cand:
+    Array.isArray(national?.cand)?national.cand:null;
   if(!rows||rows.length<2)return null;
   const find=(number,search)=>rows.find(c=>{
     if(!c||typeof c!=="object")return false;
@@ -104,41 +108,87 @@ function parseOfficialPayload(payload){
 }
 module.exports=function registerOfficialElection2026(app,io){
   const endpoint=validateOfficialUrl(SOURCE_URL);
+  // O arquivo -u.jws pode conter SOMENTE informacao de atualizacao.
+  // Preferir -v.json, com a apuracao nacional, e tentar o JWS depois.
+  // Se o caminho oficial mudar, a variavel de ambiente continua sendo a
+  // origem do identificador da eleicao; jamais consultar sites nao-TSE.
+  const prefix=endpoint?.replace(/-(?:u\.jws|v\.json)$/,"");
+  const sources=prefix?[
+    prefix+"-v.json",
+    prefix+"-u.jws"
+  ].filter((item,i,items)=>items.indexOf(item)===i&&Boolean(validateOfficialUrl(item))):[];
   let latest=null,lastFetch=0,lastSuccess=0,inflight=null,lastError=null;
+  let lastSourcePath=null,lastAttempts=[];
   const isOpen=()=>ENABLED&&Date.now()<STOP_AT;
   const publicState=()=>({
     source:"TSE — resultados.tse.jus.br",official:true,
     enabled:isOpen(),expiresAt:new Date(STOP_AT).toISOString(),
     configured:Boolean(endpoint),lastReadAt:lastFetch?new Date(lastFetch).toISOString():null,
+    lastSourcePath,attempts:lastAttempts,
     lastSuccessAt:lastSuccess?new Date(lastSuccess).toISOString():null,
     error:lastError,result:latest
   });
   async function refresh(force=false){
     if(!isOpen())return publicState();
-    if(!endpoint){lastError="URL da apuracao oficial do TSE ainda nao configurada.";return publicState();}
+    if(!sources.length){
+      lastError="Endereco oficial do TSE nao configurado ou invalido.";
+      return publicState();
+    }
     if(inflight)return inflight;
     if(!force&&Date.now()-lastFetch<INTERVAL_MS)return publicState();
     inflight=(async()=>{
-      const controller=new AbortController();
-      const timeout=setTimeout(()=>controller.abort(),8000);
-      try{
-        const isJws=endpoint.endsWith(".jws");
-        const feedUrl=endpoint+(isJws?"?nocache="+Date.now():"");
-        const res=await fetch(feedUrl,{signal:controller.signal,redirect:"error",headers:{
-          "Accept":isJws?"application/jose, application/json, text/plain":"application/json",
-          "Cache-Control":"no-cache"}});
-        if(!res.ok)throw Error("TSE retornou HTTP "+res.status);
-        const size=Number(res.headers.get("content-length")||0);
-        if(size>2500000)throw Error("Resposta do TSE excede limite seguro.");
-        const raw=await res.text();
-        if(raw.length>2500000)throw Error("Resposta do TSE excede limite seguro.");
-        const parsed=parseOfficialPayload(decodeTseResponse(raw));
-        if(!parsed)throw Error("Fonte nao informou Lula e Flavio com votos validos para presidente do Brasil.");
-        latest=parsed;lastSuccess=Date.now();lastError=null;
-      }catch(error){
-        // Manter o ultimo dado valido com idade visivel; nunca usar 0 inventado.
-        lastError="Sem atualizacao oficial: "+String(error.message||error).slice(0,180);
-      }finally{clearTimeout(timeout);lastFetch=Date.now();}
+      let success=false;
+      const attempts=[];
+      // Nao retornar um placar fabricado caso a fonte esteja fora do ar.
+      // Em vez disso, exibir qual documento do TSE falhou no painel/API.
+      for(const sourceUrl of sources){
+        const controller=new AbortController();
+        const timeout=setTimeout(()=>controller.abort(),8000);
+        const file=new URL(sourceUrl).pathname.split("/").pop();
+        try{
+          const isJws=sourceUrl.endsWith(".jws");
+          const feedUrl=sourceUrl+"?nocache="+Date.now();
+          const res=await fetch(feedUrl,{
+            signal:controller.signal,redirect:"error",
+            headers:{
+              "Accept":isJws?"application/jose, application/json, text/plain":"application/json, text/plain",
+              "Cache-Control":"no-cache"
+            }
+          });
+          if(!res.ok)throw Error("HTTP "+res.status);
+          const size=Number(res.headers.get("content-length")||0);
+          if(size>2500000)throw Error("arquivo maior que limite");
+          const raw=await res.text();
+          if(raw.length>2500000)throw Error("arquivo maior que limite");
+          const document=decodeTseResponse(raw);
+          const parsed=parseOfficialPayload(document);
+          if(!parsed){
+            const candidates=Array.isArray(document.cand)?document.cand:
+              Array.isArray(document.abr)?document.abr.flatMap(item=>item?.cand||[]):[];
+            const summary=candidates.length?
+              "sem par Lula/Flavio nos "+candidates.length+" candidatos":
+              "arquivo nao contem lista de candidatos/votos";
+            throw Error(summary);
+          }
+          latest=parsed;
+          lastSuccess=Date.now();
+          lastSourcePath=new URL(sourceUrl).pathname;
+          attempts.push({file,status:"ok"});
+          lastError=null;
+          success=true;
+          break;
+        }catch(error){
+          const message=String(error?.message||error).slice(0,110);
+          attempts.push({file,status:"erro",detail:message});
+        }finally{
+          clearTimeout(timeout);
+        }
+      }
+      lastAttempts=attempts;
+      lastFetch=Date.now();
+      if(!success){
+        lastError="TSE: "+attempts.map(a=>a.file+" ("+a.detail+")").join("; ").slice(0,420);
+      }
       const state=publicState();
       io.emit("jf-election-official-update",state);
       return state;

@@ -12,7 +12,9 @@ A URL indicada pelo criador é:
 https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.jws?nocache=1792912903306
 ```
 
-O servidor usa como **padrão** a mesma URL sem o `nocache` fixo e adiciona um novo valor a cada requisição (a cada 30 segundos). Não é necessário cadastrar a URL no Render, desde que a branch esteja implantada.
+O servidor usa a URL compartilhada como **identificador da eleição**, mas agora consulta **primeiro o arquivo nacional de votos `br-c0001-e006258-v.json`** (na mesma pasta oficial). Se ele não estiver disponível ou não trouxer candidatos válidos, tenta `br-c0001-e006258-u.jws`. Em ambos os casos, renova o `nocache` a cada consulta de 30 segundos. A correção usa somente `https://resultados.tse.jus.br`, sem consultar agregadores ou serviços não oficiais.
+
+**Motivo do conserto:** antes o sistema buscava apenas `-u.jws`, que pode servir como aviso de atualização em vez de apuração detalhada. O novo backend expõe `attempts` (documento consultado e erro específico) e `lastSourcePath` (documento do qual saiu o último resultado válido) em `/api/official-election-2026`. Assim podemos depurar erros reais sem inventar números.
 
 **Atenção:** `-u.jws` é um documento JWS (envelope assinado), e não o `-v.json` que era esperado originalmente. O leitor agora aceita JWS compact e JSON serialization, decodifica o conteúdo recebido por HTTPS e **só mostra números quando o payload efetivamente contiver a estrutura de votos nacionais (`cand`) com Lula 13 e Flávio 22**. O link não foi consultado ao vivo neste ambiente e não é possível afirmar daqui se `-u.jws` traz essa estrutura ou apenas metadados de atualização. Se não trouxer votos, a interface mostra um erro e mantém o último resultado válido; nesse caso precisamos de outra requisição real da aba Network com `cand` e `vap`.
 
@@ -28,7 +30,7 @@ Depois de publicar a branch em um ambiente de teste, abra `/api/official-electio
 
 ## Funcionamento
 
-- `official-election-results-2026.js` faz `fetch` pelo servidor a cada 30 segundos, com HTTPS, timeout 8s, checagem de host/caminho, suporte a JWS/JSON, abrangência nacional e números inteiros.
+- `official-election-results-2026.js` tenta o JSON nacional de votos do TSE e, se necessário, o JWS de atualização, com HTTPS, timeout 8s por documento, checagem de host/caminho, abrangência nacional e números inteiros.
 - `public/official-election-results.js` mostra estrela vermelha acima do tomate e lê `/api/official-election-2026` e eventos Socket.IO `jf-election-official-update`.
 - Os números são exibidos **apenas** quando o TSE retornar candidatos cujos nomes e números coincidam com Lula (13) e Flávio (22). Se a lista de candidatos for diferente, a tela não mostra totais inventados.
 - Não prevê vencedor; não transforma votos parciais em vitória.
