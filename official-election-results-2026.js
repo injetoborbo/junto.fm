@@ -67,12 +67,13 @@ function parseOfficialPayload(payload){
 }
 module.exports=function registerOfficialElection2026(app,io){
   const endpoint=validateOfficialUrl(SOURCE_URL);
-  let latest=null,lastFetch=0,inflight=null,lastError=null;
+  let latest=null,lastFetch=0,lastSuccess=0,inflight=null,lastError=null;
   const isOpen=()=>ENABLED&&Date.now()<STOP_AT;
   const publicState=()=>({
     source:"TSE — resultados.tse.jus.br",official:true,
     enabled:isOpen(),expiresAt:new Date(STOP_AT).toISOString(),
     configured:Boolean(endpoint),lastReadAt:lastFetch?new Date(lastFetch).toISOString():null,
+    lastSuccessAt:lastSuccess?new Date(lastSuccess).toISOString():null,
     error:lastError,result:latest
   });
   async function refresh(force=false){
@@ -92,7 +93,7 @@ module.exports=function registerOfficialElection2026(app,io){
         if(raw.length>2500000)throw Error("Resposta do TSE excede limite seguro.");
         const parsed=parseOfficialPayload(JSON.parse(raw));
         if(!parsed)throw Error("Fonte nao informou Lula e Flavio com votos validos para presidente do Brasil.");
-        latest=parsed;lastError=null;
+        latest=parsed;lastSuccess=Date.now();lastError=null;
       }catch(error){
         // Manter o ultimo dado valido com idade visivel; nunca usar 0 inventado.
         lastError="Sem atualizacao oficial: "+String(error.message||error).slice(0,180);
@@ -116,7 +117,7 @@ module.exports=function registerOfficialElection2026(app,io){
     void refresh();
   }
   const expiry=setTimeout(()=>{
-    latest=null;lastError=null;
+    latest=null;lastError=null;lastSuccess=0;
     io.emit("jf-election-official-update",publicState());
   },Math.max(0,STOP_AT-Date.now()));
   expiry.unref?.();
