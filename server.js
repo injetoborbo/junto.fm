@@ -473,8 +473,8 @@ function releaseRoomOwnership(room,departingId){
   }
 }
 const juntoTv = require("./junto-tv-server")(io, isRoomOwner, isRateLimited);
-// ENQUETE TEMPORARIA (26/10/2026): remover revertendo o PR especifico.
-require("./temporary-community-poll-2026")(app,io,isRateLimited);
+// RESULTADOS OFICIAIS TSE 2026 (TEMPORARIO): reverter o PR depois do evento.
+require("./official-election-results-2026")(app,io);
 io.use(async (socket,next)=>{
   try { socket.data.account=await accountAuth.accountFromRequest(socket.request); }
   catch(error){ console.warn("Conta na conexão:",error.message); socket.data.account=null; }
