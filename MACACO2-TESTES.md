@@ -30,3 +30,20 @@ Copiar `magago_junto_rig_teste.glb` (fornecido no chat) para `public/models/maga
 - A pasta `public/models` é opcional no teste por seletor de arquivo; o GLB não está incluído no GitHub.
 
 **Não fazer merge desta branch diretamente na main** enquanto esses testes não passarem.
+
+
+## Publicação na main (Macaco 2.0 automático)
+
+O código da pista entra na main, mas o arquivo binário **`magago_junto_rig_teste.glb` precisa ser enviado separadamente**: não está incluído neste PR. Até lá, o macaco anterior continua como fallback seguro e o novo ainda pode ser testado pelo painel DEV.
+
+Para publicar pelo PC depois de baixar o GLB do chat, atualize seu checkout local na `main` e rode:
+
+```powershell
+git switch main
+git pull origin main
+.\scripts\publicar-macaco2.ps1 -Origem "C:\Users\mcraf\Downloads\magago_junto_rig_teste.glb"
+```
+
+O script valida a assinatura `glTF` do arquivo, copia para `public/models/magago_junto_rig_teste.glb`, faz commit e push do **asset isolado**. Após o deploy, a pista detecta automaticamente esse arquivo e utiliza o Macaco 2.0 para todos os participantes; na ausência dele, mantém o macaco antigo sem quebrar a sala.
+
+A ativação automática ainda requer teste visual de caminhada, sentar, beber, roupas e acessorios no navegador de produção. Para impedir sua ativação, não publique o GLB ou retire somente esse asset da pasta `public/models`.
