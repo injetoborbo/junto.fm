@@ -118,7 +118,11 @@
       el.total.textContent="Votos computados dos candidatos: "+number((data.lula?.votes||0)+(data.flavio?.votes||0));
     }
     const stamp=state.lastSuccessAt?new Date(state.lastSuccessAt).toLocaleTimeString("pt-BR"):"—";
-    const details=state.configured?(data?"Último resultado oficial válido: "+stamp:"Aguardando divulgação de resultados pelo TSE."):"Fonte oficial ainda não configurada no servidor.";
+    const sourceFile=typeof state.lastSourcePath==="string"?state.lastSourcePath.split("/").pop():null;
+    const details=state.configured?
+      (data?"Último resultado TSE validado: "+stamp+(sourceFile?" · "+sourceFile:"")
+        :"Conferindo arquivos de votos do TSE."):
+      "Fonte oficial ainda não configurada no servidor.";
     el.status.textContent=state.error?details+" · "+state.error:details;
   }
   button.addEventListener("click",()=>{
