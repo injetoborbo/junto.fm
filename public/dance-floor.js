@@ -20,6 +20,27 @@ const choices=[...document.querySelectorAll("[data-jf-dance]")];
  const devAllowed=["localhost","127.0.0.1","[::1]"].includes(location.hostname)
    ||new URLSearchParams(location.search).get("jfDev")==="1";
  let devZoom=1,devUseNewModel=false,devTestOutfit=true,devShowSkeleton=false,devRigReady=false;
+ // Em producao, o novo macaco so assume a pista se o GLB estiver publicado.
+ // Sem o arquivo, o macaco atual continua funcionando normalmente.
+ let publicRigReady=false,publicRigAttempted=false;
+ async function activatePublishedMacaco2(expectedSequence){
+   if(publicRigAttempted)return;
+   publicRigAttempted=true;
+   const path="/models/magago_junto_rig_teste.glb";
+   try{
+     const check=await fetch(path,{method:"HEAD",cache:"no-store"});
+     const bytes=Number(check.headers.get("content-length")||0);
+     const type=check.headers.get("content-type")||"";
+     if(!check.ok||bytes<50000||/text\/html/i.test(type))return;
+     await setDanceAvatarTestModel(path);
+     publicRigReady=true;devRigReady=true;
+     if(active&&expectedSequence===sequence)
+       for(const id of [...people.keys()])refreshDancer(id);
+     console.info("The Símios: Macaco 2.0 ativo automaticamente; GLB publicado.");
+   }catch(error){
+     console.warn("The Símios: Macaco 2.0 nao disponivel, mantendo macaco original.",error);
+   }
+ }
  let devStatus=null;
  function attachDevSkeleton(entry){
    if(!active||!scene||!entry.rig||entry.devSkeleton)return;
@@ -1041,7 +1062,7 @@ async function putMember(id,details){
   try{
     const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{
       local:id===socket.id,
-      experimental:id===socket.id&&devUseNewModel,
+      experimental:publicRigReady||(id===socket.id&&devUseNewModel),
       testOutfit:devTestOutfit
     });
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
@@ -1050,8 +1071,8 @@ async function putMember(id,details){
     entry.experimentalRig=Boolean(avatar.experimentalUsed);
     if(entry.experimentalRig)prepareExperimentalSeat(entry);
     if(entry.experimentalRig){
-      console.info("The Símios: testando novo rig apenas no avatar local.");
-      if(devShowSkeleton)attachDevSkeleton(entry);
+      console.info("The Símios: novo rig",publicRigReady?"publicado":"experimental",id);
+      if(devShowSkeleton&&id===socket.id)attachDevSkeleton(entry);
     }
     // O GLTFLoader normaliza "mixamorig:Head" para "mixamorigHead".
     // Comparar sempre nomes normalizados, assim como no retarget das danças.
@@ -1418,6 +1439,7 @@ function open(){
   if(active)return;
   active=true;sequence++;people.clear();
   void sittingPose();
+  void activatePublishedMacaco2(sequence);
   // A animacao de beber usa os ossos do avatar sem aplicar quaternions do FBX externo.
   modal.hidden=false;
   if(openButton)openButton.hidden=true;
