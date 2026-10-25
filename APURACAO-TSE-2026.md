@@ -1,26 +1,34 @@
 # Apuração oficial TSE — integração temporária 2026
 
-**Objetivo:** exibir os totais **oficiais de votos** para Lula e Flávio Bolsonaro, quando ambos existirem no JSON de apuração presidencial do TSE, com atualização a cada 30 segundos.
+**Objetivo:** exibir os totais **oficiais de votos** para Lula e Flávio Bolsonaro, quando ambos forem informados no documento oficial de apuração presidencial do TSE, com atualização a cada 30 segundos.
 
 **NÃO é uma enquete** e não permite votar. O site nunca inventa totais: enquanto o feed oficial não for encontrado ou não fornecer dados compatíveis, mostra “Aguardando dados oficiais”.
 
-## Configuração necessária
+## Fonte fornecida pelo criador (já configurada nesta branch)
 
-Definir em Render (ou .env local) a variável:
+A URL indicada pelo criador é:
 
-```dotenv
-TSE_2026_PRESIDENT_RESULT_URL=URL_JSON_OFICIAL_DA_APURACAO_PRESIDENCIAL_NACIONAL_TSE_2026
+```text
+https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.jws?nocache=1792912903306
 ```
 
-A URL precisa vir de uma fonte verificável do TSE no domínio `resultados.tse.jus.br`, com caminho de apuração da eleição presidencial **2026**, abrangência **br**, cargo **c0001**, terminando em `-v.json`. O código confere o ID da eleição no diretório e no nome do arquivo. Não é possível obter esse ID confiavelmente sem consultar a publicação oficial; não foi inventado aqui.
+O servidor usa como **padrão** a mesma URL sem o `nocache` fixo e adiciona um novo valor a cada requisição (a cada 30 segundos). Não é necessário cadastrar a URL no Render, desde que a branch esteja implantada.
 
-**Como encontrar a URL correta:** abra a página oficial [Resultados do TSE](https://resultados.tse.jus.br/) enquanto a apuração estiver sendo divulgada, selecione Presidente — Brasil — 2º turno, abra DevTools > Network e procure o arquivo `br-c0001-e...-v.json`. Confirme domínio e valores antes de configurar a variável no Render. Cuidado com URLs copiadas de sites de terceiros.
+**Atenção:** `-u.jws` é um documento JWS (envelope assinado), e não o `-v.json` que era esperado originalmente. O leitor agora aceita JWS compact e JSON serialization, decodifica o conteúdo recebido por HTTPS e **só mostra números quando o payload efetivamente contiver a estrutura de votos nacionais (`cand`) com Lula 13 e Flávio 22**. O link não foi consultado ao vivo neste ambiente e não é possível afirmar daqui se `-u.jws` traz essa estrutura ou apenas metadados de atualização. Se não trouxer votos, a interface mostra um erro e mantém o último resultado válido; nesse caso precisamos de outra requisição real da aba Network com `cand` e `vap`.
 
-Após configurar, inicie/reinicie o servidor. Verifique `/api/official-election-2026`. Os campos `configured` e `result` devem mostrar `true` e dados válidos. Se `result` vier `null`, não publique como apuração ativa: verifique URL, bloqueios de acesso e os nomes dos candidatos.
+O parser do JWS **ainda não realiza verificação criptográfica independente da assinatura** com uma chave pública do TSE. A origem é protegida por HTTPS e validada por hostname/caminho; para auditoria criptográfica completa, obter e configurar a chave pública oficial do TSE. Não confundir ausência dessa checagem independente com validação da assinatura.
+
+Pode-se substituir a URL padrão, caso o TSE divulgue outro feed validado, pela variável opcional:
+
+```dotenv
+TSE_2026_PRESIDENT_RESULT_URL=https://resultados.tse.jus.br/oficial/ele2026/6258/dados/br/br-c0001-e006258-u.jws
+```
+
+Depois de publicar a branch em um ambiente de teste, abra `/api/official-election-2026`. Confira `configured: true`, `lastSuccessAt` e `result`. **`configured: true` significa URL aceita, não dados confirmados.** Somente `result` com `lula.votes` e `flavio.votes` indica que a resposta foi interpretada como total de votos.
 
 ## Funcionamento
 
-- `official-election-results-2026.js` faz `fetch` pelo servidor a cada 30 segundos, com HTTPS, timeout 8s, checagem de host/caminho, abrangência nacional e números inteiros.
+- `official-election-results-2026.js` faz `fetch` pelo servidor a cada 30 segundos, com HTTPS, timeout 8s, checagem de host/caminho, suporte a JWS/JSON, abrangência nacional e números inteiros.
 - `public/official-election-results.js` mostra estrela vermelha acima do tomate e lê `/api/official-election-2026` e eventos Socket.IO `jf-election-official-update`.
 - Os números são exibidos **apenas** quando o TSE retornar candidatos cujos nomes e números coincidam com Lula (13) e Flávio (22). Se a lista de candidatos for diferente, a tela não mostra totais inventados.
 - Não prevê vencedor; não transforma votos parciais em vitória.
@@ -36,4 +44,4 @@ Este PR está isolado da branch Macaco 2.0. Se ainda não tiver merge, feche o P
 
 ## Testes
 
-Verificar a configuração, candidate matching, atualização, fallback sem dados, celular/desktop, expiração e tema. A fonte/endpoint da eleição de 2026 não foi verificada ao vivo no ambiente de desenvolvimento; o URL oficial precisa ser confirmado antes do uso público.
+Verificar a configuração, candidate matching, atualização, fallback sem dados, celular/desktop, expiração e tema. A URL foi fornecida pelo criador e passa pela validação estrutural de domínio/caminho, mas não houve leitura ao vivo do payload. Antes de publicar, validar se o arquivo realmente contém votos (não apenas atualizações) e executar teste funcional no navegador.
