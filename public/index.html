@@ -809,10 +809,10 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 #jfCommunityPollModal .jf-poll-candidate{display:flex;align-items:center;gap:12px;min-width:0}
 #jfCommunityPollModal .jf-poll-head{
   width:76px;height:80px;flex:0 0 76px;display:grid;place-items:center;
-  transform-origin:50% 85%;animation:jfPollHeadBob 1.55s steps(5,end) infinite;
+  transform-origin:50% 83%;animation:jfPollHeadIdle 2.35s steps(1,end) infinite;
   filter:drop-shadow(0 5px 2px #0008)
 }
-#jfCommunityPollModal .jf-poll-head.flavio{animation-delay:-.7s;animation-duration:1.75s}
+#jfCommunityPollModal .jf-poll-head.flavio{animation-delay:-1.12s;animation-duration:2.7s}
 #jfCommunityPollModal .jf-poll-head img{
   display:block;max-height:100%;max-width:100%;width:100%;height:100%;
   object-fit:contain;object-position:center bottom;user-select:none;pointer-events:none
@@ -837,15 +837,17 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 #jfCommunityPollModal.jf-poll-collapsed .jf-poll-title h3{font-size:13px}
 #jfCommunityPollModal.jf-poll-collapsed .jf-poll-details{display:none}
 #jfCommunityPollModal.jf-poll-collapsed .jf-poll-miniscore{display:block}
-/* Referencia Hotline Miami: cabeças oscilam rapidamente no proprio eixo,
-   sem parecer que o retrato todo está flutuando pela tela. */
-@keyframes jfPollHeadBob{
-  0%,100%{transform:translateY(0) rotate(-3deg) scaleX(1)}
-  14%{transform:translateY(1px) rotate(-2deg) scaleX(1.012)}
-  29%{transform:translateY(0) rotate(1deg) scaleX(.99)}
-  45%{transform:translateY(1px) rotate(3deg) scaleX(1.012)}
-  60%{transform:translateY(0) rotate(1deg) scaleX(.99)}
-  78%{transform:translateY(1px) rotate(-2deg) scaleX(1)}
+/* Referencia do video: sprite quase fixo com microdeslocamentos discretos.
+   Uma PNG unica nao contem frames separados de piscar/expressao. */
+@keyframes jfPollHeadIdle{
+  0%,12%,100%{transform:translate(0,0)}
+  13%,26%{transform:translate(0,1px)}
+  27%,38%{transform:translate(-1px,1px)}
+  39%,50%{transform:translate(0,0)}
+  51%,63%{transform:translate(1px,0)}
+  64%,79%{transform:translate(0,1px)}
+  80%,94%{transform:translate(0,0)}
+  95%,99%{transform:translate(-1px,0)}
 }
 #jfCommunityPollModal .jf-poll-title{
   cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
