@@ -31,6 +31,18 @@ function ensureBaseModel(){
   });
   return baseLoadPromise;
 }
+// Rig experimental: acessivel apenas para o avatar local da pista.
+let testDanceModel=null;
+export async function setDanceAvatarTestModel(url){
+  if(!url){testDanceModel=null;return false;}
+  const gltf=await new GLTFLoader().loadAsync(url);
+  let skinned=0,bones=0;
+  gltf.scene.traverse(node=>{if(node.isSkinnedMesh)skinned++;if(node.isBone)bones++;});
+  if(!skinned||bones<15)throw new Error("Este GLB não possui rig/skinning completo.");
+  testDanceModel=gltf;
+  console.info("The Símios: Macaco 2.0 carregado:",skinned,"malha(s) com skin,",bones,"ossos");
+  return true;
+}
 let previewRenderer=null;
 let previewYaw=-.18;
 // Todas as roupas são GLBs ajustados ao corpo original do macaco.
@@ -1131,7 +1143,8 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   if(!base)await ensureBaseModel();
   if(!base)throw Error("Modelo macaco.glb indisponível.");
   const root=new THREE.Group();
-  const monkey=cloneSkeleton(base.scene);
+  const experimentalUsed=Boolean(options.experimental&&testDanceModel?.scene);
+  const monkey=cloneSkeleton(experimentalUsed?testDanceModel.scene:base.scene);
   const bounds=new THREE.Box3().setFromObject(monkey);
   const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   const scale=1.50/Math.max(size.x,size.y,size.z,.0001);
@@ -1139,7 +1152,9 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   monkey.position.copy(center).multiplyScalar(-scale);
   root.add(monkey);
   let stillActive=true;
-  const disposeClothes=dress(root,sanitize(outfit),requestRender,monkey,{animated:true,privateFit:Boolean(options.local&&fitAccess)});
+  // Os trajes antigos têm encaixes próprios do macaco original.
+  const experimentalOutfit=experimentalUsed&&!options.testOutfit?{}:outfit;
+  const disposeClothes=dress(root,sanitize(experimentalOutfit),requestRender,monkey,{animated:true,privateFit:Boolean(options.local&&fitAccess)});
   if(skin==="capitao-patria"){
     const asset=await getAsset("hero");
     if(asset&&stillActive){
@@ -1160,6 +1175,6 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
       });
     }
   }
-  return {group:root,rig:monkey,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
+  return {group:root,rig:monkey,experimentalUsed,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }
 
