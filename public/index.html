@@ -871,6 +871,16 @@ body.jf-in-room #jfAdminEntry{display:none!important}
   #jfCommunityPollModal .jf-community-poll-card{max-height:min(72dvh,640px);padding:13px}
   #jfCommunityPollModal .jf-poll-head{width:58px;height:64px;flex-basis:58px}
   #jfCommunityPollModal .jf-poll-sprite-fallback{width:54px;height:58px}
+  /* O placar TSE pode ficar aberto; o chat da sala sobrepoe o placar
+     no celular sem mudar suas dimensoes ou a posicao arrastada. */
+  body:has(#jfCommunityPollModal:not([hidden])) #jfChatLauncher{
+    z-index:10191!important;
+  }
+  body:has(#jfCommunityPollModal:not([hidden])) #jfChatWindow:not([hidden]){
+    position:fixed!important;
+    z-index:10192!important;
+    isolation:isolate;
+  }
 }
 @media(prefers-reduced-motion:reduce){
   #jfCommunityPollModal .jf-poll-head{animation:none!important}
