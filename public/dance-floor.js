@@ -2,7 +2,7 @@
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
-import {createDanceAvatar} from "./wardrobe.js";
+import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
 const socket=bridge?.socket;
@@ -200,6 +200,13 @@ function buildAnimationAction(member,style){
     // clavícula; ignorar quadril, coluna, pernas e pescoço para não deformar o macaco.
     if(style==="drinking"&&!["rightshoulder","rightarm","rightforearm","righthand"].includes(key))continue;
     const rest=member.restBones?.get(target.uuid)||target.quaternion.clone();
+    // AccuRig e Mixamo usam eixos locais distintos. Converter a variação
+    // de rotação pelo referencial mundial de repouso de cada osso.
+    const sourceWorld=source.getWorldQuaternion(new THREE.Quaternion());
+    const targetWorld=member.restWorldBones?.get(target.uuid)
+      ||target.getWorldQuaternion(new THREE.Quaternion());
+    const sourceToTarget=targetWorld.clone().invert().multiply(sourceWorld);
+    const targetToSource=sourceToTarget.clone().invert();
     // FBX muitas vezes armazena o repouso no primeiro keyframe, não no
     // quaternion do objeto. Aplicar variação relativa ao primeiro quadro.
     const sourceBaseline=new THREE.Quaternion();
@@ -211,6 +218,9 @@ function buildAnimationAction(member,style){
       sample.fromArray(track.values,i);
       // Em repouso, a rotação resultante deve ser exatamente a pose do macaco.
       corrected.copy(invSourceRest).multiply(sample);
+      if(member.experimentalRig){
+        corrected.premultiply(sourceToTarget).multiply(targetToSource);
+      }
       if(style==="drinking"){
         // Impedir giros completos nas juntas ao adaptar Mixamo ao avatar menor.
         const identity=new THREE.Quaternion();
@@ -786,10 +796,19 @@ async function putMember(id,details){
   const entry={data:{...details},root:null,rig:null,dispose:null,name:null};
   people.set(id,entry);
   try{
-    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{local:id===socket.id});
+    const avatar=await createDanceAvatar(profile.wardrobe,"default",()=>{},{
+      local:id===socket.id,
+      experimental:id===socket.id&&devUseNewModel,
+      testOutfit:devTestOutfit
+    });
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
+    entry.experimentalRig=Boolean(avatar.experimentalUsed);
+    if(entry.experimentalRig){
+      console.info("The Símios: testando novo rig apenas no avatar local.");
+      if(devShowSkeleton)attachDevSkeleton(entry);
+    }
     // O GLTFLoader normaliza "mixamorig:Head" para "mixamorigHead".
     // Comparar sempre nomes normalizados, assim como no retarget das danças.
     const drinkBones=new Map();
@@ -834,11 +853,14 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
     // Ajuste fino do slider fica apenas no nosso avatar; os demais usam o padrão salvo.
     if(id===socket.id)entry.setSeatGlassesCalibration?.(PUBLISHED_SEAT_GLASSES_FIT);
     entry.restBones=new Map();
+    entry.restWorldBones=new Map();
     entry.animationBones=[];
+    entry.rig.updateMatrixWorld(true);
     entry.rig.traverse(obj=>{
       if(!obj.isBone)return;
       entry.animationBones.push(obj);
       entry.restBones.set(obj.uuid,obj.quaternion.clone());
+      entry.restWorldBones.set(obj.uuid,obj.getWorldQuaternion(new THREE.Quaternion()));
       // Memorizar a pose natural ANTES da primeira animacao.
       // Se a pessoa sentar antes de dancar, nao capturar a pose deformada
       // como repouso ao se levantar da cadeira.
@@ -846,6 +868,9 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
     });
     sittingPose().then(pose=>{
       if(!pose||!active||people.get(id)!==entry)return;
+      // No rig novo, evitar aplicar curvas FBX no eixo de descanso antigo.
+      // A cadeira continua funcional; movimento sentado requer retarget específico.
+      if(entry.experimentalRig){entry.sitDuration=0;return;}
       entry.sitRotations=new Map();
       entry.sitTracks=new Map();
       entry.sitDuration=pose.duration;
@@ -902,6 +927,7 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
 function removeMember(id){
   const member=people.get(id);if(!member)return;
   clearDanceSpeech(member);
+  member.devSkeleton?.parent?.remove(member.devSkeleton);
   member.mixer?.stopAllAction();
   member.mixer?.uncacheRoot(member.rig);
   member.dispose?.();
