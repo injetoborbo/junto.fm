@@ -809,10 +809,10 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 #jfCommunityPollModal .jf-poll-candidate{display:flex;align-items:center;gap:12px;min-width:0}
 #jfCommunityPollModal .jf-poll-head{
   width:76px;height:80px;flex:0 0 76px;display:grid;place-items:center;
-  transform-origin:50% 88%;animation:jfPollHeadBob 2.4s ease-in-out infinite;
+  transform-origin:50% 85%;animation:jfPollHeadBob 1.55s steps(5,end) infinite;
   filter:drop-shadow(0 5px 2px #0008)
 }
-#jfCommunityPollModal .jf-poll-head.flavio{animation-delay:-1.2s;animation-duration:2.7s}
+#jfCommunityPollModal .jf-poll-head.flavio{animation-delay:-.7s;animation-duration:1.75s}
 #jfCommunityPollModal .jf-poll-head img{
   display:block;max-height:100%;max-width:100%;width:100%;height:100%;
   object-fit:contain;object-position:center bottom;user-select:none;pointer-events:none
@@ -837,12 +837,22 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 #jfCommunityPollModal.jf-poll-collapsed .jf-poll-title h3{font-size:13px}
 #jfCommunityPollModal.jf-poll-collapsed .jf-poll-details{display:none}
 #jfCommunityPollModal.jf-poll-collapsed .jf-poll-miniscore{display:block}
+/* Referencia Hotline Miami: cabeças oscilam rapidamente no proprio eixo,
+   sem parecer que o retrato todo está flutuando pela tela. */
 @keyframes jfPollHeadBob{
-  0%,100%{transform:translateY(1px) rotate(-3deg)}
-  25%{transform:translateY(-3px) rotate(1deg)}
-  55%{transform:translateY(-5px) rotate(3deg)}
-  80%{transform:translateY(-1px) rotate(-1deg)}
+  0%,100%{transform:translateY(0) rotate(-3deg) scaleX(1)}
+  14%{transform:translateY(1px) rotate(-2deg) scaleX(1.012)}
+  29%{transform:translateY(0) rotate(1deg) scaleX(.99)}
+  45%{transform:translateY(1px) rotate(3deg) scaleX(1.012)}
+  60%{transform:translateY(0) rotate(1deg) scaleX(.99)}
+  78%{transform:translateY(1px) rotate(-2deg) scaleX(1)}
 }
+#jfCommunityPollModal .jf-poll-title{
+  cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+}
+#jfCommunityPollModal .jf-poll-title.jf-poll-dragging{cursor:grabbing}
+#jfCommunityPollModal .jf-poll-header-actions button{cursor:pointer;touch-action:manipulation}
+#jfCommunityPollModal .jf-poll-head img{image-rendering:pixelated}
 @media(max-width:760px){
   #jfMobileFunBar .jf-poll-tomato-stack{flex:0 0 52px;min-width:52px;width:52px;min-height:52px}
   body.jf-in-room #jfMobileFunBar .jf-poll-tomato-stack #jfClubTomato.jf-tomato-launcher{
