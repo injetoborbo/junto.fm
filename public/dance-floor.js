@@ -176,30 +176,28 @@ const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(
 // O FBX fica fora do GitHub ate instalar o pacote de teste em public/poses.
 // A pose anterior e mantida como fallback para nao quebrar o deploy.
 const seatedFBXLoader=new FBXLoader();
-let sittingPosePromise=null;
-function sittingPose(){
-  if(!sittingPosePromise)sittingPosePromise=(async()=>{
+let sittingPosePromise=null,originalSittingPosePromise=null;
+function sittingPose(requireOriginal=false){
+  const previous=requireOriginal?originalSittingPosePromise:sittingPosePromise;
+  if(previous)return previous;
+  const task=(async()=>{
     let source;
-    try{
-      // sentadotryfix: FBX somente de esqueleto, 49 nós Mixamo e 64 quadros.
-      // Mesma hierarquia do arquivo original, sem malha/câmera extra.
-      const scene=await seatedFBXLoader.loadAsync("/poses/sentadotryfix.fbx");
-      source={scene,animations:scene.animations,filename:"sentadotryfix.fbx"};
-    }catch(error){
-      console.warn("Nova animação sentadotryfix indisponível; tentando versões anteriores.");
+    // O rig novo carrega SOMENTE o FBX original; o antigo mantém seu fallback.
+    const files=requireOriginal?["sentadobalanca.fbx"]
+      :["sentadotryfix.fbx","sentadobalanca.fbx","sitting-idle.glb"];
+    for(const filename of files){
       try{
-        const scene=await seatedFBXLoader.loadAsync("/poses/sentadobalanca.fbx");
-        source={scene,animations:scene.animations,filename:"sentadobalanca.fbx"};
-      }catch(previousError){
-        try{
-          const gltf=await gltfLoader.loadAsync("/poses/sitting-idle.glb");
-          source={scene:gltf.scene,animations:gltf.animations,filename:"sitting-idle.glb"};
-        }catch(fallbackError){
-          console.warn("Nenhuma animação sentada disponível.",fallbackError);
-          return null;
+        if(filename.endsWith(".fbx")){
+          const scene=await seatedFBXLoader.loadAsync("/poses/"+filename);
+          source={scene,animations:scene.animations,filename};
+        }else{
+          const gltf=await gltfLoader.loadAsync("/poses/"+filename);
+          source={scene:gltf.scene,animations:gltf.animations,filename};
         }
-      }
+        break;
+      }catch(error){console.warn("Pose sentada indisponivel:",filename,error);}
     }
+    if(!source)return null;
     const clips=source.animations||[];
     // O FBX do Mixamo contem DUAS tomadas: RootNode|mixamo.com
     // (transforms estaticos) e mixamo.com (64 quadros de movimento).
@@ -291,7 +289,9 @@ function sittingPose(){
       duration:clip.duration,filename:source.filename
     }:null;
   })();
-  return sittingPosePromise;
+  if(requireOriginal)originalSittingPosePromise=task;
+  else sittingPosePromise=task;
+  return task;
 }
 function loadClip(style){
   if(!animationFiles[style])return Promise.resolve(null);
@@ -651,6 +651,41 @@ function pointBoneAt(joint,hand,target,strength){
      }
    }
  }
+// Curvas e tempos originais de sentadobalanca.fbx, com transformacao apenas
+// dos eixos de descanso para o AccuRig (não é uma dança recriada por seno).
+function buildAccuRigSittingTracks(entry,pose){
+  const tracks=new Map();
+  for(const bone of entry.animationBones||[]){
+    const key=boneKey(bone.name),source=pose.sourceWorldBones?.get(key);
+    const sampleTrack=pose.animatedTracks?.get(key);
+    const rest=entry.restBones?.get(bone.uuid);
+    const targetWorld=entry.restWorldBones?.get(bone.uuid);
+    if(!source||!sampleTrack?.interpolant||!rest||!targetWorld)continue;
+    const alignment=targetWorld.clone().invert().multiply(source.worldRest);
+    tracks.set(bone.uuid,{
+      bone,rest:rest.clone(),interpolant:sampleTrack.interpolant,
+      invSource:source.localRest.clone().invert(),
+      alignment,unalign:alignment.clone().invert()
+    });
+  }
+  console.info("The Símios: sentadobalanca.fbx real",tracks.size,"ossos",pose.duration,"s");
+  return tracks.size?{duration:pose.duration,tracks}:null;
+}
+function applyAccuRigSitting(entry,elapsed){
+  const animation=entry.experimentalSit;
+  if(!animation?.tracks?.size)return false;
+  const t=elapsed%Math.max(.1,animation.duration);
+  const sampled=new THREE.Quaternion(),delta=new THREE.Quaternion();
+  for(const track of animation.tracks.values()){
+    const v=track.interpolant.evaluate(t);
+    if(!v||v.length!==4)continue;
+    sampled.fromArray(v);
+    delta.copy(track.invSource).multiply(sampled);
+    track.bone.quaternion.copy(track.rest).multiply(track.alignment)
+      .multiply(delta).multiply(track.unalign).normalize();
+  }
+  return true;
+}
 function poseDrinking(member,elapsed,remaining){
   if(!member.drinkHand||!member.drinkForearm||!member.drinkUpperArm||!member.headBone)return;
   const p=Math.max(0,Math.min(1,elapsed/2900));
@@ -1076,11 +1111,12 @@ entry.updateAccessories=avatar.updateAccessories;entry.setSeatGlassesCalibration
       // como repouso ao se levantar da cadeira.
       obj.userData.jfDanceRest=[obj.rotation.x,obj.rotation.y,obj.rotation.z];
     });
-    sittingPose().then(pose=>{
+    sittingPose(entry.experimentalRig).then(pose=>{
       if(!pose||!active||people.get(id)!==entry)return;
-      // No rig novo, evitar aplicar curvas FBX no eixo de descanso antigo.
-      // A cadeira continua funcional; movimento sentado requer retarget específico.
-      if(entry.experimentalRig){entry.sitDuration=0;return;}
+      if(entry.experimentalRig){
+        entry.experimentalSit=buildAccuRigSittingTracks(entry,pose);
+        return;
+      }
       entry.sitRotations=new Map();
       entry.sitTracks=new Map();
       entry.sitDuration=pose.duration;
@@ -1263,6 +1299,11 @@ function animate(now=performance.now()){
       const seatedTime=p.sitDuration>0?
         ((time%p.sitDuration)+p.sitDuration)%p.sitDuration:0;
       for(const obj of p.animationBones||[]){
+        if(p.experimentalRig&&d.seated&&!walking){
+          const rest=p.restBones?.get(obj.uuid);
+          if(rest)obj.quaternion.copy(rest);
+          continue;
+        }
         // Retarget Mixamo nao garante os MESMOS eixos de ombro e cotovelo.
         // Nesta versao de teste, preserve inteiramente o bind pose dos
         // bracos/maos e da cabeca durante a animacao sentada. Assim nao ha
@@ -1339,7 +1380,8 @@ function animate(now=performance.now()){
     if(p.experimentalRig){
       if(d.seated&&!walking&&!p.action){
         p.sitSwingElapsed=(p.sitSwingElapsed||0)+Math.min(dt,.05);
-        poseExperimentalSitting(p,p.sitSwingElapsed);
+        if(!applyAccuRigSitting(p,p.sitSwingElapsed))
+          poseExperimentalSitting(p,p.sitSwingElapsed);
       }else p.sitSwingElapsed=0;
     }
     if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()),d.drinkingUntil-Date.now());
