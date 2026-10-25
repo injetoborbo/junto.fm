@@ -2,7 +2,7 @@
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
-import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js";
+import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js";
 
 const bridge=window.jfDanceBridge;
 const socket=bridge?.socket;
@@ -19,7 +19,7 @@ const choices=[...document.querySelectorAll("[data-jf-dance]")];
  // Nunca altera o modelo dos outros participantes.
  const devAllowed=["localhost","127.0.0.1","[::1]"].includes(location.hostname)
    ||new URLSearchParams(location.search).get("jfDev")==="1";
- let devZoom=1,devUseNewModel=false,devTestOutfit=false,devShowSkeleton=false,devRigReady=false;
+ let devZoom=1,devUseNewModel=false,devTestOutfit=true,devShowSkeleton=false,devRigReady=false;
  let devStatus=null;
  function attachDevSkeleton(entry){
    if(!active||!scene||!entry.rig||entry.devSkeleton)return;
@@ -50,7 +50,14 @@ const choices=[...document.querySelectorAll("[data-jf-dance]")];
        <label>GLB experimental <input data-dev="file" type="file" accept=".glb,model/gltf-binary" style="width:100%"></label>
        <button data-dev="project-model" type="button">Carregar GLB do projeto</button>
        <label><input data-dev="model" type="checkbox"> Usar Macaco 2.0 (só meu avatar)</label>
-       <label><input data-dev="outfit" type="checkbox"> Testar roupas antigas (não calibradas)</label>
+       <label><input data-dev="outfit" type="checkbox" checked> Exibir roupas do meu macaco</label>
+       <details><summary style="cursor:pointer">👕 Ajustar roupas e acessórios</summary>
+         <div data-dev="fit-controls" style="display:grid;gap:7px;padding:6px 0"></div>
+         <button data-dev="fit-reset" type="button">Restaurar encaixes</button>
+       </details>
+       <label>Altura do macaco sentado
+         <input data-dev="seat-height" type="range" min="-.35" max=".35" value="0" step=".01" style="width:100%">
+         <output data-dev="seat-height-val">0.00</output></label>
        <label><input data-dev="bones" type="checkbox"> Mostrar esqueleto</label>
        <button data-dev="inspect" type="button">Inspecionar ossos (F12)</button>
        <div data-dev="status" role="status" style="font-size:11px;color:#c5f3ff">Escolha o GLB para começar.</div>
@@ -89,6 +96,42 @@ const choices=[...document.querySelectorAll("[data-jf-dance]")];
      refreshOwn();
    });
    get("outfit").addEventListener("change",e=>{devTestOutfit=e.target.checked;refreshOwn();});
+   const fitContainer=get("fit-controls");
+   const fitSliders=[];
+   const createFitControl=(region,axis)=>{
+     const isScale=axis==="scale",label=document.createElement("label");
+     label.style.cssText="display:grid;gap:3px";
+     label.textContent=(region==="head"?"Cabeça / chapéus":"Tronco / roupas")+" · "+(isScale?"Tamanho":axis.toUpperCase());
+     const input=document.createElement("input");
+     input.type="range";input.min=isScale?".6":"-.4";input.max=isScale?"1.4":".4";input.step=".01";input.style.width="100%";
+     const output=document.createElement("output");
+     const read=()=>{
+       const fit=getDanceAvatarTestFit()[region];
+       return isScale?fit.scale:fit.offset[["x","y","z"].indexOf(axis)];
+     };
+     const draw=()=>{input.value=String(read());output.textContent=Number(input.value).toFixed(2);};
+     input.addEventListener("input",()=>{output.textContent=Number(input.value).toFixed(2);});
+     input.addEventListener("change",()=>{
+       const fit=getDanceAvatarTestFit();
+       if(isScale)fit[region].scale=Number(input.value);
+       else fit[region].offset[["x","y","z"].indexOf(axis)]=Number(input.value);
+       setDanceAvatarTestFit(fit);
+       if(devTestOutfit&&devUseNewModel)refreshOwn();
+       devNotice("Encaixe "+region+" ajustado: "+axis+" = "+input.value);
+     });
+     label.append(input,output);fitContainer.appendChild(label);fitSliders.push(draw);draw();
+   };
+   for(const region of ["head","torso"])for(const axis of ["x","y","z","scale"])createFitControl(region,axis);
+   get("fit-reset").addEventListener("click",()=>{
+     setDanceAvatarTestFit({head:{offset:[0,-.14,0],scale:.94},torso:{offset:[0,-.02,0],scale:.94}});
+     fitSliders.forEach(draw=>draw());
+     if(devUseNewModel&&devTestOutfit)refreshOwn();
+     devNotice("Encaixes restaurados.");
+   });
+   get("seat-height").addEventListener("input",e=>{
+     devSeatHeightOffset=Number(e.target.value)||0;
+     get("seat-height-val").textContent=devSeatHeightOffset.toFixed(2);
+   });
    get("bones").addEventListener("change",e=>{devShowSkeleton=e.target.checked;applyDevSkeletons();});
    get("inspect").addEventListener("click",()=>{
      const entry=people.get(socket?.id);
