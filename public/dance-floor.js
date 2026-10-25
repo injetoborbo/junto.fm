@@ -532,6 +532,73 @@ function pointBoneAt(joint,hand,target,strength){
   const parent=joint.parent.getWorldQuaternion(new THREE.Quaternion());
   joint.quaternion.copy(parent.invert().multiply(q.multiply(world))).normalize();
 }
+// Rig AccuRig: pose sentada baseada na geometria dos PRÓPRIOS ossos.
+ // Direciona os segmentos no espaço mundial sem aplicar quaternions Mixamo.
+ let devSeatHeightOffset=0;
+ function pointSegmentAt(joint,child,target){
+   if(!joint||!child)return;
+   joint.updateWorldMatrix(true,true);
+   const pivot=joint.getWorldPosition(new THREE.Vector3());
+   const from=child.getWorldPosition(new THREE.Vector3()).sub(pivot);
+   const toward=target.clone().sub(pivot);
+   if(from.lengthSq()<1e-8||toward.lengthSq()<1e-8)return;
+   const rotation=new THREE.Quaternion().setFromUnitVectors(from.normalize(),toward.normalize());
+   const world=joint.getWorldQuaternion(new THREE.Quaternion());
+   const parent=joint.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+   joint.quaternion.copy(parent.multiply(rotation.multiply(world))).normalize();
+   joint.updateWorldMatrix(true,true);
+ }
+ function prepareExperimentalSeat(entry){
+   const bones=new Map();
+   entry.rig.traverse(obj=>{if(obj.isBone)bones.set(boneKey(obj.name),obj);});
+   const leg=side=>({
+     hip:bones.get(side+"upleg"),knee:bones.get(side+"leg"),foot:bones.get(side+"foot"),
+     shoulder:bones.get(side+"arm"),elbow:bones.get(side+"forearm"),hand:bones.get(side+"hand")
+   });
+   entry.experimentalSeat={left:leg("left"),right:leg("right")};
+   for(const side of ["left","right"]){
+     const parts=entry.experimentalSeat[side];
+     if(!parts.hip||!parts.knee||!parts.foot)console.warn("The Símios: ossos da pose sentada ausentes:",side,parts);
+   }
+ }
+ function poseExperimentalSitting(entry){
+   const parts=entry.experimentalSeat;if(!parts)return;
+   entry.root.updateMatrixWorld(true);
+   const rotation=entry.root.getWorldQuaternion(new THREE.Quaternion());
+   const forward=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
+   const sideways=new THREE.Vector3(1,0,0).applyQuaternion(rotation);
+   const down=new THREE.Vector3(0,-1,0);
+   for(const [side,sign] of [["left",1],["right",-1]]){
+     const leg=parts[side];
+     if(!leg.hip||!leg.knee||!leg.foot)continue;
+     // Coxa para a frente; canela pende na beirada da cadeira.
+     const hip=leg.hip.getWorldPosition(new THREE.Vector3());
+     const length=hip.distanceTo(leg.knee.getWorldPosition(new THREE.Vector3()));
+     const kneeTarget=hip.clone().addScaledVector(forward,length*.94)
+       .addScaledVector(down,length*.25).addScaledVector(sideways,sign*length*.04);
+     pointSegmentAt(leg.hip,leg.knee,kneeTarget);
+     const knee=leg.knee.getWorldPosition(new THREE.Vector3());
+     const shinLength=knee.distanceTo(leg.foot.getWorldPosition(new THREE.Vector3()));
+     const footTarget=knee.clone().addScaledVector(down,shinLength*.97)
+       .addScaledVector(forward,shinLength*.15);
+     pointSegmentAt(leg.knee,leg.foot,footTarget);
+     // Bracos relaxados e maos sobre as coxas.
+     if(leg.shoulder&&leg.elbow&&leg.hand){
+       const shoulder=leg.shoulder.getWorldPosition(new THREE.Vector3());
+       const armLength=shoulder.distanceTo(leg.elbow.getWorldPosition(new THREE.Vector3()));
+       const elbowTarget=shoulder.clone().addScaledVector(down,armLength*.81)
+         .addScaledVector(sideways,sign*armLength*.34)
+         .addScaledVector(forward,armLength*.15);
+       pointSegmentAt(leg.shoulder,leg.elbow,elbowTarget);
+       const elbow=leg.elbow.getWorldPosition(new THREE.Vector3());
+       const foreLength=elbow.distanceTo(leg.hand.getWorldPosition(new THREE.Vector3()));
+       const handTarget=elbow.clone().addScaledVector(forward,foreLength*.68)
+         .addScaledVector(down,foreLength*.28)
+         .addScaledVector(sideways,sign*foreLength*.10);
+       pointSegmentAt(leg.elbow,leg.hand,handTarget);
+     }
+   }
+ }
 function poseDrinking(member,elapsed,remaining){
   if(!member.drinkHand||!member.drinkForearm||!member.drinkUpperArm||!member.headBone)return;
   const p=Math.max(0,Math.min(1,elapsed/2900));
@@ -894,6 +961,7 @@ async function putMember(id,details){
     entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
     entry.experimentalRig=Boolean(avatar.experimentalUsed);
+    if(entry.experimentalRig)prepareExperimentalSeat(entry);
     if(entry.experimentalRig){
       console.info("The Símios: testando novo rig apenas no avatar local.");
       if(devShowSkeleton)attachDevSkeleton(entry);
@@ -1115,7 +1183,7 @@ function animate(now=performance.now()){
     const phase=time*(speeds[style]||2);
     const pulse=Math.sin(phase),bounce=Math.abs(pulse);
     // A pose altera as articulações, não enterra o grupo inteiro no chão.
-    p.root.position.y=(d.seated&&!walking?seatedSettings.y:.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+    p.root.position.y=(d.seated&&!walking?seatedSettings.y+(p.experimentalRig?devSeatHeightOffset:0):.77)+(d.seated?0:walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
 
     p.root.rotation.x=d.seated&&!walking?THREE.MathUtils.degToRad(seatedSettings.lean):0;
     p.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
@@ -1215,6 +1283,7 @@ function animate(now=performance.now()){
         obj.rotation.set(x,y,z);
       }
     }
+    if(p.experimentalRig&&d.seated&&!walking&&!p.action)poseExperimentalSitting(p);
     if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()),d.drinkingUntil-Date.now());
     if(p.heldDrink&&p.drinkHand){
       p.root.updateMatrixWorld(true);
@@ -1234,8 +1303,8 @@ function animate(now=performance.now()){
         p.root.updateMatrixWorld(true);
         const head=p.headBone.getWorldPosition(new THREE.Vector3());
         p.root.worldToLocal(head);
-        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.12,.6+.035*Math.sin(time*2),0));
-      }else p.bananaMarker.position.set(-.12,1.85+.035*Math.sin(time*2),0);
+        p.bananaMarker.position.copy(head).add(new THREE.Vector3(-.12,1.02+.035*Math.sin(time*2),0));
+      }else p.bananaMarker.position.set(-.12,2.25+.035*Math.sin(time*2),0);
       p.bananaMarker.rotation.y=time*.8;
     }
 
