@@ -79,16 +79,35 @@ function parseOfficialPayload(payload){
   if(!payload||typeof payload!=="object"||Array.isArray(payload))return null;
   // carper nao identifica o turno de maneira uniforme entre feeds do TSE;
   // nao descartar uma apuracao legitima baseada apenas nesse campo.
+  // O JWS real 6258 tem o formato carg[Presidente].agr[].par[].cand[].
+  // Nao misturar dados de outro cargo, eleicao, turno ou abrangencia.
+  if(payload.ele!=null&&Number(payload.ele)!==6258)return null;
+  if(payload.cdabr!=null&&keyOf(payload.cdabr)!=="BR")return null;
+  if(payload.tpabr!=null&&keyOf(payload.tpabr)!=="BR")return null;
+  if(payload.t!=null&&String(payload.t)!=="2")return null;
   const national=Array.isArray(payload.abr)?
     payload.abr.find(item=>String(item?.cdabr??item?.abr??"").toLowerCase()==="br"):null;
-  const rows=Array.isArray(payload.cand)?payload.cand:
+  let rows=Array.isArray(payload.cand)?payload.cand:
     Array.isArray(national?.cand)?national.cand:null;
+  if(!rows&&Array.isArray(payload.carg)){
+    const president=payload.carg.filter(cargo=>
+      cargo&&typeof cargo==="object"&&
+      (String(cargo.cd??"")==="1"||keyOf(cargo.nmu??cargo.nmm??cargo.nmf).includes("PRESIDENTE")));
+    rows=president.flatMap(cargo=>(Array.isArray(cargo.agr)?cargo.agr:[])
+      .flatMap(agr=>(Array.isArray(agr?.par)?agr.par:[])
+        .flatMap(par=>Array.isArray(par?.cand)?par.cand:[])));
+  }
   if(!rows||rows.length<2)return null;
-  const find=(number,search)=>rows.find(c=>{
-    if(!c||typeof c!=="object")return false;
-    const name=keyOf(c.nm??c.nome??"");
-    return String(c.n??"")===number&&name.includes(search);
-  });
+  const find=(number,search)=>{
+    const matches=rows.filter(c=>{
+      if(!c||typeof c!=="object")return false;
+      const displayName=keyOf(c.nmu??c.nm??c.nome??"");
+      const fullName=keyOf(c.nm??"");
+      return String(c.n??"")===number&&
+        (displayName.includes(search)||fullName.includes(search));
+    });
+    return matches.length===1?matches[0]:null;
+  };
   const lula=find("13","LULA");
   const flavio=find("22","FLAVIO");
   if(!lula||!flavio)return null;
@@ -101,10 +120,10 @@ function parseOfficialPayload(payload){
   // exatamente dois candidatos, mantendo indicador 'calculado'.
   const both=rows.length===2&&votosLula+votosFlavio>0;
   return {
-    lula:{name:String(lula.nm),votes:votosLula,percent:pctLula??(both?Number((votosLula*100/(votosLula+votosFlavio)).toFixed(2)):null)},
-    flavio:{name:String(flavio.nm),votes:votosFlavio,percent:pctFlavio??(both?Number((votosFlavio*100/(votosLula+votosFlavio)).toFixed(2)):null)},
+    lula:{name:String(lula.nmu??lula.nm),votes:votosLula,percent:pctLula??(both?Number((votosLula*100/(votosLula+votosFlavio)).toFixed(2)):null)},
+    flavio:{name:String(flavio.nmu??flavio.nm),votes:votosFlavio,percent:pctFlavio??(both?Number((votosFlavio*100/(votosLula+votosFlavio)).toFixed(2)):null)},
     percentSource:pctLula!==null&&pctFlavio!==null?"tse":"calculado-segundo-turno",
-    reportedAt:typeof payload.ht==="string"?payload.ht:typeof payload.t==="string"?payload.t:null,
+    reportedAt:typeof payload.ht==="string"?((typeof payload.dt==="string"?payload.dt+" ":"")+payload.ht):null,
     status:typeof payload.tpabr==="string"?payload.tpabr:null,
     apuracao:percentage(payload.pst)
   };
@@ -124,10 +143,11 @@ module.exports=function registerOfficialElection2026(app,io){
   const hasOverride=Boolean(process.env.TSE_2026_PRESIDENT_RESULT_URL?.trim());
   const candidates=prefix?[
     ...(hasOverride&&endpoint&&!endpoint.endsWith("-u.jws")?[endpoint]:[]),
+    // O JWS -u.jws disponibilizado pelo usuario CONTEM os votos aninhados.
+    prefix+"-u.jws",
     simplified,
     prefix+"-v.jws",
-    prefix+"-v.json",
-    prefix+"-u.jws"
+    prefix+"-v.json"
   ]:[];
   const sources=candidates.filter((item,i,items)=>
     items.indexOf(item)===i&&Boolean(validateOfficialUrl(item)));
@@ -178,7 +198,10 @@ module.exports=function registerOfficialElection2026(app,io){
           const parsed=parseOfficialPayload(document);
           if(!parsed){
             const candidates=Array.isArray(document.cand)?document.cand:
-              Array.isArray(document.abr)?document.abr.flatMap(item=>item?.cand||[]):[];
+              Array.isArray(document.abr)?document.abr.flatMap(item=>item?.cand||[]):
+              Array.isArray(document.carg)?document.carg.flatMap(cargo=>
+                (cargo?.agr||[]).flatMap(agr=>(agr?.par||[])
+                  .flatMap(par=>par?.cand||[]))):[];
             // Diagnóstico da ESTRUTURA, não copia o arquivo bruto nem inventa votos.
             const keys=Object.keys(document).slice(0,12)
               .filter(k=>/^[a-zA-Z0-9_]{1,35}$/.test(k));
