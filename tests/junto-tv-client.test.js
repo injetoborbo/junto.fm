@@ -12,11 +12,14 @@ function setup() {
   const pending = [];
   const transmissions = [];
   let youtube = null;
+  const parent={insertBefore(node){node.parentNode=this;},appendChild(node){node.parentNode=this;}};
+  const dialog={appendChild(node){node.parentNode=this;}};
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
+      parentNode:parent,closest(){return dialog;},
       id, hidden:false, disabled:false, value:"", style:{}, title:"",
-      classList:{toggle(){}},querySelectorAll(){return [];},addEventListener(){},
-      appendChild(){},setAttribute(){},focus(){},
+      classList:{values:new Map(),toggle(k,v){this.values.set(k,v);}},querySelectorAll(){return [];},addEventListener(){},
+      appendChild(){},replaceChildren(){},setAttribute(){},focus(){},
       set innerHTML(s){this.html=s;},
       set textContent(s){this.text=s;},
       get textContent(){return this.text;}
@@ -30,6 +33,7 @@ function setup() {
   };
   const document = {
     getElementById:element,
+    createComment:()=>({parentNode:parent}),
     createElement:()=>element("node"+elements.size),
     head:{appendChild(){}},body:{appendChild(){}}
   };
@@ -37,6 +41,7 @@ function setup() {
     let playing=2,seconds=0;
     youtube={
       opts,calls:[],
+      setOption:(...args)=>youtube.calls.push(["option",...args]),
       getPlayerState:()=>playing,
       getCurrentTime:()=>seconds,
       getDuration:()=>120,
@@ -154,4 +159,28 @@ test("Se navegador bloquear autoplay, exibir botão de som sem perder sincroniza
   app.elements.get("jfTvSound").onclick();
   assert.equal(app.elements.get("jfTvSound").hidden,true,"Esconder fallback depois de liberar som");
   assert.ok(app.youtube.calls.slice(-3).some(x=>x[0]==="unmute"),"Tentar unMute após clique");
+});
+
+
+test("Chat permanece no diálogo ao abrir e volta ao pai original ao fechar",()=>{
+ const app=setup();app.room();
+ const chat=app.elements.get("jfChatWindow"), original=chat.parentNode;
+ app.elements.get("jfTvLaunch").onclick();
+ assert.notEqual(chat.parentNode,original);
+ assert.equal(chat.parentNode,app.elements.get("jfTvTitle").closest());
+ app.elements.get("jfTvClose").onclick();assert.equal(chat.parentNode,original);
+});
+test("Selo e launcher acompanham YouTube pausado, play e fim",async()=>{
+ const app=setup();app.room();const base=await app.openYoutube();
+ const badge=app.elements.get("jfTvLiveBadge"),launch=app.elements.get("jfTvLaunch");
+ assert.equal(badge.hidden,true);assert.equal(launch.classList.values.get("jf-tv-live"),false);
+ app.events.get("tv:playback")({...base,playing:true,revision:2});
+ assert.equal(badge.hidden,false);assert.equal(launch.classList.values.get("jf-tv-live"),true);
+ app.events.get("tv:state")(null);assert.equal(badge.hidden,true);
+});
+test("Legendas recebem tentativa de desligamento no ready e na mudança de módulo",async()=>{
+ const app=setup();app.room();await app.openYoutube();
+ assert.ok(app.youtube.calls.some(x=>x[0]==="option"&&x[1]==="captions"&&x[2]==="track"));
+ const before=app.youtube.calls.length;app.youtube.opts.events.onApiChange();
+ assert.equal(app.youtube.calls[before][0],"option");
 });

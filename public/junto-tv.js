@@ -55,6 +55,7 @@
     "#jfTvOverlay .jf-tv-status{padding:9px 10px;background:color-mix(in srgb,var(--jf-primary,#0b1735) 25%,#090d1b);border:1px solid var(--jf-secondary,#445c9a);border-radius:8px;color:#cfdef9;font-size:12px;line-height:1.5}",
     "#jfTvOverlay #jfChatLauncher{z-index:25!important;visibility:visible!important;pointer-events:auto!important}",
     "#jfTvOverlay #jfChatWindow{z-index:24!important;visibility:visible!important;pointer-events:auto!important}",
+    "#jfTvOverlay .jf-tv-live-badge[hidden]{display:none!important}",
     "#jfTvOverlay .jf-tv-live-badge{display:inline-flex;align-items:center;background:#c51f34;color:#fff;border-radius:5px;padding:4px 7px;font:800 11px/1 Tahoma,Arial,sans-serif;letter-spacing:.6px;white-space:nowrap;box-shadow:0 1px 5px #0005}",
     "@media(max-width:540px){#jfTvOverlay{padding:5px}#jfTvOverlay .jf-tv-window{max-height:97dvh;border-radius:9px}#jfTvOverlay .jf-tv-inner{padding:9px;gap:8px}#jfTvOverlay .jf-tv-tabs button{min-width:70px;font-size:11px;padding:8px 4px}#jfTvOverlay .jf-tv-screen{min-height:165px}.jf-tv-dock #jfOpenDance,.jf-tv-dock #jfTvLaunch{font-size:11px}}"
   ].join("\n");
@@ -109,7 +110,6 @@
            '<button type="button" id="jfTvQueueToggle" aria-expanded="false">📋 Abrir fila de vídeos</button>',
            '<div id="jfTvQueueList" hidden></div>',
          '</section>',
-         '<div class="jf-tv-youtube-extras" id="jfTvYoutubeExtras" hidden><button type="button" id="jfTvCaptions" aria-pressed="false">CC: Desligadas</button><span class="jf-tv-note">Legendas só no seu player (quando o vídeo permitir).</span></div>',
          '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
         '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: LiveKit Cloud para tela e arquivos, sem enviar o arquivo ao Render. A música continua independente.</p>',
       '</div>',
@@ -126,7 +126,9 @@
     tvChatAnchors.set(node,anchor);
   }
   function placeChatInTv(){
-    for(const node of tvChatNodes)overlay.appendChild(node);
+    // Os controles do chat pertencem ao diálogo também na árvore acessível.
+    const dialog=$("jfTvTitle").closest("[role=dialog]");
+    for(const node of tvChatNodes)dialog.appendChild(node);
   }
   function restoreChatFromTv(){
     for(const [node,anchor] of tvChatAnchors){
@@ -256,24 +258,12 @@
     status("Sugestão enviada para a fila.");
   };
   socket.on("tv:queue",items=>{youtubeQueue=Array.isArray(items)?items:[];renderYoutubeQueue()});
-  // Preferência individual: não modifica o estado compartilhado da sala.
-  let captionsWanted=false;
+  // Melhor esforço: track não é uma opção garantida pela API pública do YouTube.
+  // cc_load_policy=0 sozinho não força desligamento das preferências do usuário.
   function applyYoutubeCaptions(){
     if(!playerReady||!player)return;
-    try{
-      if(!captionsWanted){
-        player.setOption("captions","track",{});
-      }else{
-        player.setOption("captions","track",{languageCode:"pt"});
-      }
-    }catch(_){/* O vídeo pode não oferecer faixas de legenda. */}
+    try{player.setOption("captions","track",{});}catch(_){}
   }
-  $("jfTvCaptions").addEventListener("click",()=>{
-    captionsWanted=!captionsWanted;
-    $("jfTvCaptions").textContent=captionsWanted?"CC: Ligadas":"CC: Desligadas";
-    $("jfTvCaptions").setAttribute("aria-pressed",String(captionsWanted));
-    applyYoutubeCaptions();
-  });
   const jfRecentYoutubeKey="jf-tv-youtube-recentes-v1";
   function getYoutubeRecents(){try{return JSON.parse(localStorage.getItem(jfRecentYoutubeKey)||"[]").filter(x=>/^[a-zA-Z0-9_-]{11}$/.test(x)).slice(0,8)}catch(_){return []}}
   function renderYoutubeRecents(){
@@ -338,7 +328,7 @@
       $("jfTvSeek").max=String(Math.max(1,Math.floor(player.getDuration()||100)));
       $("jfTvSeek").value=String(Math.min(Number($("jfTvSeek").max),Math.floor(wanted)));
       $("jfTvTime").textContent=fmt(wanted);
-    }catch(error){console.debug("Junto TV: player ainda não pronto",error);}
+    }catch(error){console.debug("Junto.TV: player ainda não pronto",error);}
     updateYoutubePauseShield();
   }
   function retryYoutubePlayback(){
@@ -364,6 +354,7 @@
     // muda para PLAYING independentemente de uma ordem do servidor.
     if(!state||state.mode!=="youtube"||!opened)return;
     const next=Number(event?.data);
+    if(next===1||next===5)applyYoutubeCaptions();
     if(!state.playing && (next===1||next===3)){
       try{
         // Pausar não deve desligar o som permanentemente do ouvinte.
@@ -633,10 +624,14 @@
     if(!isAdmin())return;
     stopLocal();socket.emit("tv:stop");status("TV encerrada para todos.");
   };
+  function updateLiveIndicator(){
+    const onAir=Boolean(state&&(state.mode!=="youtube"||state.playing));
+    launch.disabled=!joined;launch.classList.toggle("jf-tv-live",onAir);
+    launch.title=onAir?"Abrir Junto.TV (no ar)":"Abrir Junto.TV";
+    $("jfTvLiveBadge").hidden=!onAir;
+  }
   function updateUi(){
-    launch.disabled=!joined;launch.classList.toggle("jf-tv-live",!!state);
-    launch.title=state?"Abrir Junto.TV (no ar)":"Abrir Junto.TV";
-    $("jfTvLiveBadge").hidden=!(state&&(state.mode!=="youtube"||state.playing));
+    updateLiveIndicator();
     const admin=isAdmin();
     $("jfTvTabs").hidden=!admin;
     $("jfTvAdminTools").hidden=!admin;
@@ -646,7 +641,6 @@
     $("jfTvWatch").disabled=viewerRequested;
     $("jfTvSound").hidden=!state||state.mode==="youtube"&&!viewerAudioBlocked;
     const showYoutube=state?.mode==="youtube"&&opened;
-    $("jfTvYoutubeExtras").hidden=!showYoutube;
     $("jfTvRequests").hidden=!joined||!opened;
     renderYoutubeQueue();
     ytWrapper.hidden=!showYoutube;
@@ -671,6 +665,7 @@
     // Aplicar o comando de mídia ANTES de atualizar toda a interface.
     // A notificação rápida do servidor ignora o caminho mais pesado de UI.
     if(immediate && state?.mode==="youtube"){
+      updateLiveIndicator();
       if(opened){
         syncYoutube(true);
         if(state.playing)retryYoutubePlayback();
@@ -736,3 +731,4 @@
   },1000);
   updateUi();
 })();
+
