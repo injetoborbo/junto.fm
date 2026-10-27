@@ -3,6 +3,7 @@ import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
 import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js";
+import {resolveDrinkBones,sipBlend} from "./club-drink-bones.mjs";
 
 const bridge=window.jfDanceBridge;
 const socket=bridge?.socket;
@@ -424,7 +425,15 @@ function refreshDrinkControls(){
  drinkControls.style.display=active&&equipped?"flex":"none";
  drinkButton.disabled=Date.now()<(entry?.data?.drinkingUntil||0);
 }
-drinkButton.onclick=()=>{if(people.get(socket.id)?.data?.drink)socket.emit("club-drink-sip");};
+drinkButton.onclick=()=>{
+   const entry=people.get(socket.id);
+   if(!entry?.data?.drink)return;
+   if(entry.root&&!entry.drinkRigReady){
+     setStatus("O braco ou cabeca deste rig nao foi reconhecido para beber.");
+     return;
+   }
+   socket.emit("club-drink-sip");
+ };
 dropButton.onclick=()=>socket.emit("club-drink-drop");
 let down=null;
 // Teto de render: menor carga na GPU sem limitar as animações do restante do site.
@@ -707,24 +716,22 @@ function applyAccuRigSitting(entry,elapsed){
   }
   return true;
 }
-function poseDrinking(member,elapsed,remaining){
-  if(!member.drinkHand||!member.drinkForearm||!member.drinkUpperArm||!member.headBone)return;
-  const p=Math.max(0,Math.min(1,elapsed/2900));
-  const inWeight=Math.min(1,p/.28),outWeight=Math.min(1,(1-p)/.26);
-  const blend=Math.max(0,Math.min(inWeight,outWeight));
-  if(blend<.005)return;
-  member.root.updateMatrixWorld(true);
-  const head=member.headBone;
-  const q=head.getWorldQuaternion(new THREE.Quaternion());
-  // Pequeno deslocamento na frente e abaixo do centro da cabeca.
-  const target=head.getWorldPosition(new THREE.Vector3())
-    .add(new THREE.Vector3(0,-.10,.15).applyQuaternion(q));
-  for(let i=0;i<8;i++){
-    pointBoneAt(member.drinkForearm,member.drinkHand,target,blend);
-    pointBoneAt(member.drinkUpperArm,member.drinkHand,target,blend);
-  }
-}
-const stageColor=0xb6d5eb;
+function poseDrinking(member,elapsed){
+   if(!member.drinkRigReady||!member.root)return;
+   const blend=sipBlend(elapsed);
+   if(blend<.005)return;
+   member.root.updateMatrixWorld(true);
+   const head=member.headBone;
+   const rotation=head.getWorldQuaternion(new THREE.Quaternion());
+   const target=head.getWorldPosition(new THREE.Vector3())
+     .add(new THREE.Vector3(0,-.045,.18).applyQuaternion(rotation));
+   // CCD usa os segmentos do proprio esqueleto, sem quaternions de outro rig.
+   for(let i=0;i<9;i++){
+     pointBoneAt(member.drinkForearm,member.drinkHand,target,blend);
+     pointBoneAt(member.drinkUpperArm,member.drinkHand,target,blend);
+   }
+ }
+ const stageColor=0xb6d5eb;
 const nameMaterialCache=new Map();
 
 function nameSprite(name){
@@ -1076,19 +1083,18 @@ async function putMember(id,details){
     }
     // O GLTFLoader normaliza "mixamorig:Head" para "mixamorigHead".
     // Comparar sempre nomes normalizados, assim como no retarget das danças.
-    const drinkBones=new Map();
-    entry.rig.traverse(node=>{
-      if(node.isBone)drinkBones.set(boneKey(node.name),node);
-    });
-    entry.drinkHand=drinkBones.get("righthand")||null;
-    entry.drinkUpperArm=drinkBones.get("rightarm")||drinkBones.get("rightupperarm")||null;
-    entry.drinkForearm=drinkBones.get("rightforearm")||drinkBones.get("rightlowerarm")||null;
-    entry.headBone=drinkBones.get("head")||null;
-    if(!entry.drinkHand||!entry.drinkUpperArm||!entry.drinkForearm||!entry.headBone){
-      console.warn("The Símios: ossos de beber ausentes",{
-        head:!!entry.headBone,hand:!!entry.drinkHand,
-        upperArm:!!entry.drinkUpperArm,forearm:!!entry.drinkForearm,
-        available:[...drinkBones.keys()]
+    // Suporta os nomes Mixamo e AccuRig sem depender de RightForeArm exato.
+    const drinkRig=resolveDrinkBones(entry.rig);
+    entry.drinkHand=drinkRig.hand;
+    entry.drinkUpperArm=drinkRig.upperArm;
+    entry.drinkForearm=drinkRig.forearm;
+    entry.headBone=drinkRig.head;
+    entry.drinkRigReady=Boolean(drinkRig.hand&&drinkRig.upperArm&&drinkRig.forearm&&drinkRig.head);
+    if(!entry.drinkRigReady){
+      const available=[];
+      entry.rig.traverse(node=>{if(node.isBone)available.push(node.name);});
+      console.warn("The Símios: rig sem cadeia valida para beber.",{
+        rig:entry.experimentalRig?"Macaco 2.0":"original",available
       });
     }
     // O plumbob é exclusivamente local: nunca criamos marcador sobre amigos.
@@ -1405,7 +1411,7 @@ function animate(now=performance.now()){
           poseExperimentalSitting(p,p.sitSwingElapsed);
       }else p.sitSwingElapsed=0;
     }
-    if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()),d.drinkingUntil-Date.now());
+    if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()));
     if(p.heldDrink&&p.drinkHand){
       p.root.updateMatrixWorld(true);
       const worldPoint=p.drinkHand.getWorldPosition(new THREE.Vector3());
