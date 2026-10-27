@@ -23,6 +23,13 @@ async function createRoom(){
   function connect(id){
     const clientListeners=new Map(),serverListeners=new Map();
     const sent=[],timers=[],elements=new Map(),players=[];
+    // DOM minimo fiel ao reparenting do chat: createComment/insertBefore
+    // e appendChild sao usados pelo cliente para mover o mesmo elemento.
+    const pageParent={
+      insertBefore(node){node.parentNode=this;return node;},
+      appendChild(node){node.parentNode=this;return node;}
+    };
+    const tvDialog={appendChild(node){node.parentNode=this;return node;}};
     const socket={
       id,data:{room:"cinema"},
       on(name,fn){serverListeners.set(name,fn);},
@@ -37,9 +44,12 @@ async function createRoom(){
     };
     function el(name){
       if(!elements.has(name))elements.set(name,{
-        id:name,hidden:false,disabled:false,value:"",title:"",style:{},
+        id:name,parentNode:pageParent,hidden:false,disabled:false,value:"",title:"",style:{},
+        closest(selector){return selector==="[role=dialog]"?tvDialog:null;},
         classList:{toggle(){},contains(){return false}},
-        addEventListener(name,fn){this["on_"+name]=fn;},setAttribute(){},getAttribute(){return null},appendChild(){},focus(){},
+        addEventListener(name,fn){this["on_"+name]=fn;},setAttribute(){},getAttribute(){return null},
+        appendChild(node){node.parentNode=this;return node;},
+        replaceChildren(){},focus(){},
         querySelectorAll(){return[]},
         set innerHTML(v){this.html=v;},
         set textContent(v){this.text=v;},
@@ -62,6 +72,7 @@ async function createRoom(){
       getPlayerState(){return this.state;}
       getDuration(){return this.duration;}
       getIframe(){return{setAttribute(){}};}
+      setOption(module,name,value){this.calls.push(["option",module,name,value]);}
       mute(){this.muted=true;this.calls.push(["mute"]);}
       unMute(){this.muted=false;this.calls.push(["unmute"]);}
       attemptPlay(){this.state=1;this.options.events.onStateChange?.({data:1});}
@@ -69,6 +80,7 @@ async function createRoom(){
     const window={jfSocialSocket:userSocket,YT:{Player:FakeYT}};
     const document={
       getElementById:el,createElement:()=>el("created_"+elements.size),
+      createComment:()=>({parentNode:pageParent}),
       head:{appendChild(){}},body:{appendChild(){}}
     };
     const timer=(fn,delay)=>{timers.push({fn,delay,done:false});return timers.length;};
