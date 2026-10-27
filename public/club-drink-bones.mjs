@@ -46,3 +46,12 @@ export function resolveDrinkBones(rig){
   return {head,hand:arm?.hand||null,forearm:arm?.forearm||null,
     upperArm:arm?.upperArm||null};
 }
+
+function smoothstep(a,b,x){
+  const t=Math.max(0,Math.min(1,(x-a)/(b-a)));
+  return t*t*(3-2*t);
+}
+export function sipBlend(elapsed,duration=2900){
+  const p=Math.max(0,Math.min(1,Number(elapsed)/duration));
+  return smoothstep(0,.25,p)*(1-smoothstep(.72,1,p));
+}
