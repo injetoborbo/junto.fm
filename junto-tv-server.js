@@ -1,5 +1,5 @@
 "use strict";
-// Junto.fm TV — somente sinais/estado passam pelo Socket.io.
+// Junto.TV — somente sinais/estado passam pelo Socket.io.
 // NENHUM vídeo, arquivo ou frame é enviado ao Render ou à Metered.ca.
 const crypto = require("crypto");
 const { AccessToken } = require("livekit-server-sdk");
@@ -85,7 +85,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       try {
         const token = new AccessToken(livekitKey, livekitSecret, {
           identity: socket.id,
-          name: publisher ? "Junto.fm TV ADM" : "Junto.fm TV espectador",
+          name: publisher ? "Junto.TV ADM" : "Junto.TV espectador",
           ttl: "10m"
         });
         token.addGrant({
@@ -250,3 +250,4 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
   return { joined, leave };
 };
+
