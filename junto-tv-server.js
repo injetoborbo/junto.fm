@@ -10,6 +10,19 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   const livekitReady = /^wss:\/\//.test(livekitUrl) && !!livekitKey && !!livekitSecret;
   const lkRoomName = room => "jf-tv-" + crypto.createHash("sha256").update(room).digest("hex").slice(0, 32);
 
+  const directModes = new Set(["youtube", "link"]);
+  function validLink(raw) {
+    if (typeof raw !== "string" || raw.length > 8192) return null;
+    try {
+      const url = new URL(raw.trim());
+      const host = url.hostname.toLowerCase();
+      // No proxy or server-side fetch: browsers receive the original HTTPS source.
+      if (url.protocol !== "https:" || url.username || url.password ||
+          !host.includes(".") || host.endsWith(".local") || host.endsWith(".localhost") ||
+          host.endsWith(".internal") || /^[\d.]+$/.test(host) || host.includes(":")) return null;
+      return url.href;
+    } catch (_) { return null; }
+  }
   const states = new Map();
   const viewers = new Map();
   const youtubeQueues = new Map(); // pedidos temporários por sala, independentes do Spotify
@@ -24,7 +37,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     clearIdle(room);
     const timer = setTimeout(() => {
       idleTimers.delete(room);
-      if (states.get(room) && states.get(room).mode !== "youtube" && !(viewers.get(room)?.size)) stop(room);
+      if (states.get(room) && !directModes.has(states.get(room).mode) && !(viewers.get(room)?.size)) stop(room);
     }, delay);
     timer.unref?.();
     idleTimers.set(room, timer);
@@ -37,7 +50,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   function snapshot(room) {
     const s = states.get(room);
     if (!s) return null;
-    return { mode: s.mode, videoId: s.videoId || "", playing: !!s.playing,
+    return { ...(s.mode === "link" ? { url:s.url, title:s.title, format:s.format, rate:s.rate } : {}), mode: s.mode, videoId: s.videoId || "", playing: !!s.playing,
       seconds: s.seconds || 0, updatedAt: s.updatedAt, hostId: s.hostId,
       revision: s.revision || 0, serverNow: Date.now() };
   }
@@ -142,6 +155,21 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       broadcast(room);
     });
 
+    socket.on("tv:set-link", data => {
+      const room = socket.data.room;
+      if (!room || !isRoomOwner(socket, room)) return fail(socket, "Só o administrador pode escolher o vídeo.");
+      if (isRateLimited(socket, "tv:set-link", 6, 10000)) return;
+      const url = validLink(data?.url);
+      if (!url) return fail(socket, "Use um link HTTPS público de vídeo, sem usuário e senha no endereço.");
+      const format = ["auto", "direct", "hls"].includes(data?.format) ? data.format : "auto";
+      stop(room);
+      states.set(room, {mode:"link", url, format,
+        title:typeof data?.title === "string" ? data.title.trim().slice(0,120) : "Vídeo da sala",
+        hostId:socket.id, playing:false, seconds:0, rate:1,
+        updatedAt:Date.now(), revision:nextRevision()});
+      broadcast(room);
+    });
+
     socket.on("tv:request-state", () => {
       const room=socket.data.room;
       if (!room || isRateLimited(socket,"tv:request-state",3,10000)) return;
@@ -150,7 +178,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
     socket.on("tv:control", data => {
       const room = socket.data.room, s = states.get(room);
-      if (!isRoomOwner(socket, room) || s?.mode !== "youtube" || s.hostId !== socket.id) {
+      if (!isRoomOwner(socket, room) || !directModes.has(s?.mode) || s.hostId !== socket.id) {
         socket.emit("tv:control-result", { ok:false, message:"O comando não foi aceito: controle exclusivo do ADM." });
         return fail(socket, "Só o administrador controla o vídeo.");
       }
@@ -159,15 +187,21 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
         return fail(socket, "Comandos muito rápidos. Aguarde um instante.");
       }
       const action = data?.action;
-      if (!["play", "pause", "seek"].includes(action)) return;
+      if (!["play", "pause", "seek", ...(s.mode === "link" ? ["rate"] : [])].includes(action)) return;
+      if (action === "rate" && ![0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].includes(Number(data?.rate))) return;
       const now = Date.now();
-      const elapsed = s.playing ? Math.max(0, (now - s.updatedAt) / 1000) : 0;
+      const elapsed = s.playing ? Math.max(0, (now - s.updatedAt) / 1000 * (s.rate || 1)) : 0;
       const base = s.seconds + elapsed;
       const explicit = data && data.seconds != null ? Number(data.seconds) : NaN;
       const requested = Number.isFinite(explicit) && explicit >= 0 && explicit <= 12 * 3600;
       // O ponto capturado pelo ADM ao clicar é mais preciso do que o relógio do servidor.
       s.seconds = requested ? explicit : Math.max(0, Math.min(base, 12 * 3600));
       s.playing = action === "play" ? true : action === "pause" ? false : s.playing;
+      if (action === "rate") {
+        const rate = Number(data?.rate);
+        if (![0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].includes(rate)) return;
+        s.rate = rate;
+      }
       s.updatedAt = now;
       s.revision = nextRevision();
       const current = snapshot(room);
@@ -181,7 +215,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     // Correção periódica leve de deriva, sem vídeo na sinalização.
     socket.on("tv:sync", data => {
       const room = socket.data.room, s = states.get(room);
-      if (!isRoomOwner(socket, room) || s?.mode !== "youtube" || s.hostId !== socket.id) return;
+      if (!isRoomOwner(socket, room) || !directModes.has(s?.mode) || s.hostId !== socket.id) return;
       if (isRateLimited(socket, "tv:sync", 1, 7000)) return;
       // Sync antigo nunca pode ressuscitar um vídeo pausado.
       if (!s.playing || data?.playing !== true || Number(data?.revision) !== s.revision) return;
@@ -213,7 +247,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
     socket.on("tv:watch", () => {
       const room = socket.data.room, s = states.get(room);
-      if (!room || !s || s.mode === "youtube" || s.hostId === socket.id) return;
+      if (!room || !s || directModes.has(s.mode) || s.hostId === socket.id) return;
       if (isRateLimited(socket, "tv:watch", 4, 10000)) return;
       let set = viewers.get(room);
       if (!set) { set = new Set(); viewers.set(room, set); }
@@ -231,7 +265,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       const data = payload?.data;
       const target = io.sockets.sockets.get(id);
       const set = viewers.get(room);
-      if (!s || s.mode === "youtube" || !target || target.data.room !== room || !set) return;
+      if (!s || directModes.has(s.mode) || !target || target.data.room !== room || !set) return;
       const fromHost = s.hostId === socket.id && set.has(id);
       const toHost = id === s.hostId && set.has(socket.id);
       if (!fromHost && !toHost) return;

@@ -74,6 +74,7 @@
       '<div class="jf-tv-inner">',
         '<div class="jf-tv-tabs" id="jfTvTabs" role="tablist" aria-label="Tipo de vídeo">',
           '<button type="button" data-tv-tab="youtube" role="tab" aria-selected="true">▶ YouTube</button>',
+          '<button type="button" data-tv-tab="link" role="tab" aria-selected="false">🔗 Link de vídeo</button>',
           '<button type="button" data-tv-tab="local" role="tab" aria-selected="false">📁 Vídeo local</button>',
           '<button type="button" data-tv-tab="screen" role="tab" aria-selected="false">🖥️ Transmissão de tela</button>',
         '</div>',
@@ -81,8 +82,10 @@
           '<div class="jf-tv-empty" id="jfTvEmpty"><span>📺</span><strong>Nada na telinha ainda</strong><small>O administrador escolhe o que assistir.</small></div>',
           '<div id="jfTvYoutubeWrapper" hidden><div id="jfTvYoutubeFrame"></div></div>',
           '<div id="jfTvYoutubeShield" class="jf-tv-youtube-shield" hidden><span>⏸ Pausado pelo administrador</span></div>',
+          '<div id="jfTvLinkStage" hidden></div>',
           '<video id="jfTvStreamVideo" autoplay playsinline hidden></video>',
         '</div>',
+        '<div id="jfTvLinkControls" hidden></div>',
         '<div class="jf-tv-tools" id="jfTvAdminTools" hidden>',
           '<section id="jfTvYoutubeTools" class="jf-tv-tools" hidden>',
             '<label>Link do YouTube<input type="url" id="jfTvYoutubeUrl" placeholder="https://youtu.be/..." autocomplete="off"></label>',
@@ -90,6 +93,7 @@
              '<div id="jfTvYoutubeRecent" class="jf-tv-recent" aria-label="Vídeos reproduzidos recentemente"></div>',
             '<label>Posição do vídeo <span id="jfTvTime">0:00</span><input type="range" id="jfTvSeek" min="0" max="100" value="0" step="1"></label>',
           '</section>',
+          '<section id="jfTvLinkTools" class="jf-tv-tools" hidden></section>',
           '<section id="jfTvLocalTools" class="jf-tv-tools" hidden>',
             '<label>Vídeo do seu computador (não será enviado ao Render)<input type="file" id="jfTvFile" accept="video/*"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartLocal">Transmitir arquivo</button></div>',
@@ -111,7 +115,7 @@
            '<div id="jfTvQueueList" hidden></div>',
          '</section>',
          '<div class="jf-tv-status" role="status" aria-live="polite" id="jfTvStatus">Entre em uma sala para usar a TV.</div>',
-        '<p class="jf-tv-note">🛡 YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: LiveKit Cloud para tela e arquivos, sem enviar o arquivo ao Render. A música continua independente.</p>',
+        '<p class="jf-tv-note">🔗 Links: cada pessoa recebe o vídeo da origem, com controles sincronizados. YouTube: cada pessoa assiste pelo YouTube. Tela (vídeo e áudio) e arquivos: LiveKit Cloud para tela e arquivos, sem enviar o arquivo ao Render. A música continua independente.</p>',
       '</div>',
     '</section>'
   ].join("");
@@ -147,6 +151,12 @@
   let lkRoom=null, lkLoadPromise=null, lkGeneration=0;
   const livekitAudio=new Set();
 
+  const linkPlayer=window.JfTvLinkPlayer?.create({
+    socket, overlay, isAdmin:()=>isAdmin(), status,
+    targetTime:()=>targetTime(), getState:()=>state,
+    isOpen:()=>opened, stopOther:()=>stopLocal(), youtubeId,
+    loadYoutube:id=>socket.emit("tv:set-youtube",{videoId:id})
+  });
   function isAdmin(){return joined && socket.id===ownerId;}
   function status(message){$("jfTvStatus").textContent=message;}
   function fmt(t){t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
@@ -164,6 +174,7 @@
     currentTab=mode;
     for(const button of overlay.querySelectorAll("[data-tv-tab]")) button.setAttribute("aria-selected",String(button.dataset.tvTab===mode));
     $("jfTvYoutubeTools").hidden=mode!=="youtube";
+    $("jfTvLinkTools").hidden=mode!=="link";
     $("jfTvLocalTools").hidden=mode!=="local";
     $("jfTvGameTools").hidden=mode!=="screen";
   }
@@ -186,6 +197,7 @@
     stopLocal();
   }
   function closeTv(){
+    if(state?.mode==="link")linkPlayer?.close();
     restoreChatFromTv();overlay.hidden=true;opened=false;
     if(isAdmin()&&sourceStream) stopBroadcast(); // nunca compartilhar uma tela com a janela fechada
     if(!isAdmin() && viewerRequested){socket.emit("tv:unwatch");viewerRequested=false;releasePeers();}
@@ -199,6 +211,7 @@
     opened=true;overlay.hidden=false;placeChatInTv();updateUi();
     socket.emit("tv:request-state");
     if(state?.mode==="youtube")void ensureYoutube();
+    if(state?.mode==="link")linkPlayer?.apply(state);
     $("jfTvClose").focus();
   };
   overlay.querySelectorAll("[data-tv-tab]").forEach(button=>button.addEventListener("click",()=>{if(isAdmin())showTab(button.dataset.tvTab);}));
@@ -220,8 +233,8 @@
     if(!state)return 0;
     // Usar relógio relativo à recepção para evitar diferenças de fuso/relógio entre PCs.
     const baseline=(Number(state.seconds)||0)+
-      (state.playing?Math.max(0,((Number(state.serverNow)||Number(state.updatedAt))-(Number(state.updatedAt)||0))/1000):0);
-    return Math.max(0, baseline+(state.playing?Math.max(0,(Date.now()-stateReceivedAt)/1000):0));
+      (state.playing?Math.max(0,((Number(state.serverNow)||Number(state.updatedAt))-(Number(state.updatedAt)||0))/1000*(state.rate||1)):0);
+    return Math.max(0, baseline+(state.playing?Math.max(0,(Date.now()-stateReceivedAt)/1000*(state.rate||1)):0));
   }
   // Fila compartilhada; apenas o proprietário pode aprovar/reproduzir/remover.
   let youtubeQueue=[];
@@ -625,7 +638,7 @@
     stopLocal();socket.emit("tv:stop");status("TV encerrada para todos.");
   };
   function updateLiveIndicator(){
-    const onAir=Boolean(state&&(state.mode!=="youtube"||state.playing));
+    const onAir=Boolean(state&&(!["youtube","link"].includes(state.mode)||state.playing));
     launch.disabled=!joined;launch.classList.toggle("jf-tv-live",onAir);
     launch.title=onAir?"Abrir Junto.TV (no ar)":"Abrir Junto.TV";
     $("jfTvLiveBadge").hidden=!onAir;
@@ -635,8 +648,8 @@
     const admin=isAdmin();
     $("jfTvTabs").hidden=!admin;
     $("jfTvAdminTools").hidden=!admin;
-    const isStream=state&&state.mode!=="youtube";
-    $("jfTvViewerTools").hidden=!joined||admin||!state;
+    const isStream=state&&!["youtube","link"].includes(state.mode);
+    $("jfTvViewerTools").hidden=!joined||admin||!state||state.mode==="link";
     $("jfTvWatch").hidden=!isStream;
     $("jfTvWatch").disabled=viewerRequested;
     $("jfTvSound").hidden=!state||state.mode==="youtube"&&!viewerAudioBlocked;
@@ -647,7 +660,9 @@
     updateYoutubePauseShield();
     stage.hidden=!isStream||!opened;
     $("jfTvEmpty").hidden=!!state;
-    if(!state){status(joined?(admin?"Escolha YouTube, vídeo local ou jogo para começar.":"Aguardando o administrador abrir a TV."):"Entre em uma sala para usar a TV.");}
+    linkPlayer?.render();
+    if(!state){status(joined?(admin?"Escolha YouTube, link de vídeo, arquivo local ou tela para começar.":"Aguardando o administrador abrir a TV."):"Entre em uma sala para usar a TV.");}
+    else if(state.mode==="link"){ /* O player informa carregamento, erros e sincronização. */ }
     else if(state.mode==="youtube"){status("YouTube sincronizado. Apenas o ADM controla o vídeo; tráfego do vídeo fora da Metered.ca.");}
     else status(admin?"Vídeo LiveKit. Fechar a janela encerra a captura.":viewerRequested?"Aguardando conexão LiveKit...":"Clique em Assistir para receber a transmissão.");
     if(admin)showTab(currentTab);
@@ -656,12 +671,25 @@
   }
   function receiveTvState(incoming,immediate=false){
     const prior=state;
-    if(incoming?.mode==="youtube" && prior?.mode==="youtube" && prior.videoId===incoming.videoId &&
+    if(["youtube","link"].includes(incoming?.mode) && prior?.mode===incoming.mode &&
+        (incoming.mode==="link"?prior.url===incoming.url:prior.videoId===incoming.videoId) &&
         Number.isFinite(incoming.revision) && Number.isFinite(prior.revision) &&
         incoming.revision<=prior.revision)return; // inclusive duplicação TV PLAYBACK / TV STATE
     state=incoming||null;
     stateReceivedAt=Date.now();
     ++syncAttempt;
+    if(state?.mode==="link") {
+      if(playerReady)try{player.pauseVideo();}catch(_){}
+      pauseShield.hidden=true;
+      if(prior?.mode!=="link"){
+        if(viewerRequested)socket.emit("tv:unwatch");
+        viewerRequested=false;stopLocal();
+        if(isAdmin())showTab("link");
+      }
+      updateUi();linkPlayer?.apply(state);
+      return;
+    }
+    if(prior?.mode==="link")linkPlayer?.destroySource();
     // Aplicar o comando de mídia ANTES de atualizar toda a interface.
     // A notificação rápida do servidor ignora o caminho mais pesado de UI.
     if(immediate && state?.mode==="youtube"){
@@ -710,6 +738,7 @@
   socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;youtubeQueue=[];updateUi();});
   socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;updateUi();});
   function reset(){
+    linkPlayer?.destroySource();
     joined=false;room="";ownerId=null;state=null;viewerRequested=false;
     viewerAudioEnabled=true;viewerAudioBlocked=false;
     if(sourceStream)stopLocal();else releasePeers();
@@ -717,6 +746,7 @@
   }
   socket.on("left-room",reset);socket.on("room-kicked",reset);socket.on("disconnect",reset);
   setInterval(()=>{
+    if(opened&&state?.mode==="link"){linkPlayer?.tick();return;}
     if(!opened||!state||state.mode!=="youtube"||!playerReady)return;
     // Leitura de segurança a cada segundo, mesmo pausado.
     if(!state.playing){

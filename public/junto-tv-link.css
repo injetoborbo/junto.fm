@@ -1,0 +1,67 @@
+/* Every UI surface follows the active theme. The picture itself remains black. */
+#jfTvOverlay {
+  --tv-surface:color-mix(in srgb,var(--jf-glow,#5656a8) 26%,#0c1020);
+  --tv-raised:color-mix(in srgb,var(--jf-primary,#ff78d2) 14%,var(--tv-surface));
+  --tv-text:#f5f7ff;
+  --tv-muted:color-mix(in srgb,var(--jf-secondary,#70f4ff) 28%,#c9d0df);
+  --tv-border:color-mix(in srgb,var(--jf-secondary,#70f4ff) 50%,var(--tv-surface));
+}
+html[data-jf-theme="classic"] #jfTvOverlay {
+  --tv-surface:#ece9d8;--tv-raised:#f8faff;--tv-text:#18345b;--tv-muted:#385b81;--tv-border:#819fbe;
+}
+#jfTvOverlay .jf-tv-window{background:var(--tv-surface);color:var(--tv-text)}
+#jfTvOverlay .jf-tv-tabs button,#jfTvOverlay .jf-tv-actions button,
+#jfTvOverlay .jf-tv-youtube-extras button,#jfTvOverlay .jf-tv-recent button,
+#jfTvOverlay .jf-tv-request-panel,#jfTvOverlay .jf-tv-request-panel button,
+#jfTvOverlay #jfTvLinkControls button,#jfTvOverlay .jf-link-unlock {
+  background:var(--tv-raised);color:var(--tv-text);border:1px solid var(--tv-border);
+}
+#jfTvOverlay .jf-tv-tabs button[aria-selected=true]{background:color-mix(in srgb,var(--jf-primary) 32%,var(--tv-raised));color:var(--tv-text);box-shadow:inset 0 -3px var(--jf-secondary)}
+#jfTvOverlay .jf-tv-tools label{color:var(--tv-text)}
+#jfTvOverlay .jf-tv-note{color:var(--tv-muted)}
+#jfTvOverlay .jf-tv-status{background:var(--tv-raised);color:var(--tv-text);border-color:var(--tv-border);overflow-wrap:anywhere}
+#jfTvOverlay .jf-tv-request-panel input,#jfTvOverlay input[type=url],#jfTvOverlay input[type=text],#jfTvOverlay input[type=file],#jfTvOverlay select {
+  box-sizing:border-box;width:100%;min-width:0;background:var(--tv-raised);color:var(--tv-text);border:1px solid var(--tv-border);border-radius:7px;padding:9px;font:inherit;
+}
+#jfTvOverlay input::placeholder{color:var(--tv-muted);opacity:.85}
+#jfTvOverlay :is(button,input,select,summary):focus-visible{outline:2px solid var(--jf-secondary);outline-offset:3px}
+#jfTvOverlay input[type=range]{accent-color:var(--jf-primary);box-shadow:none;padding:0;min-width:0}
+#jfTvOverlay #jfTvLinkStage{position:absolute;inset:0;background:#000;outline-offset:-3px}
+#jfTvOverlay #jfTvLinkVideo{width:100%;height:100%;object-fit:contain}
+#jfTvOverlay .jf-link-message{position:absolute;inset:0;display:grid;place-items:center;padding:24px;color:#fff;background:#070914df;font-size:13px;text-align:center;line-height:1.6;pointer-events:none}
+#jfTvOverlay .jf-link-unlock{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);padding:12px 18px;border-radius:20px;max-width:90%;cursor:pointer;font-weight:700;box-shadow:0 5px 25px #0009}
+#jfTvOverlay #jfTvLinkControls{display:grid;gap:14px;padding:15px;border:1px solid var(--tv-border);border-radius:10px;background:var(--tv-raised)}
+#jfTvOverlay .jf-link-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#jfTvOverlay .jf-link-top>div{display:grid;gap:5px;min-width:0}
+#jfTvOverlay #jfTvLinkHeading{font-size:15px;overflow-wrap:anywhere}
+#jfTvOverlay .jf-link-kicker{font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--tv-muted)}
+#jfTvOverlay .jf-link-pill{font-size:10px;border:1px solid var(--tv-border);border-radius:20px;padding:6px 9px;white-space:nowrap;color:var(--tv-muted)}
+#jfTvOverlay .jf-link-timeline{display:grid;gap:6px}
+#jfTvOverlay .jf-link-timeline input{width:100%;height:16px;margin:0}
+#jfTvOverlay .jf-link-timeline>div{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-variant-numeric:tabular-nums;color:var(--tv-muted)}
+#jfTvOverlay .jf-link-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#jfTvOverlay .jf-link-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+#jfTvOverlay #jfTvLinkControls button{padding:8px;border-radius:7px;min-height:36px;font:700 11px Tahoma,Arial,sans-serif;cursor:pointer}
+#jfTvOverlay #jfTvLinkControls button:hover:not(:disabled){border-color:var(--jf-secondary);filter:brightness(1.08)}
+#jfTvOverlay #jfTvLinkControls button:disabled{opacity:.45;cursor:default}
+#jfTvOverlay #jfTvLinkVolume{width:80px;max-width:25vw}
+#jfTvOverlay #jfTvLinkRate{width:70px;font-size:11px;padding:8px}
+#jfTvOverlay .jf-link-form{display:grid;gap:10px;padding:12px;border:1px solid var(--tv-border);border-radius:9px}
+#jfTvOverlay .jf-link-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#jfTvOverlay .jf-link-fields label{display:grid;gap:6px;font-size:11px;color:var(--tv-muted)}
+#jfTvOverlay .jf-link-options{border-top:1px solid var(--tv-border);padding-top:11px}
+#jfTvOverlay .jf-link-options summary{cursor:pointer;font-size:11px;color:var(--tv-muted)}
+#jfTvOverlay .jf-link-options .jf-link-fields{margin:14px 0}
+#jfTvOverlay .jf-link-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;color:var(--tv-muted);font-size:11px;line-height:1.5}
+#jfTvOverlay .jf-link-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#jfTvOverlay.jf-tv-cinema .jf-tv-window{width:min(1440px,100%);max-height:96dvh}
+#jfTvOverlay .jf-tv-window:fullscreen{width:100vw;max-height:100dvh;height:100dvh;border:0;border-radius:0;overflow:auto;background:var(--tv-surface)}
+#jfTvOverlay .jf-tv-window:fullscreen .jf-tv-screen{max-height:70dvh;min-height:0}
+@media(max-width:540px){
+  #jfTvOverlay #jfTvLinkControls{padding:10px;gap:12px}
+  #jfTvOverlay .jf-link-fields{grid-template-columns:1fr}
+  #jfTvOverlay .jf-link-top{align-items:flex-start}
+  #jfTvOverlay .jf-link-pill{font-size:9px;padding:5px 7px}
+  #jfTvOverlay .jf-link-bar{gap:9px}
+  #jfTvOverlay .jf-link-footer{align-items:flex-start}
+}
