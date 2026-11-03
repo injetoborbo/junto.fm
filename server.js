@@ -4,6 +4,7 @@ const { Server } = require("socket.io");
 const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
+const sendChat = require("./chat-bandwidth");
 
 // Carrega variáveis de um arquivo .env local sem exigir dependências extras.
 try {
@@ -142,15 +143,7 @@ const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
 const achievements=require("./achievements")(app,io,accountAuth);
 require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready,achievements);
-// GLBs grandes e imagens mudam menos que a interface. Cache curto evita
-// baixar o mesmo mascote novamente em cada visita, sem congelar atualizações.
-app.use(express.static(path.join(__dirname, "public"), {
-  setHeaders(res, filePath) {
-    if (/\.(?:glb|gltf|png|jpe?g|webp|mp3|wav|ogg)$/i.test(filePath)) {
-      res.setHeader("Cache-Control", "public, max-age=1800");
-    }
-  }
-}));
+require("./static-bandwidth")(app, path.join(__dirname, "public"));
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.get("/api/room-status/:room",(req,res)=>{
  const room=String(req.params.room||"");
@@ -952,7 +945,7 @@ io.on("connection", socket => {
     socket.emit("joined-room", { room, peers, track: roomTracks.get(room) || null, profiles, avatarSkins, clientIds, registeredPeers, transmitter: roomTransmitters.get(room) || null, ownerId:roomOwners.get(room)||null, bananaCount:roomBananaCounts.get(room)||0 });
     emitSkip(room);
     juntoTv.joined(socket);
-    socket.emit("chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
+    sendChat(socket, "chat-history", { messages: (roomChatMessages.get(room) || []).slice(-50) });
     socket.to(room).emit("peer-joined", { id: socket.id, clientId:socket.data.clientId, registered:Boolean(socket.data.account) });
     notifyPresence();
     io.to(room).emit("room-count", { count: (io.sockets.adapter.rooms.get(room) || new Set()).size });
@@ -1096,7 +1089,10 @@ io.on("connection", socket => {
     history.push(message);
     if (history.length > 50) history.splice(0, history.length - 50);
     roomChatMessages.set(room, history);
-    io.to(room).emit("chat-message", message);
+    for (const id of io.sockets.adapter.rooms.get(room) || []) {
+      const peer = io.sockets.sockets.get(id);
+      if (peer) sendChat(peer, "chat-message", message);
+    }
     achievement("event","firstchat");
   });
 
