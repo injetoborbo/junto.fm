@@ -37,6 +37,7 @@ async function initializeBarrel3D(){
  if(barrelLoadStarted)return;
  barrelLoadStarted=true;
 try{
+ await import("/asset-cache.js");
  THREE=await import("https://esm.sh/three@0.170.0");
  const {GLTFLoader}=await import("https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(35,1,.01,100);

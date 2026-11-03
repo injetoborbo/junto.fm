@@ -1,3 +1,4 @@
+import "./asset-cache.js";
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
@@ -188,10 +189,13 @@ function loadDrinkingClip(){
  return drinkingClipPromise;
 }
 // Assets independentes: o indicador não altera o esqueleto nem animações do avatar.
-const jfBananaMarkerPromise=gltfLoader.loadAsync("/club/bananasims_otimizada.glb").then(gltf=>gltf.scene).catch(error=>{
+let jfBananaMarkerPromise=null;
+function loadBananaMarker(){
+ return jfBananaMarkerPromise ||= gltfLoader.loadAsync("/club/bananasims_otimizada.glb").then(gltf=>gltf.scene).catch(error=>{
   console.warn("The Símios: adicione public/club/bananasims_otimizada.glb para ativar o marcador.",error);
   return null;
-});
+ });
+}
 
 const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 // Animacao sentadobalanca.fbx (enviada pelo criador).
@@ -1098,7 +1102,7 @@ async function putMember(id,details){
       });
     }
     // O plumbob é exclusivamente local: nunca criamos marcador sobre amigos.
-    if(id===socket.id)jfBananaMarkerPromise.then(template=>{
+    if(id===socket.id)loadBananaMarker().then(template=>{
       if(!template||!active||id!==socket.id||people.get(id)!==entry||!entry.root)return;
       const marker=template.clone(true);
       const box=new THREE.Box3().setFromObject(marker);
@@ -1444,7 +1448,6 @@ function open(){
   if(!room){setStatus("Entre em uma sala para usar a pista.");return;}
   if(active)return;
   active=true;sequence++;people.clear();
-  void sittingPose();
   void activatePublishedMacaco2(sequence);
   // A animacao de beber usa os ossos do avatar sem aplicar quaternions do FBX externo.
   modal.hidden=false;

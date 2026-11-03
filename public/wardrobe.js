@@ -1,3 +1,4 @@
+import "./asset-cache.js";
 /* Guarda-roupa 3D público. Cada participante possui seu próprio macaco. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
@@ -1187,8 +1188,8 @@ if(document.body.classList.contains("jf-in-room"))scheduleRoomAvatarLoad();
 /* API reaproveitável da pista isométrica: usa a mesma rigagem e os mesmos GLBs.
    A pista é pequena e evita criar WebGLRenderers por participante. */
 export async function createDanceAvatar(outfit={},skin="default",requestRender=()=>{},options={}){
-  if(!base)await ensureBaseModel();
-  if(!base)throw Error("Modelo macaco.glb indisponível.");
+  if(!base&&!(options.experimental&&testDanceModel?.scene))await ensureBaseModel();
+  if(!base&&!(options.experimental&&testDanceModel?.scene))throw Error("Modelo macaco.glb indisponível.");
   const root=new THREE.Group();
   const experimentalUsed=Boolean(options.experimental&&testDanceModel?.scene);
   const monkey=cloneSkeleton(experimentalUsed?testDanceModel.scene:base.scene);

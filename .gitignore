@@ -3,3 +3,7 @@
 !.env.example
 node_modules/
 *.log
+
+# Generated lossless HTTP representations
+public/**/*.gz
+public/*.gz

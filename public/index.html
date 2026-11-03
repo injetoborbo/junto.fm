@@ -949,7 +949,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
     <div id="jfMobileFunBar" class="jf-mobile-fun-bar" aria-label="Ações da sala">
       <div class="jf-poll-tomato-stack">
         <button type="button" id="jfCommunityPollLaunch" class="jf-fun-image-btn" hidden aria-expanded="false" title="Apuração presidencial oficial do TSE" aria-label="Abrir contagem oficial de votos do TSE"><span aria-hidden="true">★</span></button>
-        <button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.png" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
+        <button type="button" id="jfClubTomato" class="jf-tomato-launcher" aria-label="Jogar tomate no DJ" title="Jogar tomate no DJ"><img src="/tomato/tomate-inteiro.webp" alt="" width="60" height="60" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="jf-tomato-fallback" hidden>🍅</span></button>
       </div>
       <button type="button" id="jfTvLaunch" class="jf-fun-image-btn" aria-label="Abrir Junto.TV" title="Abrir Junto.TV" disabled><img id="jfTvLaunchIcon" alt="" width="60" height="60"></button>
       <button type="button" id="jfOpenDance" class="jf-fun-image-btn jf-dance-launch" aria-label="Abrir pista de dança" title="Abrir pista de dança"><img id="jfDanceLaunchIcon" alt="" width="60" height="60"></button>
@@ -1315,7 +1315,18 @@ body.jf-in-room #jfAdminEntry{display:none!important}
       sessionStorage.setItem("jf-tab-client-id",jfClientId);
     }
   }catch(_){jfClientId="tab_"+Math.random().toString(36).slice(2)+Date.now().toString(36);}
-  const socket = io({auth:{clientId:jfClientId}});
+  const socket = io({auth:{clientId:jfClientId,chatAvatars:1}});
+  // Restore normal messages before the chat, TV and dance listeners run.
+  const jfChatAvatars=new Map();
+  const hydrateChat=payload=>{
+    if(payload.avatarReset)jfChatAvatars.clear();
+    for(const [id,avatar] of Object.entries(payload.avatars||{}))jfChatAvatars.set(id,avatar);
+    const messages=Array.isArray(payload.messages)?payload.messages:[payload];
+    for(const message of messages)if(typeof message.avatarId==="string")message.avatar=jfChatAvatars.get(message.avatarId)||"";
+  };
+  socket.on("connect",()=>jfChatAvatars.clear());
+  socket.on("chat-history",hydrateChat);
+  socket.on("chat-message",hydrateChat);
   window.jfSocialSocket=socket;
   window.jfSocialTransmitting=()=>joined&&isSender;
   window.jfBananaSocket=socket;
@@ -2846,6 +2857,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     });
   }
   try{
+    await import("/asset-cache.js");
     const THREE = await import("https://esm.sh/three@0.170.0");
     const { GLTFLoader } = await import("https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js");
     const scene=new THREE.Scene();

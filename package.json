@@ -5,7 +5,9 @@
   "description": "Protótipo de sala privada para transmitir áudio do navegador em tempo real",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "node scripts/precompress-assets.js",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "express": "^4.21.2",
