@@ -1,62 +1,149 @@
-# Junto.fm — protótipo experimental v0.2
+<div align="center">
 
-## Importante: não abra o HTML diretamente
-O projeto precisa do servidor Node.js para a sala funcionar. Não dê duplo clique em `public/index.html`.
+# 🎧 Junto.fm
 
-## Rodar no seu PC
-1. Instale Node.js 18+.
-2. Extraia o ZIP.
-3. Abra a pasta `junto-fm` no VS Code.
-4. Abra Terminal → Novo Terminal.
-5. Execute `npm install`.
-6. Execute `npm start`.
-7. Abra `http://localhost:3000` no Chrome ou Edge.
-8. Clique em **Entrar na sala**. Depois disso o botão de transmissão será habilitado.
+### Música, vídeo e pessoas no mesmo lugar.
 
-## Criar e entrar em salas
-- **Criar sala** gera um nome novo quando o campo está no valor padrão `noite`; se você digitar outro nome, esse nome será usado. Compartilhe o nome com todos os participantes.
-- **Entrar na sala** conecta ao nome informado. Todos devem usar exatamente o mesmo nome.
-- O projeto aceita um transmissor e vários ouvintes. Cada ouvinte recebe uma conexão WebRTC independente; a capacidade prática depende da rede e do navegador do transmissor.
+**Uma plataforma web de entretenimento social em tempo real.**
 
-## Tentar transmitir áudio
-1. Abra o Spotify Web Player numa aba separada do Chrome/Edge.
-2. Volte para Junto.fm e clique em **Transmitir áudio da aba**.
-3. Na janela do navegador, selecione a aba do Spotify Web Player e habilite **Compartilhar áudio da aba**.
-4. A outra pessoa precisa abrir a mesma aplicação hospedada, entrar no mesmo nome de sala e permitir a reprodução de áudio.
+[**🌐 Acessar a plataforma**](https://junto-fm.onrender.com) · [**📖 Conhecer o projeto**](#sobre-o-projeto) · [**🧩 Tecnologias**](#tecnologias) · [**🚀 Executar localmente**](#executar-localmente)
 
-## Limitações
-- Para outra pessoa conectar pela internet, hospede o servidor Node.js em um serviço compatível com WebSockets e HTTPS. `localhost` só funciona no seu PC.
-- STUN está configurado, mas algumas redes exigem um servidor TURN para o áudio WebRTC conectar.
-- Os comandos de pausar/próxima apenas enviam avisos e não controlam diretamente o Spotify.
-- Ouvintes podem entrar antes ou depois de a transmissão começar; cada participante recebe uma conexão WebRTC direcionada e independente.
-- A qualidade e a estabilidade dependem da rede e do navegador. STUN sozinho não atravessa todas as redes; para maior confiabilidade, configure um servidor TURN.
-- É um protótipo, não uma aplicação pronta para produção.
+</div>
 
+---
 
-## Ajustes de áudio (versão experimental)
+## Sobre o projeto
 
-A captura usa `getDisplayMedia` para capturar o áudio digital da aba. A versão experimental define `contentHint = "music"`, corrige a edição dos parâmetros Opus no SDP e solicita até 256 kbps quando suportado. O navegador pode ignorar algumas preferências; isso não substitui medições reais de WebRTC.
+A **Junto.fm** nasceu da ideia de aproximar pessoas que estão longe umas das outras por meio de experiências compartilhadas. Em uma única sala virtual, os participantes podem conversar, ouvir áudio transmitido por um usuário autorizado e acompanhar experiências audiovisuais em conjunto.
 
+A proposta é simplificar algo que normalmente exige vários aplicativos: reunir **mídia, conversa e interação social** no mesmo ambiente, acessível pelo navegador.
 
-## Mostrar capa, artista e progresso da música do Spotify
+> **Situação do projeto:** aplicação experimental em evolução, com funcionalidades dependentes das permissões do navegador, da rede e da configuração dos serviços externos. O funcionamento deve ser validado em testes reais.
 
-A leitura dos metadados é opcional e usa a API oficial do Spotify. O áudio continua sendo transmitido pela captura da aba como antes.
+## Funcionalidades
 
-1. Acesse o [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) e crie um app.
-2. Copie o **Client ID** do app.
-3. No painel do app, adicione exatamente esta Redirect URI para testar localmente: `http://localhost:3000/spotify/callback`.
-4. Copie `.env.example` para um arquivo chamado `.env` na mesma pasta de `server.js` e preencha `SPOTIFY_CLIENT_ID`.
-5. Reinicie o servidor com `npm start`.
-6. No aparelho que vai transmitir, abra Junto.fm, clique em **Conectar Spotify** e autorize o acesso.
-7. Deixe o Spotify Web Player tocando, entre na sala e clique em **Transmitir áudio da aba**. A capa, artista e progresso serão enviados aos ouvintes conectados.
+| Área | O que oferece |
+| --- | --- |
+| 🎵 **Salas de áudio** | Criação e acesso a salas para experiências musicais compartilhadas. |
+| 💬 **Chat em tempo real** | Mensagens e interações entre participantes conectados. |
+| 📺 **Junto.TV** | Recursos de vídeo compartilhado, sincronização do YouTube e compartilhamento de tela, sujeitos às limitações técnicas de cada modo. |
+| 🐒 **The Símios** | Ambiente social interativo com avatares 3D, personalização e animações. |
+| 👥 **Contas e social** | Recursos de identidade, amizades e interação entre usuários. |
+| 🛡️ **Administração de salas** | Controles e permissões para organização e moderação das sessões. |
+| 🏆 **Conquistas** | Recursos de conquistas e acompanhamento de atividade. |
 
-Exemplo de `.env` local:
+As funcionalidades evoluem ao longo do desenvolvimento. A presença de um recurso no código não garante que ele esteja disponível em todos os dispositivos ou configurações.
 
-```env
-SPOTIFY_CLIENT_ID=cole_seu_client_id_aqui
-SPOTIFY_REDIRECT_URI=http://localhost:3000/spotify/callback
+## Problema e público-alvo
+
+**Problema:** amigos e comunidades que desejam ouvir música, assistir a vídeos e conversar à distância frequentemente precisam alternar entre várias ferramentas, o que pode dificultar a organização da experiência.
+
+**Solução proposta:** um ambiente web único, com salas virtuais e comunicação em tempo real, para tornar essas experiências mais integradas.
+
+**Público-alvo:** grupos de amigos, comunidades online e pessoas que procuram espaços digitais de convivência.
+
+## Tecnologias
+
+- **Front-end:** HTML, CSS e JavaScript.
+- **Servidor:** Node.js e Express.
+- **Comunicação em tempo real:** Socket.IO.
+- **Áudio e vídeo:** APIs de mídia do navegador e WebRTC, conforme o recurso.
+- **Persistência:** PostgreSQL via pacote `pg`.
+- **Integrações:** recursos associados a Spotify, YouTube e LiveKit, conforme a configuração e a implementação.
+- **Hospedagem:** configuração de implantação para **Render** em [`render.yaml`](render.yaml).
+
+### Visão simplificada da arquitetura
+
+```text
+           Participantes (navegador)
+                     │
+           Interface web (HTML/CSS/JS)
+                     │
+                HTTPS / WSS
+                     │
+           Node.js + Express
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+       Socket.IO           PostgreSQL
+    Eventos de salas       Dados persistidos
+       e controles         quando aplicável
+
+   Mídia: WebRTC / APIs do navegador /
+   integrações externas, conforme o recurso.
 ```
 
-Não publique o seu arquivo `.env` nem compartilhe o Client ID em capturas de tela públicas. A integração usa OAuth Authorization Code com PKCE, sem guardar Client Secret no projeto. Para um site hospedado, cadastre a Redirect URI HTTPS exata no dashboard e defina `SPOTIFY_REDIRECT_URI` para essa URL. Cada transmissor precisa conectar sua própria conta Spotify no aparelho transmissor.
+A arquitetura acima é uma visão geral, não um diagrama de todas as conexões e serviços utilizados pela aplicação.
 
-**Nota:** o Spotify pode não retornar uma faixa quando não houver reprodução ativa ou quando a conta/dispositivo não disponibilizar o estado atual. A capa e o progresso são atualizados periodicamente, não quadro a quadro.
+## Executar localmente
+
+**Requisitos:** Node.js e npm instalados.
+
+```bash
+git clone https://github.com/injetoborbo/junto.fm.git
+cd junto.fm
+npm install
+npm start
+```
+
+Acesse **http://localhost:3000** no navegador. O HTML não deve ser aberto diretamente como arquivo local, porque o projeto depende do servidor Node.js.
+
+Para recursos que exigem credenciais, use [`.env.example`](.env.example) como referência e configure suas próprias variáveis de ambiente. **Não publique segredos ou arquivos `.env`.** Alguns recursos exigem serviços externos e HTTPS.
+
+### Exemplo: compartilhar áudio de uma aba
+
+1. Acesse a Junto.fm em um navegador compatível e entre em uma sala.
+2. Abra uma aba com a fonte de áudio autorizada.
+3. Inicie o compartilhamento de áudio da aba e conceda as permissões solicitadas pelo navegador.
+4. Os demais participantes entram na mesma sala e habilitam a reprodução, quando necessário.
+
+A qualidade e a disponibilidade da transmissão dependem de permissões, conectividade, compatibilidade do navegador e configuração de WebRTC/STUN/TURN.
+
+## Documentação e testes
+
+O repositório contém documentos de configuração e registros técnicos que ajudam a entender a evolução da aplicação:
+
+- [Testes e limitações da Junto.TV](JUNTO_TV_TESTING.md)
+- [Configuração do LiveKit](LIVEKIT_TV_SETUP.md)
+- [Testes do ambiente de avatares](DANCE_FLOOR_TESTING.md)
+- [Otimização de tráfego na hospedagem](RENDER_BANDWIDTH.md)
+- [Configuração de contas Google](GOOGLE_ACCOUNTS_SETUP.md)
+
+Há também testes automatizados na pasta [`tests/`](tests). **Testes de código não substituem validações manuais com dispositivos e redes diferentes.**
+
+## Contexto acadêmico
+
+A Junto.fm é um **projeto pessoal desenvolvido individualmente**, apresentado como **candidato à categoria “Projeto Profissional”** da atividade acadêmica de pós-aula.
+
+O objetivo é demonstrar a aplicação de conceitos de desenvolvimento web, arquitetura, comunicação em tempo real, persistência de dados, segurança, testes e implantação em nuvem.
+
+**Enquadramento e participação em grupo ainda dependem de validação do professor.** Caso o projeto seja aceito para a atividade, as melhorias acadêmicas e as contribuições efetivas serão documentadas separadamente.
+
+O desenvolvimento contou com **apoio significativo de ferramentas de inteligência artificial**, sob direção, integração, testes e revisão do autor. O uso de IA não substitui a necessidade de compreender e explicar as decisões técnicas.
+
+### Próximos passos propostos
+
+- Aprimorar acessibilidade e experiência em dispositivos móveis.
+- Melhorar diagnósticos de conexão e mensagens de erro.
+- Fortalecer testes automatizados e registrar testes reais.
+- Avaliar recursos de histórico de sessões, estatísticas de uso e feedback.
+
+Esses itens são **propostas de evolução**, não funcionalidades anunciadas como concluídas.
+
+## Limitações e responsabilidade
+
+- Algumas redes podem impedir conexões WebRTC diretas.
+- Compartilhamento de tela, áudio e reprodução automática dependem do navegador.
+- Serviços de terceiros podem exigir credenciais, limitar funcionalidades ou mudar suas regras.
+- A aplicação não fornece direitos de retransmissão de músicas, filmes ou outros conteúdos protegidos: os usuários devem respeitar licenças e termos dos serviços.
+- O sistema é experimental e pode apresentar instabilidades.
+
+---
+
+<div align="center">
+
+**Junto.fm — experiências ficam melhores quando são compartilhadas.**
+
+[🌐 Abrir Junto.fm](https://junto-fm.onrender.com) · [⬆️ Voltar ao início](#-juntofm)
+
+</div>
