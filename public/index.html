@@ -2494,6 +2494,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     getRoom:()=>joined?room:null,
     getProfile:()=>jfProfile,
     getPeerProfile:id=>jfPeerProfiles.get(id),
+    getPeerIds:()=>[...jfPeerProfiles.keys()],
     getSkin:()=>jfMySkin(),
     getPeerSkin:id=>jfPeerSkins.get(id)||"default"
   };
