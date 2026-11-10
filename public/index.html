@@ -438,6 +438,10 @@ body.jf-in-room .jf-top-actions.jf-site-menu-root,body:not(.jf-in-room) .jf-top-
  .jf-arena-stage{height:clamp(220px,35dvh,350px)}
 }
 
+#jfArenaModal .jf-spirit-badge{color:#ffd082;font-size:10px;line-height:1.4}
+#jfArenaModal .jf-spirit-badge[hidden]{display:none!important}
+#jfArenaModal .jf-arena-player[data-spirit="true"]{box-shadow:inset 0 0 18px #f90a5033;padding:6px;border-bottom:2px solid #f5b443}
+#jfArenaModal .jf-spirit-action{color:#ffd082;border-color:#e4ae51}
 /* Fight Club: arena and outcome have their own compact art direction. */
 #jfArenaModal .jf-arena-modal{background:linear-gradient(145deg,#202324,#101314)!important;border:1px solid #a99c65;border-radius:4px;box-shadow:0 24px 90px #000d;color:#f3edda;width:min(1100px,96vw);padding:22px}
 #jfArenaHeading{font-family:Impact,"Arial Black",sans-serif;font-size:30px;letter-spacing:.09em;line-height:1;margin:0}
@@ -1298,13 +1302,13 @@ body.jf-in-room #jfAdminEntry{display:none!important}
     <div class="jf-arena-player">
       <strong id="jfArenaNameA">Macaco 1</strong>
       <div class="jf-arena-meter"><span id="jfArenaHpA" style="width:100%"></span></div><small>❤️ <span id="jfArenaHpTextA">100/100</span></small>
-      <div class="jf-arena-meter energy"><span id="jfArenaEnergyA" style="width:75%"></span></div><small>⚡ <span id="jfArenaEnergyTextA">75/100</span></small>
+      <div class="jf-arena-meter energy"><span id="jfArenaEnergyA" style="width:75%"></span></div><small>⚡ <span id="jfArenaEnergyTextA">75/100</span></small><small class="jf-spirit-badge" id="jfArenaSpiritA" hidden></small>
     </div>
     <strong class="jf-arena-vs">VS</strong>
     <div class="jf-arena-player">
       <strong id="jfArenaNameB">Macaco 2</strong>
       <div class="jf-arena-meter"><span id="jfArenaHpB" style="width:100%"></span></div><small>❤️ <span id="jfArenaHpTextB">100/100</span></small>
-      <div class="jf-arena-meter energy"><span id="jfArenaEnergyB" style="width:75%"></span></div><small>⚡ <span id="jfArenaEnergyTextB">75/100</span></small>
+      <div class="jf-arena-meter energy"><span id="jfArenaEnergyB" style="width:75%"></span></div><small>⚡ <span id="jfArenaEnergyTextB">75/100</span></small><small class="jf-spirit-badge" id="jfArenaSpiritB" hidden></small>
     </div>
   </div>
   <div class="jf-arena-challenge">
@@ -1321,6 +1325,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
     <button type="button" class="btn" data-jf-arena-action="soco">👊 Soco · 12⚡</button>
     <button type="button" class="btn" data-jf-arena-action="chute">🦶 Chute · 22⚡</button>
     <button type="button" class="btn" data-jf-arena-action="forte">💥 Golpe forte · 30⚡</button>
+    <button type="button" class="btn jf-spirit-action" data-jf-arena-action="espirito_simio" title="Consome sua vez e 10 de vida. Ataque +25% e dano recebido −25% nas próximas duas ações de cada lutador.">🔥 Espírito Símio · −10❤️</button>
     <button type="button" class="btn secondary" data-jf-arena-action="defender">🛡️ Defesa · +28⚡</button>
     <button type="button" class="btn secondary" id="jfArenaForfeit">🏳️ Desistir</button>
   </div>
@@ -1456,7 +1461,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 <script type="module" src="/wardrobe.js?v=arena-fit-11"></script>
 <script type="module" src="/dance-floor.js?v=simios-drink-rig-20261027"></script>
 <script defer src="/site-menu.js?v=1"></script>
-<script type="module" src="/simios-arena.js?v=11"></script>
+<script type="module" src="/simios-arena.js?v=12"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {

@@ -75,7 +75,7 @@ if(socket&&modal&&viewport){
     }
     audienceTexture.needsUpdate=true;
   }
-  const costs={soco:12,chute:22,forte:30,defender:0};
+  const costs={soco:12,chute:22,forte:30,defender:0,espirito_simio:0};
   const now=()=>performance.now();
   const safeName=id=>{
     const p=id===socket.id?bridge.getProfile?.():bridge.getPeerProfile?.(id);
@@ -113,10 +113,17 @@ if(socket&&modal&&viewport){
       $("jfArenaHpText"+label).textContent=hp+"/100";
       $("jfArenaEnergy"+label).style.width=energy+"%";
       $("jfArenaEnergyText"+label).textContent=energy+"/100";
+      const spirit=current.spirit?.[id],badge=$("jfArenaSpirit"+label);
+      badge.hidden=!spirit?.active;
+      badge.textContent=spirit?.active?"🔥 Espírito Símio · "+spirit.roundsRemaining+" round(s) · ATQ +25% / dano recebido −25%":"";
+      badge.parentElement.dataset.spirit=spirit?.active?"true":"false";
     }
     const myTurn=playing&&current.turn===socket.id;
-    for(const b of actions)
-      b.disabled=!myTurn||Number(current.energy?.[socket.id]||0)<costs[b.dataset.jfArenaAction];
+    for(const b of actions){
+      const kind=b.dataset.jfArenaAction;
+      b.disabled=!myTurn||Number(current.energy?.[socket.id]||0)<costs[kind]||
+        (kind==="espirito_simio"&&(Number(current.hp?.[socket.id]||0)<=10||current.spirit?.[socket.id]?.active));
+    }
     const move=current.lastMove;
     if(playing){
       setStatus(myTurn?"⚡ Sua vez! Escolha um golpe.":"⏳ Vez de "+safeName(current.turn));
@@ -132,7 +139,7 @@ if(socket&&modal&&viewport){
         lastActionKey=k;actionAt=now();
         // A animacao acontece localmente, mas o resultado e do servidor.
         if(playing||finished){
-          const label=move.kind==="defender"?"se defendeu":
+          const label=move.kind==="espirito_simio"?"ativou Espírito Símio (−10 de vida)":move.kind==="defender"?"se defendeu":
             move.hit===false?"errou o "+(move.kind==="chute"?"chute":"golpe"):
             "acertou "+(move.kind==="chute"?"um chute":"um golpe")+
               " ("+move.damage+" de dano)";
@@ -161,6 +168,7 @@ if(socket&&modal&&viewport){
     resultDetails.textContent=won?"Seu macaco venceu na arena!":
       lost?"Seu macaco foi derrotado. Você pode tentar uma revanche!":
       winner?safeName(winner)+" foi o vencedor.":String(current.message||"Luta encerrada.");
+    if(!previewOutcome&&current.dramaticFinish?.triggered)resultDetails.textContent+=" Dramatic Finish!";
     result.hidden=false;
     const actor=actors.find(a=>current.players?.[a.slot]===socket.id)||(previewOutcome?actors[0]:null);
     if(actor&&(won||lost)&&renderer){
@@ -288,8 +296,8 @@ if(socket&&modal&&viewport){
         age=t-finishAt-850;
       }else if(move&&t-actionAt<1050){
         age=t-actionAt;
-        if(move.by===id)kind=move.kind;
-        else if(move.to===id&&move.kind!=="defender")
+        if(move.by===id)kind=move.kind==="espirito_simio"?"defender":move.kind;
+        else if(move.to===id&&["soco","chute","forte"].includes(move.kind))
           kind=move.hit===false?"dodge":"hurt";
       }
       if(actor===outcomeActor){

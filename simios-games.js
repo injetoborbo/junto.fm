@@ -7,8 +7,15 @@ const ATTACKS=Object.freeze({
   soco:{cost:12,damage:16,accuracy:.86,label:"Soco"},
   chute:{cost:22,damage:23,accuracy:.76,label:"Chute"},
   forte:{cost:30,damage:29,accuracy:.68,label:"Golpe forte"},
-  defender:{cost:0,damage:0,accuracy:1,label:"Defesa"}
+  defender:{cost:0,damage:0,accuracy:1,label:"Defesa"},
+  espirito_simio:{cost:0,damage:0,accuracy:1,label:"Espírito Símio"}
 });
+const SPIRIT=Object.freeze({healthCost:10,rounds:2,attackMultiplier:1.25,incomingDamageMultiplier:.75});
+const spiritActive=(fight,id)=>Number(fight.spiritUntil[id]||0)>=fight.round;
+const spiritSnapshot=fight=>Object.fromEntries(fight.players.map(id=>[id,{
+  active:spiritActive(fight,id),
+  roundsRemaining:spiritActive(fight,id)?Math.ceil((fight.spiritUntil[id]-fight.round+1)/2):0
+}]));
 const INVITE_MS=20_000,IDLE_MS=90_000;
 const clamp=(n,low,high)=>Math.max(low,Math.min(high,n));
 
@@ -29,7 +36,7 @@ function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}
     const f=state.fight;
     if(f)return {phase:"playing",players:f.players.slice(),hp:{...f.hp},
       energy:{...f.energy},guard:{...f.guard},turn:f.turn,
-      round:f.round,lastMove:f.lastMove,startedAt:f.startedAt};
+      round:f.round,spirit:spiritSnapshot(f),spiritRules:SPIRIT,lastMove:f.lastMove,startedAt:f.startedAt};
     return state.last&&now()-state.last.at<15_000
       ?{phase:"finished",...state.last}:{phase:"idle"};
   };
@@ -41,13 +48,18 @@ function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}
     const {from,to}=state.invite;state.invite=null;
     if(reason){notice(from,reason);notice(to,reason);}
   };
-  const finish=(room,winner,message)=>{
+  const finish=(room,winner,message,reason="ended")=>{
     const state=rooms.get(room),fight=state?.fight;
     if(!fight)return;
+    const loser=fight.players.find(id=>id!==winner);
+    const dramaticFinish=reason==="ko"&&winner&&loser&&fight.hp[loser]===0&&spiritActive(fight,loser)
+      ?{triggered:true,winner,loser,ability:"espirito_simio",seq:fight.lastMove?.seq}:null;
     state.fight=null;
     state.last={winner:winner||null,players:fight.players.slice(),hp:{...fight.hp},
       energy:{...fight.energy},message:String(message).slice(0,140),at:now(),
-      lastMove:fight.lastMove};
+      lastMove:fight.lastMove,spirit:spiritSnapshot(fight),spiritRules:SPIRIT,dramaticFinish};
+    // One authoritative trigger per KO. Sync only replays state, not this event.
+    if(dramaticFinish)io.to(room).emit("simios-dramatic-finish",dramaticFinish);
     broadcast(room);
   };
   const leave=(room,id)=>{
@@ -103,7 +115,8 @@ function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}
       const hp=Object.fromEntries(players.map(id=>[id,100]));
       const energy=Object.fromEntries(players.map(id=>[id,75]));
       const guard=Object.fromEntries(players.map(id=>[id,false]));
-      state.fight={players,hp,energy,guard,turn:players[0],round:1,
+      const spiritUntil=Object.fromEntries(players.map(id=>[id,0]));
+      state.fight={players,hp,energy,guard,spiritUntil,turn:players[0],round:1,
         lastMove:null,startedAt:now(),lastActionAt:now()};
       state.last=null;
       broadcast(room);
@@ -123,13 +136,22 @@ function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}
         finish(room,null,"Luta encerrada por inatividade.");return;
       }
       const kind=typeof payload?.kind==="string"?payload.kind:"";
-      const move=ATTACKS[kind];if(!move)return;
+      const move=Object.hasOwn(ATTACKS,kind)?ATTACKS[kind]:null;if(!move)return;
       const actor=socket.id,target=fight.players.find(id=>id!==actor);
       if(!validPair(room,actor,target)){finish(room,null,"Um participante saiu.");return;}
       if(fight.energy[actor]<move.cost)
         return notice(actor,"Energia insuficiente. Use Defesa para recuperar.");
+      if(kind==="espirito_simio"){
+        if(spiritActive(fight,actor))return notice(actor,"Espírito Símio já está ativo.");
+        if(fight.hp[actor]<=SPIRIT.healthCost)return notice(actor,"Você precisa de mais de 10 de vida para ativar Espírito Símio.");
+      }
       let damage=0,hit=true;
-      if(kind==="defender"){
+      if(kind==="espirito_simio"){
+        fight.hp[actor]-=SPIRIT.healthCost;
+        // Activation consumes this turn. Then protect the next two enemy
+        // actions and boost the next two actions by the owner (four turns).
+        fight.spiritUntil[actor]=fight.round+SPIRIT.rounds*2;
+      }else if(kind==="defender"){
         fight.guard[actor]=true;
         fight.energy[actor]=clamp(fight.energy[actor]+28,0,100);
       }else{
@@ -138,16 +160,18 @@ function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}
         const roll=Number(random());
         hit=Number.isFinite(roll)&&roll>=0&&roll<move.accuracy;
         if(hit){
-          damage=move.damage;
-          if(fight.guard[target]){damage=Math.ceil(damage*.4);fight.guard[target]=false;}
+          damage=Math.ceil(move.damage*(spiritActive(fight,actor)?SPIRIT.attackMultiplier:1));
+          const reduction=(spiritActive(fight,target)?SPIRIT.incomingDamageMultiplier:1)*(fight.guard[target]?0.4:1);
+          damage=Math.ceil(damage*reduction);
+          if(fight.guard[target])fight.guard[target]=false;
           fight.hp[target]=clamp(fight.hp[target]-damage,0,100);
         }
       }
       fight.energy[target]=clamp(fight.energy[target]+9,0,100);
-      fight.lastMove={by:actor,to:target,kind,hit,damage,seq:fight.round,at:now()};
+      fight.lastMove={by:actor,to:target,kind,hit,damage,seq:fight.round,at:now(),healthCost:kind==="espirito_simio"?SPIRIT.healthCost:0};
       fight.lastActionAt=now();
       if(fight.hp[target]<=0){
-        finish(room,actor,"Nocaute! O macaco vencedor levou a melhor.");return;
+        finish(room,actor,"Nocaute! O macaco vencedor levou a melhor.","ko");return;
       }
       fight.turn=target;
       fight.round++;
@@ -168,4 +192,4 @@ function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}
     socket.emit("simios-fight-state",serialize(room));},
     snapshot:serialize,dispose:()=>{if(timer)clearInterval(timer);rooms.clear();lastChallenge.clear();}};
 }
-module.exports={createSimiosGames,ATTACKS};
+module.exports={createSimiosGames,ATTACKS,SPIRIT};

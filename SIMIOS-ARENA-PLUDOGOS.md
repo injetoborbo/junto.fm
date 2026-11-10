@@ -126,3 +126,23 @@ fechar a arena, sem alterar os GLBs compartilhados ou a prévia estática.
 O teste específico verifica que a geometria mantém o encaixe calibrado em pé,
 que as duas cavas recebem influência dos respectivos braços e se movem quando
 cada braço é levantado. A suíte direcionada agora tem 16 testes.
+
+## Espírito Símio e gatilho do Dramatic Finish
+
+- Ação `espirito_simio`: custa 10 HP, requer pelo menos 11 HP, não gasta
+  energia e consome a vez. Não acumula nem renova enquanto estiver ativa.
+- Balanceamento inicial configurado em `SPIRIT` no servidor: ataque +25% e
+  dano recebido −25%, incluindo combinação multiplicativa com a guarda.
+  Arredondamento do ataque para cima, depois redução e arredondamento para cima.
+- Dois rounds significam as próximas duas ações do adversário e as próximas
+  duas ações do dono. A ativação não conta nessa duração; erros e defesa
+  consomem ações normalmente. O snapshot fornece `spirit[id].active` e
+  `roundsRemaining`, e o cliente mostra o contador junto ao placar.
+- KO de uma vítima com Espírito ativo registra `dramaticFinish` no resultado
+  e emite `simios-dramatic-finish` uma única vez para a sala, com vencedor,
+  vítima, habilidade e sequência. O servidor determina tudo; payloads do
+  cliente não podem alterar o custo, bônus, duração ou forçar o finish.
+- Desistência, saída, inatividade e KO depois da expiração não engatilham.
+  O resultado mantém o gatilho para sincronização/reconexão sem emitir um
+  segundo evento. A interface identifica o Dramatic Finish no resultado;
+  a sequência visual será implementada após a descrição detalhada do criador.
