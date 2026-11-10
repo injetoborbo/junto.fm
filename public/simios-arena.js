@@ -3,7 +3,7 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-8";
+import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-9";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
@@ -26,7 +26,6 @@ if(socket&&modal&&viewport){
   let arenaSet=null,audienceTexture=null,audienceNames="";
   let renderer=null,scene=null,camera=null,resizeObserver=null,raf=0;
   let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="",ignoredOutcome="";
-  let sharedRigLoad=null;
   let statusOverride="",outcomeActor=null,outcomeStarted=0;
   const outcomeAssets={};
   const outcomeViewport=$("jfArenaResultAvatar");
@@ -185,7 +184,6 @@ if(socket&&modal&&viewport){
       await Promise.all(["victory","death"].map(async kind=>{
         try{outcomeAssets[kind]||=await loadOutcomeAnimation(kind);}catch(error){console.warn("Animação de resultado indisponível",kind,error);}
       }));
-      const newRig=false; // Mesmo modelo e encaixes da prévia de Trajes.
       if(!open||generation!==setupGeneration)return;
       const width=Math.max(viewport.clientWidth,200),height=Math.max(viewport.clientHeight,240);
       scene=new THREE.Scene();
@@ -249,8 +247,7 @@ if(socket&&modal&&viewport){
       for(let i=0;i<2;i++){
         const id=current.players?.[i]||(i===0?socket.id:null);
         const profile=id===socket.id?bridge.getProfile?.():bridge.getPeerProfile?.(id);
-        const avatar=await createDanceAvatar(profile?.wardrobe||{},"default",()=>{},
-          {experimental:newRig,local:false,testOutfit:true,rigidAccessories:true});
+        const avatar=await createWardrobeFittedAvatar(profile?.wardrobe||{},{local:id===socket.id});
         if(!open||generation!==setupGeneration){avatar.dispose();return;}
         scene.add(avatar.group);
         const side=i===0?1:-1;

@@ -84,3 +84,30 @@ a pose procedural anterior. Fechar ou voltar limpa mixers e restaura o palco.
 Validação: 14 testes existentes passaram; carregamento dos GLBs e amostragem
 das duas animações no rig real via Three.js confirmaram movimento e transforms
 finitos. Conferência visual no navegador e teste com duas contas pendentes.
+
+## Encaixe da arena: implementação atual
+
+A arena monta o macaco com `createWardrobeFittedAvatar`, usando a normalização
+1,8 e os mesmos ajustes da prévia em pé de Trajes, incluindo ajustes locais
+quando o avatar pertence ao próprio jogador. O caminho de encaixe da pista
+usa normalização 1,5, ajustes próprios de acessórios animados/sentados e não
+serve como referência para a prévia. A arena não usa mais esse caminho.
+
+Os arquivos selecionados são carregados antes da montagem. As peças são
+encaixadas na pose inicial e ficam presas diretamente aos ossos; peças legadas
+que ficavam na raiz da prévia são reassociadas ao pescoço/quadril preservando
+seu encaixe. A animação só começa depois dessa montagem. Assim, um download
+atrasado não captura uma pose de vitória/derrota como referência de encaixe.
+
+Regressão (Three.js somente como dependência de desenvolvimento):
+
+```powershell
+npm.cmd install
+node --test tests/arena-wardrobe.test.mjs tests/simios-games.test.js tests/simios-fight-pose.test.mjs
+```
+
+O novo teste compara as matrizes das peças com a prévia de Trajes, com ajustes
+padrão e locais. Cobre seis chapéus, tipos de óculos, fones e roupas, e verifica
+1176 amostras de acessórios durante os FBXs, mantendo os vínculos com os ossos
+e o contato do corpo com o chão. Texturas/iluminação e aparência final ainda
+precisam de conferência visual no navegador.

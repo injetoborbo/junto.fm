@@ -1248,3 +1248,45 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   return {group:root,rig:monkey,experimentalUsed,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }
 
+
+// Arena: assemble EXACTLY as the standing wardrobe preview first, then let
+// the skeleton animate it. The dance-floor fitting path has separate presets
+// (including seated glasses) and must not be used as the wardrobe reference.
+export async function createWardrobeFittedAvatar(outfit={}, {local=false}={}){
+  if(!base)await ensureBaseModel();
+  if(!base)throw Error("Modelo macaco.glb indisponível.");
+  const selection=sanitize(outfit);
+  const files=[selection.hat,selection.glasses,
+    selection.headphones==="preto"?"fone_novo":selection.headphones!=="nenhum"?"fone":null,
+    {punk:"regatapunk",rosa:"vestido",rosa_novo:"vestido_novo"}[selection.outfit]]
+    .filter(file=>ASSETS[file]);
+  // All assets finish loading BEFORE the first pose is applied. Otherwise a
+  // late attach() can accidentally capture a victory/death pose as its bind.
+  await Promise.all(files.map(getAsset));
+  const group=new THREE.Group(),monkey=cloneSkeleton(base.scene);
+  const bounds=new THREE.Box3().setFromObject(monkey);
+  const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+  const scale=1.8/(Math.max(size.x,size.y,size.z)||1);
+  monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
+  group.add(monkey);group.rotation.y=-.18;
+  let active=true;
+  const disposeClothes=dress(group,selection,()=>{},monkey,{
+    animated:false,privateFit:Boolean(local&&fitAccess)
+  });
+  // Cached getAsset().then() callbacks install the clothes in this microtask.
+  await Promise.resolve();
+  group.updateWorldMatrix(true,true);
+  // Some static legacy pieces (skirt and headphones worn at the neck)
+  // stay at the model root in the preview. Keep their exact world fit but
+  // parent them to the appropriate bone so they follow the whole animation.
+  const legacy=[];
+  monkey.traverse(part=>{if(/^jfWardrobe_/.test(part.name)&&part.parent===monkey)legacy.push(part);});
+  for(const part of legacy){
+    const role=part.name==="jfWardrobe_vestido"?"Hips":part.name==="jfWardrobe_fone"&&selection.hat!=="nenhum"?"Neck":"Head";
+    const bone=getAnimatedBone(monkey,role);if(bone)bone.attach(part);
+  }
+  group.rotation.y=0;group.updateWorldMatrix(true,true);
+  return {group,rig:monkey,updateAccessories:()=>{
+    if(active)group.updateWorldMatrix(true,true);
+  },dispose:()=>{active=false;disposeClothes();}};
+}
