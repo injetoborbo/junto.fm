@@ -1,10 +1,8 @@
 "use strict";
 
-/* The Símios: minigame PvP por turnos com aceite mútuo e pets temporários.
- * O servidor é a única autoridade para vida, energia, turno e vencedor.
- * Estado é por sala e não usa placar persistente nem modifica conquistas.
+/* Arena dos Macacos: duelo voluntário independente da balada.
+ * Servidor autoritativo para HP, energia, turno, golpe e vencedor.
  */
-const PETS=Object.freeze(["nenhum","caramelo","noturno","rosinha"]);
 const ATTACKS=Object.freeze({
   soco:{cost:12,damage:16,label:"Soco"},
   forte:{cost:30,damage:28,label:"Golpe forte"},
@@ -13,20 +11,17 @@ const ATTACKS=Object.freeze({
 const INVITE_MS=20_000,IDLE_MS=90_000;
 const clamp=(n,low,high)=>Math.max(low,Math.min(high,n));
 
-function createSimiosGames(io,danceFloors,{now=()=>Date.now(),sweep=true}={}){
+function createSimiosGames(io,{now=()=>Date.now(),sweep=true}={}){
   const rooms=new Map(),lastChallenge=new Map();
   const gameOf=room=>{
     if(!rooms.has(room))rooms.set(room,{invite:null,fight:null,last:null});
     return rooms.get(room);
   };
-  const floorOf=socket=>{
-    const room=socket?.data?.room;
-    return room&&danceFloors.get(room)?.has(socket.id)
-      ?{room,floor:danceFloors.get(room)}:null;
-  };
-  const validPair=(room,by,to)=>Boolean(by!==to&&danceFloors.get(room)?.has(by)&&danceFloors.get(room)?.has(to)
-    &&io.sockets.sockets.get(by)?.data?.room===room
-    &&io.sockets.sockets.get(to)?.data?.room===room);
+  const roomOf=socket=>typeof socket?.data?.room==="string"&&socket.data.room
+    ?socket.data.room:null;
+  const inRoom=(room,id)=>typeof id==="string"&&id.length>0&&id.length<=128
+    &&io.sockets.sockets.get(id)?.data?.room===room;
+  const validPair=(room,by,to)=>Boolean(by!==to&&inRoom(room,by)&&inRoom(room,to));
   const serialize=(room)=>{
     const state=rooms.get(room);
     if(!state)return {phase:"idle"};
@@ -61,38 +56,26 @@ function createSimiosGames(io,danceFloors,{now=()=>Date.now(),sweep=true}={}){
       clearInvite(room,"O desafio foi cancelado porque alguém saiu da pista.");
     if(state.fight?.players.includes(id)){
       const opponent=state.fight.players.find(x=>x!==id);
-      finish(room,validPair(room,id,opponent)?opponent:null,"Luta encerrada: um macaco saiu da pista.");
+      finish(room,inRoom(room,opponent)?opponent:null,"Luta encerrada: um jogador saiu da sala.");
     }
-    if(!state.invite&&!state.fight&&!danceFloors.get(room)?.size)rooms.delete(room);
+    if(!state.invite&&!state.fight&&(!state.last||now()-state.last.at>15_000))rooms.delete(room);
   };
   const attachSocket=socket=>{
-    let nextPetChangeAt=0;
-    socket.on("simios-pet-equip",payload=>{
-      const context=floorOf(socket);
-      if(!context)return;
-      const type=typeof payload?.type==="string"?payload.type:"";
-      if(!PETS.includes(type))return;
-      const member=context.floor.get(socket.id);
-      if(member.pet===type||now()<nextPetChangeAt)return;
-      nextPetChangeAt=now()+350; // Evita recriar dezenas de GLBs por segundo.
-      member.pet=type;
-      io.to(context.room).emit("dance-updated",{id:socket.id,...member});
-    });
     socket.on("simios-fight-sync",()=>{
-      const context=floorOf(socket);
-      if(!context)return;
-      socket.emit("simios-fight-state",serialize(context.room));
-      const invite=rooms.get(context.room)?.invite;
+      const room=roomOf(socket);
+      if(!room)return;
+      socket.emit("simios-fight-state",serialize(room));
+      const invite=rooms.get(room)?.invite;
       if(invite?.to===socket.id&&now()-invite.at<INVITE_MS)
         socket.emit("simios-fight-invite",{from:invite.from,expiresAt:invite.at+INVITE_MS});
     });
     socket.on("simios-fight-challenge",payload=>{
-      const context=floorOf(socket);if(!context)return;
+      const room=roomOf(socket);if(!room)return;
       const to=typeof payload?.targetId==="string"?payload.targetId:"";
-      if(!validPair(context.room,socket.id,to))return notice(socket.id,"Escolha outro macaco que esteja na pista.");
+      if(!validPair(room,socket.id,to))return notice(socket.id,"Escolha outro jogador na sala.");
       if(now()-(lastChallenge.get(socket.id)||0)<8_000)
         return notice(socket.id,"Aguarde um pouco antes de desafiar novamente.");
-      const state=gameOf(context.room);
+      const state=gameOf(room);
       if(state.fight)return notice(socket.id,"Já existe uma luta acontecendo nesta sala.");
       if(state.invite&&now()-state.invite.at>=INVITE_MS)clearInvite(context.room);
       if(state.invite)return notice(socket.id,"Já existe um desafio aguardando resposta nesta sala.");
@@ -103,11 +86,11 @@ function createSimiosGames(io,danceFloors,{now=()=>Date.now(),sweep=true}={}){
       notice(socket.id,"Desafio enviado! O outro macaco precisa aceitar.");
     });
     socket.on("simios-fight-respond",payload=>{
-      const context=floorOf(socket);if(!context)return;
-      const state=rooms.get(context.room),invite=state?.invite;
+      const room=roomOf(socket);if(!room)return;
+      const state=rooms.get(room),invite=state?.invite;
       if(!invite||invite.to!==socket.id)return;
-      if(now()-invite.at>=INVITE_MS||!validPair(context.room,invite.from,invite.to)){
-        clearInvite(context.room,"Desafio expirado ou participante saiu.");return;
+      if(now()-invite.at>=INVITE_MS||!validPair(room,invite.from,invite.to)){
+        clearInvite(room,"Desafio expirado ou participante saiu.");return;
       }
       state.invite=null;
       if(payload?.accept!==true){
@@ -122,19 +105,19 @@ function createSimiosGames(io,danceFloors,{now=()=>Date.now(),sweep=true}={}){
       state.fight={players,hp,energy,guard,turn:players[0],round:1,
         lastMove:null,startedAt:now(),lastActionAt:now()};
       state.last=null;
-      broadcast(context.room);
+      broadcast(room);
     });
     socket.on("simios-fight-act",payload=>{
-      const context=floorOf(socket);if(!context)return;
-      const fight=rooms.get(context.room)?.fight;
+      const room=roomOf(socket);if(!room)return;
+      const fight=rooms.get(room)?.fight;
       if(!fight||fight.turn!==socket.id)return;
       if(now()-fight.lastActionAt>IDLE_MS){
-        finish(context.room,null,"Luta encerrada por inatividade.");return;
+        finish(room,null,"Luta encerrada por inatividade.");return;
       }
       const kind=typeof payload?.kind==="string"?payload.kind:"";
       const move=ATTACKS[kind];if(!move)return;
       const actor=socket.id,target=fight.players.find(id=>id!==actor);
-      if(!validPair(context.room,actor,target)){finish(context.room,null,"Um participante saiu.");return;}
+      if(!validPair(room,actor,target)){finish(room,null,"Um participante saiu.");return;}
       if(fight.energy[actor]<move.cost)
         return notice(actor,"Energia insuficiente. Use Defesa para recuperar.");
       let damage=move.damage;
@@ -150,11 +133,11 @@ function createSimiosGames(io,danceFloors,{now=()=>Date.now(),sweep=true}={}){
       fight.lastMove={by:actor,to:target,kind,damage,at:now()};
       fight.lastActionAt=now();
       if(fight.hp[target]<=0){
-        finish(context.room,actor,"Nocaute! O macaco vencedor levou a melhor.");return;
+        finish(room,actor,"Nocaute! O macaco vencedor levou a melhor.");return;
       }
       fight.turn=target;
       fight.round++;
-      broadcast(context.room);
+      broadcast(room);
     });
   };
   const timer=sweep?setInterval(()=>{
@@ -162,13 +145,13 @@ function createSimiosGames(io,danceFloors,{now=()=>Date.now(),sweep=true}={}){
       if(state.invite&&now()-state.invite.at>=INVITE_MS)clearInvite(room,"Desafio expirado.");
       if(state.fight&&now()-state.fight.lastActionAt>=IDLE_MS)
         finish(room,null,"Luta encerrada por inatividade.");
-      if(!state.invite&&!state.fight&&!danceFloors.get(room)?.size)rooms.delete(room);
+      if(!state.invite&&!state.fight&&(!state.last||now()-state.last.at>15_000))rooms.delete(room);
     }
     for(const [id,ts] of lastChallenge)if(now()-ts>60_000)lastChallenge.delete(id);
   },5_000):null;
   timer?.unref?.();
-  return {attachSocket,leave,sync:socket=>{const ctx=floorOf(socket);if(ctx)
-    socket.emit("simios-fight-state",serialize(ctx.room));},
+  return {attachSocket,leave,sync:socket=>{const room=roomOf(socket);if(room)
+    socket.emit("simios-fight-state",serialize(room));},
     snapshot:serialize,dispose:()=>{if(timer)clearInterval(timer);rooms.clear();lastChallenge.clear();}};
 }
-module.exports={createSimiosGames,PETS,ATTACKS};
+module.exports={createSimiosGames,ATTACKS};
