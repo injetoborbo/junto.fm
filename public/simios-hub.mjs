@@ -17,7 +17,7 @@ export function initSimiosHub({socket,bridge,getPeople,isActive}){
   const battle=el("jfFightBattle"),notice=el("jfFightNotice");
   const petSelect=el("jfPludogoSelect"),petStatus=el("jfPludogoStatus");
   const actions=[...root.querySelectorAll("[data-jf-fight-action]")];
-  let currentState={phase:"idle"},pendingInvite=null,chosen="nenhum";
+  let currentState={phase:"idle"},pendingInvite=null,chosen="nenhum",lastVisualMove="";
   const own=()=>socket.id;
   const nameOf=id=>{
     const profile=id===own()?bridge?.getProfile?.():bridge?.getPeerProfile?.(id);
@@ -118,6 +118,25 @@ export function initSimiosHub({socket,bridge,getPeople,isActive}){
     }else el("jfFightTurn").textContent=myTurn?"⚡ Sua vez! Escolha o golpe.":
       involved?"⏳ Vez de "+nameOf(fight.turn):"👀 Assistindo à luta na sala.";
     const move=fight.lastMove;
+    // Animacao curta do soco/defesa, sem novos modelos 3D ou bibliotecas.
+    const visualKey=move?move.by+":"+move.at+":"+move.kind:"";
+    if(move&&visualKey!==lastVisualMove){
+      lastVisualMove=visualKey;
+      const attackingSide=players.indexOf(move.by)===0?"A":"B";
+      const targetSide=players.indexOf(move.to)===0?"A":"B";
+      const attacker=el("jfFightFace"+attackingSide);
+      const targetFace=el("jfFightFace"+targetSide);
+      if(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches!==true){
+        attacker?.animate?.(
+          move.kind==="defender"?
+            [{transform:"scale(1)"},{transform:"scale(1.18)",filter:"drop-shadow(0 0 8px #6cdcff)"},{transform:"scale(1)"}]:
+            [{transform:"translateX(0)"},{transform:"translateX("+(attackingSide==="A"?25:-25)+"px) scale(1.18)"},{transform:"translateX(0)"}],
+          {duration:450,easing:"ease-out"});
+        if(move.kind!=="defender")targetFace?.animate?.(
+          [{transform:"translateX(0)"},{transform:"translateX(-6px) rotate(-8deg)"},{transform:"translateX(7px) rotate(8deg)"},{transform:"translateX(0)"}],
+          {duration:400});
+      }
+    }
     el("jfFightLastMove").textContent=move
       ?nameOf(move.by)+" usou "+(labelOf[move.kind]||"golpe")+
         (move.kind==="defender"?" e recuperou energia.":" e causou "+move.damage+" de dano.")
@@ -152,7 +171,7 @@ export function initSimiosHub({socket,bridge,getPeople,isActive}){
     onEnter(){equip();socket.emit("simios-fight-sync");refreshOpponents();},
     onPresence(){refreshOpponents();if(currentState.phase!=="idle")render();},
     onLeave(){
-      currentState={phase:"idle"};pendingInvite=null;
+      currentState={phase:"idle"};pendingInvite=null;lastVisualMove="";
       invite.hidden=true;battle.hidden=true;msg("");
       for(const item of tabs){item.classList.remove("active");item.setAttribute("aria-pressed","false");}
       for(const panel of panels)panel.hidden=true;
