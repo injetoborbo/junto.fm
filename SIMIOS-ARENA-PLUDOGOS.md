@@ -193,3 +193,12 @@ quando os nomes mudam. A animação usa transforms dos grupos, sem redesenhar
 texturas por quadro. Texturas/geometrias são descartadas ao fechar a arena.
 Os testes `arena-audience.test.mjs` verificam orientação, nomes e animação sem
 uploads de canvas a cada frame.
+
+### Arte fiel e volume de fundo
+
+A plateia principal usa os cinco personagens da folha enviada pelo criador,
+coloridos mantendo suas poses, roupas e desenho simples. A versão anterior
+foi substituída. Duas camadas de silhuetas cinzas derivadas do alpha dessa
+mesma arte ficam atrás dos grupos coloridos para dar volume, com fases de
+movimento independentes e menor amplitude. O shader das silhuetas usa só a
+transparência da imagem, com cor cinza sólida, sem inventar outros personagens.

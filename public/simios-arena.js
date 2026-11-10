@@ -3,7 +3,7 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import {playDramaticFinish,stopDramaticFinish,finishDevAllowed} from "./dramatic-finish.js?v=2";
-import {createArenaAudience} from "./arena-audience.mjs?v=1";
+import {createArenaAudience} from "./arena-audience.mjs?v=2";
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-11";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
@@ -249,7 +249,7 @@ if(socket&&modal&&viewport){
       }
       const rearWall=new THREE.Mesh(new THREE.PlaneGeometry(8,5),wallMaterial);rearWall.position.set(0,1.8,-3);arenaSet.add(rearWall);
       const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.5,.8),new THREE.MeshBasicMaterial({map:texture}));sign.position.set(0,1.7,-2.8);arenaSet.add(sign);
-      const crowdArt=await new THREE.TextureLoader().loadAsync("/arena/plateia-colorida.webp");
+      const crowdArt=await new THREE.TextureLoader().loadAsync("/arena/plateia-colorida.webp?v=2");
       if(!open||generation!==setupGeneration){crowdArt.dispose();return;}
       audience=createArenaAudience(THREE,{texture:crowdArt});arenaSet.add(audience.group);updateAudience();
       for(let i=0;i<2;i++){

@@ -11,6 +11,12 @@ function setup(){
 test('crowd and name placards face into the ring without mirrored text',()=>{
  const {audience,texture}=setup();audience.group.updateMatrixWorld(true);
  assert.equal(audience.fans.length,10);
+ assert.equal(audience.silhouettes.length,20);
+ for(const shade of audience.silhouettes){
+  assert.equal(shade.group.material.map,texture);assert.ok(shade.z<0,'gray crowd must stay behind the original figures');
+  const shader={fragmentShader:'#include <map_fragment>'};shade.group.material.onBeforeCompile(shader);
+  assert.match(shader.fragmentShader,/diffuseColor\.rgb = diffuse/,'rear copies use alpha silhouettes, not colored art');
+ }
  for(const fan of audience.fans){
   const normal=new THREE.Vector3(0,0,1).applyQuaternion(fan.group.getWorldQuaternion(new THREE.Quaternion()));
   const inward=fan.group.getWorldPosition(new THREE.Vector3()).negate();inward.y=0;
