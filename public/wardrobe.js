@@ -250,8 +250,9 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   const updateAccessories=(seated=isSeated)=>{
     isSeated=Boolean(seated);
     if(!animated||!state.userData.active||!followers.length)return;
-    // Garantir osso atualizado APÓS mixer/pose, inclusive no modo sentado.
-    monkey.updateMatrixWorld(true);
+    // O root pode ter sido reposicionado para encostar no chão. Atualizar
+    // TODA a hierarquia antes de ler bone.matrixWorld e calcular as roupas.
+    root.updateWorldMatrix(true,true);
     for(const {part,bone,bindLocal,seatedLocal} of followers){
       if(!part.parent)continue;
       // A calibração é aplicada ANTES da matriz local do acessório,
@@ -469,14 +470,11 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       update();
     });
   };
-  if(rigidFollowers&&["bone","gorro"].includes(selection.hat)){
-    installNewWearable(selection.hat,newHeadBone,{preset:{width:selection.hat==="bone"?.64:.61,offset:[0,.30,.015]}});
-  }
   if(selection.hat==="caveira")installNewWearable("caveira",newHeadBone,{
     seatedOffset:{y:-.00015}
   });
   if(selection.glasses==="sem_aro"||selection.glasses==="botao"||
-     ((!animated||rigidFollowers)&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
+     (!animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
     installNewWearable(selection.glasses,newHeadBone,{
       seatedOffset:{z:.00015}
     });
@@ -517,12 +515,12 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       updateAccessories();
       render();
     });
-  }else if(!rigidFollowers&&(selection.hat==="bone"||selection.hat==="gorro")){
+  }else if(selection.hat==="bone"||selection.hat==="gorro"){
     attachFitted(selection.hat,part=>{
       part.position.x=rawX;
     },true,headBone,null,{y:-.0004});
   }
-  if(animated&&!rigidFollowers&&(selection.glasses==="escuros"||selection.glasses==="redondos")){
+  if(animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")){
     attachFitted(selection.glasses,(part,measure)=>{
       const s=.88;
       part.scale.setScalar(s);

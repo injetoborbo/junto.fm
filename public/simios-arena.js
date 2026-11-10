@@ -3,7 +3,7 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-7";
+import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-8";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
@@ -314,6 +314,7 @@ if(socket&&modal&&viewport){
           contact.translate(new THREE.Vector3(0,correction,0));actor.outcomeBounds=contact;
         }
       }
+      actor.avatar.group.updateMatrixWorld(true);
       actor.shadow.position.set(actor.avatar.group.position.x,.007,actor.avatar.group.position.z);
       if(actor===outcomeActor&&actor.outcomeBounds){const center=actor.outcomeBounds.getCenter(new THREE.Vector3());actor.shadow.position.set(center.x,.007,center.z);}
       actor.avatar.updateAccessories?.(false);

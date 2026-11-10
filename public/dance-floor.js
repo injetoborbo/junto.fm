@@ -3,7 +3,7 @@ import "./asset-cache.js";
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
-import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js?v=arena-fit-7";
+import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js?v=arena-fit-8";
 import {resolveDrinkBones,sipBlend} from "./club-drink-bones.mjs";
 
 const bridge=window.jfDanceBridge;
