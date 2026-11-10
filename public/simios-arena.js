@@ -2,7 +2,7 @@
  * Carrega os mesmos GLBs do macaco pela API do guarda-roupa.
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
-import {playDramaticFinish,stopDramaticFinish,finishDevAllowed} from "./dramatic-finish.js?v=1";
+import {playDramaticFinish,stopDramaticFinish,finishDevAllowed} from "./dramatic-finish.js?v=2";
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-11";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
@@ -164,7 +164,22 @@ if(socket&&modal&&viewport){
     if(dramaticPlaying||!actors.length||result.hidden===false||(current.phase!=="finished"&&!previewOutcome)||key===ignoredOutcome)return;
     if(!previewOutcome&&current.dramaticFinish?.triggered&&dramaticPlayed!==key){
       dramaticPlayed=key;dramaticPlaying=true;
-      void playDramaticFinish().finally(()=>{
+      void playDramaticFinish({
+        canRematch:(current.players||[]).includes(socket.id),
+        onRematch:()=>{
+          const rival=(current.players||[]).find(id=>id!==socket.id);
+          if(!inRoom()||!rival||!(bridge.getPeerIds?.()||[]).includes(rival))return 'O adversário não está mais na sala.';
+          if(current.phase!=="finished")return 'Já existe outro combate em andamento.';
+          ignoredOutcome=key;finishAt=0;resetOutcome();current={phase:"idle"};renderUi();
+          const accepting=inviteFrom===rival;
+          statusOverride=accepting?"Revanche aceita; preparando o duelo.":"Revanche enviada; aguardando o adversário.";
+          if(accepting){inviteFrom=null;showInvite();socket.emit("simios-fight-respond",{accept:true});}
+          else socket.emit("simios-fight-challenge",{targetId:rival});
+          setStatus(statusOverride);
+          return true;
+        },
+        onReturn:()=>{ignoredOutcome=key;dramaticPlaying=false;closeArena();$("jfCloseDance")?.click();}
+      }).finally(()=>{
         dramaticPlaying=false;
         if(open&&current.phase==="finished"&&String(current.at)+":"+String(current.winner)===key)showOutcome();
       });

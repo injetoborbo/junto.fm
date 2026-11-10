@@ -1,5 +1,5 @@
 import "./asset-cache.js";
-import {playDramaticFinish} from "./dramatic-finish.js?v=1";
+import {playDramaticFinish} from "./dramatic-finish.js?v=2";
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";

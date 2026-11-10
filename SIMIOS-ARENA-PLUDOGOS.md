@@ -164,3 +164,17 @@ Prévia sem combate:
 
 `tests/dramatic-finish.test.mjs` cobre sincronização de áudio/zoom, autoplay
 bloqueado, repetição da prévia, descarte ao pular e falha de áudio.
+
+### Menu ao encerrar o Dramatic Finish
+
+A sequência continua cobrindo a tela inteira, com o mesmo áudio e zoom out.
+Ao acabar (ou pular), mantém a imagem final e abre uma camada escura com blur,
+título estilizado DRAMATIC FINISH e as opções Pedir revanche / Voltar ao Junto.fm.
+O áudio para; a imagem/menu permanecem até uma escolha. A prévia do Dev Kit
+inclui exatamente essa etapa final; sua opção de revanche apenas abre a arena.
+
+No duelo real, revanche usa o convite existente do servidor para o mesmo rival,
+com aceite obrigatório. Se já houver convite desse adversário, o botão o aceita.
+Adversário ausente gera aviso no próprio menu; espectadores não pedem revanche.
+Voltar fecha arena/The Símios e retorna à interface do Junto.fm sem sair da sala.
+Esc pula para as opções durante a sequência e retorna ao site quando no menu.
