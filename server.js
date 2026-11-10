@@ -37,7 +37,7 @@ const roomBananaCounts = new Map(); // 0 a 15 por sala
 const roomBananaResetTimers = new Map();
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
-const simiosGames=createSimiosGames(io,danceFloors);
+const simiosGames=createSimiosGames(io);
 const roomChatMessages = new Map();
 const roomAccess = new Map();
 const roomQueueJobs = new Map(); // Serializa pedidos por sala; respeita a ordem de chegada.
@@ -488,7 +488,6 @@ function danceSnapshot(room){
   return [...(danceFloors.get(room)||new Map()).entries()].map(([id,data])=>({id,...data}));
 }
 function danceLeave(room,id){
-  simiosGames.leave(room,id);
   const floor=danceFloors.get(room);
   if(!floor||!floor.delete(id))return;
   io.to(room).emit("dance-left",{id});
@@ -564,7 +563,6 @@ io.on("connection", socket => {
       io.to(room).emit("dance-updated",{id:socket.id,...data});
     }
     socket.emit("dance-state",{room,participants:danceSnapshot(room)});
-    simiosGames.sync(socket);
   });
   socket.on("dance-move",payload=>{
     const room=socket.data.room;
@@ -777,6 +775,7 @@ io.on("connection", socket => {
     target.data.receiveMusicSuggestions=false;
     target.data.room=null;
     juntoTv.leave(room,targetId);
+    simiosGames.leave(room,targetId);
     danceLeave(room,targetId);
     target.leave(room);
     if(roomTransmitters.get(room)?.id===targetId){
@@ -868,6 +867,7 @@ io.on("connection", socket => {
     }
     socket.data.isTransmitting = false;
     juntoTv.leave(room,socket.id);
+    simiosGames.leave(room,socket.id);
     danceLeave(room,socket.id);
     releaseRoomOwnership(room,socket.id);
     socket.leave(room);
@@ -1174,6 +1174,7 @@ io.on("connection", socket => {
     if (!room) return;
     socket.data.room=null;
     juntoTv.leave(room,socket.id);
+    simiosGames.leave(room,socket.id);
     danceLeave(room,socket.id);
     notifyPresence();
     releaseRoomOwnership(room,socket.id);
