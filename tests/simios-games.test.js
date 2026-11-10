@@ -12,7 +12,7 @@ function setup(){
       events.push({destination,event,payload});
     }}}
   };
-  const games=createSimiosGames(io,rooms,{now:()=>clock,sweep:false});
+  const games=createSimiosGames(io,{now:()=>clock,random:()=>.25,sweep:false});
   const connect=id=>{
     const handlers=new Map();
     const client={id,data:{room:"sala"},connected:true,on:(name,fn)=>handlers.set(name,fn),
@@ -70,19 +70,38 @@ test("ninguém pode desafiar a si, ausente, ou forçar aceitação",()=>{
   assert.equal(h.games.snapshot("sala").phase,"idle");
   h.games.dispose();
 });
-test("Pludogos só permitem três visuais ou nenhum, visíveis para a sala",()=>{
-  const h=setup();
-  h.a.send("simios-pet-equip",{type:"caramelo"});
-  assert.equal(h.floor.get("alpha").pet,"caramelo");
-  assert.equal(h.last("dance-updated").pet,"caramelo");
-  h.a.send("simios-pet-equip",{type:"hacker"});
-  assert.equal(h.floor.get("alpha").pet,"caramelo");
-  h.advance(400);
-  h.a.send("simios-pet-equip",{type:"nenhum"});
-  assert.equal(h.floor.get("alpha").pet,"nenhum");
+test("chute usa 3D e dano calculado no servidor",()=>{
+  const h=setup();h.start();
+  h.a.send("simios-fight-act",{kind:"chute"});
+  const state=h.games.snapshot("sala");
+  assert.equal(state.hp.beta,77);
+  assert.equal(state.lastMove.kind,"chute");
+  assert.equal(state.lastMove.hit,true);
+  assert.equal(state.lastMove.damage,23);
+  assert.equal(state.turn,"beta");
   h.games.dispose();
 });
-test("recusa e saída da pista cancelam desafios e duelos",()=>{
+test("erros de soco e chute não causam dano e consomem o turno",()=>{
+  const h=setup();
+  // Simular um resultado aleatorio desfavoravel com novo jogo injetado.
+  h.games.dispose();
+  const clients=h.clients;
+  const io={
+    sockets:{sockets:clients},
+    to(destination){return{emit(event,payload){h.events.push({destination,event,payload});}}}
+  };
+  const game=createSimiosGames(io,{now:()=>h.now(),random:()=>.99,sweep:false});
+  game.attachSocket(h.a);game.attachSocket(h.b);
+  h.a.send("simios-fight-challenge",{targetId:"beta"});
+  h.b.send("simios-fight-respond",{accept:true});
+  h.a.send("simios-fight-act",{kind:"chute"});
+  assert.equal(game.snapshot("sala").hp.beta,100);
+  assert.equal(game.snapshot("sala").lastMove.hit,false);
+  assert.equal(game.snapshot("sala").lastMove.damage,0);
+  assert.equal(game.snapshot("sala").turn,"beta");
+  game.dispose();
+});
+test("recusa e saída da sala cancelam desafios e duelos",()=>{
   const h=setup();
   h.a.send("simios-fight-challenge",{targetId:"beta"});
   h.b.send("simios-fight-respond",{accept:false});
