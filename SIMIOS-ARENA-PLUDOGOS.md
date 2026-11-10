@@ -64,3 +64,23 @@ atalhos existentes ainda abrem seus modais.
 WebGL, o visual das animações no GLB real, duas sessões Live e todos os
 temas ainda precisam ser conferidos manualmente. Não publicar na main
 antes da revisão visual.
+
+## Animações de resultado enviadas pelo criador
+
+A tela de vitória/derrota agora mostra o próprio avatar do participante,
+com seus trajes, em destaque. Victory.fbx foi convertido para
+`public/poses/arena/victory.glb` (8,57 s) e Sword And Shield Death.fbx
+para `public/poses/arena/death.glb` (3,93 s). Ambos preservam somente
+esqueleto/animação, sem duplicar a malha do arquivo original. A tomada
+animada Layer0 foi selecionada; a tomada Base Layer estática foi descartada.
+
+`simios-outcome-animation.js` adapta as rotações globais ao repouso do
+macaco atual e transfere o deslocamento do quadril. A animação começa
+quando aparece o resultado, toca uma vez e mantém o último quadro.
+O canvas da arena é reutilizado no resultado, sem criar outro contexto WebGL.
+Espectadores continuam vendo o resultado geral. Falha de carregamento mantém
+a pose procedural anterior. Fechar ou voltar limpa mixers e restaura o palco.
+
+Validação: 14 testes existentes passaram; carregamento dos GLBs e amostragem
+das duas animações no rig real via Three.js confirmaram movimento e transforms
+finitos. Conferência visual no navegador e teste com duas contas pendentes.

@@ -4,6 +4,7 @@
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js";
+import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
 const $=id=>document.getElementById(id);
@@ -25,7 +26,15 @@ if(socket&&modal&&viewport){
   let renderer=null,scene=null,camera=null,resizeObserver=null,raf=0;
   let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="",ignoredOutcome="";
   let sharedRigLoad=null;
-  let statusOverride="";
+  let statusOverride="",outcomeActor=null,outcomeStarted=0;
+  const outcomeAssets={};
+  const outcomeViewport=$("jfArenaResultAvatar");
+  function resetOutcome(){
+    outcomeActor=null;
+    if(renderer&&viewport)viewport.appendChild(renderer.domElement);
+    for(const actor of actors){actor.avatar.group.visible=true;for(const animation of Object.values(actor.outcomes))animation.reset();}
+    if(camera){camera.position.set(0,2.08,7.6);camera.lookAt(0,.67,0);}
+  }
   const costs={soco:12,chute:22,forte:30,defender:0};
   const now=()=>performance.now();
   const safeName=id=>{
@@ -96,7 +105,7 @@ if(socket&&modal&&viewport){
       finishedSignature=key;finishAt=now();
       result.hidden=true;
     }else if(!finished){
-      finishAt=0;finishedSignature="";result.hidden=true;
+      resetOutcome();finishAt=0;finishedSignature="";result.hidden=true;
     }
     if(key===ignoredOutcome){finishAt=0;result.hidden=true;}
     listOpponents();
@@ -113,6 +122,16 @@ if(socket&&modal&&viewport){
       lost?"Seu macaco foi derrotado. Você pode tentar uma revanche!":
       winner?safeName(winner)+" foi o vencedor.":String(current.message||"Luta encerrada.");
     result.hidden=false;
+    const actor=actors.find(a=>current.players?.[a.slot]===socket.id);
+    if(actor&&(won||lost)&&renderer){
+      outcomeActor=actor;outcomeStarted=now();
+      actor.outcomeKind=won?"victory":"death";
+      for(const a of actors)a.avatar.group.visible=a===actor;
+      outcomeViewport.appendChild(renderer.domElement);
+      camera.position.set(0,1.7,5.5);camera.lookAt(0,.65,0);
+      const w=Math.max(outcomeViewport.clientWidth,200),h=Math.max(outcomeViewport.clientHeight,160);
+      camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);
+    }
   }
   async function ensureScene(){
     if(scene||loading)return;
@@ -125,6 +144,9 @@ if(socket&&modal&&viewport){
           console.warn("Arena: usando rig clássico como fallback.",error);
           return false;
         });
+      await Promise.all(["victory","death"].map(async kind=>{
+        try{outcomeAssets[kind]||=await loadOutcomeAnimation(kind);}catch(error){console.warn("Animação de resultado indisponível",kind,error);}
+      }));
       const newRig=await sharedRigLoad;
       if(!open||generation!==setupGeneration)return;
       const width=Math.max(viewport.clientWidth,200),height=Math.max(viewport.clientHeight,240);
@@ -161,15 +183,20 @@ if(socket&&modal&&viewport){
         scene.add(avatar.group);
         const side=i===0?1:-1;
         const fighter=bindCombatRig(THREE,avatar,{side,x:i===0?-1.2:1.2});
-        actors.push({avatar,fighter,slot:i});
+        const outcomes={};
+        for(const kind of ["victory","death"])if(outcomeAssets[kind]){
+          try{outcomes[kind]=bindOutcomeAnimation(avatar,outcomeAssets[kind]);}catch(error){console.warn(error);}
+        }
+        actors.push({avatar,fighter,slot:i,outcomes});
       }
       resizeObserver=new ResizeObserver(()=>{
         if(!renderer||!camera)return;
-        const w=Math.max(viewport.clientWidth,200),h=Math.max(viewport.clientHeight,180);
+        const target=outcomeActor?outcomeViewport:viewport;
+        const w=Math.max(target.clientWidth,200),h=Math.max(target.clientHeight,180);
         camera.aspect=w/h;camera.updateProjectionMatrix();
         renderer.setSize(w,h,false);
       });
-      resizeObserver.observe(viewport);
+      resizeObserver.observe(viewport);resizeObserver.observe(outcomeViewport);
       tick();
     }catch(error){
       console.error("Arena 3D:",error);
@@ -193,16 +220,24 @@ if(socket&&modal&&viewport){
         else if(move.to===id&&move.kind!=="defender")
           kind=move.hit===false?"dodge":"hurt";
       }
-      actor.fighter.apply(kind,age);
+      if(actor===outcomeActor){
+        actor.fighter.apply("idle",0);
+        actor.avatar.group.position.set(0,.82,0);actor.avatar.group.rotation.set(0,0,0);
+        actor.avatar.group.updateMatrixWorld(true);
+        const animation=actor.outcomes[actor.outcomeKind];
+        if(animation)animation.apply((t-outcomeStarted)/1000);
+        else actor.fighter.apply(actor.outcomeKind==="victory"?"victory":"ko",t-outcomeStarted);
+      }else actor.fighter.apply(kind,age);
     }
     if(current.phase==="finished"&&finishAt&&t-finishAt>2350)showOutcome();
     renderer.render(scene,camera);
   }
   function clearScene(){
+    resetOutcome();
     setupGeneration++;
     cancelAnimationFrame(raf);raf=0;
     resizeObserver?.disconnect();resizeObserver=null;
-    for(const {avatar} of actors){avatar.group.parent?.remove(avatar.group);avatar.dispose?.();}
+    for(const {avatar,outcomes} of actors){for(const animation of Object.values(outcomes))animation.dispose();avatar.group.parent?.remove(avatar.group);avatar.dispose?.();}
     actors=[];
     // A geometria e os materiais da arena são locais. Os do guarda-roupa
     // são compartilhados e não podem ser descartados aqui.
@@ -231,6 +266,7 @@ if(socket&&modal&&viewport){
   $("jfOpenArena")?.addEventListener("click",openArena);
   $("jfArenaClose")?.addEventListener("click",closeArena);
   $("jfArenaResultBack")?.addEventListener("click",()=>{
+    resetOutcome();
     ignoredOutcome=String(current.at)+":"+String(current.winner);
     result.hidden=true;finishAt=0;finishedSignature="";
     current={phase:"idle"};renderUi();

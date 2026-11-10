@@ -409,6 +409,12 @@ body.jf-in-room .jf-top-actions.jf-site-menu-root,body:not(.jf-in-room) .jf-top-
 .jf-arena-stage{position:relative;height:clamp(260px,40dvh,460px);border:2px solid var(--jf-secondary,#89d8ff);border-radius:12px;overflow:hidden;background:radial-gradient(circle at center,#37345d,#09071a);margin:10px 0}
 .jf-arena-viewport,.jf-arena-viewport canvas{display:block;width:100%;height:100%;touch-action:manipulation}
 .jf-arena-result{position:absolute;inset:0;display:flex;z-index:4;align-items:center;justify-content:center;flex-direction:column;gap:8px;text-align:center;background:radial-gradient(#080820e9,#090a19f6);color:#fff;padding:12px}
+.jf-arena-result-avatar{width:100%;flex:1 1 130px;min-height:70px;overflow:hidden}
+.jf-arena-result-avatar canvas{display:block;width:100%;height:100%}
+.jf-arena-result{gap:4px;padding:6px}
+.jf-arena-result p{margin:2px 0;font-size:12px}
+.jf-arena-result>strong{font-size:clamp(24px,5vw,40px);flex-shrink:0}
+.jf-arena-result>button{flex-shrink:0}
 .jf-arena-result strong{font-size:clamp(32px,8vw,64px);font-weight:1000;letter-spacing:.04em;text-shadow:0 4px 0 #231b46,0 0 28px #fbc947}
 .jf-arena-result p{font-weight:700}
 .jf-arena-score{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
@@ -1237,6 +1243,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
   <div class="jf-arena-stage" id="jfArenaStage">
     <div id="jfArenaViewport" class="jf-arena-viewport" aria-label="Combate 3D entre macacos"></div>
     <div id="jfArenaResult" class="jf-arena-result" hidden>
+      <div id="jfArenaResultAvatar" class="jf-arena-result-avatar" aria-label="Seu macaco animado"></div>
       <strong id="jfArenaResultTitle">VITÓRIA!</strong>
       <p id="jfArenaResultDetails"></p>
       <button class="btn" id="jfArenaResultBack" type="button">Voltar à arena</button>
