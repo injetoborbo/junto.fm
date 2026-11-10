@@ -66,13 +66,15 @@ function createSimiosGames(io,danceFloors,{now=()=>Date.now(),sweep=true}={}){
     if(!state.invite&&!state.fight&&!danceFloors.get(room)?.size)rooms.delete(room);
   };
   const attachSocket=socket=>{
+    let nextPetChangeAt=0;
     socket.on("simios-pet-equip",payload=>{
       const context=floorOf(socket);
       if(!context)return;
       const type=typeof payload?.type==="string"?payload.type:"";
       if(!PETS.includes(type))return;
       const member=context.floor.get(socket.id);
-      if(member.pet===type)return;
+      if(member.pet===type||now()<nextPetChangeAt)return;
+      nextPetChangeAt=now()+350; // Evita recriar dezenas de GLBs por segundo.
       member.pet=type;
       io.to(context.room).emit("dance-updated",{id:socket.id,...member});
     });
