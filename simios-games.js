@@ -108,6 +108,13 @@ function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}
       state.last=null;
       broadcast(room);
     });
+    socket.on("simios-fight-forfeit",()=>{
+      const room=roomOf(socket);if(!room)return;
+      const fight=rooms.get(room)?.fight;
+      if(!fight?.players.includes(socket.id))return;
+      const winner=fight.players.find(id=>id!==socket.id);
+      finish(room,inRoom(room,winner)?winner:null,"Um macaco desistiu do combate.");
+    });
     socket.on("simios-fight-act",payload=>{
       const room=roomOf(socket);if(!room)return;
       const fight=rooms.get(room)?.fight;
