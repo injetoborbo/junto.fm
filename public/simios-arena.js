@@ -2,6 +2,7 @@
  * Carrega os mesmos GLBs do macaco pela API do guarda-roupa.
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
+import {playDramaticFinish,stopDramaticFinish,finishDevAllowed} from "./dramatic-finish.js?v=1";
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-11";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
@@ -21,6 +22,7 @@ if(socket&&modal&&viewport){
   const opponent=$("jfArenaOpponent");
   const invite=$("jfArenaInvite");
   const lobby=$("jfArenaChallenge").parentElement;
+  let dramaticPlaying=false,dramaticPlayed="";
   let current={phase:"idle"},inviteFrom=null,previewOutcome=null;
   let open=false,loading=false,setupGeneration=0;
   let arenaSet=null,audienceTexture=null,audienceNames="";
@@ -159,7 +161,15 @@ if(socket&&modal&&viewport){
   }
   function showOutcome(){
     const key=String(current.at)+":"+String(current.winner);
-    if(!actors.length||result.hidden===false||(current.phase!=="finished"&&!previewOutcome)||key===ignoredOutcome)return;
+    if(dramaticPlaying||!actors.length||result.hidden===false||(current.phase!=="finished"&&!previewOutcome)||key===ignoredOutcome)return;
+    if(!previewOutcome&&current.dramaticFinish?.triggered&&dramaticPlayed!==key){
+      dramaticPlayed=key;dramaticPlaying=true;
+      void playDramaticFinish().finally(()=>{
+        dramaticPlaying=false;
+        if(open&&current.phase==="finished"&&String(current.at)+":"+String(current.winner)===key)showOutcome();
+      });
+      return;
+    }
     const winner=current.winner,players=current.players||[];
     const myself=players.includes(socket.id);
     const won=previewOutcome?previewOutcome==="victory":myself&&winner===socket.id;
@@ -364,6 +374,7 @@ if(socket&&modal&&viewport){
     void ensureScene();
   }
   function closeArena(){
+    if(dramaticPlaying)stopDramaticFinish();
     if(!open)return;
     open=false;modal.hidden=true;
     clearScene();inviteFrom=null;showInvite();
@@ -373,6 +384,12 @@ if(socket&&modal&&viewport){
     resetOutcome();previewOutcome=button.dataset.arenaPreview;
     result.hidden=true;showOutcome();
   });
+  if(finishDevAllowed(location)){
+    const previewButton=document.createElement("button");previewButton.type="button";previewButton.className="btn secondary";
+    previewButton.textContent="🎬 Testar Dramatic Finish";previewButton.dataset.arenaDramaticPreview="true";
+    previewButton.addEventListener("click",()=>{void playDramaticFinish();});
+    modal.querySelector(".jf-arena-preview>div")?.appendChild(previewButton);
+  }
   $("jfOpenArena")?.addEventListener("click",openArena);
   $("jfArenaClose")?.addEventListener("click",closeArena);
   $("jfArenaResultBack")?.addEventListener("click",()=>{
@@ -419,6 +436,7 @@ if(socket&&modal&&viewport){
     showInvite();openArena();
   });
   socket.on("simios-fight-state",data=>{
+    if(data?.phase!=="finished"&&dramaticPlaying)stopDramaticFinish();
     current=data&&typeof data==="object"?data:{phase:"idle"};
     const ids=current.players||[];
     if(current.phase==="playing"&&ids.includes(socket.id)){

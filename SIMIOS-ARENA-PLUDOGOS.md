@@ -146,3 +146,21 @@ cada braço é levantado. A suíte direcionada agora tem 16 testes.
   O resultado mantém o gatilho para sincronização/reconexão sem emitir um
   segundo evento. A interface identifica o Dramatic Finish no resultado;
   a sequência visual será implementada após a descrição detalhada do criador.
+
+### Apresentação do Dramatic Finish
+
+Implementada com a arte `derrota.png` enviada pelo criador (convertida para
+WebP mantendo resolução/proporção) e o MP3 original, sem alteração do áudio.
+A imagem começa ampliada em 1,35× e recua até ficar inteira, acompanhando a
+duração do áudio (aproximadamente 16,4 s). A sequência cobre a interface e,
+ao terminar/pular, a arena mostra o resultado normal. Esc ou Pular interrompe
+o áudio e limpa os temporizadores. Se o navegador bloquear autoplay, o botão
+Tocar áudio e iniciar começa o som e o zoom juntos.
+
+Prévia sem combate:
+- **The Símios → DEV → Testar Dramatic Finish**, no kit existente.
+- **Arena → Conferir animações → Testar Dramatic Finish**, também em modo dev.
+- Disponíveis em localhost ou com `?jfDev=1`, sem emitir ações no servidor.
+
+`tests/dramatic-finish.test.mjs` cobre sincronização de áudio/zoom, autoplay
+bloqueado, repetição da prévia, descarte ao pular e falha de áudio.

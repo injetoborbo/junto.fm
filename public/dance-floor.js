@@ -1,4 +1,5 @@
 import "./asset-cache.js";
+import {playDramaticFinish} from "./dramatic-finish.js?v=1";
 /* Pista de dança 3D isométrica: um único renderer para até oito macacos. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
@@ -69,6 +70,7 @@ const choices=[...document.querySelectorAll("[data-jf-dance]")];
      <div style="display:grid;gap:8px;margin-top:9px">
        <label>Zoom <input data-dev="zoom" type="range" min="0.55" max="2.6" value="1" step=".05" style="width:100%;accent-color:#65cfff">
          <output data-dev="zoom-val">100%</output></label>
+       <button data-dev="dramatic-finish" type="button">🎬 Testar Dramatic Finish</button>
        <button data-dev="reset-zoom" type="button">Restaurar zoom</button>
        <label>GLB experimental <input data-dev="file" type="file" accept=".glb,model/gltf-binary" style="width:100%"></label>
        <button data-dev="project-model" type="button">Carregar GLB do projeto</button>
@@ -89,6 +91,7 @@ const choices=[...document.querySelectorAll("[data-jf-dance]")];
    const get=id=>panel.querySelector('[data-dev="'+id+'"]');
    const refreshOwn=()=>{if(active&&socket?.id)refreshDancer(socket.id);};
    devStatus=get("status");
+   get("dramatic-finish").addEventListener("click",()=>{void playDramaticFinish();});
    const zoomInput=get("zoom"),zoomOutput=get("zoom-val");
    const updateZoom=()=>{
      devZoom=Number(zoomInput.value)||1;
