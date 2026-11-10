@@ -121,3 +121,13 @@ test("combate é isolado por sala e sincronização envia estado ao novo observa
   assert.equal(h.last("simios-fight-state","alpha").phase,"playing");
   h.games.dispose();
 });
+
+test("rendição encerra duelo e dá vitória ao adversário",()=>{
+  const h=setup();h.start();
+  h.a.send("simios-fight-forfeit");
+  const state=h.games.snapshot("sala");
+  assert.equal(state.phase,"finished");
+  assert.equal(state.winner,"beta");
+  assert.match(state.message,/desistiu/);
+  h.games.dispose();
+});
