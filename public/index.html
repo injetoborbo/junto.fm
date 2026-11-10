@@ -437,6 +437,50 @@ body.jf-in-room .jf-top-actions.jf-site-menu-root,body:not(.jf-in-room) .jf-top-
  .jf-arena-modal{padding:10px!important}
  .jf-arena-stage{height:clamp(220px,35dvh,350px)}
 }
+
+/* Fight Club: arena and outcome have their own compact art direction. */
+#jfArenaModal .jf-arena-modal{background:linear-gradient(145deg,#202324,#101314)!important;border:1px solid #a99c65;border-radius:4px;box-shadow:0 24px 90px #000d;color:#f3edda;width:min(1100px,96vw);padding:22px}
+#jfArenaHeading{font-family:Impact,"Arial Black",sans-serif;font-size:30px;letter-spacing:.09em;line-height:1;margin:0}
+.jf-fight-subtitle{display:block;color:#e4bd68;font-size:12px;letter-spacing:.5em;margin-top:7px}
+#jfArenaModal .jf-arena-modal>.small{font:10px monospace;letter-spacing:.12em;color:#aba996;margin:16px 0}
+#jfArenaModal .jf-arena-stage{height:clamp(320px,48dvh,540px);border:1px solid #6d674f;border-radius:0;box-shadow:inset 0 0 60px #0008;margin:12px 0 18px}
+#jfArenaModal .jf-arena-score{background:#0b0e0f;border:1px solid #4b4a3d;padding:12px;gap:20px}
+#jfArenaModal .jf-arena-player:first-child{text-align:left}
+#jfArenaModal .jf-arena-player:last-child{text-align:right}
+#jfArenaModal .jf-arena-player strong{text-transform:uppercase;letter-spacing:.12em;font:18px Impact,"Arial Black",sans-serif}
+#jfArenaModal .jf-arena-meter{border-radius:0;height:15px;border:1px solid #8f8054;transform:skewX(-10deg)}
+#jfArenaModal .jf-arena-meter>span{background:linear-gradient(90deg,#987535,#ffe6a1)}
+#jfArenaModal .jf-arena-meter.energy{height:5px;border:0;margin-top:3px}
+#jfArenaModal .jf-arena-meter.energy>span{background:#94b6ac}
+#jfArenaModal .jf-arena-vs{color:#e4bd68;font:italic 34px Impact,sans-serif}
+#jfArenaModal .btn{border-radius:2px;background:#292e2e;color:#ece3ca;border:1px solid #726b51;box-shadow:0 3px 0 #080909;text-shadow:none}
+#jfArenaModal .btn:hover:not(:disabled){background:#4c4632;border-color:#e4bd68}
+#jfArenaModal .btn:disabled{opacity:.35}
+#jfArenaModal .jf-arena-actions .btn{padding:14px 18px;border-bottom:3px solid #c9a457;font-weight:900}
+#jfArenaModal .jf-arena-preview{font-size:11px;color:#b8b3a2;margin:10px 0;cursor:pointer}
+#jfArenaModal .jf-arena-preview>div{padding:10px}
+#jfArenaModal .jf-arena-status{background:#0b0e0f;color:#e4bd68;padding:12px;border-left:3px solid #e4bd68;text-transform:uppercase;font:12px monospace;letter-spacing:.04em}
+#jfArenaModal .jf-arena-result{display:grid;grid-template-columns:56% 1fr;grid-template-rows:1fr auto auto auto 1fr;column-gap:12px;row-gap:12px;padding:24px;text-align:left;background:radial-gradient(ellipse at 25% 50%,#403824,#101416 65%);overflow:hidden}
+#jfArenaModal .jf-arena-result[data-outcome="death"]{background:radial-gradient(ellipse at 25% 50%,#43262a,#101416 65%)}
+#jfArenaModal .jf-arena-result-avatar{grid-column:1;grid-row:1/6;width:100%;height:100%;min-width:0;min-height:0;border-right:1px solid #71654b}
+#jfArenaModal .jf-result-eyebrow{grid-column:2;grid-row:2;font:10px monospace;letter-spacing:.15em;color:#a8a28e}
+#jfArenaModal #jfArenaResultTitle{grid-column:2;grid-row:3;font:clamp(28px,5vw,62px)/1 Impact,"Arial Black",sans-serif;letter-spacing:.02em;color:#f6d68b;text-shadow:0 3px 0 #000;overflow-wrap:anywhere}
+#jfArenaModal #jfArenaResultDetails{grid-column:2;grid-row:4;font-size:13px;line-height:1.5;color:#c1bcab;align-self:start}
+#jfArenaModal #jfArenaResultBack{grid-column:2;grid-row:5;align-self:start;justify-self:start}
+#jfArenaModal .jf-arena-result[data-outcome="death"] #jfArenaResultTitle{color:#e28e82}
+@media(max-width:600px){
+ #jfArenaModal .jf-arena-modal{padding:12px}
+ #jfArenaHeading{font-size:23px}
+ #jfArenaModal .jf-arena-stage{height:390px}
+ #jfArenaModal .jf-arena-result{padding:10px;grid-template-columns:1fr;grid-template-rows:minmax(180px,1fr) auto auto auto auto;gap:7px;text-align:center}
+ #jfArenaModal .jf-arena-result-avatar{grid-column:1;grid-row:1;border:0}
+ #jfArenaModal .jf-result-eyebrow{grid-column:1;grid-row:2}
+ #jfArenaModal #jfArenaResultTitle{grid-column:1;grid-row:3;font-size:32px}
+ #jfArenaModal #jfArenaResultDetails{grid-column:1;grid-row:4}
+ #jfArenaModal #jfArenaResultBack{grid-column:1;grid-row:5;justify-self:center}
+ #jfArenaModal .jf-arena-score{gap:8px;padding:8px}
+}
+
 @media(max-width:600px){.jf-dance-modal{padding:9px!important}.jf-dance-stage{min-height:210px;aspect-ratio:4/3;max-height:41dvh}.jf-dance-toolbar{font-size:11px}.jf-dance-launch{bottom:12px;left:76px}#jfDanceModal{bottom:8px;left:8px;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}#jfDanceModal .jf-dance-modal{max-height:calc(100dvh - 16px)}}
 body:not(.jf-in-room) .jf-topbar{justify-content:center}
 body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
@@ -1237,19 +1281,19 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 </div>
 <div class="jf-modal-backdrop" id="jfArenaModal" hidden>
  <section class="panel jf-modal jf-arena-modal" role="dialog" aria-modal="true" aria-labelledby="jfArenaHeading">
-  <div class="jf-modal-head"><h2 id="jfArenaHeading">🥊 Arena dos Macacos</h2>
+  <div class="jf-modal-head"><h2 id="jfArenaHeading">THE SÍMIOS <span class="jf-fight-subtitle">FIGHT CLUB</span></h2>
     <button class="btn secondary" id="jfArenaClose" type="button" aria-label="Fechar arena">✕</button></div>
-  <p class="small">Uma arena separada da The Símios. Desafie outro macaco da sala para lutar com seu avatar 3D.</p>
+  <p class="small">JUNTO.FM UNDERGROUND · DUELOS 1 × 1 · SEU MACACO, SUAS REGRAS</p>
   <div class="jf-arena-stage" id="jfArenaStage">
     <div id="jfArenaViewport" class="jf-arena-viewport" aria-label="Combate 3D entre macacos"></div>
     <div id="jfArenaResult" class="jf-arena-result" hidden>
       <div id="jfArenaResultAvatar" class="jf-arena-result-avatar" aria-label="Seu macaco animado"></div>
-      <strong id="jfArenaResultTitle">VITÓRIA!</strong>
+      <span class="jf-result-eyebrow">THE SÍMIOS // RESULTADO DO DUELO</span><strong id="jfArenaResultTitle">VITÓRIA!</strong>
       <p id="jfArenaResultDetails"></p>
       <button class="btn" id="jfArenaResultBack" type="button">Voltar à arena</button>
     </div>
   </div>
-  <div class="jf-arena-preview"><span class="small">Prévia das animações do seu macaco:</span> <button type="button" class="btn secondary" data-arena-preview="victory">Ver vitória</button> <button type="button" class="btn secondary" data-arena-preview="death">Ver derrota</button></div>
+  <details class="jf-arena-preview"><summary>Conferir animações</summary><div><span class="small">Prévia das animações do seu macaco:</span> <button type="button" class="btn secondary" data-arena-preview="victory">Ver vitória</button> <button type="button" class="btn secondary" data-arena-preview="death">Ver derrota</button></div></details>
   <div class="jf-arena-score">
     <div class="jf-arena-player">
       <strong id="jfArenaNameA">Macaco 1</strong>
@@ -1412,7 +1456,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 <script type="module" src="/wardrobe.js?v=arena-fit-4"></script>
 <script type="module" src="/dance-floor.js?v=simios-drink-rig-20261027"></script>
 <script defer src="/site-menu.js?v=1"></script>
-<script type="module" src="/simios-arena.js?v=4"></script>
+<script type="module" src="/simios-arena.js?v=5"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {

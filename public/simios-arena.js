@@ -4,7 +4,7 @@
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-4";
-import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=4";
+import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=5";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
 const $=id=>document.getElementById(id);
@@ -23,6 +23,7 @@ if(socket&&modal&&viewport){
   const lobby=$("jfArenaChallenge").parentElement;
   let current={phase:"idle"},inviteFrom=null,previewOutcome=null;
   let open=false,loading=false,setupGeneration=0;
+  let arenaSet=null;
   let renderer=null,scene=null,camera=null,resizeObserver=null,raf=0;
   let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="",ignoredOutcome="";
   let sharedRigLoad=null;
@@ -33,7 +34,8 @@ if(socket&&modal&&viewport){
     outcomeActor=null;previewOutcome=null;
     if(renderer&&viewport)viewport.appendChild(renderer.domElement);
     for(const actor of actors){actor.avatar.group.visible=true;for(const animation of Object.values(actor.outcomes))animation.reset();}
-    if(camera){camera.position.set(0,2.08,7.6);camera.lookAt(0,.67,0);}
+    if(arenaSet)arenaSet.visible=true;
+    if(camera){camera.position.set(0,1.65,4.6);camera.lookAt(0,.90,0);}
   }
   const costs={soco:12,chute:22,forte:30,defender:0};
   const now=()=>performance.now();
@@ -128,7 +130,9 @@ if(socket&&modal&&viewport){
       actor.outcomeKind=won?"victory":"death";
       for(const a of actors)a.avatar.group.visible=a===actor;
       outcomeViewport.appendChild(renderer.domElement);
-      camera.position.set(0,1.7,5.5);camera.lookAt(0,.65,0);
+      if(arenaSet)arenaSet.visible=false;
+      result.dataset.outcome=won?"victory":"death";
+      camera.position.set(0,1.1,3.0);camera.lookAt(0,.85,0);
       const w=Math.max(outcomeViewport.clientWidth,200),h=Math.max(outcomeViewport.clientHeight,160);
       camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);
     }
@@ -149,7 +153,7 @@ if(socket&&modal&&viewport){
       scene.background=new THREE.Color(0x10102a);
       scene.fog=new THREE.Fog(0x10102a,10,22);
       camera=new THREE.PerspectiveCamera(37,width/height,.08,50);
-      camera.position.set(0,2.08,7.6);camera.lookAt(0,.67,0);
+      camera.position.set(0,1.65,4.6);camera.lookAt(0,.90,0);
       renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
       renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
       renderer.setSize(width,height,false);
@@ -160,15 +164,35 @@ if(socket&&modal&&viewport){
       leftLight.position.set(-3,5,4);scene.add(leftLight);
       const rightLight=new THREE.DirectionalLight(0xff83c2,1.55);
       rightLight.position.set(3,3,-2);scene.add(rightLight);
-      const floor=new THREE.Mesh(new THREE.CylinderGeometry(2.9,3.05,.28,64),
-        new THREE.MeshStandardMaterial({color:0x34305e,metalness:.2,roughness:.65,flatShading:true}));
-      floor.position.y=-.18;scene.add(floor);
-      const matA=new THREE.MeshStandardMaterial({color:0x6ad8fd,emissive:0x0c536a,metalness:.32,roughness:.38});
-      const matB=new THREE.MeshStandardMaterial({color:0xff71cc,emissive:0x4d1845,metalness:.32,roughness:.38});
-      for(const [radius,mat] of [[2.9,matA],[2.65,matB]]){
-        const ring=new THREE.Mesh(new THREE.TorusGeometry(radius,.035,6,100),mat);
-        ring.rotation.x=Math.PI/2;ring.position.y=.025;scene.add(ring);
+      arenaSet=new THREE.Group();scene.add(arenaSet);
+      const canvas=document.createElement("canvas");canvas.width=1024;canvas.height=512;
+      const ctx=canvas.getContext("2d");
+      ctx.fillStyle="#25282c";ctx.fillRect(0,0,1024,512);
+      ctx.strokeStyle="#505349";ctx.lineWidth=3;
+      for(let i=0;i<25;i++){ctx.beginPath();ctx.moveTo(i*47,0);ctx.lineTo(i*47-120,512);ctx.stroke();}
+      ctx.strokeStyle="#d1c578";ctx.lineWidth=8;ctx.strokeRect(42,38,940,436);
+      ctx.save();ctx.translate(512,256);ctx.rotate(-.10);ctx.textAlign="center";
+      ctx.fillStyle="#d1c578";ctx.font="900 115px sans-serif";ctx.fillText("SÍMIOS",0,10);
+      ctx.font="bold 30px monospace";ctx.fillText("FIGHT CLUB // JUNTO.FM",0,65);ctx.restore();
+      const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+      const floor=new THREE.Mesh(new THREE.BoxGeometry(6,.22,3.8),new THREE.MeshStandardMaterial({map:texture,roughness:.9,color:0xffffff}));
+      floor.position.y=-.12;arenaSet.add(floor);
+      const steel=new THREE.MeshStandardMaterial({color:0x363c42,metalness:.75,roughness:.38});
+      const amber=new THREE.MeshStandardMaterial({color:0xffc76c,emissive:0x805015,emissiveIntensity:.65});
+      for(const x of [-2.85,2.85])for(const z of [-1.75,1.75]){
+        const post=new THREE.Mesh(new THREE.CylinderGeometry(.055,.07,1.65,8),steel);post.position.set(x,.7,z);arenaSet.add(post);
+        const cap=new THREE.Mesh(new THREE.BoxGeometry(.18,.27,.18),amber);cap.position.set(x,1.34,z);arenaSet.add(cap);
       }
+      // Back and side ropes leave the fighters unobstructed from the front.
+      for(const y of [.35,.75,1.15]){
+        const rope=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,5.7,8),amber);
+        rope.rotation.z=Math.PI/2;rope.position.set(0,y,-1.75);arenaSet.add(rope);
+        for(const x of [-2.85,2.85]){const r=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,3.5,8),steel);r.rotation.x=Math.PI/2;r.position.set(x,y,0);arenaSet.add(r);}
+      }
+      for(let i=0;i<11;i++){
+        const beam=new THREE.Mesh(new THREE.BoxGeometry(.11,3,.13),steel);beam.position.set((i-5)*.65,1.1,-2.7);arenaSet.add(beam);
+      }
+      const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.5,.8),new THREE.MeshBasicMaterial({map:texture}));sign.position.set(0,1.7,-2.8);arenaSet.add(sign);
       for(let i=0;i<2;i++){
         const id=current.players?.[i]||(i===0?socket.id:null);
         const profile=id===socket.id?bridge.getProfile?.():bridge.getPeerProfile?.(id);
@@ -177,7 +201,7 @@ if(socket&&modal&&viewport){
         if(!open||generation!==setupGeneration){avatar.dispose();return;}
         scene.add(avatar.group);
         const side=i===0?1:-1;
-        const fighter=bindCombatRig(THREE,avatar,{side,x:i===0?-1.2:1.2});
+        const fighter=bindCombatRig(THREE,avatar,{side,x:i===0?-.85:.85});
         const outcomes={};
         for(const kind of ["victory","death"])if(outcomeAssets[kind]){
           try{outcomes[kind]=bindOutcomeAnimation(avatar,outcomeAssets[kind]);}catch(error){console.warn(error);}
@@ -225,6 +249,16 @@ if(socket&&modal&&viewport){
         else actor.fighter.apply(actor.outcomeKind==="victory"?"victory":"ko",t-outcomeStarted);
       }else actor.fighter.apply(kind,age);
       actor.avatar.updateAccessories?.(false);
+      if(actor===outcomeActor){
+        // Frame the animated body itself, never the ring or asynchronously loaded accessories.
+        actor.avatar.group.updateMatrixWorld(true);
+        const bounds=new THREE.Box3().setFromObject(actor.avatar.rig,true);
+        const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
+        const fov=THREE.MathUtils.degToRad(camera.fov);
+        const distance=Math.max(size.y/(2*Math.tan(fov/2)),size.x/(2*Math.tan(fov/2)*camera.aspect),1)*1.2;
+        camera.position.set(center.x,center.y+.08,center.z+distance);
+        camera.lookAt(center);
+      }
     }
     if(current.phase==="finished"&&finishAt&&t-finishAt>2350)showOutcome();
     renderer.render(scene,camera);
@@ -238,12 +272,10 @@ if(socket&&modal&&viewport){
     actors=[];
     // A geometria e os materiais da arena são locais. Os do guarda-roupa
     // são compartilhados e não podem ser descartados aqui.
-    if(scene)for(const obj of scene.children){
-      if(obj.isMesh){obj.geometry?.dispose();obj.material?.dispose?.();}
-    }
+    arenaSet?.traverse(obj=>{if(obj.isMesh){obj.geometry?.dispose();obj.material?.map?.dispose();obj.material?.dispose?.();}});
     renderer?.dispose();renderer?.forceContextLoss();
     renderer?.domElement?.remove();
-    scene=null;camera=null;renderer=null;
+    scene=null;arenaSet=null;camera=null;renderer=null;
     loading=false;
   }
   function openArena(){
