@@ -4,14 +4,15 @@
  * Servidor autoritativo para HP, energia, turno, golpe e vencedor.
  */
 const ATTACKS=Object.freeze({
-  soco:{cost:12,damage:16,label:"Soco"},
-  forte:{cost:30,damage:28,label:"Golpe forte"},
-  defender:{cost:0,damage:0,label:"Defesa"}
+  soco:{cost:12,damage:16,accuracy:.86,label:"Soco"},
+  chute:{cost:22,damage:23,accuracy:.76,label:"Chute"},
+  forte:{cost:30,damage:29,accuracy:.68,label:"Golpe forte"},
+  defender:{cost:0,damage:0,accuracy:1,label:"Defesa"}
 });
 const INVITE_MS=20_000,IDLE_MS=90_000;
 const clamp=(n,low,high)=>Math.max(low,Math.min(high,n));
 
-function createSimiosGames(io,{now=()=>Date.now(),sweep=true}={}){
+function createSimiosGames(io,{now=()=>Date.now(),random=Math.random,sweep=true}={}){
   const rooms=new Map(),lastChallenge=new Map();
   const gameOf=room=>{
     if(!rooms.has(room))rooms.set(room,{invite:null,fight:null,last:null});
@@ -53,7 +54,7 @@ function createSimiosGames(io,{now=()=>Date.now(),sweep=true}={}){
     if(!room||!id)return;
     const state=rooms.get(room);if(!state)return;
     if(state.invite&&(state.invite.from===id||state.invite.to===id))
-      clearInvite(room,"O desafio foi cancelado porque alguém saiu da pista.");
+      clearInvite(room,"O desafio foi cancelado porque alguém saiu da sala.");
     if(state.fight?.players.includes(id)){
       const opponent=state.fight.players.find(x=>x!==id);
       finish(room,inRoom(room,opponent)?opponent:null,"Luta encerrada: um jogador saiu da sala.");
@@ -77,7 +78,7 @@ function createSimiosGames(io,{now=()=>Date.now(),sweep=true}={}){
         return notice(socket.id,"Aguarde um pouco antes de desafiar novamente.");
       const state=gameOf(room);
       if(state.fight)return notice(socket.id,"Já existe uma luta acontecendo nesta sala.");
-      if(state.invite&&now()-state.invite.at>=INVITE_MS)clearInvite(context.room);
+      if(state.invite&&now()-state.invite.at>=INVITE_MS)clearInvite(room);
       if(state.invite)return notice(socket.id,"Já existe um desafio aguardando resposta nesta sala.");
       state.last=null;
       lastChallenge.set(socket.id,now());
@@ -120,17 +121,23 @@ function createSimiosGames(io,{now=()=>Date.now(),sweep=true}={}){
       if(!validPair(room,actor,target)){finish(room,null,"Um participante saiu.");return;}
       if(fight.energy[actor]<move.cost)
         return notice(actor,"Energia insuficiente. Use Defesa para recuperar.");
-      let damage=move.damage;
+      let damage=0,hit=true;
       if(kind==="defender"){
         fight.guard[actor]=true;
         fight.energy[actor]=clamp(fight.energy[actor]+28,0,100);
       }else{
         fight.energy[actor]=clamp(fight.energy[actor]-move.cost+5,0,100);
-        if(fight.guard[target]){damage=Math.ceil(damage*.4);fight.guard[target]=false;}
-        fight.hp[target]=clamp(fight.hp[target]-damage,0,100);
+        // Sorteio APENAS no servidor; ambos os clientes recebem hit e damage.
+        const roll=Number(random());
+        hit=Number.isFinite(roll)&&roll>=0&&roll<move.accuracy;
+        if(hit){
+          damage=move.damage;
+          if(fight.guard[target]){damage=Math.ceil(damage*.4);fight.guard[target]=false;}
+          fight.hp[target]=clamp(fight.hp[target]-damage,0,100);
+        }
       }
       fight.energy[target]=clamp(fight.energy[target]+9,0,100);
-      fight.lastMove={by:actor,to:target,kind,damage,at:now()};
+      fight.lastMove={by:actor,to:target,kind,hit,damage,seq:fight.round,at:now()};
       fight.lastActionAt=now();
       if(fight.hp[target]<=0){
         finish(room,actor,"Nocaute! O macaco vencedor levou a melhor.");return;
