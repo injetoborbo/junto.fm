@@ -3,7 +3,7 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-9";
+import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-10";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
