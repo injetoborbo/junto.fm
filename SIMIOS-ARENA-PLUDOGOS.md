@@ -178,3 +178,18 @@ com aceite obrigatório. Se já houver convite desse adversário, o botão o ace
 Adversário ausente gera aviso no próprio menu; espectadores não pedem revanche.
 Voltar fecha arena/The Símios e retorna à interface do Junto.fm sem sair da sala.
 Esc pula para as opções durante a sequência e retorna ao site quando no menu.
+
+## Plateia colorida do criador
+
+A arte plateia.png foi colorida preservando fundo transparente e integrada como
+`public/arena/plateia-colorida.webp`, substituindo os espectadores procedurais.
+`arena-audience.mjs` distribui dez grupos nas arquibancadas traseira e laterais.
+Os grupos têm leves pulos/balanços em fases diferentes, com placas dos dois
+lutadores acompanhando o movimento. As faces apontam para dentro do ringue,
+impedindo que os nomes apareçam espelhados.
+
+A textura da plateia é compartilhada; os canvases das placas só são atualizados
+quando os nomes mudam. A animação usa transforms dos grupos, sem redesenhar
+texturas por quadro. Texturas/geometrias são descartadas ao fechar a arena.
+Os testes `arena-audience.test.mjs` verificam orientação, nomes e animação sem
+uploads de canvas a cada frame.

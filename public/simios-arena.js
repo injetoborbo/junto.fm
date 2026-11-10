@@ -3,6 +3,7 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import {playDramaticFinish,stopDramaticFinish,finishDevAllowed} from "./dramatic-finish.js?v=2";
+import {createArenaAudience} from "./arena-audience.mjs?v=1";
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-11";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
@@ -25,7 +26,7 @@ if(socket&&modal&&viewport){
   let dramaticPlaying=false,dramaticPlayed="";
   let current={phase:"idle"},inviteFrom=null,previewOutcome=null;
   let open=false,loading=false,setupGeneration=0;
-  let arenaSet=null,audienceTexture=null,audienceNames="";
+  let arenaSet=null,audience=null;
   let renderer=null,scene=null,camera=null,resizeObserver=null,raf=0;
   let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="",ignoredOutcome="";
   let statusOverride="",outcomeActor=null,outcomeStarted=0;
@@ -51,31 +52,8 @@ if(socket&&modal&&viewport){
     return bounds;
   }
   function updateAudience(){
-    if(!audienceTexture)return;
-    const names=[0,1].map(i=>{const id=current.players?.[i]||(i===0?socket.id:opponent.value);return id?safeName(id):"DESAFIANTE";});
-    const signature=names.join("|");if(signature===audienceNames)return;audienceNames=signature;
-    const canvas=audienceTexture.image,ctx=canvas.getContext("2d");
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const colors=["#a79c80","#d5bd85","#8ea6a0","#a98680","#807f9c"];
-    for(let row=0;row<3;row++)for(let i=0;i<16;i++){
-      const x=45+i*96+(row%2)*22,y=110+row*126;
-      ctx.fillStyle=row===0?"#343c3a":"#4b514b";
-      ctx.fillRect(x-30,y+32,60,100);
-      ctx.fillStyle=colors[(i+row*3)%colors.length];
-      for(const ear of [-27,27]){ctx.beginPath();ctx.arc(x+ear,y+8,12,0,Math.PI*2);ctx.fill();}
-      ctx.beginPath();ctx.ellipse(x,y+6,27,32,0,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle="#23292b";ctx.beginPath();ctx.ellipse(x,y+18,17,13,0,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle="#080d0e";ctx.fillRect(x-11,y,5,6);ctx.fillRect(x+6,y,5,6);
-      if((i+row)%3===0){
-        ctx.strokeStyle=colors[(i+row)%colors.length];ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(x-22,y+50);ctx.lineTo(x-40,y-45);ctx.moveTo(x+22,y+50);ctx.lineTo(x+40,y-45);ctx.stroke();
-        ctx.save();ctx.translate(x,y-62);ctx.rotate(((i%3)-1)*.07);
-        ctx.fillStyle=(i+row)%2?"#d8bd76":"#a9c6c0";ctx.fillRect(-65,-22,130,44);
-        ctx.strokeStyle="#161d1e";ctx.lineWidth=3;ctx.strokeRect(-65,-22,130,44);
-        ctx.fillStyle="#121a1b";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 17px sans-serif";
-        ctx.fillText(names[(i+row)%2].toUpperCase(),0,0,120);ctx.restore();
-      }
-    }
-    audienceTexture.needsUpdate=true;
+    if(!audience)return;
+    audience.setNames([0,1].map(i=>{const id=current.players?.[i]||(i===0?socket.id:opponent.value);return id?safeName(id):"DESAFIANTE";}));
   }
   const costs={soco:12,chute:22,forte:30,defender:0,espirito_simio:0};
   const now=()=>performance.now();
@@ -271,12 +249,9 @@ if(socket&&modal&&viewport){
       }
       const rearWall=new THREE.Mesh(new THREE.PlaneGeometry(8,5),wallMaterial);rearWall.position.set(0,1.8,-3);arenaSet.add(rearWall);
       const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.5,.8),new THREE.MeshBasicMaterial({map:texture}));sign.position.set(0,1.7,-2.8);arenaSet.add(sign);
-      const crowdCanvas=document.createElement("canvas");crowdCanvas.width=1536;crowdCanvas.height=512;
-      audienceTexture=new THREE.CanvasTexture(crowdCanvas);audienceTexture.colorSpace=THREE.SRGBColorSpace;
-      audienceNames="";updateAudience();
-      const crowdMaterial=new THREE.MeshBasicMaterial({map:audienceTexture,transparent:true,alphaTest:.05,side:THREE.DoubleSide,depthWrite:false});
-      const rearCrowd=new THREE.Mesh(new THREE.PlaneGeometry(7.5,2.5),crowdMaterial);rearCrowd.position.set(0,1.5,-2.55);arenaSet.add(rearCrowd);
-      for(const x of [-3.18,3.18]){const crowd=new THREE.Mesh(new THREE.PlaneGeometry(6,2.5),crowdMaterial);crowd.rotation.y=Math.PI/2;crowd.position.set(x,1.5,0);arenaSet.add(crowd);}
+      const crowdArt=await new THREE.TextureLoader().loadAsync("/arena/plateia-colorida.webp");
+      if(!open||generation!==setupGeneration){crowdArt.dispose();return;}
+      audience=createArenaAudience(THREE,{texture:crowdArt});arenaSet.add(audience.group);updateAudience();
       for(let i=0;i<2;i++){
         const id=current.players?.[i]||(i===0?socket.id:null);
         const profile=id===socket.id?bridge.getProfile?.():bridge.getPeerProfile?.(id);
@@ -312,6 +287,7 @@ if(socket&&modal&&viewport){
     if(!open||!scene||!renderer)return;
     raf=requestAnimationFrame(tick);
     const t=now();
+    audience?.update(t/1000);
     for(const actor of actors){
       const id=current.players?.[actor.slot],move=current.lastMove;
       let kind="idle",age=t;
@@ -373,10 +349,11 @@ if(socket&&modal&&viewport){
     actors=[];
     // A geometria e os materiais da arena são locais. Os do guarda-roupa
     // são compartilhados e não podem ser descartados aqui.
+    audience?.dispose();audience=null;
     arenaSet?.traverse(obj=>{if(obj.isMesh){obj.geometry?.dispose();obj.material?.map?.dispose();obj.material?.dispose?.();}});
     renderer?.dispose();renderer?.forceContextLoss();
     renderer?.domElement?.remove();
-    scene=null;arenaSet=null;audienceTexture=null;audienceNames="";camera=null;renderer=null;
+    scene=null;arenaSet=null;camera=null;renderer=null;
     loading=false;
   }
   function openArena(){
