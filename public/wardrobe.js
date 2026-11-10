@@ -201,7 +201,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   const monkeyBindWorld=monkey.matrixWorld.clone();
   const rootBindWorld=root.matrixWorld.clone();
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
-  const findBone=animated?getAnimatedBone:getBone;
+  const findBone=(model,part)=>getAnimatedBone(model,part)||getBone(model,part);
   const headBone=findBone(monkey,"Head");
   const topBone=findBone(monkey,"HeadTop_End");
   const neckBone=findBone(monkey,"Neck");

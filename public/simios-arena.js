@@ -3,8 +3,8 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js";
-import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js";
+import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-4";
+import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=4";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
 const $=id=>document.getElementById(id);
@@ -21,7 +21,7 @@ if(socket&&modal&&viewport){
   const opponent=$("jfArenaOpponent");
   const invite=$("jfArenaInvite");
   const lobby=$("jfArenaChallenge").parentElement;
-  let current={phase:"idle"},inviteFrom=null;
+  let current={phase:"idle"},inviteFrom=null,previewOutcome=null;
   let open=false,loading=false,setupGeneration=0;
   let renderer=null,scene=null,camera=null,resizeObserver=null,raf=0;
   let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="",ignoredOutcome="";
@@ -30,7 +30,7 @@ if(socket&&modal&&viewport){
   const outcomeAssets={};
   const outcomeViewport=$("jfArenaResultAvatar");
   function resetOutcome(){
-    outcomeActor=null;
+    outcomeActor=null;previewOutcome=null;
     if(renderer&&viewport)viewport.appendChild(renderer.domElement);
     for(const actor of actors){actor.avatar.group.visible=true;for(const animation of Object.values(actor.outcomes))animation.reset();}
     if(camera){camera.position.set(0,2.08,7.6);camera.lookAt(0,.67,0);}
@@ -112,17 +112,17 @@ if(socket&&modal&&viewport){
   }
   function showOutcome(){
     const key=String(current.at)+":"+String(current.winner);
-    if(result.hidden===false||current.phase!=="finished"||key===ignoredOutcome)return;
+    if(!actors.length||result.hidden===false||(current.phase!=="finished"&&!previewOutcome)||key===ignoredOutcome)return;
     const winner=current.winner,players=current.players||[];
     const myself=players.includes(socket.id);
-    const won=myself&&winner===socket.id;
-    const lost=myself&&winner&&winner!==socket.id;
+    const won=previewOutcome?previewOutcome==="victory":myself&&winner===socket.id;
+    const lost=previewOutcome?previewOutcome==="death":myself&&winner&&winner!==socket.id;
     resultTitle.textContent=won?"🏆 VITÓRIA!":lost?"💀 DERROTA!":winner?"🏆 VENCEDOR!":"⚖️ EMPATE";
     resultDetails.textContent=won?"Seu macaco venceu na arena!":
       lost?"Seu macaco foi derrotado. Você pode tentar uma revanche!":
       winner?safeName(winner)+" foi o vencedor.":String(current.message||"Luta encerrada.");
     result.hidden=false;
-    const actor=actors.find(a=>current.players?.[a.slot]===socket.id);
+    const actor=actors.find(a=>current.players?.[a.slot]===socket.id)||(previewOutcome?actors[0]:null);
     if(actor&&(won||lost)&&renderer){
       outcomeActor=actor;outcomeStarted=now();
       actor.outcomeKind=won?"victory":"death";
@@ -139,15 +139,10 @@ if(socket&&modal&&viewport){
     const generation=++setupGeneration;
     setStatus("Preparando os macacos 3D...");
     try{
-      if(!sharedRigLoad)sharedRigLoad=setDanceAvatarTestModel("/models/magago_junto_rig_teste.glb")
-        .then(()=>true).catch(error=>{
-          console.warn("Arena: usando rig clássico como fallback.",error);
-          return false;
-        });
       await Promise.all(["victory","death"].map(async kind=>{
         try{outcomeAssets[kind]||=await loadOutcomeAnimation(kind);}catch(error){console.warn("Animação de resultado indisponível",kind,error);}
       }));
-      const newRig=await sharedRigLoad;
+      const newRig=false; // Mesmo modelo e encaixes da prévia de Trajes.
       if(!open||generation!==setupGeneration)return;
       const width=Math.max(viewport.clientWidth,200),height=Math.max(viewport.clientHeight,240);
       scene=new THREE.Scene();
@@ -175,7 +170,7 @@ if(socket&&modal&&viewport){
         ring.rotation.x=Math.PI/2;ring.position.y=.025;scene.add(ring);
       }
       for(let i=0;i<2;i++){
-        const id=current.players?.[i];
+        const id=current.players?.[i]||(i===0?socket.id:null);
         const profile=id===socket.id?bridge.getProfile?.():bridge.getPeerProfile?.(id);
         const avatar=await createDanceAvatar(profile?.wardrobe||{},"default",()=>{},
           {experimental:newRig,local:false,testOutfit:true});
@@ -197,6 +192,7 @@ if(socket&&modal&&viewport){
         renderer.setSize(w,h,false);
       });
       resizeObserver.observe(viewport);resizeObserver.observe(outcomeViewport);
+      renderUi();
       tick();
     }catch(error){
       console.error("Arena 3D:",error);
@@ -228,6 +224,7 @@ if(socket&&modal&&viewport){
         if(animation)animation.apply((t-outcomeStarted)/1000);
         else actor.fighter.apply(actor.outcomeKind==="victory"?"victory":"ko",t-outcomeStarted);
       }else actor.fighter.apply(kind,age);
+      actor.avatar.updateAccessories?.(false);
     }
     if(current.phase==="finished"&&finishAt&&t-finishAt>2350)showOutcome();
     renderer.render(scene,camera);
@@ -263,10 +260,16 @@ if(socket&&modal&&viewport){
     open=false;modal.hidden=true;
     clearScene();inviteFrom=null;showInvite();
   }
+  for(const button of modal.querySelectorAll("[data-arena-preview]"))button.addEventListener("click",()=>{
+    if(!actors.length||current.phase==="playing")return;
+    resetOutcome();previewOutcome=button.dataset.arenaPreview;
+    result.hidden=true;showOutcome();
+  });
   $("jfOpenArena")?.addEventListener("click",openArena);
   $("jfArenaClose")?.addEventListener("click",closeArena);
   $("jfArenaResultBack")?.addEventListener("click",()=>{
-    resetOutcome();
+    const wasPreview=Boolean(previewOutcome);resetOutcome();
+    if(wasPreview){result.hidden=true;renderUi();return;}
     ignoredOutcome=String(current.at)+":"+String(current.winner);
     result.hidden=true;finishAt=0;finishedSignature="";
     current={phase:"idle"};renderUi();
