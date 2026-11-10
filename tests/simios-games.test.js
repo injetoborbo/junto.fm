@@ -77,6 +77,7 @@ test("Pludogos só permitem três visuais ou nenhum, visíveis para a sala",()=>
   assert.equal(h.last("dance-updated").pet,"caramelo");
   h.a.send("simios-pet-equip",{type:"hacker"});
   assert.equal(h.floor.get("alpha").pet,"caramelo");
+  h.advance(400);
   h.a.send("simios-pet-equip",{type:"nenhum"});
   assert.equal(h.floor.get("alpha").pet,"nenhum");
   h.games.dispose();
