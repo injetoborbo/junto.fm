@@ -11,12 +11,13 @@ export function loadOutcomeAnimation(kind){
 export function bindOutcomeAnimation(avatar,asset){
   const source=asset.scene.clone(true),sourceBones=new Map(),targets=[];
   source.updateMatrixWorld(true);avatar.rig.updateMatrixWorld(true);
+  const initialFrame=avatar.group.getWorldQuaternion(new THREE.Quaternion()).invert();
   source.traverse(node=>{if(node.name)sourceBones.set(key(node.name),{
     node,rest:node.getWorldQuaternion(new THREE.Quaternion()),position:node.position.clone()
   });});
   avatar.rig.traverse(node=>{if(!node.isBone)return;
     const match=sourceBones.get(key(node.name));
-    if(match)targets.push({node,match,rest:node.getWorldQuaternion(new THREE.Quaternion()),position:node.position.clone()});
+    if(match)targets.push({node,match,rest:node.getWorldQuaternion(new THREE.Quaternion()).premultiply(initialFrame),position:node.position.clone()});
   });
   const score=clip=>clip.tracks.reduce((sum,t)=>{
     if(!t.name.endsWith('.quaternion'))return sum;
@@ -33,15 +34,16 @@ export function bindOutcomeAnimation(avatar,asset){
   return {apply(seconds){
     mixer.setTime(Math.min(Math.max(seconds,0),Math.max(0,clip.duration-.001)));
     source.updateMatrixWorld(true);
+    const frame=avatar.group.getWorldQuaternion(new THREE.Quaternion());
     for(const t of targets){
-      t.match.node.getWorldQuaternion(world).multiply(t.match.rest.clone().invert()).multiply(t.rest);
+      t.match.node.getWorldQuaternion(world).multiply(t.match.rest.clone().invert()).multiply(t.rest).premultiply(frame);
       t.node.parent.getWorldQuaternion(parent).invert();
       t.node.quaternion.copy(parent.multiply(world)).normalize();
       if(t===targetHip&&sourceHip){
         const delta=sourceHip.node.position.clone().sub(sourceHip.position);
         // Convert source parent space through world into target parent space.
         delta.multiply(sourceHip.node.parent.getWorldScale(new THREE.Vector3())).applyQuaternion(sourceHip.node.parent.getWorldQuaternion(new THREE.Quaternion()));
-        delta.multiplyScalar(scale);
+        delta.multiplyScalar(scale).applyQuaternion(frame);
         const local=delta.applyQuaternion(t.node.parent.getWorldQuaternion(new THREE.Quaternion()).invert());
         const parentScale=t.node.parent.getWorldScale(new THREE.Vector3());
         local.divide(parentScale);t.node.position.copy(t.position).add(local);

@@ -3,8 +3,8 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-4";
-import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=5";
+import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-6";
+import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=6";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
 const $=id=>document.getElementById(id);
@@ -130,7 +130,7 @@ if(socket&&modal&&viewport){
       actor.outcomeKind=won?"victory":"death";
       for(const a of actors)a.avatar.group.visible=a===actor;
       outcomeViewport.appendChild(renderer.domElement);
-      if(arenaSet)arenaSet.visible=false;
+      if(arenaSet)arenaSet.visible=true;
       result.dataset.outcome=won?"victory":"death";
       camera.position.set(0,1.1,3.0);camera.lookAt(0,.85,0);
       const w=Math.max(outcomeViewport.clientWidth,200),h=Math.max(outcomeViewport.clientHeight,160);
@@ -192,12 +192,20 @@ if(socket&&modal&&viewport){
       for(let i=0;i<11;i++){
         const beam=new THREE.Mesh(new THREE.BoxGeometry(.11,3,.13),steel);beam.position.set((i-5)*.65,1.1,-2.7);arenaSet.add(beam);
       }
+      const wallMaterial=new THREE.MeshStandardMaterial({color:0x242927,roughness:1,side:THREE.DoubleSide});
+      for(const x of [-3.4,3.4]){
+        const wall=new THREE.Mesh(new THREE.PlaneGeometry(8,5),wallMaterial);wall.rotation.y=Math.PI/2;wall.position.set(x,1.8,0);arenaSet.add(wall);
+        for(let i=0;i<6;i++){
+          const stripe=new THREE.Mesh(new THREE.BoxGeometry(.02,.12,6),amber);stripe.position.set(x*.99,.2+i*.5,0);arenaSet.add(stripe);
+        }
+      }
+      const rearWall=new THREE.Mesh(new THREE.PlaneGeometry(8,5),wallMaterial);rearWall.position.set(0,1.8,-3);arenaSet.add(rearWall);
       const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.5,.8),new THREE.MeshBasicMaterial({map:texture}));sign.position.set(0,1.7,-2.8);arenaSet.add(sign);
       for(let i=0;i<2;i++){
         const id=current.players?.[i]||(i===0?socket.id:null);
         const profile=id===socket.id?bridge.getProfile?.():bridge.getPeerProfile?.(id);
         const avatar=await createDanceAvatar(profile?.wardrobe||{},"default",()=>{},
-          {experimental:newRig,local:false,testOutfit:true});
+          {experimental:newRig,local:false,testOutfit:true,rigidAccessories:true});
         if(!open||generation!==setupGeneration){avatar.dispose();return;}
         scene.add(avatar.group);
         const side=i===0?1:-1;
@@ -242,7 +250,8 @@ if(socket&&modal&&viewport){
       }
       if(actor===outcomeActor){
         actor.fighter.apply("idle",0);
-        actor.avatar.group.position.set(0,.82,0);actor.avatar.group.rotation.set(0,0,0);
+        actor.avatar.group.position.set(actor.fighter.baseX,.82,0);
+        actor.avatar.group.rotation.set(0,actor.fighter.baseYaw,0);
         actor.avatar.group.updateMatrixWorld(true);
         const animation=actor.outcomes[actor.outcomeKind];
         if(animation)animation.apply((t-outcomeStarted)/1000);
@@ -255,9 +264,11 @@ if(socket&&modal&&viewport){
         const bounds=new THREE.Box3().setFromObject(actor.avatar.rig,true);
         const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
         const fov=THREE.MathUtils.degToRad(camera.fov);
-        const distance=Math.max(size.y/(2*Math.tan(fov/2)),size.x/(2*Math.tan(fov/2)*camera.aspect),1)*1.2;
-        camera.position.set(center.x,center.y+.08,center.z+distance);
-        camera.lookAt(center);
+        // Opponent's side of the ring: camera looks straight into the
+        // fighter, preserving his side and the actual arena behind him.
+        const distance=Math.max(size.y/(2*Math.tan(fov/2)),size.z/(2*Math.tan(fov/2)*camera.aspect),1)*1.35;
+        camera.position.set(center.x+actor.fighter.side*distance,Math.max(1.05,center.y+.12),center.z+.12);
+        camera.lookAt(center.x,center.y,center.z);
       }
     }
     if(current.phase==="finished"&&finishAt&&t-finishAt>2350)showOutcome();

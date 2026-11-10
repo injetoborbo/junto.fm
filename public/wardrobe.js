@@ -192,7 +192,7 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false,experimental=false}={}){
+function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false,experimental=false,rigidFollowers=false}={}){
   // Capturar o bind pose ANTES das animações. As promessas de GLB podem
   // resolver com o avatar andando/sentado; nesse caso attach() simples
   // preservaria uma posição antiga num esqueleto já animado.
@@ -242,6 +242,10 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       calibration:{...glassesCalibration}};
   };
   for(const bone of [headBone,neckBone,torsoBone,hipBone,newHeadBone,newTopBone,newTorsoBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
+  const rigidPosition=new THREE.Vector3(),rigidRotation=new THREE.Quaternion(),rigidScale=new THREE.Vector3();
+  const bindPosition=new THREE.Vector3(),bindRotation=new THREE.Quaternion(),bindScale=new THREE.Vector3();
+  const anchorPosition=new THREE.Vector3(),anchorRotation=new THREE.Quaternion(),anchorScale=new THREE.Vector3();
+  const rootBindScale=new THREE.Vector3().setFromMatrixScale(rootBindWorld);
   const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
   const updateAccessories=(seated=isSeated)=>{
     isSeated=Boolean(seated);
@@ -266,6 +270,21 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
         correctionWorld.multiplyMatrices(bone.matrixWorld,seatShift).multiply(seatedLocal);
       }else{
         correctionWorld.multiplyMatrices(bone.matrixWorld,isSeated?seatedLocal:bindLocal);
+      }
+      if(rigidFollowers){
+        // A rigid hat/shirt must follow translation + rotation, not the
+        // non-uniform scale/shear of a retargeted bone's world matrix.
+        const bind=bindMatrices.get(bone);
+        const local=isSeated?seatedLocal:bindLocal;
+        bind.decompose(bindPosition,bindRotation,bindScale);
+        correctionWorld.copy(bind).multiply(local).decompose(rigidPosition,rigidRotation,rigidScale);
+        bone.matrixWorld.decompose(anchorPosition,anchorRotation,anchorScale);
+        const ratio=root.getWorldScale(new THREE.Vector3()).x/rootBindScale.x;
+        rigidPosition.sub(bindPosition).applyQuaternion(bindRotation.clone().invert())
+          .multiplyScalar(ratio).applyQuaternion(anchorRotation).add(anchorPosition);
+        rigidRotation.premultiply(bindRotation.clone().invert()).premultiply(anchorRotation);
+        rigidScale.multiplyScalar(ratio);
+        correctionWorld.compose(rigidPosition,rigidRotation,rigidScale);
       }
       part.parent.updateWorldMatrix(true,false);
       parentInverse.copy(part.parent.matrixWorld).invert();
@@ -1203,7 +1222,7 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   // Os trajes antigos têm encaixes próprios do macaco original.
   const experimentalOutfit=experimentalUsed&&!options.testOutfit?{}:outfit;
   const disposeClothes=dress(root,sanitize(experimentalOutfit),requestRender,monkey,{
-    animated:true,privateFit:Boolean(options.local&&fitAccess),experimental:experimentalUsed
+    animated:true,privateFit:Boolean(options.local&&fitAccess),experimental:experimentalUsed,rigidFollowers:Boolean(options.rigidAccessories)
   });
   if(skin==="capitao-patria"){
     const asset=await getAsset("hero");
