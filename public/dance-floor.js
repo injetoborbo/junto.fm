@@ -5,8 +5,6 @@ import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTF
 import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
 import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js";
 import {resolveDrinkBones,sipBlend} from "./club-drink-bones.mjs";
-import {makePludogo,animatePludogo,disposePludogo} from "./simios-pludogos.mjs";
-import {initSimiosHub} from "./simios-hub.mjs";
 
 const bridge=window.jfDanceBridge;
 const socket=bridge?.socket;
@@ -449,7 +447,6 @@ const CLUB_FRAME_MS=1000/CLUB_FPS;
 const CLUB_RENDER_SCALE=CLUB_MOBILE?.8:.9;
 let lastClubFrame=0,clubVisualTick=0;
 const people=new Map();
-const simiosHub=initSimiosHub({socket,bridge,getPeople:()=>people,isActive:()=>active});
 const danceSpeechTimers=new Map(); // Map<avatar, Set<timeout>>
 function clearDanceSpeech(member){
   for(const timer of danceSpeechTimers.get(member)||[])clearTimeout(timer);
@@ -1063,22 +1060,11 @@ function currentProfile(id){
 function currentSkin(id){
   return id===socket.id?bridge.getSkin():bridge.getPeerSkin(id);
 }
-function setMemberPludogo(entry,type){
-  if(!entry?.root)return;
-  const variant=["caramelo","noturno","rosinha"].includes(type)?type:"nenhum";
-  if(entry.petType===variant)return;
-  disposePludogo(entry.petGroup);
-  entry.petGroup=null;entry.petType=variant;
-  const pet=makePludogo(THREE,variant);
-  if(pet){entry.root.add(pet);entry.petGroup=pet;}
-}
 async function putMember(id,details){
   if(!active||!room||!id)return;
   const prev=people.get(id);
   if(prev){
-    prev.data={...prev.data,...details};
-    if(prev.root)setMemberPludogo(prev,prev.data.pet);
-    return;
+    prev.data={...prev.data,...details};return;
   }
   const generation=sequence;
   const profile=currentProfile(id);
@@ -1093,7 +1079,6 @@ async function putMember(id,details){
     if(!active||generation!==sequence||people.get(id)!==entry){avatar.dispose();return;}
     entry.profileName=profile.name;
     entry.root=avatar.group;entry.rig=avatar.rig;entry.dispose=avatar.dispose;
-    setMemberPludogo(entry,entry.data.pet);
     entry.experimentalRig=Boolean(avatar.experimentalUsed);
     if(entry.experimentalRig)prepareExperimentalSeat(entry);
     if(entry.experimentalRig){
@@ -1220,7 +1205,6 @@ function removeMember(id){
   const member=people.get(id);if(!member)return;
   clearDanceSpeech(member);
   if(member.devSkeleton){member.devSkeleton.parent?.remove(member.devSkeleton);member.devSkeleton.geometry.dispose();member.devSkeleton.material.dispose();}
-  disposePludogo(member.petGroup);
   member.mixer?.stopAllAction();
   member.mixer?.uncacheRoot(member.rig);
   member.dispose?.();
@@ -1432,7 +1416,6 @@ function animate(now=performance.now()){
       }else p.sitSwingElapsed=0;
     }
     if(sipping)poseDrinking(p,2900-(d.drinkingUntil-Date.now()));
-    if(p.petGroup)animatePludogo(p.petGroup,time,walking);
     if(p.heldDrink&&p.drinkHand){
       p.root.updateMatrixWorld(true);
       const worldPoint=p.drinkHand.getWorldPosition(new THREE.Vector3());
@@ -1474,7 +1457,6 @@ function open(){
 }
 function close(){
   if(!active)return;
-  simiosHub.onLeave();
   const oldRoom=room;active=false;room=null;sequence++;lastClubFrame=0;
   cancelAnimationFrame(frame);
   socket.emit("dance-exit");
@@ -1542,17 +1524,14 @@ socket?.on("dance-state",({room:joinedRoom,participants=[]})=>{
   count.textContent=people.size+"/8 macacos";
   setStatus("Clique nas garrafas para pegar, no chão para andar ou na cadeira para sentar.");
   updateChoices();
-  simiosHub.onEnter();
-  simiosHub.onPresence();
 });
 socket?.on("dance-updated",entry=>{
   if(!active||!entry?.id)return;
   putMember(entry.id,entry);
   count.textContent=people.size+"/8 macacos";
   if(entry.id===socket.id){updateChoices();refreshDrinkControls();}
-  simiosHub.onPresence();
 });
-socket?.on("dance-left",({id})=>{if(active){removeMember(id);simiosHub.onPresence();}});
+socket?.on("dance-left",({id})=>{if(active)removeMember(id);});
 function refreshDancer(id){
   if(!active||!people.has(id))return;
   const data={...people.get(id).data};
