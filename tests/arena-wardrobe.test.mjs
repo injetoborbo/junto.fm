@@ -13,10 +13,12 @@ const loaderURL=import.meta.resolve('three/examples/jsm/loaders/GLTFLoader.js');
 const cloneURL=import.meta.resolve('three/examples/jsm/utils/SkeletonUtils.js');
 const loadSource="import fs from 'node:fs';\nimport {GLTFLoader} from 'PLACEHOLDER';\nglobalThis.ProgressEvent=class{};\nexport async function load(path){\n const b=fs.readFileSync(path);const n=b.readUInt32LE(12),data=JSON.parse(b.subarray(20,20+n));\n delete data.images;delete data.textures;data.materials=[];\n for(const mesh of data.meshes||[])for(const p of mesh.primitives)delete p.material;\n if(data.buffers?.length){const start=20+n;data.buffers[0].uri='data:application/octet-stream;base64,'+b.subarray(start+8,start+8+b.readUInt32LE(start)).toString('base64');}\n return new GLTFLoader().parseAsync(JSON.stringify(data),'');\n}\n";
 await fs.writeFile(path.join(temp,'load.mjs'),loadSource.replace('PLACEHOLDER',loaderURL));
+const garmentSource=(await fs.readFile(path.join(project,'public/skin-wardrobe-shirt.mjs'),'utf8')).replaceAll('https://esm.sh/three@0.170.0',threeURL);
+await fs.writeFile(path.join(temp,'skin-shirt.mjs'),garmentSource);
 const prefix="import * as THREE from 'THREE_URL';\nimport {clone as cloneSkeleton} from 'CLONE_URL';\nimport {load} from './load.mjs';\nconst location={hostname:'test'};\nconst localStorage={getItem(){return null},setItem(){}};\nconst document={getElementById(){return null}};\nconst window={addEventListener(){},dispatchEvent(){},removeEventListener(){}};\nclass GLTFLoader{loadAsync(url){return load(PUBLIC_DIR+url)}}\n";
 // Execute the actual browser fitting functions, isolating only DOM and texture IO.
 const wardrobe=await fs.readFile(path.join(project,'public/wardrobe.js'),'utf8');
-const code=prefix.replace('THREE_URL',threeURL).replace('CLONE_URL',cloneURL).replace('PUBLIC_DIR',JSON.stringify(path.join(project,'public')))+wardrobe.slice(wardrobe.indexOf('const OPTIONS='),wardrobe.indexOf('// Encaixe INDEPENDENTE'))+wardrobe.slice(wardrobe.indexOf('// Arena: assemble EXACTLY'))+'\nexport {dress};export function qaBase(model){base=model;}export function qaFits(fits){fitAccess=true;privateFits=fits;}';
+const code='import {skinWardrobeShirt} from "./skin-shirt.mjs";\n'+prefix.replace('THREE_URL',threeURL).replace('CLONE_URL',cloneURL).replace('PUBLIC_DIR',JSON.stringify(path.join(project,'public')))+wardrobe.slice(wardrobe.indexOf('const OPTIONS='),wardrobe.indexOf('// Encaixe INDEPENDENTE'))+wardrobe.slice(wardrobe.indexOf('// Arena: assemble EXACTLY'))+'\nexport {dress};export function qaBase(model){base=model;}export function qaFits(fits){fitAccess=true;privateFits=fits;}';
 await fs.writeFile(path.join(temp,'wardrobe.mjs'),code);
 const source=(await fs.readFile(path.join(project,'public/simios-outcome-animation.js'),'utf8')).replaceAll('https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js',loaderURL).replaceAll('https://esm.sh/three@0.170.0',threeURL);
 await fs.writeFile(path.join(temp,'outcome.mjs'),source);
@@ -75,4 +77,40 @@ for(const local of [false,true]){
 }
 assert.ok(checks>=1100);
 
+});
+
+test('regata keeps its standing fit and both cavas deform with their upper arms',async()=>{
+ const selection={hat:'nenhum',glasses:'nenhum',headphones:'nenhum',outfit:'punk'};
+ const base=await load(path.join(project,'public/macaco.glb'));qaBase(base);
+ const avatar=await createWardrobeFittedAvatar(selection);
+ const referenceRig=cloneSkeleton(base.scene),referenceGroup=new THREE.Group();
+ const box=new THREE.Box3().setFromObject(referenceRig),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+ const scale=1.8/Math.max(size.x,size.y,size.z);
+ referenceRig.scale.setScalar(scale);referenceRig.position.copy(center).multiplyScalar(-scale);referenceGroup.add(referenceRig);referenceGroup.rotation.y=-.18;
+ const dispose=dress(referenceGroup,selection,()=>{},referenceRig,{animated:false});await Promise.resolve();
+ referenceGroup.rotation.y=0;referenceGroup.updateMatrixWorld(true);avatar.group.updateMatrixWorld(true);
+ let referenceMesh,garment;referenceGroup.traverse(n=>{if(n.isMesh&&n.parent.name==='jfWardrobe_regatapunk')referenceMesh=n;});
+ avatar.rig.traverse(n=>{if(n.userData.jfGarment)garment=n;});
+ assert.ok(garment?.isSkinnedMesh,'regata must be skinned, not a rigid spine attachment');
+ assert.equal(garment.geometry.attributes.position.count,referenceMesh.geometry.attributes.position.count);
+ garment.skeleton.update();
+ const p=new THREE.Vector3(),q=new THREE.Vector3();
+ for(let i=0;i<garment.geometry.attributes.position.count;i+=997){
+  garment.getVertexPosition(i,p).applyMatrix4(garment.matrixWorld);
+  q.fromBufferAttribute(referenceMesh.geometry.attributes.position,i).applyMatrix4(referenceMesh.matrixWorld);
+  assert.ok(p.distanceTo(q)<1e-5,'skinning must preserve the calibrated standing fit');
+ }
+ const indices=garment.geometry.attributes.skinIndex,weights=garment.geometry.attributes.skinWeight;
+ for(const side of ['Left','Right']){
+  const arm=garment.skeleton.bones.find(b=>new RegExp(side+'Arm$','i').test(b.name));assert.ok(arm);
+  const boneIndex=garment.skeleton.bones.indexOf(arm);let chosen=-1,largest=0;
+  for(let i=0;i<weights.count;i++)for(let k=0;k<4;k++)if(indices.getComponent(i,k)===boneIndex&&weights.getComponent(i,k)>largest){largest=weights.getComponent(i,k);chosen=i;}
+  assert.ok(largest>.1,`${side} cava must have real upper-arm influence`);
+  garment.getVertexPosition(chosen,p);const rest=arm.quaternion.clone();
+  arm.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),.8));
+  avatar.group.updateMatrixWorld(true);garment.skeleton.update();garment.getVertexPosition(chosen,q);
+  assert.ok(p.distanceTo(q)>.00001,`${side} cava must move when its arm lifts`);
+  arm.quaternion.copy(rest);avatar.group.updateMatrixWorld(true);garment.skeleton.update();
+ }
+ avatar.dispose();dispose();
 });

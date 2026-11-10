@@ -3,7 +3,7 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-10";
+import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-11";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
@@ -40,7 +40,7 @@ if(socket&&modal&&viewport){
     avatar.group.updateMatrixWorld(true);
     const bounds=new THREE.Box3();
     avatar.rig.traverse(mesh=>{
-      if(!mesh.isSkinnedMesh)return;
+      if(!mesh.isSkinnedMesh||mesh.userData.jfGarment)return;
       let parent=mesh;
       while(parent&&parent!==avatar.rig){if(/^jfWardrobe/.test(parent.name))return;parent=parent.parent;}
       mesh.skeleton.update();

@@ -111,3 +111,18 @@ padrão e locais. Cobre seis chapéus, tipos de óculos, fones e roupas, e verif
 1176 amostras de acessórios durante os FBXs, mantendo os vínculos com os ossos
 e o contato do corpo com o chão. Texturas/iluminação e aparência final ainda
 precisam de conferência visual no navegador.
+
+### Regata deformável na arena
+
+A regata original não tem skin. Prendê-la apenas à coluna mantém o tronco no
+lugar, mas deixa as cavas paradas quando os braços levantam. A arena agora
+converte suas malhas em SkinnedMesh e transfere pesos dos três vértices mais
+próximos do corpo para cada vértice da roupa (busca espacial KD-tree).
+Compartilha o esqueleto do macaco, preservando UVs, material e o encaixe em pé
+`width: 0.44, offset: [0, -0.01, 0]`. A transferência acontece só na montagem;
+a deformação por quadro usa a GPU. As geometrias geradas são liberadas ao
+fechar a arena, sem alterar os GLBs compartilhados ou a prévia estática.
+
+O teste específico verifica que a geometria mantém o encaixe calibrado em pé,
+que as duas cavas recebem influência dos respectivos braços e se movem quando
+cada braço é levantado. A suíte direcionada agora tem 16 testes.

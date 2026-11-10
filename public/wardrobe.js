@@ -1,4 +1,5 @@
 import "./asset-cache.js";
+import {skinWardrobeShirt} from "./skin-wardrobe-shirt.mjs?v=1";
 /* Guarda-roupa 3D público. Cada participante possui seu próprio macaco. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
@@ -1286,7 +1287,8 @@ export async function createWardrobeFittedAvatar(outfit={}, {local=false}={}){
     const bone=getAnimatedBone(monkey,role);if(bone)bone.attach(part);
   }
   group.rotation.y=0;group.updateWorldMatrix(true,true);
+  const disposeShirt=selection.outfit==="punk"?skinWardrobeShirt({group,rig:monkey}):()=>{};
   return {group,rig:monkey,updateAccessories:()=>{
     if(active)group.updateWorldMatrix(true,true);
-  },dispose:()=>{active=false;disposeClothes();}};
+  },dispose:()=>{active=false;disposeShirt();disposeClothes();}};
 }
