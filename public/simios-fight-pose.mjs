@@ -9,10 +9,11 @@ const pulse=(t,from=.12,peak=.38,end=.84)=>t<=from||t>=end?0:
 
 export function combatBoneRole(name){
   const raw=String(name||"").split(/[|/:\\]/).pop();
-  const key=raw.replace(/^mixamorig\d*/i,"").replace(/^ccbase/i,"")
-    .replace(/[^a-z0-9]/gi,"").toLowerCase();
+  // Normalizar separadores ANTES de remover prefixo CC_Base_/mixamorig.
+  const key=raw.replace(/[^a-z0-9]/gi,"")
+    .replace(/^(?:mixamorig\d*|ccbase)/i,"").toLowerCase();
   if(key==="head"||key==="neck")return key;
-  if(/^(spine|spine1|spine2|chest|upperchest)$/.test(key))return "spine";
+  if(/^(?:spine\d*|chest|upperchest)$/.test(key))return "spine";
   if(key==="hips"||key==="pelvis")return "hips";
   const sides=[["right",/^(?:right|r)/],["left",/^(?:left|l)/]];
   for(const [side,re] of sides){
