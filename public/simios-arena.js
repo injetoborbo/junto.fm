@@ -5,7 +5,7 @@
 import {playDramaticFinish,stopDramaticFinish,finishDevAllowed} from "./dramatic-finish.js?v=2";
 import {createArenaAudience} from "./arena-audience.mjs?v=2";
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-11";
+import {createWardrobeFittedAvatar} from "./wardrobe.js?v=arena-fit-12";
 import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 

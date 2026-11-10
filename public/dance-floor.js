@@ -4,7 +4,7 @@ import {playDramaticFinish} from "./dramatic-finish.js?v=2";
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
-import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js?v=arena-fit-11";
+import {createDanceAvatar,setDanceAvatarTestModel,getDanceAvatarTestFit,setDanceAvatarTestFit} from "./wardrobe.js?v=arena-fit-12";
 import {resolveDrinkBones,sipBlend} from "./club-drink-bones.mjs";
 
 const bridge=window.jfDanceBridge;

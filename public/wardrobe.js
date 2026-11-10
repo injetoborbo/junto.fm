@@ -1,5 +1,5 @@
 import "./asset-cache.js";
-import {skinWardrobeShirt} from "./skin-wardrobe-shirt.mjs?v=1";
+import {skinWardrobeShirt} from "./skin-wardrobe-shirt.mjs?v=2";
 /* Guarda-roupa 3D público. Cada participante possui seu próprio macaco. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";

@@ -114,3 +114,36 @@ test('regata keeps its standing fit and both cavas deform with their upper arms'
  }
  avatar.dispose();dispose();
 });
+
+test('regata excludes distal limbs and stays within fabric stretch limits in the real finish clips',async()=>{
+ const base=await load(path.join(project,'public/macaco.glb'));qaBase(base);
+ const avatar=await createWardrobeFittedAvatar({outfit:'punk'});
+ let garment;avatar.rig.traverse(mesh=>{if(mesh.userData.jfGarment)garment=mesh;});
+ const allowed=new Set(['mixamorigSpine2','mixamorigSpine1','mixamorigLeftArm','mixamorigRightArm']);
+ const indices=garment.geometry.attributes.skinIndex,weights=garment.geometry.attributes.skinWeight;
+ for(let i=0;i<weights.count;i++){
+  let sum=0;
+  for(let k=0;k<4;k++){const weight=weights.getComponent(i,k);sum+=weight;
+   if(weight>0)assert.ok(allowed.has(garment.skeleton.bones[indices.getComponent(i,k)].name),'shirt cannot inherit forearm, hand, head or leg weights');
+  }
+  assert.ok(Math.abs(sum-1)<1e-5);
+ }
+ avatar.group.updateMatrixWorld(true);garment.skeleton.update();
+ const count=weights.count,rest=Array.from({length:count},(_,i)=>garment.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(garment.matrixWorld));
+ const ids=garment.geometry.index?.array||Array.from({length:count},(_,i)=>i);
+ const animations=await Promise.all(['victory','death'].map(async kind=>{
+  const clip=await load(path.join(project,'public/poses/arena',kind+'.glb'));return {kind,duration:clip.animations[0].duration,anim:bindOutcomeAnimation(avatar,clip)};
+ }));
+ for(const {kind,duration,anim} of animations){
+  for(let t=0;t<duration;t+=.3){
+   anim.apply(t);avatar.group.updateMatrixWorld(true);garment.skeleton.update();
+   const posed=Array.from({length:count},(_,i)=>garment.getVertexPosition(i,new THREE.Vector3()).applyMatrix4(garment.matrixWorld));
+   for(let j=0;j<ids.length;j+=21)for(let k=0;k<3;k++){
+    const a=ids[j+k],b=ids[j+(k+1)%3];if(a===undefined||b===undefined)continue;
+    const length=rest[a].distanceTo(rest[b]);if(length<1e-7)continue;
+    assert.ok(posed[a].distanceTo(posed[b])/length<1.5,`${kind} at ${t}: shirt triangle stretched too far`);
+   }
+  }anim.reset();anim.dispose();
+ }
+ avatar.dispose();
+});

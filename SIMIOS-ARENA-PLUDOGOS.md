@@ -116,8 +116,8 @@ precisam de conferência visual no navegador.
 
 A regata original não tem skin. Prendê-la apenas à coluna mantém o tronco no
 lugar, mas deixa as cavas paradas quando os braços levantam. A arena agora
-converte suas malhas em SkinnedMesh e transfere pesos dos três vértices mais
-próximos do corpo para cada vértice da roupa (busca espacial KD-tree).
+converte suas malhas em SkinnedMesh com pesos contínuos de Spine1/Spine2
+e pequenas regiões suaves de influência dos braços superiores nas cavas.
 Compartilha o esqueleto do macaco, preservando UVs, material e o encaixe em pé
 `width: 0.44, offset: [0, -0.01, 0]`. A transferência acontece só na montagem;
 a deformação por quadro usa a GPU. As geometrias geradas são liberadas ao
@@ -202,3 +202,22 @@ foi substituída. Duas camadas de silhuetas cinzas derivadas do alpha dessa
 mesma arte ficam atrás dos grupos coloridos para dar volume, com fases de
 movimento independentes e menor amplitude. O shader das silhuetas usa só a
 transparência da imagem, com cor cinza sólida, sem inventar outros personagens.
+
+
+### Correção da torção nos FBXs de resultado
+
+A transferência por vizinhança foi removida: no bind pose do macaco, os
+antebraços dobrados ficam perto da camiseta. Isso fazia cerca de um terço dos
+pesos da regata seguir os antebraços, com influências adicionais de mãos,
+cabeça e pernas. Ao animar, triângulos vizinhos se separavam drasticamente.
+
+A regata agora usa apenas Spine1, Spine2 e os braços superiores. Os pesos são
+funções contínuas da altura da peça e da distância aos ombros, com influência
+dos braços limitada a 30% por lado e concentrada nas cavas. Nenhum ponto pode
+seguir antebraços, mãos, cabeça ou pernas. O encaixe em pé continua em 0.44.
+
+O teste novo amostra os FBXs reais de vitória e morte e rejeita alongamento de
+arestas acima de 1.5×, além de verificar os ossos permitidos e a soma dos pesos.
+Na inspeção das sequências, o alongamento máximo ficou em 1.24× na vitória e
+1.28× na morte, sem as separações extremas da versão anterior. A suíte de arena,
+roupas, torcida e Dramatic Finish passou com 32 testes.
