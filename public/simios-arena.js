@@ -3,8 +3,8 @@
  * O Socket.IO do servidor decide quem acerta/erra, HP e vencedor.
  */
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-6";
-import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=6";
+import {createDanceAvatar,setDanceAvatarTestModel} from "./wardrobe.js?v=arena-fit-7";
+import {loadOutcomeAnimation,bindOutcomeAnimation} from "./simios-outcome-animation.js?v=7";
 import {bindCombatRig} from "./simios-fight-pose.mjs";
 
 const $=id=>document.getElementById(id);
@@ -23,7 +23,7 @@ if(socket&&modal&&viewport){
   const lobby=$("jfArenaChallenge").parentElement;
   let current={phase:"idle"},inviteFrom=null,previewOutcome=null;
   let open=false,loading=false,setupGeneration=0;
-  let arenaSet=null;
+  let arenaSet=null,audienceTexture=null,audienceNames="";
   let renderer=null,scene=null,camera=null,resizeObserver=null,raf=0;
   let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="",ignoredOutcome="";
   let sharedRigLoad=null;
@@ -33,9 +33,48 @@ if(socket&&modal&&viewport){
   function resetOutcome(){
     outcomeActor=null;previewOutcome=null;
     if(renderer&&viewport)viewport.appendChild(renderer.domElement);
-    for(const actor of actors){actor.avatar.group.visible=true;for(const animation of Object.values(actor.outcomes))animation.reset();}
+    for(const actor of actors){actor.avatar.group.visible=true;actor.shadow.visible=true;for(const animation of Object.values(actor.outcomes))animation.reset();}
     if(arenaSet)arenaSet.visible=true;
     if(camera){camera.position.set(0,1.65,4.6);camera.lookAt(0,.90,0);}
+  }
+  function bodyBounds(avatar){
+    avatar.group.updateMatrixWorld(true);
+    const bounds=new THREE.Box3();
+    avatar.rig.traverse(mesh=>{
+      if(!mesh.isSkinnedMesh)return;
+      let parent=mesh;
+      while(parent&&parent!==avatar.rig){if(/^jfWardrobe/.test(parent.name))return;parent=parent.parent;}
+      mesh.skeleton.update();
+      bounds.expandByObject(mesh,true);
+    });
+    return bounds;
+  }
+  function updateAudience(){
+    if(!audienceTexture)return;
+    const names=[0,1].map(i=>{const id=current.players?.[i]||(i===0?socket.id:opponent.value);return id?safeName(id):"DESAFIANTE";});
+    const signature=names.join("|");if(signature===audienceNames)return;audienceNames=signature;
+    const canvas=audienceTexture.image,ctx=canvas.getContext("2d");
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const colors=["#a79c80","#d5bd85","#8ea6a0","#a98680","#807f9c"];
+    for(let row=0;row<3;row++)for(let i=0;i<16;i++){
+      const x=45+i*96+(row%2)*22,y=110+row*126;
+      ctx.fillStyle=row===0?"#343c3a":"#4b514b";
+      ctx.fillRect(x-30,y+32,60,100);
+      ctx.fillStyle=colors[(i+row*3)%colors.length];
+      for(const ear of [-27,27]){ctx.beginPath();ctx.arc(x+ear,y+8,12,0,Math.PI*2);ctx.fill();}
+      ctx.beginPath();ctx.ellipse(x,y+6,27,32,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#23292b";ctx.beginPath();ctx.ellipse(x,y+18,17,13,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#080d0e";ctx.fillRect(x-11,y,5,6);ctx.fillRect(x+6,y,5,6);
+      if((i+row)%3===0){
+        ctx.strokeStyle=colors[(i+row)%colors.length];ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(x-22,y+50);ctx.lineTo(x-40,y-45);ctx.moveTo(x+22,y+50);ctx.lineTo(x+40,y-45);ctx.stroke();
+        ctx.save();ctx.translate(x,y-62);ctx.rotate(((i%3)-1)*.07);
+        ctx.fillStyle=(i+row)%2?"#d8bd76":"#a9c6c0";ctx.fillRect(-65,-22,130,44);
+        ctx.strokeStyle="#161d1e";ctx.lineWidth=3;ctx.strokeRect(-65,-22,130,44);
+        ctx.fillStyle="#121a1b";ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="900 17px sans-serif";
+        ctx.fillText(names[(i+row)%2].toUpperCase(),0,0,120);ctx.restore();
+      }
+    }
+    audienceTexture.needsUpdate=true;
   }
   const costs={soco:12,chute:22,forte:30,defender:0};
   const now=()=>performance.now();
@@ -110,7 +149,7 @@ if(socket&&modal&&viewport){
       resetOutcome();finishAt=0;finishedSignature="";result.hidden=true;
     }
     if(key===ignoredOutcome){finishAt=0;result.hidden=true;}
-    listOpponents();
+    listOpponents();updateAudience();
   }
   function showOutcome(){
     const key=String(current.at)+":"+String(current.winner);
@@ -128,7 +167,7 @@ if(socket&&modal&&viewport){
     if(actor&&(won||lost)&&renderer){
       outcomeActor=actor;outcomeStarted=now();
       actor.outcomeKind=won?"victory":"death";
-      for(const a of actors)a.avatar.group.visible=a===actor;
+      for(const a of actors){a.avatar.group.visible=a===actor;a.shadow.visible=a===actor;}
       outcomeViewport.appendChild(renderer.domElement);
       if(arenaSet)arenaSet.visible=true;
       result.dataset.outcome=won?"victory":"death";
@@ -201,6 +240,12 @@ if(socket&&modal&&viewport){
       }
       const rearWall=new THREE.Mesh(new THREE.PlaneGeometry(8,5),wallMaterial);rearWall.position.set(0,1.8,-3);arenaSet.add(rearWall);
       const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.5,.8),new THREE.MeshBasicMaterial({map:texture}));sign.position.set(0,1.7,-2.8);arenaSet.add(sign);
+      const crowdCanvas=document.createElement("canvas");crowdCanvas.width=1536;crowdCanvas.height=512;
+      audienceTexture=new THREE.CanvasTexture(crowdCanvas);audienceTexture.colorSpace=THREE.SRGBColorSpace;
+      audienceNames="";updateAudience();
+      const crowdMaterial=new THREE.MeshBasicMaterial({map:audienceTexture,transparent:true,alphaTest:.05,side:THREE.DoubleSide,depthWrite:false});
+      const rearCrowd=new THREE.Mesh(new THREE.PlaneGeometry(7.5,2.5),crowdMaterial);rearCrowd.position.set(0,1.5,-2.55);arenaSet.add(rearCrowd);
+      for(const x of [-3.18,3.18]){const crowd=new THREE.Mesh(new THREE.PlaneGeometry(6,2.5),crowdMaterial);crowd.rotation.y=Math.PI/2;crowd.position.set(x,1.5,0);arenaSet.add(crowd);}
       for(let i=0;i<2;i++){
         const id=current.players?.[i]||(i===0?socket.id:null);
         const profile=id===socket.id?bridge.getProfile?.():bridge.getPeerProfile?.(id);
@@ -214,7 +259,9 @@ if(socket&&modal&&viewport){
         for(const kind of ["victory","death"])if(outcomeAssets[kind]){
           try{outcomes[kind]=bindOutcomeAnimation(avatar,outcomeAssets[kind]);}catch(error){console.warn(error);}
         }
-        actors.push({avatar,fighter,slot:i,outcomes});
+        const shadow=new THREE.Mesh(new THREE.CircleGeometry(.32,24),new THREE.MeshBasicMaterial({color:0x080c0d,transparent:true,opacity:.26,depthWrite:false}));
+        shadow.rotation.x=-Math.PI/2;shadow.position.set(fighter.baseX,.007,0);scene.add(shadow);
+        actors.push({avatar,fighter,slot:i,outcomes,shadow});
       }
       resizeObserver=new ResizeObserver(()=>{
         if(!renderer||!camera)return;
@@ -257,11 +304,23 @@ if(socket&&modal&&viewport){
         if(animation)animation.apply((t-outcomeStarted)/1000);
         else actor.fighter.apply(actor.outcomeKind==="victory"?"victory":"ko",t-outcomeStarted);
       }else actor.fighter.apply(kind,age);
+      if(actor===outcomeActor){
+        // Use skinned body vertices AFTER the FBX pose. A fixed root Y
+        // leaves the feet floating and makes the death pose pierce the mat.
+        const contact=bodyBounds(actor.avatar);
+        if(!contact.isEmpty()){
+          const correction=.015-contact.min.y;
+          actor.avatar.group.position.y+=correction;
+          contact.translate(new THREE.Vector3(0,correction,0));actor.outcomeBounds=contact;
+        }
+      }
+      actor.shadow.position.set(actor.avatar.group.position.x,.007,actor.avatar.group.position.z);
+      if(actor===outcomeActor&&actor.outcomeBounds){const center=actor.outcomeBounds.getCenter(new THREE.Vector3());actor.shadow.position.set(center.x,.007,center.z);}
       actor.avatar.updateAccessories?.(false);
       if(actor===outcomeActor){
         // Frame the animated body itself, never the ring or asynchronously loaded accessories.
         actor.avatar.group.updateMatrixWorld(true);
-        const bounds=new THREE.Box3().setFromObject(actor.avatar.rig,true);
+        const bounds=actor.outcomeBounds||bodyBounds(actor.avatar);
         const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
         const fov=THREE.MathUtils.degToRad(camera.fov);
         // Opponent's side of the ring: camera looks straight into the
@@ -279,14 +338,14 @@ if(socket&&modal&&viewport){
     setupGeneration++;
     cancelAnimationFrame(raf);raf=0;
     resizeObserver?.disconnect();resizeObserver=null;
-    for(const {avatar,outcomes} of actors){for(const animation of Object.values(outcomes))animation.dispose();avatar.group.parent?.remove(avatar.group);avatar.dispose?.();}
+    for(const {avatar,outcomes,shadow} of actors){shadow.geometry.dispose();shadow.material.dispose();shadow.removeFromParent();for(const animation of Object.values(outcomes))animation.dispose();avatar.group.parent?.remove(avatar.group);avatar.dispose?.();}
     actors=[];
     // A geometria e os materiais da arena são locais. Os do guarda-roupa
     // são compartilhados e não podem ser descartados aqui.
     arenaSet?.traverse(obj=>{if(obj.isMesh){obj.geometry?.dispose();obj.material?.map?.dispose();obj.material?.dispose?.();}});
     renderer?.dispose();renderer?.forceContextLoss();
     renderer?.domElement?.remove();
-    scene=null;arenaSet=null;camera=null;renderer=null;
+    scene=null;arenaSet=null;audienceTexture=null;audienceNames="";camera=null;renderer=null;
     loading=false;
   }
   function openArena(){
@@ -376,7 +435,7 @@ if(socket&&modal&&viewport){
     if(open)setStatus(statusOverride);
   });
   for(const evt of ["peer-joined","peer-left","joined-room","profile-update"])
-    socket.on(evt,()=>{if(open)listOpponents();});
+    socket.on(evt,()=>{if(open){listOpponents();updateAudience();}});
   for(const evt of ["left-room","room-kicked","disconnect"])
     socket.on(evt,closeArena);
 }

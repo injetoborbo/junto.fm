@@ -404,7 +404,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       if(!file||file===binding.file)binding.update();
   };
   if(privateFit&&fitAccess)window.addEventListener("jf-private-fit-updated",onFitUpdated);
-  const installNewWearable=(file,bone,{seatedOffset={}}={})=>{
+  const installNewWearable=(file,bone,{seatedOffset={},preset=null}={})=>{
     getAsset(file).then(asset=>{
       if(!asset||!state.userData.active||!bone)return;
       const part=asset.clone(true);
@@ -439,7 +439,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       };
       const update=()=>{
         if(!state.userData.active||!part.parent)return;
-        buildMatrix(fittedItem(file,privateFit),rootPart);
+        buildMatrix(preset||fittedItem(file,privateFit),rootPart);
         if(animated){
           const follower=followers.find(item=>item.part===part);
           if(!follower||!boneBind)return;
@@ -447,7 +447,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
           follower.bindLocal.copy(toBone);
           // O vestido sentado usa um preset privado INDEPENDENTE.
           // As outras peças continuam usando o ajuste original sentado.
-          buildMatrix(fittedItem(file,privateFit,file==="vestido_novo"),seatPart);
+          buildMatrix(preset||fittedItem(file,privateFit,file==="vestido_novo"),seatPart);
           toBone.copy(boneBind).invert().multiply(rootBindWorld).multiply(seatPart);
           toBone.decompose(tmpPosition,tmpRotation,tmpScale);
           tmpPosition.x+=seatedOffset.x||0;
@@ -469,11 +469,14 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       update();
     });
   };
+  if(rigidFollowers&&["bone","gorro"].includes(selection.hat)){
+    installNewWearable(selection.hat,newHeadBone,{preset:{width:selection.hat==="bone"?.64:.61,offset:[0,.30,.015]}});
+  }
   if(selection.hat==="caveira")installNewWearable("caveira",newHeadBone,{
     seatedOffset:{y:-.00015}
   });
   if(selection.glasses==="sem_aro"||selection.glasses==="botao"||
-     (!animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
+     ((!animated||rigidFollowers)&&(selection.glasses==="escuros"||selection.glasses==="redondos")))
     installNewWearable(selection.glasses,newHeadBone,{
       seatedOffset:{z:.00015}
     });
@@ -514,12 +517,12 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       updateAccessories();
       render();
     });
-  }else if(selection.hat==="bone"||selection.hat==="gorro"){
+  }else if(!rigidFollowers&&(selection.hat==="bone"||selection.hat==="gorro")){
     attachFitted(selection.hat,part=>{
       part.position.x=rawX;
     },true,headBone,null,{y:-.0004});
   }
-  if(animated&&(selection.glasses==="escuros"||selection.glasses==="redondos")){
+  if(animated&&!rigidFollowers&&(selection.glasses==="escuros"||selection.glasses==="redondos")){
     attachFitted(selection.glasses,(part,measure)=>{
       const s=.88;
       part.scale.setScalar(s);
