@@ -5,6 +5,7 @@ const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
 const sendChat = require("./chat-bandwidth");
+const {createSimiosGames}=require("./simios-games");
 
 // Carrega variáveis de um arquivo .env local sem exigir dependências extras.
 try {
@@ -36,6 +37,7 @@ const roomBananaCounts = new Map(); // 0 a 15 por sala
 const roomBananaResetTimers = new Map();
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
+const simiosGames=createSimiosGames(io,danceFloors);
 const roomChatMessages = new Map();
 const roomAccess = new Map();
 const roomQueueJobs = new Map(); // Serializa pedidos por sala; respeita a ordem de chegada.
@@ -486,6 +488,7 @@ function danceSnapshot(room){
   return [...(danceFloors.get(room)||new Map()).entries()].map(([id,data])=>({id,...data}));
 }
 function danceLeave(room,id){
+  simiosGames.leave(room,id);
   const floor=danceFloors.get(room);
   if(!floor||!floor.delete(id))return;
   io.to(room).emit("dance-left",{id});
@@ -502,6 +505,7 @@ const danceAwardTimer=setInterval(()=>{
 },15000);
 danceAwardTimer.unref();
 io.on("connection", socket => {
+  simiosGames.attachSocket(socket);
   const achievement=(method,...args)=>{
     const id=socket.data.account?.id;
     if(id)void achievements[method](id,...args,socket).catch(error=>console.error("Conquista:",error.message));
@@ -560,6 +564,7 @@ io.on("connection", socket => {
       io.to(room).emit("dance-updated",{id:socket.id,...data});
     }
     socket.emit("dance-state",{room,participants:danceSnapshot(room)});
+    simiosGames.sync(socket);
   });
   socket.on("dance-move",payload=>{
     const room=socket.data.room;
