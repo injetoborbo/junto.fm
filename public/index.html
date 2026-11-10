@@ -387,41 +387,56 @@ body:has(#jfDanceModal.jf-dance-expanded:not([hidden])) #jfChatLauncher{z-index:
 .jf-dance-actions button{font-size:12px;padding:8px 11px}
 .jf-dance-actions button.active{outline:2px solid #185bb3;outline-offset:2px}
 .jf-dance-help{text-align:center;margin:10px auto 0;max-width:620px}
-/* Arena dos Macacos e Pludogos: respeitar cores herdadas dos temas. */
-#jfSimiosHub{margin:10px 0 4px;color:inherit}
-#jfSimiosHub .jf-simios-tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-#jfSimiosHub button.active{outline:2px solid currentColor;outline-offset:2px}
-#jfSimiosHub .jf-simios-panel{margin:10px 0;padding:12px;border:1px solid currentColor;border-radius:12px;background:rgba(50,66,88,.11);color:inherit}
-#jfSimiosHub .jf-simios-panel[hidden],#jfSimiosHub .jf-simios-battle[hidden],#jfSimiosHub #jfFightInvite[hidden]{display:none!important}
-#jfSimiosHub .jf-simios-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-#jfSimiosHub label{display:flex;align-items:center;gap:8px;font-weight:bold}
-#jfSimiosHub select{width:min(100%,225px);max-width:100%;padding:7px;border-radius:7px;color:FieldText;background:Field;font:inherit}
-#jfSimiosHub .jf-simios-vs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;margin:12px 0}
-#jfSimiosHub .jf-simios-fighter{min-width:0;padding:9px;border:1px solid currentColor;border-radius:10px;text-align:center}
-#jfSimiosHub .jf-simios-face{display:block;font-size:38px;line-height:1.1;filter:drop-shadow(0 3px 2px #0005)}
-#jfSimiosHub .jf-simios-name{display:block;font-weight:900;overflow-wrap:anywhere;margin:5px 0}
-#jfSimiosHub .jf-simios-meter{height:12px;background:#2a2a35;border:1px solid #0005;border-radius:99px;overflow:hidden}
-#jfSimiosHub .jf-simios-meter>span{display:block;height:100%;background:linear-gradient(90deg,#fb5d5d,#f8b34b);transition:width .25s ease}
-#jfSimiosHub .jf-simios-meter.energy>span{background:linear-gradient(90deg,#5a9aff,#65dedb)}
-#jfSimiosHub .jf-simios-stats{display:block;font-size:11px;opacity:.85;margin:2px 0 7px}
-#jfSimiosHub .jf-simios-moves{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:12px 0}
-#jfSimiosHub .jf-simios-moves button{min-height:39px}
-#jfSimiosHub .jf-simios-note{font-size:12px;opacity:.85;margin:7px 0}
-@media(max-width:600px){
- #jfSimiosHub .jf-simios-panel{padding:8px}
- #jfSimiosHub .jf-simios-vs{gap:4px}
- #jfSimiosHub .jf-simios-fighter{padding:5px}
- #jfSimiosHub .jf-simios-face{font-size:28px}
- #jfSimiosHub .jf-simios-moves button{flex:1 1 90px;padding:7px 6px}
- #jfSimiosHub label{width:100%;justify-content:space-between}
-}
 
+/* Menu principal centraliza os botões já existentes sem recriar handlers. */
+.jf-top-actions.jf-site-menu-root{display:flex!important;position:relative;justify-content:flex-end;gap:0;width:auto;min-width:0}
+.jf-site-menu-root>.jf-site-menu-toggle.btn{display:inline-flex!important;width:112px!important;min-width:100px!important;height:42px!important;min-height:42px!important;padding:8px 12px!important}
+.jf-site-menu-panel{position:absolute;right:0;top:calc(100% + 8px);display:flex;flex-direction:column;gap:7px;width:min(284px,calc(100vw - 24px));max-height:min(80dvh,680px);overflow-y:auto;padding:13px;border:2px solid var(--jf-secondary,#a4baff);border-radius:12px;background:color-mix(in srgb,var(--jf-glow,#25234b) 32%,#101025);box-shadow:0 15px 40px #000b;z-index:13000;isolation:isolate}
+.jf-site-menu-panel[hidden]{display:none!important}
+.jf-site-menu-panel .jf-menu-group-title{font-size:12px;text-transform:uppercase;font-weight:900;letter-spacing:.06em;margin:5px 3px;color:var(--jf-secondary,#fff)}
+.jf-top-actions .jf-site-menu-panel .btn,.jf-top-actions .jf-site-menu-panel .btn.secondary{position:relative!important;display:flex!important;justify-content:center!important;width:100%!important;min-height:38px!important;height:auto!important;flex:0 0 auto!important;padding:9px 10px!important;font-size:12px!important}
+.jf-top-actions .jf-site-menu-panel .btn[hidden]{display:none!important}
+body.jf-in-room .jf-top-actions .jf-site-menu-panel #jfOpenFriends{display:flex!important}
+body:not(.jf-in-room) .jf-top-actions > #jfSiteMenuButton{display:inline-flex!important}
+body.jf-in-room .jf-top-actions.jf-site-menu-root,body:not(.jf-in-room) .jf-top-actions.jf-site-menu-root{display:flex!important;width:auto!important;max-width:100%!important;position:relative!important;inset:auto!important;margin-left:auto!important}
+.jf-pet-wardrobe-slot{margin:9px 0;border:1px solid currentColor;border-radius:8px;padding:10px;opacity:.86}
+.jf-pet-wardrobe-slot legend{font-weight:900}
+.jf-pet-wardrobe-slot select{max-width:100%;width:100%;padding:9px}
+/* Nova arena própria, independente da balada e com os modelos GLB atuais. */
+#jfArenaModal{z-index:12800}
+#jfArenaModal[hidden],#jfArenaResult[hidden],#jfArenaInvite[hidden],#jfArenaActions[hidden]{display:none!important}
+#jfArenaModal .jf-arena-modal{width:min(980px,calc(100vw - 20px));max-width:100%;max-height:92dvh;overflow-y:auto;color:inherit}
+.jf-arena-stage{position:relative;height:clamp(260px,40dvh,460px);border:2px solid var(--jf-secondary,#89d8ff);border-radius:12px;overflow:hidden;background:radial-gradient(circle at center,#37345d,#09071a);margin:10px 0}
+.jf-arena-viewport,.jf-arena-viewport canvas{display:block;width:100%;height:100%;touch-action:manipulation}
+.jf-arena-result{position:absolute;inset:0;display:flex;z-index:4;align-items:center;justify-content:center;flex-direction:column;gap:8px;text-align:center;background:radial-gradient(#080820e9,#090a19f6);color:#fff;padding:12px}
+.jf-arena-result strong{font-size:clamp(32px,8vw,64px);font-weight:1000;letter-spacing:.04em;text-shadow:0 4px 0 #231b46,0 0 28px #fbc947}
+.jf-arena-result p{font-weight:700}
+.jf-arena-score{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center}
+.jf-arena-player{display:grid;gap:5px;min-width:0;text-align:center;font-weight:800}
+.jf-arena-player strong{overflow-wrap:anywhere}
+.jf-arena-player small{font-size:11px}
+.jf-arena-vs{font-size:21px;text-shadow:0 0 10px var(--jf-primary,#fff)}
+.jf-arena-meter{width:100%;height:12px;overflow:hidden;border-radius:99px;background:#181822;border:1px solid #ffffff55}
+.jf-arena-meter>span{display:block;height:100%;background:linear-gradient(90deg,#eb4949,#ffa66c);transition:width .22s}
+.jf-arena-meter.energy>span{background:linear-gradient(90deg,#4886df,#62ead5)}
+.jf-arena-challenge,.jf-arena-actions,.jf-arena-invite{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin:13px 0}
+.jf-arena-challenge select{width:min(300px,100%);padding:8px;color:FieldText;background:Field;border-radius:7px;font:inherit}
+.jf-arena-challenge label{margin:0}
+.jf-arena-actions .btn{min-width:120px}
+.jf-arena-status{text-align:center;font-size:13px;font-weight:700;margin:13px 0 3px}
+@media(max-width:600px){
+ .jf-site-menu-root>.jf-site-menu-toggle.btn{width:96px!important;min-width:96px!important}
+ .jf-arena-actions .btn{flex:1 1 120px;min-width:0}
+ .jf-arena-score{gap:6px}
+ .jf-arena-modal{padding:10px!important}
+ .jf-arena-stage{height:clamp(220px,35dvh,350px)}
+}
 @media(max-width:600px){.jf-dance-modal{padding:9px!important}.jf-dance-stage{min-height:210px;aspect-ratio:4/3;max-height:41dvh}.jf-dance-toolbar{font-size:11px}.jf-dance-launch{bottom:12px;left:76px}#jfDanceModal{bottom:8px;left:8px;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}#jfDanceModal .jf-dance-modal{max-height:calc(100dvh - 16px)}}
 body:not(.jf-in-room) .jf-topbar{justify-content:center}
 body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
 /* Na tela de entrada, exibir apenas Perfil e Trajes no canto superior direito. */
 body:not(.jf-in-room) .jf-top-actions{display:flex!important;position:fixed;top:16px;right:20px;z-index:20;gap:8px;margin:0}
-body:not(.jf-in-room) .jf-top-actions > :not(#jfHomeSocial):not(#jfOpenWardrobe):not(#jfOpenProfile){display:none!important}
+body:not(.jf-in-room) .jf-top-actions > :not(#jfSiteMenuButton):not(#jfSiteMenuPanel){display:none!important}
 body:not(.jf-in-room) #jfHomeSocial,body:not(.jf-in-room) #jfOpenWardrobe,body:not(.jf-in-room) #jfOpenProfile{display:inline-flex!important;min-height:40px;width:auto;min-width:92px;padding:7px 10px}
 @media(max-width:600px){
  body:not(.jf-in-room) .jf-top-actions{top:10px;right:10px;gap:5px}
@@ -924,7 +939,13 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 <div id="jfRankDialog" hidden role="dialog" aria-modal="true" aria-labelledby="jfRankHeading"><div class="panel jf-rank-body"><div style="display:flex;justify-content:space-between;align-items:center"><h2 id="jfRankHeading">🏆 Ranking de horas</h2><button type="button" class="btn secondary" id="jfCloseRank">Fechar</button></div><p class="small">Tempo de DJ e ouvintes com conta Google durante transmissão com áudio.</p><div id="jfRankContent">Carregando...</div></div></div>
 <div id="jfWelcomeToast" role="status" hidden><svg viewBox="0 0 96 96" role="img" aria-label="Navio de madeira entalhada"><defs><linearGradient id="jfWoodShip"><stop stop-color="#f5d09a"/><stop offset=".5" stop-color="#c18a4f"/><stop offset="1" stop-color="#86502b"/></linearGradient></defs><circle cx="48" cy="48" r="42" fill="#57321e" stroke="#edc78b" stroke-width="5"/><path d="M49 18v43M49 24l-24 32h24zm4 7 20 25H53zM17 62h63L67 77H30Z" fill="url(#jfWoodShip)" stroke="#3b2116" stroke-width="3" stroke-linejoin="round"/><path d="M24 83q7-5 13 0t12 0t12 0t12 0" fill="none" stroke="#efc28a" stroke-width="3"/></svg><div><small>🏆 CONQUISTA DESBLOQUEADA</small><strong>Bem-vindo a bordo</strong><span>Seu primeiro embarque no Junto.fm!</span></div></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button></div></div>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary jf-site-menu-toggle" id="jfSiteMenuButton" type="button" aria-expanded="false" aria-controls="jfSiteMenuPanel" aria-haspopup="true">☰ Menu</button>
+  <nav class="jf-site-menu-panel" id="jfSiteMenuPanel" aria-label="Menu principal" hidden>
+    <span class="jf-menu-group-title">Minha conta e visual</span>
+    <button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button>
+    <span class="jf-menu-group-title">Minigames</span>
+    <button class="btn secondary" type="button" id="jfOpenArena">🥊 Arena dos Macacos</button>
+  </nav></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
@@ -1164,6 +1185,11 @@ body.jf-in-room #jfAdminEntry{display:none!important}
         <label>Óculos<select id="jfWardrobeGlasses"><option value="nenhum">Sem óculos</option><option value="escuros">Escuros</option><option value="redondos">Redondos</option><option value="sem_aro">Óculos 3D novo</option><option value="botao">Olhos de botão 🧵</option></select></label>
         <label>Fones<select id="jfWardrobeHeadphones"><option value="nenhum">Sem fones</option><option value="azul">Azuis</option><option value="rosa">Rosas</option><option value="preto">Preto (novo)</option></select></label>
         <label>Roupa<select id="jfWardrobeOutfit"><option value="padrao">Original</option><option value="rosa">Rosa</option><option value="rosa_novo">Vestido rosa 3D (novo)</option><option value="punk">Regata punk</option></select></label>
+        <fieldset class="jf-pet-wardrobe-slot"><legend>🐾 Pludogos</legend>
+          <label for="jfWardrobePet">Pet equipado</label>
+          <select id="jfWardrobePet" disabled><option value="nenhum">Nenhum — aguardando modelos 3D</option></select>
+          <p class="small">Os Pludogos serão criaturas circulares 3D. Assim que os modelos chegarem, você poderá equipá-los aqui em Trajes. Eles ficarão apoiados no chão, ao lado do macaco.</p>
+        </fieldset>
       </div>
     </div>
     <details id="jfWardrobeFitEditor" class="jf-fit-editor" hidden>
@@ -1203,6 +1229,51 @@ body.jf-in-room #jfAdminEntry{display:none!important}
     <div class="row" style="margin-top:14px"><button class="btn" type="button" id="jfSaveWardrobe">Salvar traje</button><span class="small">Gratuito, sem precisar criar conta.</span></div>
   </section>
 </div>
+<div class="jf-modal-backdrop" id="jfArenaModal" hidden>
+ <section class="panel jf-modal jf-arena-modal" role="dialog" aria-modal="true" aria-labelledby="jfArenaHeading">
+  <div class="jf-modal-head"><h2 id="jfArenaHeading">🥊 Arena dos Macacos</h2>
+    <button class="btn secondary" id="jfArenaClose" type="button" aria-label="Fechar arena">✕</button></div>
+  <p class="small">Uma arena separada da The Símios. Desafie outro macaco da sala para lutar com seu avatar 3D.</p>
+  <div class="jf-arena-stage" id="jfArenaStage">
+    <div id="jfArenaViewport" class="jf-arena-viewport" aria-label="Combate 3D entre macacos"></div>
+    <div id="jfArenaResult" class="jf-arena-result" hidden>
+      <strong id="jfArenaResultTitle">VITÓRIA!</strong>
+      <p id="jfArenaResultDetails"></p>
+      <button class="btn" id="jfArenaResultBack" type="button">Voltar à arena</button>
+    </div>
+  </div>
+  <div class="jf-arena-score">
+    <div class="jf-arena-player">
+      <strong id="jfArenaNameA">Macaco 1</strong>
+      <div class="jf-arena-meter"><span id="jfArenaHpA" style="width:100%"></span></div><small>❤️ <span id="jfArenaHpTextA">100/100</span></small>
+      <div class="jf-arena-meter energy"><span id="jfArenaEnergyA" style="width:75%"></span></div><small>⚡ <span id="jfArenaEnergyTextA">75/100</span></small>
+    </div>
+    <strong class="jf-arena-vs">VS</strong>
+    <div class="jf-arena-player">
+      <strong id="jfArenaNameB">Macaco 2</strong>
+      <div class="jf-arena-meter"><span id="jfArenaHpB" style="width:100%"></span></div><small>❤️ <span id="jfArenaHpTextB">100/100</span></small>
+      <div class="jf-arena-meter energy"><span id="jfArenaEnergyB" style="width:75%"></span></div><small>⚡ <span id="jfArenaEnergyTextB">75/100</span></small>
+    </div>
+  </div>
+  <div class="jf-arena-challenge">
+    <label for="jfArenaOpponent">Adversário</label>
+    <select id="jfArenaOpponent" aria-label="Escolha um jogador da mesma sala"></select>
+    <button class="btn" type="button" id="jfArenaChallenge">⚔️ Desafiar</button>
+  </div>
+  <div id="jfArenaInvite" class="jf-arena-invite" hidden>
+    <strong id="jfArenaInviteText">Você foi desafiado!</strong>
+    <button class="btn" id="jfArenaAccept" type="button">Aceitar</button>
+    <button class="btn secondary" id="jfArenaDecline" type="button">Recusar</button>
+  </div>
+  <div id="jfArenaActions" class="jf-arena-actions" hidden>
+    <button type="button" class="btn" data-jf-arena-action="soco">👊 Soco · 12⚡</button>
+    <button type="button" class="btn" data-jf-arena-action="chute">🦶 Chute · 22⚡</button>
+    <button type="button" class="btn" data-jf-arena-action="forte">💥 Golpe forte · 30⚡</button>
+    <button type="button" class="btn secondary" data-jf-arena-action="defender">🛡️ Defesa · +28⚡</button>
+  </div>
+  <p id="jfArenaStatus" class="jf-arena-status" role="status" aria-live="polite">Entre numa sala para desafiar outros macacos.</p>
+ </section>
+</div>
 <div class="jf-modal-backdrop" id="jfDanceModal" hidden>
   <section class="panel jf-dance-modal" role="dialog" aria-modal="false" aria-labelledby="jfDanceTitle">
     <div class="jf-modal-head"><div><h2 id="jfDanceTitle">🪩 The Símios</h2><p class="small" style="margin:3px 0 0">Nossa salinha isométrica de macacos</p></div><button class="btn secondary" type="button" id="jfDanceChat" aria-label="Abrir chat da sala na The Símios">💬 Chat</button><button class="btn secondary" type="button" id="jfDanceExpand" aria-pressed="false">⤢ Ampliar</button><button class="btn secondary jf-modal-close" id="jfCloseDance" type="button" aria-label="Fechar pista de dança">×</button></div>
@@ -1216,47 +1287,6 @@ body.jf-in-room #jfAdminEntry{display:none!important}
       <button class="btn secondary" data-jf-dance="capoeira" aria-pressed="false" type="button">🥋 Capoeira</button>
       <button class="btn secondary" data-jf-dance="groove" aria-pressed="false" type="button">🎉 Dança 2</button>
     </div>
-    <section id="jfSimiosHub" aria-label="Minigames e pets da The Símios">
-      <div class="jf-simios-tabs">
-        <button class="btn secondary" type="button" data-jf-simios-tab="luta" aria-pressed="false">🥊 Arena dos Macacos</button>
-        <button class="btn secondary" type="button" data-jf-simios-tab="pets" aria-pressed="false">🐾 Meus Pludogos</button>
-      </div>
-      <div class="jf-simios-panel" data-jf-simios-panel="luta" hidden>
-        <p class="jf-simios-note">Duelo amigável 1 contra 1: o outro macaco precisa aceitar. A luta não interfere na música nem na dança.</p>
-        <div class="jf-simios-row"><label for="jfFightOpponent">Desafiar <select id="jfFightOpponent" aria-label="Escolha um macaco da pista"></select></label>
-          <button class="btn" id="jfFightChallenge" type="button">⚔️ Desafiar</button></div>
-        <p class="jf-simios-note" id="jfFightNotice" role="status" aria-live="polite"></p>
-        <div id="jfFightInvite" hidden><strong id="jfFightInviteName"></strong>
-          <div class="jf-simios-row"><button class="btn" id="jfFightAccept" type="button">Aceitar luta</button>
-          <button class="btn secondary" id="jfFightDecline" type="button">Recusar</button></div></div>
-        <section class="jf-simios-battle" id="jfFightBattle" hidden aria-label="Partida de luta">
-          <div class="jf-simios-vs">
-            <div class="jf-simios-fighter"><span class="jf-simios-face" id="jfFightFaceA" aria-hidden="true">🐒</span><strong class="jf-simios-name" id="jfFightNameA">Macaco 1</strong>
-              <div class="jf-simios-meter"><span id="jfFightHpA" style="width:100%"></span></div><small class="jf-simios-stats">❤️ <span id="jfFightHpTextA">100/100</span></small>
-              <div class="jf-simios-meter energy"><span id="jfFightEnergyA" style="width:75%"></span></div><small class="jf-simios-stats">⚡ <span id="jfFightEnergyTextA">75/100</span></small></div>
-            <strong>VS</strong>
-            <div class="jf-simios-fighter"><span class="jf-simios-face" id="jfFightFaceB" aria-hidden="true">🐒</span><strong class="jf-simios-name" id="jfFightNameB">Macaco 2</strong>
-              <div class="jf-simios-meter"><span id="jfFightHpB" style="width:100%"></span></div><small class="jf-simios-stats">❤️ <span id="jfFightHpTextB">100/100</span></small>
-              <div class="jf-simios-meter energy"><span id="jfFightEnergyB" style="width:75%"></span></div><small class="jf-simios-stats">⚡ <span id="jfFightEnergyTextB">75/100</span></small></div>
-          </div>
-          <p id="jfFightTurn" role="status" aria-live="polite"></p>
-          <div class="jf-simios-moves">
-            <button class="btn" data-jf-fight-action="soco" type="button">👊 Soco (12⚡)</button>
-            <button class="btn" data-jf-fight-action="forte" type="button">💥 Golpe forte (30⚡)</button>
-            <button class="btn secondary" data-jf-fight-action="defender" type="button">🛡️ Defesa (+28⚡)</button>
-          </div>
-          <p class="jf-simios-note" id="jfFightLastMove" role="status" aria-live="polite"></p>
-        </section>
-      </div>
-      <div class="jf-simios-panel" data-jf-simios-panel="pets" hidden>
-        <div class="jf-simios-row"><label for="jfPludogoSelect">Meu companheiro <select id="jfPludogoSelect">
-          <option value="nenhum">Nenhum</option><option value="caramelo">🐕 Pludogo Caramelo</option>
-          <option value="noturno">🌙 Pludogo Noturno</option><option value="rosinha">🌸 Pludogo Rosinha</option>
-        </select></label></div>
-        <p class="jf-simios-note">Seu Pludogo segue seu macaco pela pista e é visível para os outros. A escolha fica salva neste navegador.</p>
-        <p class="jf-simios-note" id="jfPludogoStatus" role="status" aria-live="polite"></p>
-      </div>
-    </section>
     <p class="small jf-dance-help">Clique em um quadrado vazio para o macaco andar até lá. Cada pessoa escolhe sua própria dança, que aparece para todos na mesma sala.</p>
   </section>
 </div>
@@ -1371,7 +1401,9 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 
 <script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/wardrobe.js?v=punk-fit-2"></script>
-<script type="module" src="/dance-floor.js?v=simios-games-pludogos-1"></script>
+<script type="module" src="/dance-floor.js?v=simios-drink-rig-20261027"></script>
+<script defer src="/site-menu.js?v=1"></script>
+<script type="module" src="/simios-arena.js?v=2"></script>
 <script type="module" src="/tomato-throw.js"></script>
 <script>
 (() => {
