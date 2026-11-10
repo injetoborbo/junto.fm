@@ -23,7 +23,8 @@ if(socket&&modal&&viewport){
   let current={phase:"idle"},inviteFrom=null;
   let open=false,loading=false,setupGeneration=0;
   let renderer=null,scene=null,camera=null,resizeObserver=null,raf=0;
-  let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="";
+  let actors=[],lastActionKey="",actionAt=0,finishAt=0,finishedSignature="",ignoredOutcome="";
+  let sharedRigLoad=null;
   let statusOverride="";
   const costs={soco:12,chute:22,forte:30,defender:0};
   const now=()=>performance.now();
@@ -91,16 +92,18 @@ if(socket&&modal&&viewport){
       }
     }
     const key=finished?String(current.at)+":"+String(current.winner):"";
-    if(finished&&key!==finishedSignature){
+    if(finished&&key!==ignoredOutcome&&key!==finishedSignature){
       finishedSignature=key;finishAt=now();
       result.hidden=true;
     }else if(!finished){
       finishAt=0;finishedSignature="";result.hidden=true;
     }
+    if(key===ignoredOutcome){finishAt=0;result.hidden=true;}
     listOpponents();
   }
   function showOutcome(){
-    if(result.hidden===false||current.phase!=="finished")return;
+    const key=String(current.at)+":"+String(current.winner);
+    if(result.hidden===false||current.phase!=="finished"||key===ignoredOutcome)return;
     const winner=current.winner,players=current.players||[];
     const myself=players.includes(socket.id);
     const won=myself&&winner===socket.id;
@@ -117,11 +120,12 @@ if(socket&&modal&&viewport){
     const generation=++setupGeneration;
     setStatus("Preparando os macacos 3D...");
     try{
-      let newRig=false;
-      try{
-        await setDanceAvatarTestModel("/models/magago_junto_rig_teste.glb");
-        newRig=true;
-      }catch(error){console.warn("Arena: usando rig clássico como fallback.",error);}
+      if(!sharedRigLoad)sharedRigLoad=setDanceAvatarTestModel("/models/magago_junto_rig_teste.glb")
+        .then(()=>true).catch(error=>{
+          console.warn("Arena: usando rig clássico como fallback.",error);
+          return false;
+        });
+      const newRig=await sharedRigLoad;
       if(!open||generation!==setupGeneration)return;
       const width=Math.max(viewport.clientWidth,200),height=Math.max(viewport.clientHeight,240);
       scene=new THREE.Scene();
@@ -227,9 +231,9 @@ if(socket&&modal&&viewport){
   $("jfOpenArena")?.addEventListener("click",openArena);
   $("jfArenaClose")?.addEventListener("click",closeArena);
   $("jfArenaResultBack")?.addEventListener("click",()=>{
+    ignoredOutcome=String(current.at)+":"+String(current.winner);
     result.hidden=true;finishAt=0;finishedSignature="";
     current={phase:"idle"};renderUi();
-    socket.emit("simios-fight-sync");
   });
   modal.addEventListener("pointerdown",event=>{if(event.target===modal)closeArena();});
   document.addEventListener("keydown",event=>{
@@ -255,6 +259,12 @@ if(socket&&modal&&viewport){
     if(current.phase!=="playing"||current.turn!==socket.id)return;
     socket.emit("simios-fight-act",{kind:button.dataset.jfArenaAction});
   });
+  $("jfArenaForfeit")?.addEventListener("click",()=>{
+    if(current.phase!=="playing"||!(current.players||[]).includes(socket.id))return;
+    if(window.confirm("Desistir da luta? O outro macaco vence.")){
+      socket.emit("simios-fight-forfeit");
+    }
+  });
   socket.on("simios-fight-invite",event=>{
     if(!event?.from||!inRoom())return;
     inviteFrom=event.from;
@@ -265,6 +275,7 @@ if(socket&&modal&&viewport){
     current=data&&typeof data==="object"?data:{phase:"idle"};
     const ids=current.players||[];
     if(current.phase==="playing"&&ids.includes(socket.id)){
+      ignoredOutcome="";
       if(!open)openArena();
       inviteFrom=null;showInvite();
     }
