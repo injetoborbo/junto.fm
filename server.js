@@ -5,6 +5,7 @@ const path = require("path");
 const crypto = require("crypto");
 const fs = require("fs");
 const sendChat = require("./chat-bandwidth");
+const {createSimiosGames}=require("./simios-games");
 
 // Carrega variáveis de um arquivo .env local sem exigir dependências extras.
 try {
@@ -36,6 +37,7 @@ const roomBananaCounts = new Map(); // 0 a 15 por sala
 const roomBananaResetTimers = new Map();
 const roomOwners = new Map();
 const danceFloors = new Map(); // presença temporária por sala, no máximo 8 avatares // room -> socket ID do criador / sucessor
+const simiosGames=createSimiosGames(io);
 const roomChatMessages = new Map();
 const roomAccess = new Map();
 const roomQueueJobs = new Map(); // Serializa pedidos por sala; respeita a ordem de chegada.
@@ -502,6 +504,7 @@ const danceAwardTimer=setInterval(()=>{
 },15000);
 danceAwardTimer.unref();
 io.on("connection", socket => {
+  simiosGames.attachSocket(socket);
   const achievement=(method,...args)=>{
     const id=socket.data.account?.id;
     if(id)void achievements[method](id,...args,socket).catch(error=>console.error("Conquista:",error.message));
@@ -772,6 +775,7 @@ io.on("connection", socket => {
     target.data.receiveMusicSuggestions=false;
     target.data.room=null;
     juntoTv.leave(room,targetId);
+    simiosGames.leave(room,targetId);
     danceLeave(room,targetId);
     target.leave(room);
     if(roomTransmitters.get(room)?.id===targetId){
@@ -863,6 +867,7 @@ io.on("connection", socket => {
     }
     socket.data.isTransmitting = false;
     juntoTv.leave(room,socket.id);
+    simiosGames.leave(room,socket.id);
     danceLeave(room,socket.id);
     releaseRoomOwnership(room,socket.id);
     socket.leave(room);
@@ -1169,6 +1174,7 @@ io.on("connection", socket => {
     if (!room) return;
     socket.data.room=null;
     juntoTv.leave(room,socket.id);
+    simiosGames.leave(room,socket.id);
     danceLeave(room,socket.id);
     notifyPresence();
     releaseRoomOwnership(room,socket.id);

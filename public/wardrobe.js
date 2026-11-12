@@ -1,4 +1,5 @@
 import "./asset-cache.js";
+import {skinWardrobeShirt} from "./skin-wardrobe-shirt.mjs?v=2";
 /* Guarda-roupa 3D público. Cada participante possui seu próprio macaco. */
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
@@ -109,7 +110,7 @@ const FIT_DEFAULTS=Object.freeze({
   botao:{width:.68,offset:[0,.23,.31],scale:[.78,1,1]},
   fone_novo:{width:.66,offset:[0,.40,.10]},
   vestido_novo:{width:.70,offset:[0,-.24,0]},
-  regatapunk:{width:.45,offset:[0,-.01,0]}
+  regatapunk:{width:.44,offset:[0,-.01,0]}
 });
 const FIT_STORAGE="jf_wardrobe_private_fit_v1";
 const FIT_SEATED_STORAGE="jf_wardrobe_private_fit_seated_v1";
@@ -192,7 +193,7 @@ function getBounds(root){
   const box=new THREE.Box3().setFromObject(root);
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
-function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false,experimental=false}={}){
+function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false,experimental=false,rigidFollowers=false}={}){
   // Capturar o bind pose ANTES das animações. As promessas de GLB podem
   // resolver com o avatar andando/sentado; nesse caso attach() simples
   // preservaria uma posição antiga num esqueleto já animado.
@@ -201,7 +202,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   const monkeyBindWorld=monkey.matrixWorld.clone();
   const rootBindWorld=root.matrixWorld.clone();
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
-  const findBone=animated?getAnimatedBone:getBone;
+  const findBone=(model,part)=>getAnimatedBone(model,part)||getBone(model,part);
   const headBone=findBone(monkey,"Head");
   const topBone=findBone(monkey,"HeadTop_End");
   const neckBone=findBone(monkey,"Neck");
@@ -242,12 +243,17 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       calibration:{...glassesCalibration}};
   };
   for(const bone of [headBone,neckBone,torsoBone,hipBone,newHeadBone,newTopBone,newTorsoBone])if(bone)bindMatrices.set(bone,bone.matrixWorld.clone());
+  const rigidPosition=new THREE.Vector3(),rigidRotation=new THREE.Quaternion(),rigidScale=new THREE.Vector3();
+  const bindPosition=new THREE.Vector3(),bindRotation=new THREE.Quaternion(),bindScale=new THREE.Vector3();
+  const anchorPosition=new THREE.Vector3(),anchorRotation=new THREE.Quaternion(),anchorScale=new THREE.Vector3();
+  const rootBindScale=new THREE.Vector3().setFromMatrixScale(rootBindWorld);
   const correctionWorld=new THREE.Matrix4(),parentInverse=new THREE.Matrix4(),localMatrix=new THREE.Matrix4();
   const updateAccessories=(seated=isSeated)=>{
     isSeated=Boolean(seated);
     if(!animated||!state.userData.active||!followers.length)return;
-    // Garantir osso atualizado APÓS mixer/pose, inclusive no modo sentado.
-    monkey.updateMatrixWorld(true);
+    // O root pode ter sido reposicionado para encostar no chão. Atualizar
+    // TODA a hierarquia antes de ler bone.matrixWorld e calcular as roupas.
+    root.updateWorldMatrix(true,true);
     for(const {part,bone,bindLocal,seatedLocal} of followers){
       if(!part.parent)continue;
       // A calibração é aplicada ANTES da matriz local do acessório,
@@ -266,6 +272,21 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
         correctionWorld.multiplyMatrices(bone.matrixWorld,seatShift).multiply(seatedLocal);
       }else{
         correctionWorld.multiplyMatrices(bone.matrixWorld,isSeated?seatedLocal:bindLocal);
+      }
+      if(rigidFollowers){
+        // A rigid hat/shirt must follow translation + rotation, not the
+        // non-uniform scale/shear of a retargeted bone's world matrix.
+        const bind=bindMatrices.get(bone);
+        const local=isSeated?seatedLocal:bindLocal;
+        bind.decompose(bindPosition,bindRotation,bindScale);
+        correctionWorld.copy(bind).multiply(local).decompose(rigidPosition,rigidRotation,rigidScale);
+        bone.matrixWorld.decompose(anchorPosition,anchorRotation,anchorScale);
+        const ratio=root.getWorldScale(new THREE.Vector3()).x/rootBindScale.x;
+        rigidPosition.sub(bindPosition).applyQuaternion(bindRotation.clone().invert())
+          .multiplyScalar(ratio).applyQuaternion(anchorRotation).add(anchorPosition);
+        rigidRotation.premultiply(bindRotation.clone().invert()).premultiply(anchorRotation);
+        rigidScale.multiplyScalar(ratio);
+        correctionWorld.compose(rigidPosition,rigidRotation,rigidScale);
       }
       part.parent.updateWorldMatrix(true,false);
       parentInverse.copy(part.parent.matrixWorld).invert();
@@ -385,7 +406,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       if(!file||file===binding.file)binding.update();
   };
   if(privateFit&&fitAccess)window.addEventListener("jf-private-fit-updated",onFitUpdated);
-  const installNewWearable=(file,bone,{seatedOffset={}}={})=>{
+  const installNewWearable=(file,bone,{seatedOffset={},preset=null}={})=>{
     getAsset(file).then(asset=>{
       if(!asset||!state.userData.active||!bone)return;
       const part=asset.clone(true);
@@ -420,7 +441,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       };
       const update=()=>{
         if(!state.userData.active||!part.parent)return;
-        buildMatrix(fittedItem(file,privateFit),rootPart);
+        buildMatrix(preset||fittedItem(file,privateFit),rootPart);
         if(animated){
           const follower=followers.find(item=>item.part===part);
           if(!follower||!boneBind)return;
@@ -428,7 +449,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
           follower.bindLocal.copy(toBone);
           // O vestido sentado usa um preset privado INDEPENDENTE.
           // As outras peças continuam usando o ajuste original sentado.
-          buildMatrix(fittedItem(file,privateFit,file==="vestido_novo"),seatPart);
+          buildMatrix(preset||fittedItem(file,privateFit,file==="vestido_novo"),seatPart);
           toBone.copy(boneBind).invert().multiply(rootBindWorld).multiply(seatPart);
           toBone.decompose(tmpPosition,tmpRotation,tmpScale);
           tmpPosition.x+=seatedOffset.x||0;
@@ -1203,7 +1224,7 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   // Os trajes antigos têm encaixes próprios do macaco original.
   const experimentalOutfit=experimentalUsed&&!options.testOutfit?{}:outfit;
   const disposeClothes=dress(root,sanitize(experimentalOutfit),requestRender,monkey,{
-    animated:true,privateFit:Boolean(options.local&&fitAccess),experimental:experimentalUsed
+    animated:true,privateFit:Boolean(options.local&&fitAccess),experimental:experimentalUsed,rigidFollowers:Boolean(options.rigidAccessories)
   });
   if(skin==="capitao-patria"){
     const asset=await getAsset("hero");
@@ -1228,3 +1249,46 @@ export async function createDanceAvatar(outfit={},skin="default",requestRender=(
   return {group:root,rig:monkey,experimentalUsed,updateAccessories:disposeClothes.updateAccessories||(()=>{}),setSeatGlassesCalibration:disposeClothes.setSeatGlassesCalibration||(()=>{}),getGlassesDiagnostics:disposeClothes.getGlassesDiagnostics||(()=>({loaded:false})),dispose:()=>{stillActive=false;disposeClothes();}};
 }
 
+
+// Arena: assemble EXACTLY as the standing wardrobe preview first, then let
+// the skeleton animate it. The dance-floor fitting path has separate presets
+// (including seated glasses) and must not be used as the wardrobe reference.
+export async function createWardrobeFittedAvatar(outfit={}, {local=false}={}){
+  if(!base)await ensureBaseModel();
+  if(!base)throw Error("Modelo macaco.glb indisponível.");
+  const selection=sanitize(outfit);
+  const files=[selection.hat,selection.glasses,
+    selection.headphones==="preto"?"fone_novo":selection.headphones!=="nenhum"?"fone":null,
+    {punk:"regatapunk",rosa:"vestido",rosa_novo:"vestido_novo"}[selection.outfit]]
+    .filter(file=>ASSETS[file]);
+  // All assets finish loading BEFORE the first pose is applied. Otherwise a
+  // late attach() can accidentally capture a victory/death pose as its bind.
+  await Promise.all(files.map(getAsset));
+  const group=new THREE.Group(),monkey=cloneSkeleton(base.scene);
+  const bounds=new THREE.Box3().setFromObject(monkey);
+  const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+  const scale=1.8/(Math.max(size.x,size.y,size.z)||1);
+  monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
+  group.add(monkey);group.rotation.y=-.18;
+  let active=true;
+  const disposeClothes=dress(group,selection,()=>{},monkey,{
+    animated:false,privateFit:Boolean(local&&fitAccess)
+  });
+  // Cached getAsset().then() callbacks install the clothes in this microtask.
+  await Promise.resolve();
+  group.updateWorldMatrix(true,true);
+  // Some static legacy pieces (skirt and headphones worn at the neck)
+  // stay at the model root in the preview. Keep their exact world fit but
+  // parent them to the appropriate bone so they follow the whole animation.
+  const legacy=[];
+  monkey.traverse(part=>{if(/^jfWardrobe_/.test(part.name)&&part.parent===monkey)legacy.push(part);});
+  for(const part of legacy){
+    const role=part.name==="jfWardrobe_vestido"?"Hips":part.name==="jfWardrobe_fone"&&selection.hat!=="nenhum"?"Neck":"Head";
+    const bone=getAnimatedBone(monkey,role);if(bone)bone.attach(part);
+  }
+  group.rotation.y=0;group.updateWorldMatrix(true,true);
+  const disposeShirt=selection.outfit==="punk"?skinWardrobeShirt({group,rig:monkey}):()=>{};
+  return {group,rig:monkey,updateAccessories:()=>{
+    if(active)group.updateWorldMatrix(true,true);
+  },dispose:()=>{active=false;disposeShirt();disposeClothes();}};
+}

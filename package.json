@@ -2,7 +2,7 @@
   "name": "junto-fm",
   "version": "0.1.0",
   "private": true,
-  "description": "Protótipo de sala privada para transmitir áudio do navegador em tempo real",
+  "description": "Prot\u00f3tipo de sala privada para transmitir \u00e1udio do navegador em tempo real",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -14,5 +14,8 @@
     "socket.io": "^4.8.1",
     "pg": "^8.13.1",
     "livekit-server-sdk": "^2.9.0"
+  },
+  "devDependencies": {
+    "three": "0.170.0"
   }
 }
