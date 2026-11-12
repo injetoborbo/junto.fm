@@ -2878,7 +2878,29 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     const root=new THREE.Group();scene.add(root);
     // Modelo independente do miniplayer. A pista, os participantes e o guarda-roupa
     // continuam usando /macaco.glb. Fallback apenas enquanto o novo GLB não foi copiado.
-    const gltf=await new GLTFLoader().loadAsync("/meshypint-player.glb").catch(async error=>{
+    const djModelPath="/meshypint-player.glb";
+    async function loadDjModel(loader){
+      // O manifesto identifica o arquivo deste deploy, inclusive em branches de teste.
+      const versionedUrl=new URL(THREE.DefaultLoadingManager.resolveURL(djModelPath),location.href);
+      if(versionedUrl.searchParams.get("assetv")==="7bfc3163d31fb47588d2"){
+        const mirror="https://raw.githubusercontent.com/injetoborbo/junto.fm/48725ec0ffd6f3c7024c7b5ced065157ac1fd624/public/meshypint-player.glb";
+        try{
+          const response=await fetch(mirror,{
+            cache:"force-cache",
+            credentials:"omit",
+            integrity:"sha256-e/wxY9MftHWI0kNxKlnBx+KE7zPCTARiDcj27tQL+ps=",
+            signal:AbortSignal.timeout(30000)
+          });
+          if(!response.ok)throw new Error("HTTP "+response.status);
+          // O GLB inclui as texturas e não depende de arquivos externos.
+          return await loader.parseAsync(await response.arrayBuffer(),"");
+        }catch(error){
+          console.warn("Miniplayer: usando cópia local do modelo do DJ.",error);
+        }
+      }
+      return loader.loadAsync(djModelPath);
+    }
+    const gltf=await loadDjModel(new GLTFLoader()).catch(async error=>{
       console.warn("Miniplayer: modelo novo não encontrado. Copie public/meshypint-player.glb.",error);
       return new GLTFLoader().loadAsync("/macaco.glb");
     });
