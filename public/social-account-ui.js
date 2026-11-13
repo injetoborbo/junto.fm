@@ -55,9 +55,10 @@
  document.head.appendChild(style);
  const entry=document.getElementById("jfEntryAccount");
  const actions=document.createElement("div");actions.className="jf-social-account-actions";
- actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen">Criar conta Junto.fm</button><div class="jf-have-account"><button class="jf-have-account-link" type="button" id="jfHaveAccountToggle" aria-expanded="false" aria-controls="jfLoginChoice">Já tem uma conta? Aperte aqui.</button><div class="jf-login-choice" id="jfLoginChoice" hidden><a class="btn secondary" href="/auth/google">Entrar com Google</a><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button></div></div><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
+ actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen">Cadastrar com e-mail</button><div class="jf-have-account"><button class="jf-have-account-link" type="button" id="jfHaveAccountToggle" aria-expanded="false" aria-controls="jfLoginChoice">Já tem uma conta? Aperte aqui.</button><div class="jf-login-choice" id="jfLoginChoice" hidden><a class="btn secondary" href="/auth/google">Entrar com Google</a><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button></div></div><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
  if(entry)entry.appendChild(actions);
  else document.querySelector("main")?.appendChild(actions);
+ const menu=document.getElementById("jfSiteMenuPanel");
  const loginToggle=document.getElementById("jfHaveAccountToggle");
  const loginChoice=document.getElementById("jfLoginChoice");
  loginToggle.addEventListener("click",()=>{
@@ -70,7 +71,14 @@
  if(rankButton)dock.append(rankButton);
  if(achievementsButton)dock.append(achievementsButton);
  // Mantém o dock fixo no desktop; em celular ele aparece abaixo da marca.
- (document.querySelector(".jf-topbar")||document.body).appendChild(dock);
+ const topbar=document.querySelector(".jf-topbar");
+ const placeCommunityButtons=()=>{
+  if(!document.body.classList.contains("jf-in-room")&&menu){menu.append(rankButton,achievementsButton);}
+  else {dock.append(rankButton,achievementsButton);}
+ };
+ (topbar||document.body).appendChild(dock);
+ placeCommunityButtons();
+ new MutationObserver(placeCommunityButtons).observe(document.body,{attributes:true,attributeFilter:["class"]});
  fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(r=>r.json()).then(data=>{
   const registered=Boolean(data.loggedIn);
   document.getElementById("jfLocalRegisterOpen").hidden=registered;
