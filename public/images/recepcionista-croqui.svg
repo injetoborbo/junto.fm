@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 155" fill="none">
+<g stroke="#342825" stroke-linejoin="round" stroke-linecap="round">
+<!-- Cabeça inclinada, franja em três pontas, focinho e orelhas conforme o croqui. -->
+<path d="M51 121C27 111 12 88 12 57 10 29 30 11 56 8 83 4 106 16 108 38c2 13-1 22-4 30l6 13-9 23-22 18-7 14-9-10-10 5z" fill="#ac6954" stroke-width="2.8"/>
+<path d="M22 69C15 55 19 37 28 26m14-10q20-9 39-2" stroke="#eaa389" stroke-width="3"/>
+<path d="M26 49q24-9 38-9l13 29-6-37 19 32-4-28 19-16q8 18 0 49l-7 13-38 23-20-9z" fill="#fff1c9" stroke-width="2"/>
+<path d="M20 92q-15 1-13 12 2 12 27 9l6-7m63-33q17-15 23-7 7 8-17 14" fill="#d7916f" stroke-width="2.6"/>
+<path d="M14 101q6-7 15 1m82-28 8-4" stroke="#855146" stroke-width="2"/>
+<path d="M26 55q14-8 33-3m35-12 10-7" stroke-width="2.8"/>
+<ellipse cx="61" cy="76" rx="3.6" ry="9" transform="rotate(-13 61 76)" fill="#322c2b"/>
+<ellipse cx="97" cy="61" rx="3.5" ry="8" transform="rotate(8 97 61)" fill="#322c2b"/>
+<path d="M38 111q10-14 29-21l16-7q11-9 21-5 15 3 10 16-6 20-31 29-20 8-35-3z" fill="#f7deb2" stroke-width="2.5"/>
+<path d="M73 84q3-8 13-8 6 0 6 3-5 6-13 8z" fill="#332a2b" stroke-width="1.4"/>
+<path d="M58 114q22 4 42-16m-36 23q13 2 23-3" stroke="#735040" stroke-width="1.7"/>
+<path d="M103 134l12-12 12-18 19-23q7-6 9-2 1 5-13 23l15 1q5 1 2 6 4 2-1 8l-22 28-26-5z" fill="#f7deb2" stroke-width="2.5"/>
+<path d="M102 131l12-6-4 17-9-2z" fill="#aa6956" stroke-width="2"/>
+<path d="M140 102l8 2m-15 4-11 15" stroke="#936952" stroke-width="1.6"/>
+</g></svg>
