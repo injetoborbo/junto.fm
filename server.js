@@ -503,6 +503,13 @@ const danceAwardTimer=setInterval(()=>{
   for(const accountId of active)void achievements.increment(accountId,"dance_seconds",15).catch(error=>console.error("Conquista dança:",error.message));
 },15000);
 danceAwardTimer.unref();
+function broadcastLobbyPresence(){
+  const people=new Set();
+  for(const peer of io.sockets.sockets.values()){
+    people.add(peer.data.account?.id ? "account:"+peer.data.account.id : "guest:"+(peer.data.clientId||peer.id));
+  }
+  io.emit("lobby-presence",people.size);
+}
 io.on("connection", socket => {
   simiosGames.attachSocket(socket);
   const achievement=(method,...args)=>{
@@ -702,6 +709,7 @@ io.on("connection", socket => {
   // Um identificador por aba permite reconciliar sockets após reconexão.
   const rawClientId=socket.handshake.auth?.clientId;
   socket.data.clientId=typeof rawClientId==="string" && /^[a-zA-Z0-9_-]{16,90}$/.test(rawClientId)?rawClientId:null;
+  broadcastLobbyPresence();
   socket.data.isAdmin = adminAuth.isAdmin(socket.request);
   socket.data.avatarSkin = "default";
   socket.on("avatar-skin-set", payload => {
@@ -1170,6 +1178,7 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
+    broadcastLobbyPresence();
     const room = socket.data.room;
     if (!room) return;
     socket.data.room=null;
