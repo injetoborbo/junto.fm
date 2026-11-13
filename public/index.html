@@ -987,6 +987,21 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 </style>
 <!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
 <link rel="stylesheet" href="/kodoku.css">
+<style>
+/* Recepção do clube, visível enquanto o visitante escolhe uma sala. */
+.jf-reception{display:none}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-reception{display:block;margin:0 0 16px;border:2px solid;border-color:#eff2d8 #536274 #536274 #eff2d8;background:#172438}
+.jf-reception h2{margin:0;padding:5px 9px;background:linear-gradient(90deg,#173b60,#486b80);color:#fff4d9;text-align:left;font:bold 14px Tahoma,Verdana,sans-serif}
+.jf-reception img{display:block;width:100%;height:auto;image-rendering:pixelated}
+@media(min-width:800px){
+ body:not(.jf-in-room) main{max-width:1120px}
+ body:not(.jf-in-room) #jfRoomEntryPanel{display:flow-root;width:100%;max-width:none}
+ body:not(.jf-in-room) #jfRoomEntryPanel .jf-reception{float:left;width:61%;margin:0 22px 0 0}
+ body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{display:grid;gap:9px}
+ body:not(.jf-in-room) #jfRoomEntryPanel .jf-entry-account{overflow:hidden}
+}
+@media(max-width:799px){.jf-reception img{max-height:36svh;object-fit:contain}}
+</style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
@@ -1004,6 +1019,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
 
   <section class="panel jf-room-entry-panel" id="jfRoomEntryPanel">
+    <div class="jf-reception"><h2>♫ Recepção do clube</h2><img src="/images/recepcao-junto.svg" width="960" height="640" alt="O DJ macaco recebe os visitantes no balcão da rádio, ao lado da entrada do The Símios."></div>
     <input id="room" type="hidden" value="" autocomplete="off">
     <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
       <button class="btn" id="join" type="button">↗ Entrar na sala</button>
