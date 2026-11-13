@@ -988,51 +988,51 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 <!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
 <link rel="stylesheet" href="/kodoku.css">
 <style>
-/* Telas de entrada do clube. */
-.home-only,.jf-guest-art,.jf-user-side,.jf-lobby-title,.jf-personal-tools{display:none}
-html:root body:not(.jf-in-room){background:radial-gradient(ellipse at 50% 38%,#31485d00 10%,#101e30bb 95%),repeating-linear-gradient(135deg,#2d4352 0 1px,#273c4c 1px 5px) fixed!important}
+/* Coordenadas relativas à folha útil dos dois desenhos. */
+.home-only,.jf-guest-art,.jf-user-side,.jf-lobby-title,.jf-wordmark,.jf-personal-tools{display:none}
+html:root body:not(.jf-in-room){color:#332b2a;background:#faf4e6!important;font-family:Tahoma,Verdana,sans-serif}
 html:root body:not(.jf-in-room)::before,html:root body:not(.jf-in-room)::after,body:not(.jf-in-room) #jfAeroBackground{display:none!important}
-html:root body:not(.jf-in-room)>main{width:min(1120px,100%)!important;max-width:none!important;min-height:100svh;justify-content:center;gap:0;padding:95px 24px 75px}
-html:root body:not(.jf-in-room) .jf-topbar{position:absolute;inset:0 22px auto;display:flex!important;justify-content:space-between!important;align-items:center;padding:14px 0!important;border-bottom:3px double #79919b;min-height:64px}
-html:root body:not(.jf-in-room) .jf-topbar .brand{display:block;width:auto;font:italic 900 clamp(28px,4vw,42px)/1 Verdana;color:#ffd387;letter-spacing:-3px;text-shadow:2px 3px #794b35}
-.jf-wordmark{display:none}
-body:not(.jf-in-room) .brand .jf-original-name{display:none}
-body:not(.jf-in-room) .brand .jf-wordmark{display:inline-flex;align-items:baseline}
-.jf-wordmark img{width:.83em;height:.83em;object-fit:cover;object-position:top;border-radius:50%;background:#efc77c;border:1px solid #3e3024}
-body:not(.jf-in-room) .brand .logo,body:not(.jf-in-room) .brand .tag{display:none}
+html:root body:not(.jf-in-room)>main{position:relative;width:100%!important;max-width:none!important;min-height:100svh;display:block;padding:0;margin:0}
+html:root body:not(.jf-in-room) main>.jf-topbar{height:15svh;min-height:68px;max-height:124px;padding:0 4.5vw!important;margin:0;display:flex!important;align-items:center;justify-content:space-between!important;position:relative;z-index:21;border-bottom:2px solid #46332c;background:#fff9ec;box-shadow:0 3px 0 #dac7a3}
+html:root body:not(.jf-in-room) .jf-topbar .brand{display:block;width:auto}
+body:not(.jf-in-room) .brand>:not(.jf-wordmark){display:none!important}
+body:not(.jf-in-room) .brand .jf-wordmark{display:block;width:clamp(154px,32vw,335px);height:clamp(48px,13svh,100px);object-fit:contain;object-position:left center}
 html:root body:not(.jf-in-room) .jf-topbar .jf-top-actions{position:relative!important;inset:auto!important;display:block!important;width:auto!important;margin:0!important}
-html:root body:not(.jf-in-room) #jfSiteMenuButton{font: bold 20px/1 Verdana!important;width:43px!important;min-width:43px!important;color:#fff4d2;background:#38536a;border:2px outset #849aa4;border-radius:2px}
+html:root body:not(.jf-in-room) #jfSiteMenuButton{width:44px!important;min-width:44px!important;height:36px!important;min-height:36px!important;border:2px solid #45342d!important;border-radius:4px 2px 5px 3px!important;background:#fffaed!important;color:#3c302a!important;box-shadow:2px 2px #bb9772!important;text-shadow:none;font:bold 21px/1 sans-serif}
 body:not(.jf-in-room) .jf-topbar .jf-community-top-dock{display:none}
-html:root body:not(.jf-in-room) #jfRoomEntryPanel{width:min(540px,100%);max-width:100%!important;position:relative;overflow:visible;margin:0 auto;padding:0 24px 16px!important;border:3px solid!important;border-color:#f3f5e6 #677786 #677786 #e2eae1!important;border-radius:2px!important;background:#d1d9d5!important;box-shadow:6px 7px #101d2a!important;color:#243c4a;text-shadow:none;font:14px Tahoma,Verdana,sans-serif}
-body:not(.jf-in-room) #jfRoomEntryPanel:before{display:none}
-body:not(.jf-in-room) #jfRoomEntryPanel .jf-lobby-title{display:block;margin:0 -22px 18px;padding:9px 12px;color:#fff4cc!important;font:bold 16px Tahoma,Verdana;background:linear-gradient(90deg,#1d465e,#547488);text-shadow:none}
-body:not(.jf-in-room) #jfRoomEntryPanel .jf-guest-art{display:block;position:absolute;right:97%;bottom:-6px;width:clamp(130px,18vw,226px);pointer-events:none}
-body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{display:grid;max-width:300px;margin:auto;gap:8px}
-body:not(.jf-in-room) #jfRoomEntryPanel .btn{min-height:38px!important;border:2px outset #e4eae1!important;border-radius:2px!important;box-shadow:1px 2px #687985!important;background:linear-gradient(#fff8e6,#c5cdc7)!important;color:#193849!important;text-shadow:none!important;font:bold 14px Tahoma,Verdana,sans-serif}
-body:not(.jf-in-room) #jfRoomEntryPanel .jf-entry-account{margin:0;padding:0;border:0;gap:8px}
-body:not(.jf-in-room) #jfRoomEntryPanel .jf-entry-account .jf-social-account-actions{display:grid;width:min(300px,100%);gap:9px}
-body:not(.jf-in-room) #jfRoomEntryPanel .jf-have-account-link{color:#264d63!important}
-body:not(.jf-in-room) #jfRoomEntryPanel #jfGoogleLogin{width:min(300px,100%)}
-body:not(.jf-in-room) #jfRoomEntryPanel .status{margin:12px 0 0;padding:4px 0;background:transparent;border:0;color:#3d5661}
-body:not(.jf-in-room) #jfRoomEntryPanel :is(#roomCount,#help,#jfEntryAccountHint,#jfEntryAccountLoggedIn){display:none!important}
-body:not(.jf-in-room) #jfAdminEntry:not([hidden]){position:fixed;bottom:15px;right:16px;z-index:10}
-body:not(.jf-in-room) .jf-presence{display:block;position:absolute;top:100%;left:0;right:0;text-align:center;margin:20px auto;color:#d9eee3;font: bold 13px Tahoma}
-body:not(.jf-in-room)[data-lobby="guest"] #jfRoomEntryActions{display:none!important}
-body:not(.jf-in-room)[data-lobby="guest"] .guest-continue{display:block;margin:14px auto 0;border:0;background:none;color:#284b62;text-decoration:underline;cursor:pointer}
-body:not(.jf-in-room):is([data-lobby="member"],[data-lobby="visitor"]) #jfEntryAccount,body:not(.jf-in-room):is([data-lobby="member"],[data-lobby="visitor"]) .jf-guest-art{display:none!important}
-body:not(.jf-in-room)[data-lobby="member"] #jfRoomEntryPanel{transform:translateX(-8vw)}
-body:not(.jf-in-room)[data-lobby="member"] .jf-user-side{display:grid;justify-items:center;align-content:center;position:absolute;left:calc(100% + 20px);top:50%;transform:translateY(-50%);width:clamp(180px,20vw,252px);color:#ffdc9d;text-align:center}
-#jfHomeAvatar{width:100%;aspect-ratio:1;display:grid;place-items:center;color:#ced8d7}
+html:root body:not(.jf-in-room) #jfRoomEntryPanel{position:relative;overflow:visible;width:40vw;max-width:none!important;min-height:32svh;margin:10svh 0 0 25vw;padding:clamp(18px,3vh,34px) 20px!important;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;border:2px solid #4d382e!important;border-radius:14px 6px 12px 5px / 7px 13px 5px 16px!important;background:#fffaf0!important;box-shadow:3px 4px #e1bf87,5px 6px #664e3d!important;color:#322a27;text-shadow:none}
+body:not(.jf-in-room) #jfRoomEntryPanel::before{display:none}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-lobby-title{display:block;margin:0 0 8px;text-align:center;color:#392923!important;font:700 clamp(21px,2.4vw,36px)/1.05 Georgia,serif;text-shadow:none;letter-spacing:-.04em}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-guest-art{display:block;position:absolute;right:100%;bottom:-3.5svh;width:clamp(110px,17vw,275px);height:auto;pointer-events:none}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-entry-account{display:grid;align-items:start;justify-items:stretch;width:min(100%,200px);gap:6px;margin:0;padding:0;border:0}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-social-account-actions{display:grid;width:100%;gap:6px}
+body:not(.jf-in-room) #jfRoomEntryPanel .btn{box-shadow:2px 2px #73523a!important;border:1.5px solid #49372f!important;border-radius:4px 2px 5px 2px!important;background:#f6d59b!important;color:#322923!important;font:bold 16px/1.15 Tahoma,Verdana,sans-serif;text-shadow:none!important;padding:8px 14px!important}
+body:not(.jf-in-room) #jfRoomEntryPanel :is(#jfGoogleLogin,#jfLocalRegisterOpen){display:flex;align-items:center;justify-content:flex-start;gap:10px;min-width:0!important;width:100%;min-height:32px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:3px 8px!important;text-align:left}
+body:not(.jf-in-room) #jfRoomEntryPanel :is(#jfGoogleLogin,#jfLocalRegisterOpen)::before{content:"";width:14px;height:14px;border:1.5px solid #47362b;border-radius:2px;background:#efbc70;box-shadow:1px 1px #8d6945}
+body:not(.jf-in-room) #jfRoomEntryPanel #jfGoogleLogin[hidden]{display:none!important}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-have-account-link{background:transparent;color:#634537;font:12px Tahoma}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{display:grid;gap:12px;width:min(100%,190px);margin:auto}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{width:100%!important;min-height:42px!important;margin:0}
+body:not(.jf-in-room)[data-lobby="guest"] #jfRoomEntryActions,body:not(.jf-in-room) #jfRoomEntryPanel :is(#jfEntryAccountHint,#jfEntryAccountLoggedIn,#roomCount,#help,.status),body:not(.jf-in-room) #jfRoomEntryPanel>.row:has(#jfLeaveRoom){display:none!important}
+body:not(.jf-in-room)[data-lobby="guest"] .guest-continue{display:block;background:transparent;border:none;color:#695345;text-decoration:underline;cursor:pointer;font:12px Tahoma}
+body:not(.jf-in-room) .jf-presence{display:block;position:absolute;top:calc(100% + 10svh);left:0;right:0;text-align:center;color:#543c2f;font:700 16px Tahoma}
+body:not(.jf-in-room) #jfAdminEntry:not([hidden]){position:fixed;bottom:16px;right:4vw;margin:0;z-index:10}
+body:not(.jf-in-room) #jfAdminLogin{background:#fff7e4;color:#49362e;border:1.5px solid #534030;box-shadow:2px 2px #c6a785}
+body:not(.jf-in-room):is([data-lobby="member"],[data-lobby="visitor"]) #jfEntryAccount,body:not(.jf-in-room):is([data-lobby="member"],[data-lobby="visitor"]) .jf-guest-art,body:not(.jf-in-room)[data-lobby="member"] :is(.jf-presence,.jf-lobby-title){display:none!important}
+html:root body:not(.jf-in-room)[data-lobby="member"] #jfRoomEntryPanel{width:49vw;min-height:43svh;margin:15svh 0 0 19vw}
+body:not(.jf-in-room)[data-lobby="member"] .jf-user-side{position:absolute;left:calc(100% + 5vw);top:50%;transform:translateY(-50%);width:21vw;text-align:center;display:grid;gap:6px;justify-items:center;color:#473326;font:700 17px Georgia}
+#jfHomeAvatar{width:min(100%,260px);aspect-ratio:1;display:grid;place-items:center;font:13px Tahoma}
 body:not(.jf-in-room)[data-lobby="member"] #jfHomeQuarter{display:block}
 body:not(.jf-in-room)[data-quarter] #jfRoomEntryActions{display:none!important}
-body:not(.jf-in-room)[data-quarter] .jf-personal-tools{display:grid;gap:8px}
-@media(max-width:830px){
-html:root body:not(.jf-in-room)>main{padding:90px 16px 65px}
-body:not(.jf-in-room)[data-lobby="member"] #jfRoomEntryPanel{transform:none}
-body:not(.jf-in-room)[data-lobby="member"] .jf-user-side{position:static;transform:none;width:140px;margin:8px auto}
-body:not(.jf-in-room) #jfRoomEntryPanel .jf-guest-art{position:static;width:86px;float:left;margin-right:8px}
+body:not(.jf-in-room)[data-quarter] .jf-personal-tools{display:grid;gap:10px}
+@media(max-width:620px){
+html:root body:not(.jf-in-room)>main{padding-bottom:90px}
+html:root body:not(.jf-in-room) #jfRoomEntryPanel{width:70vw;margin:13svh 5vw 0 auto;padding:18px 10px!important}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-guest-art{width:24vw;bottom:0}
+html:root body:not(.jf-in-room)[data-lobby="member"] #jfRoomEntryPanel{width:62vw;margin:15svh 0 0 4vw}
+body:not(.jf-in-room)[data-lobby="member"] .jf-user-side{width:27vw;left:calc(100% + 2vw);overflow-wrap:anywhere;font-size:14px}
+body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{width:min(100%,150px)}
 }
-@media(max-width:450px){body:not(.jf-in-room) #jfRoomEntryPanel .jf-guest-art{float:none;margin:0 auto 6px}}
 </style>
 </head>
 <body data-lobby="guest">
@@ -1040,7 +1040,7 @@ body:not(.jf-in-room) #jfRoomEntryPanel .jf-guest-art{position:static;width:86px
 <div id="jfRankDialog" hidden role="dialog" aria-modal="true" aria-labelledby="jfRankHeading"><div class="panel jf-rank-body"><div style="display:flex;justify-content:space-between;align-items:center"><h2 id="jfRankHeading">🏆 Ranking de horas</h2><button type="button" class="btn secondary" id="jfCloseRank">Fechar</button></div><p class="small">Tempo de DJ e ouvintes com conta Google durante transmissão com áudio.</p><div id="jfRankContent">Carregando...</div></div></div>
 <div id="jfWelcomeToast" role="status" hidden><svg viewBox="0 0 96 96" role="img" aria-label="Navio de madeira entalhada"><defs><linearGradient id="jfWoodShip"><stop stop-color="#f5d09a"/><stop offset=".5" stop-color="#c18a4f"/><stop offset="1" stop-color="#86502b"/></linearGradient></defs><circle cx="48" cy="48" r="42" fill="#57321e" stroke="#edc78b" stroke-width="5"/><path d="M49 18v43M49 24l-24 32h24zm4 7 20 25H53zM17 62h63L67 77H30Z" fill="url(#jfWoodShip)" stroke="#3b2116" stroke-width="3" stroke-linejoin="round"/><path d="M24 83q7-5 13 0t12 0t12 0t12 0" fill="none" stroke="#efc28a" stroke-width="3"/></svg><div><small>🏆 CONQUISTA DESBLOQUEADA</small><strong>Bem-vindo a bordo</strong><span>Seu primeiro embarque no Junto.fm!</span></div></div>
 <main>
-  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div><span class="jf-original-name">Junto.fm</span><span class="jf-wordmark" aria-label="Junto.fm">Junt<img src="/images/recepcionista.svg" alt="o">.fm</span> <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary jf-site-menu-toggle" id="jfSiteMenuButton" aria-label="Abrir menu" type="button" aria-expanded="false" aria-controls="jfSiteMenuPanel" aria-haspopup="true">☰</button>
+  <div class="jf-topbar"><div class="brand"><div class="logo">♫</div><span class="jf-original-name">Junto.fm</span><img class="jf-wordmark" src="/images/junto-lettering.svg" alt="Junto.fm"> <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary jf-site-menu-toggle" id="jfSiteMenuButton" aria-label="Abrir menu" type="button" aria-expanded="false" aria-controls="jfSiteMenuPanel" aria-haspopup="true">☰</button>
   <nav class="jf-site-menu-panel" id="jfSiteMenuPanel" aria-label="Menu principal" hidden>
     <span class="jf-menu-group-title">Minha conta e visual</span>
     <button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button>
@@ -1052,19 +1052,19 @@ body:not(.jf-in-room) #jfRoomEntryPanel .jf-guest-art{position:static;width:86px
 
   <section class="panel jf-room-entry-panel" id="jfRoomEntryPanel">
     <h2 class="jf-lobby-title" id="jfLobbyTitle">Novo aqui? Cadastre-se!</h2>
-    <img class="jf-guest-art" src="/images/recepcionista.svg" alt="">
+    <img class="jf-guest-art" src="/images/recepcionista-croqui.svg" alt="">
     <aside class="jf-user-side"><strong id="jfLobbyName"></strong><div id="jfHomeAvatar"></div></aside>
     <div class="jf-personal-tools"><button class="btn" id="jfQuarterDress" type="button">Trocar traje</button><button class="btn secondary" id="jfQuarterBack" type="button">Voltar à recepção</button></div>
     <span class="home-only jf-presence" id="jfPresence" role="status"></span>
     <input id="room" type="hidden" value="" autocomplete="off">
     <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
-      <button class="btn" id="join" type="button">↗ Entrar na sala</button>
-      <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
+      <button class="btn" id="join" type="button">Entrar</button>
+      <button class="btn secondary" id="createRoom" type="button">Criar sala</button>
       <button class="btn secondary home-only" id="jfHomeQuarter" type="button">Quarto</button>
     </div>
     <div class="jf-entry-account" id="jfEntryAccount">
       <span class="small" id="jfEntryAccountHint">Escolha como criar sua conta. Você também pode entrar nas salas sem cadastro.</span>
-      <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Criar com Google</a>
+      <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Google</a>
       <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
     </div>
     <button type="button" class="home-only guest-continue" id="jfGuestContinue">Continuar como visitante</button>
