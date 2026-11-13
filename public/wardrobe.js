@@ -761,9 +761,9 @@ function applyPlayerSittingPose(monkey,source){
   console.info("Pose sentada Mixamo: ossos aplicados",applied,"de",clip.tracks.length,"canais");
   return applied>=5;
 }
-function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false}={}){
+function makeScene(target,wardrobe,{preview=false,spin=false,skin="default",playerSitting=false,previewSeated=false}={}){
   if(!base)return null;
-  const width=preview?248:64,height=preview?248:68;
+  const width=preview||spin?248:64,height=preview||spin?248:68;
   const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
   renderer.setSize(width,height,false);
@@ -917,8 +917,18 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     target.addEventListener("pointerup",up);
     target.addEventListener("pointercancel",up);
   }
+  if(spin && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+    let previous=0;
+    renderer.setAnimationLoop(time=>{
+      if(time-previous<40)return;
+      normalized.rotation.y+=Math.min(time-previous,100)*.00055;
+      previous=time;
+      renderer.render(scene,camera);
+    });
+  }
   return {dispose:()=>{
     active=false;
+    if(spin)renderer.setAnimationLoop(null);
     if(preview){
       target.removeEventListener("pointerdown",down);
       target.removeEventListener("pointermove",move);
@@ -1291,4 +1301,28 @@ export async function createWardrobeFittedAvatar(outfit={}, {local=false}={}){
   return {group,rig:monkey,updateAccessories:()=>{
     if(active)group.updateWorldMatrix(true,true);
   },dispose:()=>{active=false;disposeShirt();disposeClothes();}};
+}
+
+const homeAvatar=document.getElementById("jfHomeAvatar");
+if(homeAvatar){
+  let homeScene=null,version=0;
+  async function updateHomeAvatar(){
+    const request=++version;
+    homeScene?.dispose();
+    homeScene=null;
+    if(document.body.dataset.lobby!=="member"||document.body.classList.contains("jf-in-room")||document.hidden)return;
+    homeAvatar.textContent="Carregando macaco…";
+    try{
+      const model=await ensureBaseModel();
+      if(request!==version)return;
+      if(!model)throw Error("Modelo indisponível");
+      homeScene=makeScene(homeAvatar,readSaved(),{spin:true});
+    }catch{
+      if(request===version)homeAvatar.textContent="Prévia do macaco indisponível";
+    }
+  }
+  new MutationObserver(updateHomeAvatar).observe(document.body,{attributes:true,attributeFilter:["data-lobby","class"]});
+  document.addEventListener("visibilitychange",updateHomeAvatar);
+  window.addEventListener("jf-wardrobe-save",updateHomeAvatar);
+  updateHomeAvatar();
 }
