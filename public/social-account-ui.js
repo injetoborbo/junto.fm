@@ -55,7 +55,7 @@
  document.head.appendChild(style);
  const entry=document.getElementById("jfEntryAccount");
  const actions=document.createElement("div");actions.className="jf-social-account-actions";
- actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen" aria-label="Cadastrar com e-mail">E-mail</button><div class="jf-have-account"><button class="jf-have-account-link" type="button" id="jfHaveAccountToggle" aria-expanded="false" aria-controls="jfLoginChoice">Já tenho conta</button><div class="jf-login-choice" id="jfLoginChoice" hidden><a class="btn secondary" href="/auth/google">Entrar com Google</a><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button></div></div><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
+ actions.innerHTML='<button class="btn secondary" type="button" id="jfLocalRegisterOpen" aria-label="Cadastrar com e-mail">Criar conta com e-mail</button><div class="jf-have-account"><button class="jf-have-account-link" type="button" id="jfHaveAccountToggle" aria-expanded="false" aria-controls="jfLoginChoice">Já tenho conta</button><div class="jf-login-choice" id="jfLoginChoice" hidden><a class="btn secondary" href="/auth/google">Entrar com Google</a><button class="btn secondary" type="button" id="jfLocalLoginOpen">Entrar com e-mail</button></div></div><button class="btn secondary" type="button" id="jfAchievementsOpen">🏅 Conquistas</button>';
  if(entry)entry.appendChild(actions);
  else document.querySelector("main")?.appendChild(actions);
  const menu=document.getElementById("jfSiteMenuPanel");
