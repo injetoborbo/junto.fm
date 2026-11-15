@@ -3,6 +3,7 @@
 // NENHUM vídeo, arquivo ou frame é enviado ao Render ou à Metered.ca.
 const crypto = require("crypto");
 const { AccessToken } = require("livekit-server-sdk");
+const { archiveRequest, resolveArchiveVideo } = require("./archive-video");
 module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   const livekitUrl = process.env.LIVEKIT_URL || "";
   const livekitKey = process.env.LIVEKIT_API_KEY || "";
@@ -24,6 +25,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     } catch (_) { return null; }
   }
   const states = new Map();
+  const pendingLinks = new Map();
   const viewers = new Map();
   const youtubeQueues = new Map(); // pedidos temporários por sala, independentes do Spotify
   const queueFor = room => youtubeQueues.get(room) || [];
@@ -60,6 +62,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     io.to(room).emit("tv:state", snapshot(room));
   }
   function stop(room) {
+    pendingLinks.delete(room);
     clearIdle(room);
     const s = states.get(room);
     if (!s) return;
@@ -69,6 +72,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   }
   function leave(room, id) {
     if (!room) return;
+    if (pendingLinks.get(room)?.hostId === id) pendingLinks.delete(room);
     if (states.get(room)?.hostId === id) return stop(room);
     const set = viewers.get(room);
     if (set?.delete(id)) {
@@ -157,13 +161,27 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       broadcast(room);
     });
 
-    socket.on("tv:set-link", data => {
+    socket.on("tv:set-link", async data => {
       const room = socket.data.room;
       if (!room || !isRoomOwner(socket, room)) return fail(socket, "Só o administrador pode escolher o vídeo.");
       if (isRateLimited(socket, "tv:set-link", 6, 10000)) return;
-      const url = validLink(data?.url);
+      let url = validLink(data?.url);
       if (!url) return fail(socket, "Use um link HTTPS público de vídeo, sem usuário e senha no endereço.");
-      const format = ["auto", "direct", "hls"].includes(data?.format) ? data.format : "auto";
+      let format = ["auto", "direct", "hls"].includes(data?.format) ? data.format : "auto";
+      const pending = {hostId:socket.id};
+      pendingLinks.set(room,pending);
+      try {
+        const request = archiveRequest(url);
+        if (request) {
+          const resolved = await resolveArchiveVideo(request);
+          if (pendingLinks.get(room) !== pending || socket.data.room !== room || !isRoomOwner(socket,room)) return;
+          url = resolved.url; format = resolved.format;
+        }
+      } catch (error) {
+        if (pendingLinks.get(room) !== pending) return;
+        pendingLinks.delete(room);
+        return fail(socket,error.name === "TimeoutError" ? "O Archive.org demorou a responder. Tente carregar novamente." : error.message);
+      }
       stop(room);
       states.set(room, {mode:"link", url, format,
         title:typeof data?.title === "string" ? data.title.trim().slice(0,120) : "Vídeo da sala",
@@ -234,6 +252,7 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       if (!isRoomOwner(socket, room)) return fail(socket, "Só o administrador pode transmitir.");
       if (isRateLimited(socket, "tv:start-stream", 4, 10000)) return;
       if (!allowedModes.has(data?.mode)) return fail(socket, "Fonte de vídeo inválida.");
+      pendingLinks.delete(room);
       // Substituir fonte sem anunciar um estado nulo intermediário, que encerraria
       // a captura recém-iniciada no navegador do administrador.
       clearIdle(room);
@@ -244,7 +263,10 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
     socket.on("tv:stop", () => {
       const room = socket.data.room;
-      if (room && isRoomOwner(socket, room) && states.get(room)?.hostId === socket.id) stop(room);
+      if (room && isRoomOwner(socket, room)) {
+        pendingLinks.delete(room);
+        if (states.get(room)?.hostId === socket.id) stop(room);
+      }
     });
 
     // The host controls the captured file itself. Viewers keep receiving the

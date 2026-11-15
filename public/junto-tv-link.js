@@ -204,7 +204,7 @@
         const url=new URL(raw);
         if(url.protocol!=="https:"||url.username||url.password)throw new Error();
         socket.emit("tv:set-link",{url:url.href,title:$("jfTvLinkTitle").value,format:$("jfTvLinkFormat").value});
-        status("Solicitando vídeo para a sala…");
+        status(["archive.org","www.archive.org"].includes(url.hostname)?"Buscando o arquivo do episódio no Archive.org…":"Solicitando vídeo para a sala…");
       }catch(_){status("Cole um endereço HTTPS de vídeo válido, sem usuário e senha no link.");}
     };
     $("jfTvLinkPlay").onclick=()=>{
