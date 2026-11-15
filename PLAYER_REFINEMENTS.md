@@ -30,3 +30,7 @@ O ambiente desta revisão bloqueou o lançamento do Chromium. Não foi validada 
 3. Arquivo local: pausa e retomada sem republicar, avanço, som do ADM e volume independente dos ouvintes.
 4. Fechar/reabrir TV, encerrar a fonte, perder/restaurar a rede e reentrar na sala.
 5. Verificar a franquia LiveKit; mídia por link direto não passa pelo Render.
+
+## Links do Archive.org
+
+Links `/details/colecao/arquivo` e `/download/colecao/arquivo` são resolvidos usando a lista real de arquivos da coleção. O servidor consulta apenas os metadados públicos de `archive.org`, com prazo de oito segundos; a mídia continua vindo diretamente do Archive para cada participante. O player prefere o derivado `.ia.mp4` quando listado, corrige espaços codificados como `+` e seleciona o formato correto. Nomes com `+` literal são preservados se existirem. Coleções sem episódio selecionado e arquivos ausentes geram orientação, sem escolher outro episódio silenciosamente. Trocar/encerrar a fonte cancela a aplicação de consultas antigas.

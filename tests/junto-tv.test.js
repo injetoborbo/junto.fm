@@ -21,7 +21,7 @@ function setup() {
       send(event, payload) {
         const cb = this.callbacks.get(event);
         assert.ok(cb, "Missing socket listener: " + event);
-        cb(payload);
+        return cb(payload);
       }
     };
     io.sockets.sockets.set(id, socket);
@@ -178,4 +178,20 @@ test("Espectador de outra sala não ganha acesso ao LiveKit",async()=>{
   }finally{
     for(const [name,value] of [["LIVEKIT_URL",old.url],["LIVEKIT_API_KEY",old.key],["LIVEKIT_API_SECRET",old.secret]])if(value===undefined)delete process.env[name];else process.env[name]=value;
   }
+});
+test("Archive: consulta metadados sem substituir outro vídeo escolhido durante a espera",async()=>{
+ const previous=globalThis.fetch;let resolve;
+ globalThis.fetch=()=>new Promise(r=>{resolve=()=>r({ok:true,text:async()=>JSON.stringify({files:[{name:"Episode 1.ia.mp4"}]})});});
+ try{
+  const {api,connect}=setup(),host=connect("owner"),guest=connect("guest");
+  const first=host.send("tv:set-link",{url:"https://archive.org/details/series/Episode+1.mp4"});
+  resolve();await first;api.joined(guest);
+  assert.equal(guest.outgoing.at(-1).payload.url,"https://archive.org/download/series/Episode%201.ia.mp4");
+  assert.equal(guest.outgoing.at(-1).payload.format,"direct");
+  const late=host.send("tv:set-link",{url:"https://archive.org/details/series/Episode+1.mp4"});
+  host.send("tv:set-youtube",{videoId:"dQw4w9WgXcQ"});resolve();await late;api.joined(guest);
+  assert.equal(guest.outgoing.at(-1).payload.mode,"youtube");
+  host.send("tv:stop");const cancelled=host.send("tv:set-link",{url:"https://archive.org/details/series/Episode+1.mp4"});
+  host.send("tv:stop");resolve();await cancelled;api.joined(guest);assert.equal(guest.outgoing.at(-1).payload,null);
+ }finally{globalThis.fetch=previous;}
 });
