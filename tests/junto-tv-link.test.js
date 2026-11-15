@@ -20,9 +20,9 @@ async function createRoom(){
   };
   const tv=buildTv(io,(socket,room)=>socket.id==="host"&&socket.data.room===room,()=>false);
   const clients=new Map();
-  function connect(id){
+  function connect(id,extras={}){
     const clientListeners=new Map(),serverListeners=new Map();
-    const sent=[],timers=[],elements=new Map(),players=[];
+    const sent=[],timers=[],intervals=[],elements=new Map(),players=[];
     // DOM minimo fiel ao reparenting do chat: createComment/insertBefore
     // e appendChild sao usados pelo cliente para mover o mesmo elemento.
     const pageParent={
@@ -78,7 +78,7 @@ async function createRoom(){
       unMute(){this.muted=false;this.calls.push(["unmute"]);}
       attemptPlay(){this.state=1;this.options.events.onStateChange?.({data:1});}
     }
-    const window={jfSocialSocket:userSocket,YT:{Player:FakeYT}};
+    const window={jfSocialSocket:userSocket,YT:{Player:FakeYT},...extras};
     const document={
       getElementById:el,createElement:()=>el("created_"+elements.size),
       createComment:()=>({parentNode:pageParent}),
@@ -87,14 +87,14 @@ async function createRoom(){
     const timer=(fn,delay)=>{timers.push({fn,delay,done:false});return timers.length;};
     const context=vm.createContext({
       window,document,URL,navigator:{},console:{debug(){},warn(){},error(){}},
-      setTimeout:timer,setInterval:()=>1
+      setTimeout:timer,setInterval:fn=>{intervals.push(fn);return intervals.length;}
     });
     vm.runInContext(fs.readFileSync(path.join(__dirname,"../public/junto-tv-link.js"),"utf8"),context);
     vm.runInContext(source,context);
 
     clientListeners.get("joined-room")?.({room:"cinema",ownerId:"host"});
     const client={
-      id,sent,timers,players,el,send:(n,p)=>userSocket.emit(n,p),serverEmit:(n,p)=>socket.emit(n,p),
+      id,sent,timers,players,el,tick:()=>intervals.forEach(fn=>fn()),send:(n,p)=>userSocket.emit(n,p),serverEmit:(n,p)=>socket.emit(n,p),
       get player(){return players.at(-1);},
       openLink(){el("jfTvLaunch").onclick();},
       async open(){
@@ -171,4 +171,70 @@ test("Trocar para YouTube pausa e libera a fonte direta",async()=>{
   host.el("jfTvYoutubeUrl").value="https://youtu.be/dQw4w9WgXcQ";host.el("jfTvLoad").onclick();
   assert.equal(guest.el("jfTvLinkVideo").paused,true);
   assert.equal(guest.el("jfTvLinkControls").hidden,true);
+});
+
+
+test("Sala inteira: 12 espectadores, entrada tardia, seek e pausa",async()=>{
+  const app=await createRoom(),host=app.connect("host");loadLink(host);
+  const guests=Array.from({length:12},(_,i)=>app.connect("guest"+i));
+  guests.forEach(g=>g.openLink());
+  host.el("jfTvLinkPlay").onclick();
+  host.el("jfTvLinkSeek").value="53";host.el("jfTvLinkSeek").on_change();
+  const late=app.connect("late");late.openLink();guests.push(late);
+  for(const g of guests){assert.equal(g.el("jfTvLinkVideo").paused,false);assert.ok(Math.abs(g.el("jfTvLinkVideo").currentTime-53)<0.1);}
+  host.el("jfTvLinkPlay").onclick();
+  for(const g of guests)assert.equal(g.el("jfTvLinkVideo").paused,true);
+});
+test("Buffer do ouvinte não entra em ciclo de seek; canplay retorna ao ponto da sala",async()=>{
+  const app=await createRoom(),host=app.connect("host"),g=app.connect("guest");loadLink(host);g.openLink();
+  host.el("jfTvLinkPlay").onclick();const v=g.el("jfTvLinkVideo");v.currentTime=5;v.on_waiting();
+  const state={mode:"link",url:mediaUrl,format:"direct",playing:true,seconds:30,updatedAt:Date.now(),serverNow:Date.now(),revision:500};
+  g.serverEmit("tv:state",state);g.tick();g.tick();assert.equal(v.currentTime,5);
+  v.on_canplay();assert.ok(Math.abs(v.currentTime-30)<0.1);
+});
+test("Autoplay pendente não se multiplica e falha após heartbeat ainda mostra botão de som",async()=>{
+  const app=await createRoom(),host=app.connect("host"),g=app.connect("guest");loadLink(host);g.openLink();
+  const v=g.el("jfTvLinkVideo");let reject,calls=0;
+  v.play=()=>{calls++;return new Promise((_,r)=>reject=r);};
+  host.el("jfTvLinkPlay").onclick();g.tick();g.tick();assert.equal(calls,1);
+  g.serverEmit("tv:state",{mode:"link",url:mediaUrl,playing:true,seconds:1,updatedAt:Date.now(),revision:500});
+  v.play=()=>{calls++;v.paused=false;return Promise.resolve();};
+  reject(Object.assign(new Error("gesture required"),{name:"NotAllowedError"}));
+  for(let i=0;i<6;i++)await Promise.resolve();
+  assert.equal(g.el("jfTvLinkUnlock").hidden,false);assert.equal(v.muted,true);assert.equal(calls,2);
+  g.el("jfTvLinkUnlock").onclick();assert.equal(v.muted,false);
+});
+test("Erro definitivo permanece visível até tentar novamente",async()=>{
+  const app=await createRoom(),host=app.connect("host"),g=app.connect("guest");loadLink(host);g.openLink();
+  g.el("jfTvLinkVideo").on_error();const message=g.el("jfTvLinkHealth").textContent;
+  host.el("jfTvLinkPlay").onclick();g.tick();g.el("jfTvLinkResync").onclick();
+  assert.equal(g.el("jfTvLinkHealth").textContent,message);
+  g.el("jfTvLinkRetry").onclick();assert.notEqual(g.el("jfTvLinkHealth").textContent,message);
+});
+test("Falha definitiva do ADM pausa todos os espectadores",async()=>{
+  const app=await createRoom(),host=app.connect("host"),guest=app.connect("guest");loadLink(host);guest.openLink();
+  host.el("jfTvLinkPlay").onclick();host.el("jfTvLinkVideo").on_error();
+  assert.equal(guest.el("jfTvLinkVideo").paused,true);
+  assert.match(host.el("jfTvLinkHealth").textContent,/não pôde/);
+});
+
+test("HLS recupera decodificação uma vez; falha repetida pausa a sala e libera retry",async()=>{
+  const instances=[];
+  class Hls{
+    static isSupported(){return true;}
+    static Events={MANIFEST_PARSED:"manifest",AUDIO_TRACKS_UPDATED:"audio",SUBTITLE_TRACKS_UPDATED:"subs",ERROR:"error"};
+    static ErrorTypes={MEDIA_ERROR:"media",NETWORK_ERROR:"network"};
+    constructor(){this.handlers=new Map();this.recoveries=0;instances.push(this);}
+    on(n,fn){this.handlers.set(n,fn);}loadSource(url){this.url=url;}attachMedia(v){this.video=v;}
+    recoverMediaError(){this.recoveries++;}destroy(){this.destroyed=true;}
+  }
+  const app=await createRoom(),host=app.connect("host",{Hls}),guest=app.connect("guest",{Hls});
+  host.openLink();host.el("jfTvLinkUrl").value="https://media.example.org/episode.m3u8";host.el("jfTvLinkFormat").value="hls";
+  host.el("jfTvLinkForm").onsubmit({preventDefault(){}});guest.openLink();
+  for(let i=0;i<4;i++)await Promise.resolve();
+  assert.equal(instances.length,2);const h=instances[0];host.el("jfTvLinkPlay").onclick();
+  h.handlers.get("error")(null,{fatal:true,type:"media"});assert.equal(h.recoveries,1);assert.equal(h.destroyed,undefined);
+  h.handlers.get("error")(null,{fatal:true,type:"media"});assert.equal(h.recoveries,1);assert.equal(h.destroyed,true);
+  assert.equal(guest.el("jfTvLinkVideo").paused,true);
+  host.el("jfTvLinkRetry").onclick();for(let i=0;i<4;i++)await Promise.resolve();assert.equal(instances.length,3);
 });

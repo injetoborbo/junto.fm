@@ -19,7 +19,7 @@ function setup() {
       parentNode:parent,closest(){return dialog;},
       id, hidden:false, disabled:false, value:"", style:{}, title:"",
       classList:{values:new Map(),toggle(k,v){this.values.set(k,v);}},querySelectorAll(){return [];},addEventListener(){},
-      appendChild(){},replaceChildren(){},setAttribute(){},focus(){},
+      appendChild(){},replaceChildren(){},setAttribute(){},focus(){},querySelector(){return {};},
       set innerHTML(s){this.html=s;},
       set textContent(s){this.text=s;},
       get textContent(){return this.text;}
@@ -184,3 +184,4 @@ test("Legendas recebem tentativa de desligamento no ready e na mudança de módu
  const before=app.youtube.calls.length;app.youtube.opts.events.onApiChange();
  assert.equal(app.youtube.calls[before][0],"option");
 });
+
