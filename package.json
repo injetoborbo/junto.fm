@@ -6,6 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "test:tv": "node --test tests/junto-tv*.test.js",
     "build": "node scripts/precompress-assets.js",
     "postinstall": "npm run build"
   },

@@ -64,14 +64,15 @@ test("Convida só espectadores autorizados para transmissão P2P", () => {
   guest.send("tv:unwatch");
   assert.ok(messages.some(e => e.room === "owner" && e.event === "tv:viewer-left"));
 });
-test("Limita streaming a quatro espectadores", () => {
-  const { connect } = setup();
+test("LiveKit aceita todos os participantes da sala, inclusive após o quarto", () => {
+  const { connect, messages } = setup();
   const owner = connect("owner");
   owner.send("tv:start-stream", { mode: "local" });
-  for (let i = 0; i < 4; i++) connect("viewer" + i).send("tv:watch");
-  const fifth = connect("fifth");
-  fifth.send("tv:watch");
-  assert.ok(fifth.outgoing.some(e => e.event === "tv:error"));
+  for (let i = 0; i < 24; i++) {
+    const viewer=connect("viewer" + i);viewer.send("tv:watch");viewer.send("tv:watch");
+    assert.equal(viewer.outgoing.some(e => e.event === "tv:error"),false);
+  }
+  assert.equal(messages.filter(e=>e.event==="tv:viewer-joined").length,24);
 });
 test("Parar a TV e sair da sala limpam o estado", () => {
   const { api, connect } = setup();
@@ -146,4 +147,35 @@ test("Comando de ouvinte é rejeitado e não gera falso pause", () => {
   guest.send("tv:control",{action:"pause",seconds:99});
   assert.equal(guest.outgoing.some(m=>m.event==="tv:control-result"&&m.payload.ok===false),true);
   assert.equal(messages.slice(before).some(m=>m.event==="tv:playback"),false);
+});
+
+
+test("Estado local só aceita ADM e mantém pausa/posição para novos participantes",()=>{
+  const {api,connect}=setup(),host=connect("owner"),guest=connect("guest");
+  host.send("tv:start-stream",{mode:"local"});
+  guest.send("tv:local-state",{playing:false,seconds:40,duration:120});
+  api.joined(guest);assert.equal(guest.outgoing.at(-1).payload.playing,true);
+  host.send("tv:local-state",{playing:false,seconds:40,duration:120});
+  const late=connect("late");api.joined(late);
+  assert.equal(late.outgoing.at(-1).payload.playing,false);assert.equal(late.outgoing.at(-1).payload.seconds,40);
+  host.send("tv:local-state",{playing:true,seconds:Infinity,duration:120});api.joined(late);
+  assert.equal(late.outgoing.at(-1).payload.playing,false);
+  host.send("tv:local-state",{playing:true,seconds:40,duration:120});api.joined(late);
+  assert.equal(late.outgoing.at(-1).payload.playing,true);
+});
+test("Espectador de outra sala não ganha acesso ao LiveKit",async()=>{
+  const old={url:process.env.LIVEKIT_URL,key:process.env.LIVEKIT_API_KEY,secret:process.env.LIVEKIT_API_SECRET};
+  process.env.LIVEKIT_URL="wss://test.example.org";process.env.LIVEKIT_API_KEY="test";process.env.LIVEKIT_API_SECRET="test-secret-at-least-32-characters-long";
+  try{
+    const {connect}=setup(),host=connect("owner");host.send("tv:start-stream",{mode:"local"});
+    for(let i=0;i<8;i++){
+      const v=connect("viewer"+i);v.send("tv:watch");
+      const result=await new Promise(resolve=>v.callbacks.get("tv:livekit-token")({publish:false},resolve));
+      assert.equal(result.ok,true);assert.equal(typeof result.token,"string");
+    }
+    const stranger=connect("stranger");stranger.data.room="different";
+    const denied=await new Promise(resolve=>stranger.callbacks.get("tv:livekit-token")({publish:false},resolve));assert.equal(denied.ok,false);
+  }finally{
+    for(const [name,value] of [["LIVEKIT_URL",old.url],["LIVEKIT_API_KEY",old.key],["LIVEKIT_API_SECRET",old.secret]])if(value===undefined)delete process.env[name];else process.env[name]=value;
+  }
 });

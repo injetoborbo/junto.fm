@@ -43,6 +43,8 @@
     const video=$("jfTvLinkVideo"), message=$("jfTvLinkMessage"), unlock=$("jfTvLinkUnlock");
     let source="", sourceRevision=0, hls=null, generation=0, hlsAttempted=false;
     let playingPromise=null, lastSync=0, scrubbing=false, subtitleUrl="", subtitleTrack=null;
+    let buffering=false, fatalError=false, mediaRecoveries=0;
+    let lastPlaying=false, lastRate=1;
     let lastPosition=-1, stalledTicks=0;
     const active=()=>getState()?.mode==="link"&&isOpen();
     function report(text,error=false) {
@@ -50,8 +52,15 @@
       message.textContent=text;message.hidden=!error;
       if(error)status(text);
     }
+    function failSource(text){
+      fatalError=true;
+      // A failed host cannot remain the running clock for everyone else.
+      if(active()&&isAdmin()&&getState().playing)command("pause");
+      report(text,true);
+    }
     function destroySource() {
       ++generation; source="";sourceRevision=0;playingPromise=null;
+      buffering=false;fatalError=false;mediaRecoveries=0;
       hls?.destroy();hls=null;hlsAttempted=false;
       video.pause();video.removeAttribute("src");video.load();
       if(subtitleTrack){subtitleTrack.remove();subtitleTrack=null;}
@@ -95,16 +104,21 @@
         hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,tracks);
         hls.on(Hls.Events.ERROR,(_event,data)=>{
           if(token!==generation||!data.fatal)return;
-          report(data.type===Hls.ErrorTypes.NETWORK_ERROR?
+          // hls.js already retries transient network errors. One media recovery
+          // is safe; terminal failures must not trigger an endless retry loop.
+          if(data.type===Hls.ErrorTypes.MEDIA_ERROR&&mediaRecoveries++<1){
+            report("Recuperando reprodução…");hls.recoverMediaError();return;
+          }
+          failSource(data.type===Hls.ErrorTypes.NETWORK_ERROR?
             "A origem bloqueou o HLS ou o link expirou. Verifique acesso e CORS; tente um link atualizado.":
-            "Não foi possível decodificar esta fonte HLS. Tente outra fonte ou formato.",true);
+            "Não foi possível decodificar esta fonte HLS. Tente outra fonte ou formato.");
           hls?.destroy();hls=null;
         });
         hls.loadSource(url);hls.attachMedia(video);
       }catch(error){
         if(token!==generation||!active())return;
         if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=url;video.load();}
-        else report(error.message,true);
+        else failSource(error.message);
       }
     }
     function load(s) {
@@ -118,28 +132,31 @@
       else {video.src=s.url;video.load();}
     }
     function play() {
-      if(!video.paused||!active()||!getState().playing)return;
-      const token=generation, revision=getState().revision;
-      playingPromise=Promise.resolve(video.play()).catch(error=>{
-        if(token!==generation||!active()||!getState().playing||getState().revision!==revision)return;
+      if(playingPromise||fatalError||!video.paused||!active()||!getState().playing)return;
+      const token=generation;
+      const attempt=Promise.resolve(video.play()).catch(error=>{
+        // A clock sync changes revision without changing the playback intent.
+        if(token!==generation||!active()||!getState().playing)return;
         if(error.name==="NotAllowedError"){
-          unlock.hidden=false;video.muted=true;
+          unlock.hidden=false;video.muted=true;volumeUi();
           return video.play().catch(()=>{});
         }
         if(error.name!=="AbortError")report("Não foi possível iniciar. Tente novamente ou use outra fonte.",true);
-      }).finally(()=>{if(token===generation)playingPromise=null;});
+      }).finally(()=>{if(playingPromise===attempt)playingPromise=null;});
+      playingPromise=attempt;
     }
     function sync(force=false) {
-      if(!active()||!source)return;
+      if(!active()||!source||fatalError)return;
       const s=getState(), wanted=targetTime();
       video.playbackRate=s.rate||1;
       // Do not continually seek a buffering host. It is the playback clock.
       const finite=Number.isFinite(video.duration)&&video.duration>0;
       const bounded=finite?Math.min(wanted,Math.max(0,video.duration-0.05)):wanted;
-      if(video.readyState>=1&&finite&&(force||!isAdmin())&&Math.abs(video.currentTime-bounded)>(force?0.35:1.5)){
+      if(video.readyState>=1&&finite&&(force||(!isAdmin()&&!buffering&&!video.seeking))&&Math.abs(video.currentTime-bounded)>(force?0.35:1.5)){
         try{video.currentTime=bounded;}catch(_){}
       }
       if(s.playing)play();else {
+        playingPromise=null;
         video.pause();
         if(video.readyState>=2)report("Pausado na sala. "+(isAdmin()?"Você controla a reprodução.":"Aguardando o ADM retomar."));
       }
@@ -171,8 +188,13 @@
     }
     function apply(s) {
       if(!isOpen())return;
-      if(source!==s.url||sourceRevision>s.revision)load(s);
-      sync(true);render();
+      const changed=source!==s.url||sourceRevision>s.revision;
+      if(changed)load(s);
+      // Heartbeats are clock corrections, not explicit seeks. Never repeatedly
+      // seek a participant who is still filling their buffer.
+      const command=changed||!!s.action||s.playing!==lastPlaying||(s.rate||1)!==lastRate||!s.playing;
+      lastPlaying=s.playing;lastRate=s.rate||1;
+      sync(command);render();
     }
     $("jfTvLinkForm").onsubmit=event=>{
       event.preventDefault();if(!isAdmin())return;
@@ -188,7 +210,6 @@
     $("jfTvLinkPlay").onclick=()=>{
       if(!isAdmin()||!active())return;
       const action=getState().playing?"pause":"play";
-      if(action==="pause")video.pause();
       command(action);
     };
     $("jfTvLinkBack").onclick=()=>seek(currentPosition()-10);
@@ -199,8 +220,8 @@
     function volumeUi(){ $("jfTvLinkMute").textContent=video.muted||video.volume===0?"🔇":"🔊";$("jfTvLinkMute").setAttribute("aria-pressed",String(video.muted)); }
     $("jfTvLinkVolume").oninput=()=>{video.volume=Number($("jfTvLinkVolume").value);video.muted=video.volume===0;volumeUi();};
     $("jfTvLinkMute").onclick=()=>{video.muted=!video.muted;volumeUi();};
-    unlock.onclick=()=>{video.muted=false;unlock.hidden=true;volumeUi();if(getState()?.playing)play();else video.pause();};
-    $("jfTvLinkResync").onclick=()=>{sync(true);socket.emit("tv:request-state");report("Posição atualizada com a sala.");};
+    unlock.onclick=()=>{video.muted=false;unlock.hidden=true;volumeUi();sync(true);};
+    $("jfTvLinkResync").onclick=()=>{sync(true);socket.emit("tv:request-state");if(!fatalError)report("Posição atualizada com a sala.");};
     $("jfTvLinkRetry").onclick=()=>{if(active()){load(getState());sync(true);}};
     $("jfTvLinkTheatre").onclick=()=>{const on=overlay.classList.toggle("jf-tv-cinema");$("jfTvLinkTheatre").setAttribute("aria-pressed",String(on));};
     $("jfTvLinkFullscreen").onclick=async()=>{
@@ -249,15 +270,16 @@
     video.addEventListener("durationchange",renderProgress);
     video.addEventListener("volumechange",volumeUi);
     video.addEventListener("playing",()=>{
-      if(!active()||!getState().playing){video.pause();return;}
-      message.hidden=true;report("Reproduzindo com a sala.");
+      if(!active()||fatalError||!getState().playing){video.pause();return;}
+      buffering=false;message.hidden=true;report("Reproduzindo com a sala.");
     });
-    video.addEventListener("waiting",()=>{if(active())report("Carregando buffer…");});
+    video.addEventListener("waiting",()=>{if(active()){buffering=true;report("Carregando buffer…");}});
+    video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
     video.addEventListener("ended",()=>{if(active()&&isAdmin())command("pause",video.duration);report("Vídeo encerrado.");});
     video.addEventListener("error",()=>{
       if(!active()||!source)return;
       if(getState().format==="auto"&&!hlsAttempted){void startHls(source,generation);return;}
-      report("A fonte não pôde ser reproduzida. O link pode ter expirado, bloquear acesso externo ou usar um formato incompatível.",true);
+      failSource("A fonte não pôde ser reproduzida. O link pode ter expirado, bloquear acesso externo ou usar um formato incompatível.");
     });
     function tick(){
       if(!active())return;
@@ -277,3 +299,4 @@
   }
   window.JfTvLinkPlayer={create};
 })();
+

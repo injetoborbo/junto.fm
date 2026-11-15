@@ -42,7 +42,8 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
     timer.unref?.();
     idleTimers.set(room, timer);
   }
-  const MAX_VIEWERS = 4;
+  // LiveKit distributes one publication to the room. Do not retain the old
+  // four-peer limit from the P2P prototype; provider quotas still apply.
   const allowedModes = new Set(["local", "screen"]);
   let revisionCounter = 0;
   const nextRevision = () => ++revisionCounter;
@@ -50,7 +51,8 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
   function snapshot(room) {
     const s = states.get(room);
     if (!s) return null;
-    return { ...(s.mode === "link" ? { url:s.url, title:s.title, format:s.format, rate:s.rate } : {}), mode: s.mode, videoId: s.videoId || "", playing: !!s.playing,
+    return { ...(s.mode === "link" ? { url:s.url, title:s.title, format:s.format, rate:s.rate } : {}),
+      ...(s.mode === "local" ? { duration:s.duration || 0 } : {}), mode: s.mode, videoId: s.videoId || "", playing: !!s.playing,
       seconds: s.seconds || 0, updatedAt: s.updatedAt, hostId: s.hostId,
       revision: s.revision || 0, serverNow: Date.now() };
   }
@@ -245,13 +247,26 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
       if (room && isRoomOwner(socket, room) && states.get(room)?.hostId === socket.id) stop(room);
     });
 
+    // The host controls the captured file itself. Viewers keep receiving the
+    // same LiveKit tracks when it pauses/seeks, rather than reconnecting.
+    socket.on("tv:local-state", data => {
+      const room = socket.data.room, s = states.get(room);
+      if (!room || s?.mode !== "local" || s.hostId !== socket.id || !isRoomOwner(socket, room)) return;
+      if (isRateLimited(socket, "tv:local-state", 12, 5000)) return;
+      const seconds = Number(data?.seconds), duration = Number(data?.duration);
+      if (typeof data?.playing !== "boolean" || !Number.isFinite(seconds) || seconds < 0 || seconds > 43200 ||
+          !Number.isFinite(duration) || duration <= 0 || duration > 43200 || seconds > duration) return;
+      Object.assign(s, {seconds, duration, playing:data.playing, updatedAt:Date.now(), revision:nextRevision()});
+      broadcast(room);
+    });
+
     socket.on("tv:watch", () => {
       const room = socket.data.room, s = states.get(room);
       if (!room || !s || directModes.has(s.mode) || s.hostId === socket.id) return;
       if (isRateLimited(socket, "tv:watch", 4, 10000)) return;
       let set = viewers.get(room);
       if (!set) { set = new Set(); viewers.set(room, set); }
-      if (!set.has(socket.id) && set.size >= MAX_VIEWERS) return fail(socket, "Limite de espectadores do protótipo atingido.");
+      if (set.has(socket.id)) return;
       set.add(socket.id);
       clearIdle(room);
       io.to(s.hostId).emit("tv:viewer-joined", { viewerId: socket.id });
@@ -284,4 +299,5 @@ module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
 
   return { joined, leave };
 };
+
 

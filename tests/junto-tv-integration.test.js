@@ -50,7 +50,7 @@ async function createRoom(){
         addEventListener(name,fn){this["on_"+name]=fn;},setAttribute(){},getAttribute(){return null},
         appendChild(node){node.parentNode=this;return node;},
         replaceChildren(){},focus(){},
-        querySelectorAll(){return[]},
+        querySelectorAll(){return[]},querySelector(){return {};},
         set innerHTML(v){this.html=v;},
         set textContent(v){this.text=v;},
         get textContent(){return this.text;}
@@ -172,3 +172,4 @@ test("A ação chega em tv:playback antes do estado; revisão anterior não reab
   });
   assert.equal(guest.player.getPlayerState(),2,"Controle velho não pode desfazer pause");
 });
+

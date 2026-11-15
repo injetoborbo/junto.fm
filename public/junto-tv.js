@@ -86,6 +86,7 @@
           '<video id="jfTvStreamVideo" autoplay playsinline hidden></video>',
         '</div>',
         '<div id="jfTvLinkControls" hidden></div>',
+        '<div id="jfTvStreamControls" class="jf-tv-actions" hidden><span id="jfTvStreamAudio" class="jf-tv-actions"><button type="button" id="jfTvStreamMute" aria-label="Silenciar meu áudio" aria-pressed="false">🔊</button><label for="jfTvStreamVolume">Meu volume</label><input id="jfTvStreamVolume" type="range" min="0" max="1" step="0.01" value="1"></span><button type="button" id="jfTvStreamFullscreen">⛶ Tela cheia</button><span id="jfTvLocalState" role="status"></span></div>',
         '<div class="jf-tv-tools" id="jfTvAdminTools" hidden>',
           '<section id="jfTvYoutubeTools" class="jf-tv-tools" hidden>',
             '<label>Link do YouTube<input type="url" id="jfTvYoutubeUrl" placeholder="https://youtu.be/..." autocomplete="off"></label>',
@@ -97,7 +98,8 @@
           '<section id="jfTvLocalTools" class="jf-tv-tools" hidden>',
             '<label>Vídeo do seu computador (não será enviado ao Render)<input type="file" id="jfTvFile" accept="video/*"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartLocal">Transmitir arquivo</button></div>',
-            '<p class="jf-tv-note">O arquivo fica no seu PC. A reprodução (vídeo e áudio) segue por LiveKit. Prévia do ADM silenciosa para evitar áudio duplicado.</p>',
+            '<div id="jfTvLocalControls" class="jf-tv-actions" hidden><button type="button" id="jfTvLocalBack">−10s</button><button type="button" id="jfTvLocalPlay">Ⅱ Pausar</button><button type="button" id="jfTvLocalForward">+10s</button><label for="jfTvLocalSeek">Posição</label><input id="jfTvLocalSeek" type="range" min="0" max="1" step="0.1" value="0"><span id="jfTvLocalTime">0:00 / 0:00</span></div>',
+            '<p class="jf-tv-note">O arquivo fica no seu PC. Toda a sala recebe a reprodução por LiveKit. Só o ADM pausa e avança; o volume é individual.</p>',
           '</section>',
           '<section id="jfTvGameTools" class="jf-tv-tools" hidden>',
             '<label class="jf-tv-audio-choice"><input id="jfTvCaptureAudio" type="checkbox" checked> 🔊 Transmitir áudio da tela/aba</label>',
@@ -147,7 +149,9 @@
   // Abrir a TV é uma interação do usuário: tentar áudio audível desde o início.
   // Só usar o botão manual quando o próprio navegador bloquear autoplay com som.
   let youtubeHardStopped=false, viewerAudioEnabled=true, viewerAudioBlocked=false, pauseRetryCount=0;
-  let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, viewerRequested=false;
+  let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, localMonitor=null, viewerRequested=false;
+  let streamVolume=1, streamMuted=false, localScrubbing=false;
+  let captureRequest=0;
   let lkRoom=null, lkLoadPromise=null, lkGeneration=0;
   const livekitAudio=new Set();
 
@@ -160,6 +164,50 @@
   function isAdmin(){return joined && socket.id===ownerId;}
   function status(message){$("jfTvStatus").textContent=message;}
   function fmt(t){t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
+  function streamAudioUi(){
+    const volume=streamMuted?0:streamVolume;
+    for(const audio of livekitAudio)audio.volume=volume;
+    // Monitoring gain is separate from the captured audio sent to the room.
+    if(localMonitor)localMonitor.gain.value=volume;
+    $("jfTvStreamMute").textContent=volume===0?"🔇":"🔊";
+    $("jfTvStreamMute").setAttribute("aria-pressed",String(streamMuted||streamVolume===0));
+  }
+  $("jfTvStreamVolume").oninput=()=>{streamVolume=Number($("jfTvStreamVolume").value);streamMuted=false;streamAudioUi();};
+  $("jfTvStreamMute").onclick=()=>{streamMuted=!streamMuted;streamAudioUi();};
+  $("jfTvStreamFullscreen").onclick=async()=>{
+    try{if(document.fullscreenElement)await document.exitFullscreen();else await overlay.querySelector(".jf-tv-window").requestFullscreen();}
+    catch(_){status("Tela cheia indisponível neste navegador.");}
+  };
+  function renderLocal(){
+    const video=localVideo,enabled=isAdmin()&&state?.mode==="local"&&!!video;
+    $("jfTvLocalControls").hidden=!enabled;
+    $("jfTvLocalState").textContent=state?.mode==="local"?(state.playing?"▶ Arquivo em reprodução":"Ⅱ Pausado pelo ADM"):"";
+    if(!enabled)return;
+    const finite=Number.isFinite(video.duration)&&video.duration>0;
+    $("jfTvLocalPlay").textContent=video.paused?"▶ Reproduzir":"Ⅱ Pausar";
+    $("jfTvLocalSeek").max=String(finite?video.duration:1);
+    $("jfTvLocalSeek").disabled=$("jfTvLocalBack").disabled=$("jfTvLocalForward").disabled=!finite;
+    if(!localScrubbing)$("jfTvLocalSeek").value=String(video.currentTime||0);
+    $("jfTvLocalTime").textContent=fmt(video.currentTime)+" / "+(finite?fmt(video.duration):"—:—");
+  }
+  function localState(){
+    renderLocal();
+    if(isAdmin()&&state?.mode==="local"&&sourceStream&&localVideo&&Number.isFinite(localVideo.duration))
+      socket.emit("tv:local-state",{playing:!localVideo.paused&&!localVideo.ended,seconds:localVideo.currentTime,duration:localVideo.duration});
+  }
+  $("jfTvLocalPlay").onclick=async()=>{
+    if(!isAdmin()||state?.mode!=="local"||!localVideo)return;
+    try{if(localVideo.paused){await Promise.all([localAudioContext?.resume(),localVideo.play()]);}else localVideo.pause();localState();}
+    catch(_){status("Não foi possível retomar o arquivo. Tente novamente.");}
+  };
+  function seekLocal(seconds){
+    if(!isAdmin()||state?.mode!=="local"||!localVideo||!Number.isFinite(localVideo.duration))return;
+    localVideo.currentTime=Math.max(0,Math.min(localVideo.duration,seconds));localState();
+  }
+  $("jfTvLocalBack").onclick=()=>seekLocal((localVideo?.currentTime||0)-10);
+  $("jfTvLocalForward").onclick=()=>seekLocal((localVideo?.currentTime||0)+10);
+  $("jfTvLocalSeek").oninput=()=>{localScrubbing=true;};
+  $("jfTvLocalSeek").onchange=()=>{localScrubbing=false;seekLocal(Number($("jfTvLocalSeek").value));};
   function youtubeId(raw){
     try {
       const u=new URL(raw.trim());
@@ -186,10 +234,12 @@
     stage.srcObject=null;
   }
   function stopLocal(){
+    ++captureRequest;
     if(sourceStream){for(const track of sourceStream.getTracks())track.stop();sourceStream=null;}
     if(localVideo){localVideo.pause();localVideo.removeAttribute("src");localVideo.load();localVideo=null;}
     if(localUrl){URL.revokeObjectURL(localUrl);localUrl="";}
     if(localAudioContext){localAudioContext.close().catch(()=>{});localAudioContext=null;}
+    localMonitor=null;localScrubbing=false;renderLocal();
     releasePeers();
   }
   function stopBroadcast(){
@@ -197,9 +247,10 @@
     stopLocal();
   }
   function closeTv(){
+    ++captureRequest;
     if(state?.mode==="link")linkPlayer?.close();
     restoreChatFromTv();overlay.hidden=true;opened=false;
-    if(isAdmin()&&sourceStream) stopBroadcast(); // nunca compartilhar uma tela com a janela fechada
+    if(isAdmin()&&(sourceStream||localVideo)) stopBroadcast(); // encerra também arquivo ainda carregando
     if(!isAdmin() && viewerRequested){socket.emit("tv:unwatch");viewerRequested=false;releasePeers();}
     if(playerReady && state?.mode==="youtube")try{player.pauseVideo()}catch(_){}
     pauseShield.hidden=true;
@@ -469,14 +520,25 @@
     if(lkRoom){const old=lkRoom;lkRoom=null;await old.disconnect().catch(()=>{});}
     const Client=await loadLivekit();
     const auth=await getLivekitToken(publish);
-    if(generation!==lkGeneration||!joined||(publish&&!isAdmin()))return;
+    if(generation!==lkGeneration||!joined||(publish&&!isAdmin()))return false;
     const roomInstance=new Client.Room({adaptiveStream:true,dynacast:true});
     lkRoom=roomInstance;
     roomInstance.on(Client.RoomEvent.Disconnected,()=>{
-      if(lkRoom===roomInstance && generation===lkGeneration)status("Conexão com LiveKit encerrada.");
+      if(lkRoom!==roomInstance||generation!==lkGeneration)return;
+      if(!publish){
+        socket.emit("tv:unwatch");viewerRequested=false;releasePeers();updateUi();
+        status("Conexão encerrada. Clique em Assistir ao vídeo para reconectar.");
+      }else {stopBroadcast();status("Transmissão desconectada. Inicie novamente para a sala.");}
+    });
+    if(Client.RoomEvent.Reconnecting)roomInstance.on(Client.RoomEvent.Reconnecting,()=>{
+      if(lkRoom===roomInstance)status("Reconectando à transmissão…");
+    });
+    if(Client.RoomEvent.Reconnected)roomInstance.on(Client.RoomEvent.Reconnected,()=>{
+      if(lkRoom===roomInstance)status("🟢 Transmissão reconectada.");
     });
     if(!publish){
       roomInstance.on(Client.RoomEvent.TrackSubscribed,(track,publication,participant)=>{
+        if(lkRoom!==roomInstance||generation!==lkGeneration)return;
         if(track.kind===Client.Track.Kind.Video){
           track.attach(stage);
           stage.muted=false;stage.hidden=false;
@@ -487,6 +549,7 @@
           audio.style.display="none";
           overlay.appendChild(audio);
           livekitAudio.add(audio);
+          streamAudioUi();
           audio.play().catch(()=>status("O navegador bloqueou o som. Clique em Ativar reprodução/som."));
         }
       });
@@ -497,10 +560,11 @@
       });
     }
     await roomInstance.connect(auth.url,auth.token,{autoSubscribe:!publish});
-    if(generation!==lkGeneration){await roomInstance.disconnect();return;}
+    if(generation!==lkGeneration){await roomInstance.disconnect();return false;}
     if(publish){
-      if(!stream||sourceStream!==stream){await roomInstance.disconnect();return;}
+      if(!stream||sourceStream!==stream){await roomInstance.disconnect();return false;}
       for(const track of stream.getTracks()){
+        if(generation!==lkGeneration||sourceStream!==stream){await roomInstance.disconnect();return false;}
         const options=track.kind==="video"?
           {name:"junto-tv-video",source:Client.Track.Source.ScreenShare,
             videoEncoding:{maxBitrate:state?.mode==="local"?VIDEO_LOCAL_BITRATE:VIDEO_SCREEN_BITRATE,maxFramerate:VIDEO_MAX_FPS},simulcast:true}:
@@ -509,17 +573,19 @@
       }
       status("🟢 TV ao vivo pelo LiveKit, com qualidade adaptativa.");
     }else status("🟢 Conectado ao vídeo pelo LiveKit.");
+    return true;
   }
   socket.on("tv:viewer-joined",()=>{});
   socket.on("tv:viewer-left",()=>{});
   $("jfTvWatch").onclick=async()=>{
-    if(isAdmin()||!joined||!state||state.mode==="youtube")return;
+    if(isAdmin()||!joined||!state||["youtube","link"].includes(state.mode)||viewerRequested)return;
     viewerRequested=true;releasePeers();
     socket.emit("tv:watch");
     $("jfTvWatch").disabled=true;
     status("Conectando à transmissão LiveKit...");
+    const attempt=lkGeneration+1;
     try{await connectLivekit(false);}
-    catch(error){socket.emit("tv:unwatch");viewerRequested=false;releasePeers();status("Falha ao assistir: "+error.message);updateUi();}
+    catch(error){if(lkGeneration!==attempt)return;socket.emit("tv:unwatch");viewerRequested=false;releasePeers();updateUi();status("Falha ao assistir: "+error.message);}
   };
   $("jfTvSound").onclick=()=>{
     if(state?.mode==="youtube"){
@@ -542,7 +608,10 @@
         updateViewerAudioButton();
         status("O navegador ainda bloqueou o som. Toque de novo para liberar.");
       }
+    }else if(state?.mode==="link"){
+      $("jfTvLinkUnlock").onclick();
     }else {
+      lkRoom?.startAudio?.().catch(()=>status("Não foi possível liberar o áudio. Toque novamente."));
       stage.play().catch(()=>status("Não foi possível iniciar a reprodução."));
       for(const audio of livekitAudio)audio.play().catch(()=>status("Não foi possível liberar o áudio."));
     }
@@ -563,11 +632,12 @@
     stage.muted=true;stage.srcObject=stream;
     stage.play().catch(()=>{});
     socket.emit("tv:start-stream",{mode});
-    try{await connectLivekit(true,stream);}
-    catch(error){status("Falha ao publicar no LiveKit: "+error.message);stopBroadcast();}
+    try{return await connectLivekit(true,stream);}
+    catch(error){if(sourceStream===stream){stopBroadcast();status("Falha ao publicar no LiveKit: "+error.message);}return false;}
   }
   $("jfTvStartGame").onclick=async()=>{
     if(!isAdmin()||!navigator.mediaDevices?.getDisplayMedia)return status("Seu navegador não suporta compartilhar janela.");
+    const request=++captureRequest;
     try{
       // A pessoa escolhe tela inteira, aba ou janela no diálogo do navegador.
       // "ideal" não força upscale se a fonte não tiver resolução Full HD.
@@ -581,10 +651,11 @@
         systemAudio:wantAudio?"include":"exclude",
         windowAudio:wantAudio?"window":"exclude"
       });
+      if(request!==captureRequest||!opened||!isAdmin()){stream.getTracks().forEach(t=>t.stop());return;}
       const hasAudio=stream.getAudioTracks().some(track=>track.readyState!=="ended");
-      await publishStream(stream,"screen");
+      if(!await publishStream(stream,"screen"))return;
       if(wantAudio && hasAudio){
-        status("🟢 Tela + áudio capturados. Transmitindo diretamente pelo LiveKit, sem TURN.");
+        status("🟢 Tela + áudio transmitidos pelo LiveKit para os participantes que clicarem em Assistir.");
       }else if(wantAudio){
         status("⚠️ Tela transmitindo SEM áudio: o navegador não forneceu faixa de som. Compartilhe uma aba com 'Compartilhar áudio' marcado ou selecione áudio do sistema, se disponível, e reinicie a transmissão.");
       }else{
@@ -602,10 +673,14 @@
     localUrl=URL.createObjectURL(file);
     const video=document.createElement("video");
     localVideo=video;video.playsInline=true;video.muted=false;video.preload="auto";
-    video.src=localUrl;video.onended=()=>{if(localVideo===video)stopBroadcast();};
+    video.src=localUrl;video.onended=()=>{if(localVideo===video)localState();};
+    video.addEventListener("timeupdate",renderLocal);
+    video.addEventListener("loadedmetadata",renderLocal);
+    video.addEventListener("pause",()=>{if(localVideo===video)localState();});
+    video.addEventListener("playing",()=>{if(localVideo===video)localState();});
     try{
-      // O som vai direto ao MediaStreamDestination: nada sai pelo fone do ADM
-      // e não duplicamos as faixas de áudio do captureStream.
+      // Publicação e monitoração têm caminhos separados. O volume do ADM não
+      // altera o áudio da sala; captureStream fornece apenas a faixa de vídeo.
       let audioStream=null;
       const AudioEngine=window.AudioContext||window.webkitAudioContext;
       let audioReady=Promise.resolve();
@@ -614,23 +689,29 @@
         const sourceNode=localAudioContext.createMediaElementSource(video);
         const destination=localAudioContext.createMediaStreamDestination();
         sourceNode.connect(destination);
+        localMonitor=localAudioContext.createGain();
+        sourceNode.connect(localMonitor);localMonitor.connect(localAudioContext.destination);
+        streamAudioUi();
         audioStream=destination.stream;
         audioReady=localAudioContext.resume();
       }else video.muted=true;
       // play() e resume() começam enquanto o gesto do clique ainda está ativo.
       await Promise.all([audioReady,video.play()]);
+      if(localVideo!==video||!opened||!isAdmin())return;
       const direct=(video.captureStream||video.mozCaptureStream).call(video);
       const captured=new MediaStream([
         ...direct.getVideoTracks(),
         ...(audioStream?audioStream.getAudioTracks():direct.getAudioTracks())
       ]);
       if(!captured.getVideoTracks().length)throw new Error("Vídeo não disponível para captura.");
-      await publishStream(captured,"local");
+      if(!await publishStream(captured,"local"))return;
+      if(localVideo!==video||!sourceStream)return;
+      localState();
       stage.muted=true;
       status("Arquivo local pelo LiveKit, com áudio quando o formato permitir. Nenhum arquivo foi enviado ao servidor.");
     }catch(e){
       status("Falha no arquivo local: "+e.message);
-      stopLocal();
+      if(localVideo===video)stopLocal();
     }
   };
   $("jfTvStop").onclick=()=>{
@@ -638,7 +719,7 @@
     stopLocal();socket.emit("tv:stop");status("TV encerrada para todos.");
   };
   function updateLiveIndicator(){
-    const onAir=Boolean(state&&(!["youtube","link"].includes(state.mode)||state.playing));
+    const onAir=Boolean(state&&(state.mode==="screen"||state.playing));
     launch.disabled=!joined;launch.classList.toggle("jf-tv-live",onAir);
     launch.title=onAir?"Abrir Junto.TV (no ar)":"Abrir Junto.TV";
     $("jfTvLiveBadge").hidden=!onAir;
@@ -659,6 +740,10 @@
     ytWrapper.hidden=!showYoutube;
     updateYoutubePauseShield();
     stage.hidden=!isStream||!opened;
+    $("jfTvStreamControls").hidden=!isStream||!opened;
+    $("jfTvStreamAudio").hidden=admin&&!localMonitor;
+    $("jfTvStreamFullscreen").hidden=!overlay.querySelector(".jf-tv-window").requestFullscreen;
+    renderLocal();
     $("jfTvEmpty").hidden=!!state;
     linkPlayer?.render();
     if(!state){status(joined?(admin?"Escolha YouTube, link de vídeo, arquivo local ou tela para começar.":"Aguardando o administrador abrir a TV."):"Entre em uma sala para usar a TV.");}
@@ -741,7 +826,7 @@
     linkPlayer?.destroySource();
     joined=false;room="";ownerId=null;state=null;viewerRequested=false;
     viewerAudioEnabled=true;viewerAudioBlocked=false;
-    if(sourceStream)stopLocal();else releasePeers();
+    if(sourceStream||localVideo)stopLocal();else releasePeers();
     restoreChatFromTv();overlay.hidden=true;opened=false;updateUi();
   }
   socket.on("left-room",reset);socket.on("room-kicked",reset);socket.on("disconnect",reset);
@@ -761,4 +846,5 @@
   },1000);
   updateUi();
 })();
+
 
