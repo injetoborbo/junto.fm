@@ -325,3 +325,30 @@ footer {
     letter-spacing: 1.5px;
   }
 }
+
+/* Espaço permanente para a futura arte PNG; não ocupa a área desenhável. */
+.heading { gap: 24px; }
+.heading > div:first-child { min-width: 0; }
+.mural-mascot {
+  flex: 0 0 220px;
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.mural-mascot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+.mural-mascot img[hidden] { display: none; }
+.mural-mascot .stamp { margin-bottom: 20px; }
+@media (max-width: 650px) {
+  .heading { flex-wrap: wrap; gap: 8px; }
+  .heading > div:first-child { width: 100%; }
+  .mural-mascot { flex-basis: 120px; height: 110px; margin-left: auto; }
+  .mural-mascot .stamp { display: block; padding: 8px; margin-bottom: 8px; font-size: 9px; }
+  .mural-mascot .stamp strong { font-size: 14px; }
+}

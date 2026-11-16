@@ -21,3 +21,7 @@ Verificados em PGlite: duas publicações em paralelo, persistência na recarga,
 A suíte existente apresenta uma falha anterior em `wardrobe-persistence.test.js`: variável `achievement` ausente no contexto mock do teste. O handler testado é idêntico à main.
 
 Textura gerada para este recurso: muro frontal de concreto claro envelhecido, sem objetos, texto ou grafites prévios. Asset `public/mural-wall.png`, PNG com paleta otimizada.
+
+## Arte do mascote
+
+O cabeçalho reserva 220 × 200 px no desktop e 120 × 110 px no celular para o PNG do usuário, fora da superfície desenhável. Até chegar a arte, o selo Junto.fm ocupa esse espaço. Para aplicar: salvar em `public/images/mural-macaco.png`, definir esse `src` em `#muralMascot`, remover `hidden` da imagem e ocultar o selo dentro de `.mural-mascot`. `object-fit: contain` preserva a arte inteira e a transparência.
