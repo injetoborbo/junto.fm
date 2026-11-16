@@ -273,6 +273,6 @@ module.exports=function setupAccounts(app){
     await pool.query("DELETE FROM junto_friendships WHERE user_a=$1 AND user_b=$2",[a,b]);
   }
   setInterval(()=>{const now=Date.now();for(const [k,v] of states)if(v.expires<now)states.delete(k);if(pool)pool.query("DELETE FROM junto_sessions WHERE expires_at<NOW()").catch(()=>{});},3600000).unref();
-  return {accountFromRequest,friends,requests,request,respond,remove,safeAccount,ready};
+  return {accountFromRequest,friends,requests,request,respond,remove,safeAccount,ready,pool};
 };
 

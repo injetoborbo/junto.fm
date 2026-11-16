@@ -796,7 +796,7 @@ html[data-jf-theme="aero"] .jf-audio-source option{background:#0b3855;color:#eff
 }
 @media(max-width:370px){body.jf-in-room .jf-top-actions{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
 /* O Social só existe no hall; dentro da sala permanece a aba Amigos. */
-body.jf-in-room #jfHomeSocial{display:none!important}
+body.jf-in-room #jfEntryMural,body.jf-in-room #jfHomeSocial,body.jf-in-room #jfHomeMural{display:none!important}
 /* Ajustes exclusivos para telas estreitas, preservando a versão desktop. */
 @media(max-width:760px){
   html.jf-android-scale body{zoom:1;width:100%}
@@ -812,7 +812,7 @@ body.jf-in-room #jfHomeSocial{display:none!important}
   .jf-top-actions>.btn,body:not(.jf-in-room) .jf-top-actions>.btn{display:inline-flex;justify-content:center;align-items:center;width:100%!important;min-width:0!important;min-height:38px!important;height:38px;padding:5px 5px!important;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .jf-top-actions>[hidden]{display:none!important}
   body:not(.jf-in-room) .jf-topbar{padding-top:0!important}
-  body.jf-in-room #jfHomeSocial{display:none!important}
+  body.jf-in-room #jfEntryMural,body.jf-in-room #jfHomeSocial,body.jf-in-room #jfHomeMural{display:none!important}
   main>h1{font-size:clamp(29px,9vw,43px);margin:16px 0 8px}
   main>.jf-hero-description{margin:0 0 10px;line-height:1.5}
   .panel{max-width:100%;margin-top:14px}
@@ -996,7 +996,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
   <div class="jf-topbar"><div class="brand"><div class="logo">♫</div> Junto.fm <span class="tag">✦ Y2K RADIO · BETA</span></div><div class="jf-top-actions"><button class="btn secondary jf-site-menu-toggle" id="jfSiteMenuButton" type="button" aria-expanded="false" aria-controls="jfSiteMenuPanel" aria-haspopup="true">☰ Menu</button>
   <nav class="jf-site-menu-panel" id="jfSiteMenuPanel" aria-label="Menu principal" hidden>
     <span class="jf-menu-group-title">Minha conta e visual</span>
-    <button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button>
+    <a class="btn secondary" id="jfHomeMural" href="/mural">✎ Mural</a><button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button>
     <span class="jf-menu-group-title">Minigames</span>
     <button class="btn secondary" type="button" id="jfOpenArena">🥊 Arena dos Macacos</button>
   </nav></div></div>
@@ -1008,6 +1008,7 @@ body.jf-in-room #jfAdminEntry{display:none!important}
     <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
       <button class="btn" id="join" type="button">↗ Entrar na sala</button>
       <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
+      <a class="btn secondary" id="jfEntryMural" href="/mural">✎ Mural dos Símios</a>
     </div>
     <div class="jf-entry-account" id="jfEntryAccount">
       <span class="small" id="jfEntryAccountHint">Escolha como criar sua conta. Você também pode entrar nas salas sem cadastro.</span>

@@ -143,6 +143,7 @@ async function validSpotifyAccessToken(session, req=null, res=null) {
 app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
+require("./mural").setupMural(app,io,accountAuth,adminAuth);
 const achievements=require("./achievements")(app,io,accountAuth);
 require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready,achievements);
 require("./static-bandwidth")(app, path.join(__dirname, "public"));
@@ -155,7 +156,7 @@ app.get("/api/room-status/:room",(req,res)=>{
 });
 app.get("/:room",(req,res,next)=>{
  const room=String(req.params.room||"");
- if(!/^[a-zA-Z0-9_-]{1,40}$/.test(room)||["api","auth","spotify","socket.io","health"].includes(room.toLowerCase()))return next();
+ if(!/^[a-zA-Z0-9_-]{1,40}$/.test(room)||["api","auth","spotify","socket.io","health","mural"].includes(room.toLowerCase()))return next();
  res.set("Cache-Control","no-cache");
  return res.sendFile(path.join(__dirname,"public","index.html"));
 });
@@ -726,7 +727,7 @@ io.on("connection", socket => {
       socket.emit("create-room-error", { message: "Escolha um nome válido para a sala." });
       return;
     }
-    if(["api","auth","spotify","socket.io","health"].includes(room.toLowerCase()))return socket.emit("create-room-error",{message:"Nome reservado."});
+    if(["api","auth","spotify","socket.io","health","mural"].includes(room.toLowerCase()))return socket.emit("create-room-error",{message:"Nome reservado."});
     if (password && password.length < 4) {
       socket.emit("create-room-error", { message: "A senha deve ter pelo menos 4 caracteres." });
       return;
