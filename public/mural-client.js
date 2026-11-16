@@ -18,7 +18,7 @@
     pendingId = crypto.randomUUID(),
     draftOwner = null,
     current = null,
-    tool = "brush",
+    tool = "spray",
     scale = 1,
     cursor = "0",
     canDraw = false,

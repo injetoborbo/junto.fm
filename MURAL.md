@@ -25,3 +25,9 @@ Textura gerada para este recurso: muro frontal de concreto claro envelhecido, se
 ## Arte do mascote
 
 O cabeçalho reserva 220 × 200 px no desktop e 120 × 110 px no celular para o PNG do usuário, fora da superfície desenhável. Até chegar a arte, o selo Junto.fm ocupa esse espaço. Para aplicar: salvar em `public/images/mural-macaco.png`, definir esse `src` em `#muralMascot`, remover `hidden` da imagem e ocultar o selo dentro de `.mural-mascot`. `object-fit: contain` preserva a arte inteira e a transparência.
+
+## Visual urbano em cartoon
+
+Muro inteiramente feito de blocos cinza, com contornos desenhados, em `public/mural-wall-blocks.webp`. Interface em tons de cinza e spray selecionado por padrão. O canvas preserva 1536 × 1024 e os mesmos pontos das contribuições; muda somente a arte de fundo. Cores do desenho são compostas normalmente, inclusive tinta branca. O espaço para o macaco continua no cabeçalho. A arte foi gerada como imagem e comprimida para WebP.
+
+O céu com nuvens em cartoon (`public/mural-sky-clouds.webp`) é aplicado ao fundo da página, separado da textura do muro e dos canvases. O spray só altera os blocos.
