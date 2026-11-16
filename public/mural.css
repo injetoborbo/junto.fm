@@ -551,7 +551,7 @@ footer {
 }
 .mural-mascot img {
   transform-origin: 50% 85%;
-  animation: mural-mascot-idle 800ms steps(1, end) infinite;
+  animation: mural-mascot-idle 24s ease-in-out infinite;
 }
 @keyframes mural-mascot-idle {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
