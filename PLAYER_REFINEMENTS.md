@@ -34,3 +34,9 @@ O ambiente desta revisão bloqueou o lançamento do Chromium. Não foi validada 
 ## Links do Archive.org
 
 Links `/details/colecao/arquivo` e `/download/colecao/arquivo` são resolvidos usando a lista real de arquivos da coleção. O servidor consulta apenas os metadados públicos de `archive.org`, com prazo de oito segundos; a mídia continua vindo diretamente do Archive para cada participante. O player prefere o derivado `.ia.mp4` quando listado, corrige espaços codificados como `+` e seleciona o formato correto. Nomes com `+` literal são preservados se existirem. Coleções sem episódio selecionado e arquivos ausentes geram orientação, sem escolher outro episódio silenciosamente. Trocar/encerrar a fonte cancela a aplicação de consultas antigas.
+
+## TV e chat no celular
+
+Em telas estreitas, a TV mantém vídeo acima do chat, com controles/fontes em uma seção recolhível. Em celulares na horizontal com largura suficiente, vídeo e chat ficam lado a lado. O chat abre sem focar o campo. `visualViewport` ajusta a altura/posição da janela ao teclado; focar o chat recolhe os controles. O log rola separadamente e o formulário permanece na área do chat. A bandeja de emojis tem altura limitada. Fechar o chat mantém um botão para reabri-lo.
+
+A subárvore de mídia não é movida nem recriada (incluindo o iframe do YouTube). Somente os controles mudam de contêiner. Ao fechar a TV ou sair do breakpoint mobile, sua posição e o estado anterior do chat são restaurados. A suíte cobre montagem/restauração, preservação de nós/rascunho, resize do viewport, foco e transição de breakpoint. Validação visual em aparelhos reais continua pendente; não há confirmação do teclado nativo Android/iOS nesta revisão.

@@ -1,0 +1,55 @@
+/* Explicitly scoped: desktop and the room's floating chat keep their layouts. */
+#jfTvOverlay.jf-tv-mobile{
+  top:var(--jf-tv-visible-top,0px);bottom:auto;height:var(--jf-tv-visible-height,100dvh);
+  padding:max(4px,env(safe-area-inset-top)) max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));
+  box-sizing:border-box;overflow:hidden;overscroll-behavior:contain;
+}
+#jfTvOverlay.jf-tv-mobile .jf-tv-window{
+  display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto minmax(0,1fr);
+  width:100%;height:100%;max-height:100%;min-height:0;overflow:hidden;border-radius:9px;box-sizing:border-box;
+}
+#jfTvOverlay.jf-tv-mobile .jf-tv-window>.jf-tv-inner{display:contents!important}
+#jfTvOverlay.jf-tv-mobile .jf-tv-head{grid-row:1;padding:5px 9px;border-radius:6px 6px 0 0;min-width:0}
+#jfTvOverlay.jf-tv-mobile .jf-tv-head strong{font-size:13px}
+#jfTvOverlay.jf-tv-mobile .jf-tv-window .jf-tv-screen{
+  grid-row:2;min-height:0;min-width:0;margin:0;width:100%;box-sizing:border-box;
+  height:min(calc((100vw - 12px)*0.5625),calc(var(--jf-tv-visible-height,100dvh)*0.38));
+  max-height:none;aspect-ratio:auto;border-radius:0;background:#000;
+}
+#jfTvOverlay.jf-tv-mobile #jfTvMobileOptions{grid-row:3;min-width:0;min-height:0;background:var(--tv-surface,#101529);border-block:1px solid var(--tv-border,#536c9c)}
+#jfTvOverlay.jf-tv-mobile #jfTvMobileOptions>summary{padding:9px 12px;cursor:pointer;font-size:12px;font-weight:bold;color:var(--tv-text,#fff);touch-action:manipulation}
+#jfTvOverlay.jf-tv-mobile #jfTvMobileOptions>.jf-tv-mobile-controls{display:grid;gap:8px;padding:8px;max-height:min(200px,calc(var(--jf-tv-visible-height,100dvh)*0.22));overflow:auto;overscroll-behavior:contain;box-sizing:border-box;min-height:0}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow{
+  grid-row:4;position:relative!important;inset:auto!important;width:100%!important;height:100%!important;
+  min-height:0!important;max-height:none!important;max-width:none!important;margin:0!important;transform:none!important;
+  box-sizing:border-box;border:0;border-radius:0;box-shadow:none;z-index:auto!important;backdrop-filter:none;
+  display:flex;overflow:hidden;
+}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow[hidden]{display:none!important}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow .jf-chat-header{flex-shrink:0;padding:5px 9px;gap:6px}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow .jf-chat-heading{font-size:12px;margin:0}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow .jf-chat-subheading{display:none}
+#jfTvOverlay.jf-tv-mobile #jfChatLog{flex:1 1 0;min-height:0;padding:7px 9px;gap:6px;overscroll-behavior:contain;overflow-wrap:anywhere}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow .jf-chat-tools{flex-shrink:0;padding:2px 7px 0}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow .jf-chat-emoji-toggle{padding:3px 7px;font-size:11px;min-height:26px}
+#jfTvOverlay.jf-tv-mobile #jfChatEmojiTray{flex:0 1 70px;min-height:0;max-height:70px;overflow:auto}
+#jfTvOverlay.jf-tv-mobile #jfChatWindow .jf-chat-form{flex-shrink:0;padding:6px;gap:6px;margin:0}
+#jfTvOverlay.jf-tv-mobile #jfChatInput{font-size:16px;min-height:38px;box-sizing:border-box}
+#jfTvOverlay.jf-tv-mobile #jfChatSend{min-height:38px;padding:7px 10px}
+#jfTvOverlay.jf-tv-mobile #jfChatLauncher{
+  grid-row:4;align-self:end;justify-self:stretch;position:relative!important;inset:auto!important;
+  width:100%!important;height:40px!important;min-height:0;margin:0!important;border-radius:0;transform:none!important;z-index:auto!important;
+}
+#jfTvOverlay.jf-tv-mobile #jfChatLauncher::after{content:"Abrir chat";font-size:12px;margin-left:7px}
+#jfTvOverlay.jf-tv-mobile:has(#jfChatWindow:not([hidden])) #jfChatLauncher{display:none!important}
+#jfTvOverlay.jf-tv-mobile:not(:has(#jfChatWindow:not([hidden]))) .jf-tv-window{grid-template-rows:auto minmax(0,1fr) auto auto}
+#jfTvOverlay.jf-tv-mobile:not(:has(#jfChatWindow:not([hidden]))) .jf-tv-screen{height:100%}
+@media(min-width:641px) and (orientation:landscape){
+  #jfTvOverlay.jf-tv-mobile .jf-tv-window{grid-template-columns:minmax(0,1.4fr) minmax(220px,1fr);grid-template-rows:auto minmax(0,1fr) auto}
+  #jfTvOverlay.jf-tv-mobile .jf-tv-head{grid-column:1;grid-row:1}
+  #jfTvOverlay.jf-tv-mobile .jf-tv-window .jf-tv-screen{grid-column:1;grid-row:2;height:100%;min-height:0}
+  #jfTvOverlay.jf-tv-mobile #jfTvMobileOptions{grid-column:1;grid-row:3}
+  #jfTvOverlay.jf-tv-mobile #jfTvMobileOptions>.jf-tv-mobile-controls{max-height:calc(var(--jf-tv-visible-height,100dvh)*0.28)}
+  #jfTvOverlay.jf-tv-mobile #jfChatWindow,#jfTvOverlay.jf-tv-mobile #jfChatLauncher{grid-column:2;grid-row:1 / 4;border-left:1px solid var(--tv-border,#536c9c)}
+  #jfTvOverlay.jf-tv-mobile:not(:has(#jfChatWindow:not([hidden]))) .jf-tv-window{grid-template-rows:auto minmax(0,1fr) auto}
+}

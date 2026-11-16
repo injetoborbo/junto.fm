@@ -154,6 +154,7 @@
   let captureRequest=0;
   let lkRoom=null, lkLoadPromise=null, lkGeneration=0;
   const livekitAudio=new Set();
+  const mobileLayout=window.JfTvMobile?.create(overlay);
 
   const linkPlayer=window.JfTvLinkPlayer?.create({
     socket, overlay, isAdmin:()=>isAdmin(), status,
@@ -247,6 +248,7 @@
     stopLocal();
   }
   function closeTv(){
+    mobileLayout?.close();
     ++captureRequest;
     if(state?.mode==="link")linkPlayer?.close();
     restoreChatFromTv();overlay.hidden=true;opened=false;
@@ -259,7 +261,7 @@
   overlay.addEventListener("click",event=>{if(event.target===overlay)closeTv();});
   launch.onclick=()=>{
     if(!joined)return;
-    opened=true;overlay.hidden=false;placeChatInTv();updateUi();
+    opened=true;overlay.hidden=false;placeChatInTv();mobileLayout?.open();updateUi();
     socket.emit("tv:request-state");
     if(state?.mode==="youtube")void ensureYoutube();
     if(state?.mode==="link")linkPlayer?.apply(state);
@@ -823,6 +825,7 @@
   socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;youtubeQueue=[];updateUi();});
   socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;updateUi();});
   function reset(){
+    mobileLayout?.close();
     linkPlayer?.destroySource();
     joined=false;room="";ownerId=null;state=null;viewerRequested=false;
     viewerAudioEnabled=true;viewerAudioBlocked=false;
