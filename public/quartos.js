@@ -72,7 +72,7 @@ function draw(){const rect=canvas.getBoundingClientRect();if(!rect.width)return;
 function tile(e){const r=canvas.getBoundingClientRect(),dx=(e.clientX-r.left-ox)/(32*scale),dy=(e.clientY-r.top-oy)/(16*scale);return {x:Math.floor((dx+dy)/2),y:Math.floor((dy-dx)/2)};}
 canvas.onpointermove=e=>{if(editing){hover=tile(e);draw();}};
 canvas.onclick=run(async e=>{if(!current||saving)return;const p=tile(e);if(p.x<0||p.y<0||p.x>=10||p.y>=10)return;
- if(!editing){await emit('walk',p);return;}
+ if(!editing){const target=[...current.layout.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(target&&['sofa','chair','bed'].includes(target.type)){const result=await emit('interact',{itemId:target.id});status(result.pose==='lying'?'Indo descansar na cama…':'Indo sentar no móvel…');}else await emit('walk',p);return;}
  if(selected){const item={...selected,...p},candidate={...draft,items:[...draft.items.filter(i=>i.id!==item.id),item]};R.validate(candidate);draft=candidate;selected=null;selection();status('Móvel colocado. Salve para todos verem.');}
  else {const item=[...draft.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(item)selected={...item};selection();}draw();});
 $('zoomIn').onclick=()=>{zoom=Math.min(1.6,zoom+.15);draw();};$('zoomOut').onclick=()=>{zoom=Math.max(.65,zoom-.15);draw();};new ResizeObserver(draw).observe(canvas.parentElement);window.addEventListener('jf-quartos-3d-ready',draw);
