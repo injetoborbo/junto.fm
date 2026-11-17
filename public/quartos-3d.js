@@ -113,7 +113,7 @@ function switchClubDance(record,style){
  record.action?.fadeOut(.24);record.currentDance=style;record.action=null;
  if(style==="idle"){
   record.mixer?.stopAllAction();
-  for(const [uuid,rest] of record.restBones||[])record.rig?.traverse?.(bone=>{if(bone.uuid===uuid)bone.quaternion.copy(rest);});
+  for(const bone of record.animationBones||[]){const rest=record.restBones?.get(bone.uuid);if(rest)bone.quaternion.copy(rest);}
   return;
  }
  if(!animationClips.has(style)){const loading=style==="sitting"?loadClubSittingClip():loadClubClip(style);loading.then(clip=>{if(clip&&record.currentDance===style&&avatars.get(record.id)===record){record.currentDance="idle";switchClubDance(record,style);scheduleAnimation();}});return;}
