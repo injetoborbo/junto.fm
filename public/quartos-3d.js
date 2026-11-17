@@ -41,9 +41,9 @@ async function syncFurniture(items,width,height,scale){
   if(furniture.get(item.id)!==token)continue;
   const object=source?source.clone(true):fallbackFurniture(item.type,item.color,w,h);
   const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-  const clubHeight=item.type==="chair"?1.16*45*scale:item.type==="table"?.78*45*scale:0;
-  const targetW=item.type==="chair"?1.02*45*scale:item.type==="table"?1.42*45*scale:Math.max(16,w*.9);
-  const targetH=clubHeight||Math.max(14,h*.95,(item.type==="plant"||item.type==="lamp")?58*scale:0);
+  const modelSize={sofa:[1.85,.78],chair:[1.02,1.16],table:[1.42,.78],bed:[1.9,.55],shelf:[1.25,1.35],plant:[.82,1.12],lamp:[.68,1.55],tv:[1.72,.92],banana:[.9,1.3]};
+  const [widthFactor,heightFactor]=modelSize[item.type]||[Math.max(.65,w/45),Math.max(.45,h/45)];
+  const targetW=widthFactor*45*scale,targetH=heightFactor*45*scale;
   const fit=Math.min(targetW/Math.max(size.x,.001),targetH/Math.max(size.y,.001));
   object.scale.setScalar(fit);object.position.sub(center.multiplyScalar(fit));object.position.y+=targetH*.48;
   if(item.rotation)object.rotation.y=item.rotation*Math.PI/2;
