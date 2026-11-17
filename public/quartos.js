@@ -1,10 +1,41 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),R=RoomRules,canvas=$('canvas'),ctx=canvas.getContext('2d');
 let data,current,own=false,editing=false,draft,selected=null,people=[],bubbles=new Map(),zoom=1,hover=null,saving=false;
-const socket=io('/quartos',{autoConnect:false});
+const demoMode=location.hostname==='junto-fm-quartos-preview.onrender.com';
+const demoId='demo-quarto-preview';
+const demoRoomId='00000000-0000-4000-8000-000000000054';
+const demoRoom={owner_id:demoRoomId,owner_name:'VISITANTE',name:'Quarto de demonstração',revision:1,layout:{wall:'#8caaa5',floor:'#c9ad85',items:[{id:'welcome-sofa',type:'sofa',x:1,y:7,rotation:0},{id:'welcome-plant',type:'plant',x:8,y:1,rotation:0},{id:'welcome-rug',type:'rug',x:3,y:3,rotation:0}]}};
+const demoHandlers=new Map();
+const socket=demoMode?{
+ id:demoId,connected:false,
+ on(event,fn){if(!demoHandlers.has(event))demoHandlers.set(event,[]);demoHandlers.get(event).push(fn);return this;},
+ once(event,fn){const once=(...a)=>{this.off(event,once);fn(...a);};return this.on(event,once);},
+ off(event,fn){demoHandlers.set(event,(demoHandlers.get(event)||[]).filter(f=>f!==fn));return this;},
+ fire(event,value){for(const fn of demoHandlers.get(event)||[])fn(value);},
+ connect(){this.connected=true;this.fire('connect');},
+ disconnect(){this.connected=false;this.fire('disconnect');},
+ timeout(){return this;},
+ emit(event,payload,ack){let result={ok:true};
+  if(event==='enter'){result={room:structuredClone(demoRoom),own:true};}
+  else if(event==='walk'){const p=people.find(x=>x.id===demoId);if(p){p.x=Math.max(0,Math.min(9,payload.x));p.y=Math.max(0,Math.min(9,payload.y));}this.fire('people',people);}
+  else if(event==='interact'){result={pose:'sitting'};}
+  else if(event==='chat'){const msg={id:demoId,name:'VISITANTE',text:String(payload?.text||'').slice(0,240)};this.fire('chat',msg);}
+  if(typeof ack==='function')ack(null,result);return this;
+ }
+}:io('/quartos',{autoConnect:false});
 const status=text=>$('status').textContent=text;
 function showLoginGate(message='Entre na sua conta do Junto.fm para acessar os quartos.'){ $('lobby').hidden=true;$('room').hidden=true;$('authGate').hidden=false;status(message); }
-async function api(url,method='GET',body){const r=await fetch(url,{method,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok){if(r.status===401)showLoginGate(d.error);throw Error(d.error||'Falha na conexão.');}return d;}
+async function api(url,method='GET',body){
+ if(demoMode){
+  if(url==='/api/quartos'&&method==='GET')return {own:structuredClone(demoRoom),invites:[],friends:[]};
+  if(url==='/api/quartos'&&method==='POST')return {owner_id:demoRoomId};
+  if(url==='/api/quartos'&&method==='PUT'){demoRoom.layout=structuredClone(body.layout);demoRoom.name=String(body.name||demoRoom.name);demoRoom.revision++;return structuredClone(demoRoom);}
+  if(url==='/api/quartos/guests')return [];
+  if(url.startsWith('/api/quartos/invites'))return {ok:true};
+  throw Error('Ação indisponível no modo demonstração.');
+ }
+ const r=await fetch(url,{method,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok){if(r.status===401)showLoginGate(d.error);throw Error(d.error||'Falha na conexão.');}return d;
+}
 function run(fn){return async(...args)=>{try{await fn(...args);}catch(e){status(e.message);}};}
 function button(text,fn){const b=document.createElement('button');b.textContent=text;b.onclick=run(fn);return b;}
 function card(name,subtitle,action){const el=document.createElement('div');el.className='invite-card';const text=document.createElement('div');text.textContent=name;const small=document.createElement('small');small.textContent=subtitle;text.append(small);el.append(text,action);return el;}
@@ -79,5 +110,5 @@ canvas.onclick=run(async e=>{if(!current||saving)return;const p=tile(e);if(p.x<0
  if(selected){const item={...selected,...p},candidate={...draft,items:[...draft.items.filter(i=>i.id!==item.id),item]};R.validate(candidate);draft=candidate;selected=null;selection();status('Móvel colocado. Salve para todos verem.');}
  else {const item=[...draft.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(item)selected={...item};selection();}draw();});
 $('zoomIn').onclick=()=>{zoom=Math.min(1.6,zoom+.15);draw();};$('zoomOut').onclick=()=>{zoom=Math.max(.65,zoom-.15);draw();};new ResizeObserver(draw).observe(canvas.parentElement);window.addEventListener('jf-quartos-3d-ready',draw);
-run(async()=>{const response=await fetch('/api/account/status',{credentials:'same-origin',cache:'no-store'});const auth=await response.json();if(!response.ok||!auth.loggedIn){showLoginGate('É necessário entrar em uma conta do Junto.fm para acessar os quartos.');return;} $('authGate').hidden=true;await load();const id=new URLSearchParams(location.search).get('room');if(id)await enter(id);})();
+run(async()=>{if(!demoMode){const response=await fetch('/api/account/status',{credentials:'same-origin',cache:'no-store'});const auth=await response.json();if(!response.ok||!auth.loggedIn){showLoginGate('É necessário entrar em uma conta do Junto.fm para acessar os quartos.');return;}} $('authGate').hidden=true;if(demoMode){$('create').textContent='ENTRAR NO QUARTO DE DEMONSTRAÇÃO →';status('Modo demonstração: alterações ficam apenas neste navegador.');}await load();const id=demoMode?demoRoomId:new URLSearchParams(location.search).get('room');if(id)await enter(id);})();
 })();
