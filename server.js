@@ -144,6 +144,7 @@ app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
 require("./mural").setupMural(app,io,accountAuth,adminAuth);
+require("./personal-rooms").setupRooms(app,io,accountAuth);
 const achievements=require("./achievements")(app,io,accountAuth);
 require("./listening-leaderboard")(app,io,roomTransmitters,accountAuth.ready,achievements);
 require("./static-bandwidth")(app, path.join(__dirname, "public"));

@@ -1,0 +1,32 @@
+name: Personal rooms
+on:
+  push:
+    branches: [main, feature/quartos-simios]
+  pull_request:
+    branches: [main]
+jobs:
+  room-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Install isolated integration-test dependencies
+        run: npm install --no-save --package-lock=false @electric-sql/pglite socket.io-client
+      - name: Check JavaScript syntax
+        run: |
+          node --check personal-rooms.js
+          node --check public/quartos.js
+          node --check public/room-rules.js
+          node --check tests/personal-rooms.test.js
+          node --input-type=module --check < public/quartos-3d.js
+          node --input-type=module --check < public/wardrobe.js
+      - name: Run room rules and Socket.IO/Postgres integration tests
+        run: npm run test:rooms
+        env:
+          PGLITE_TEST_MODULE: ${{ github.workspace }}/node_modules/@electric-sql/pglite
+          SOCKET_CLIENT_TEST_MODULE: ${{ github.workspace }}/node_modules/socket.io-client
