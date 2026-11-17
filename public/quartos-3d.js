@@ -100,11 +100,11 @@ function update(payload){
    record={signature:key,root:null,dispose:null,target:null,pose:"standing",walking:false,legs:[]};avatars.set(p.id,record);
    void createAvatar(p,payload.scale||1,record);
   }
+  record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y,2);
+  record.pose=p.pose||"standing";
   if(record.root){
    const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
    record.root.scale.setScalar(height/1.8);
-   record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y,2);
-   record.pose=p.pose||"standing";
    if(!record.walking&&record.lastPose!==record.pose)bonePose(record,record.pose,performance.now());
   }
  }
