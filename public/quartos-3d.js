@@ -10,8 +10,8 @@ let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
 
 const furniture=new Map(), furnitureLoader=new GLTFLoader(), furnitureAssets=new Map();
-const CC0="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/41b06c6223d847d9de6519dd25a493d40e65992d/GLB/";
-const ASSET_PATHS={chair:"/club/cadeirabalada.glb",table:"/club/mesabalada.glb",plant:CC0+"Living/ap_plant_small.glb",lamp:CC0+"Living/ap_floor_lamp.glb",shelf:CC0+"Bedroom/ap_nightstand.glb",speaker:CC0+"Clutter/ap_book_stack.glb",banana:"/club/bananasims_otimizada.glb"};
+const KENNEY_CC0="https://raw.githubusercontent.com/0auBSQ/OpenTaiko/50b190a2303742202dc9cb44d946a524da2d4fff/OpenTaiko/Global/Modules/Stages/my_room/Models/";
+const ASSET_PATHS={chair:"/club/cadeirabalada.glb",table:"/club/mesabalada.glb",sofa:KENNEY_CC0+"sofa.glb",bed:KENNEY_CC0+"bed.glb",shelf:KENNEY_CC0+"bookshelf.glb",plant:KENNEY_CC0+"plant.glb",lamp:KENNEY_CC0+"floorlamp.glb",tv:KENNEY_CC0+"tv.glb",banana:"/club/bananasims_otimizada.glb"};
 const material=color=>new THREE.MeshStandardMaterial({color,roughness:.88});
 function block(g,w,h,d,color,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));m.position.set(x,y,z);g.add(m);}
 function fallbackFurniture(type,color,w,h){
