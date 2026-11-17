@@ -34,6 +34,7 @@ function animate(now){
    if(record.walking){record.walking=false;bonePose(record,record.pose||"standing",now);}
   }
   const pose=record.walking?"walking":(record.pose||"standing");
+  record.root.rotation.z=pose==="lying"?-1.25:0;
   if(pose!==record.lastPose||pose==="walking")bonePose(record,pose,now);
   record.lastPose=pose;
   if(record.walking){p.z=2+Math.abs(Math.sin(now*.018))*2;moving=true;}
