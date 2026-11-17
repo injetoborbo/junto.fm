@@ -114,3 +114,10 @@ html[data-jf-theme="aero"] #chatLog{background:#eaffffb8;color:#06476b}
 html[data-jf-theme="aero"] .scene{background:linear-gradient(#78c8ee,#d9f4ff)}
 html[data-jf-theme="kodoku"] .intro h1{font-family:Georgia,serif;letter-spacing:0}
 html[data-jf-theme="tsimiomi"] .brand-mark{background:linear-gradient(145deg,#ff3324,#7d0505)}
+
+.room-dances{position:absolute;left:12px;top:12px;z-index:5;display:flex;align-items:center;gap:5px;flex-wrap:wrap;max-width:calc(100% - 90px);padding:6px 8px;border:1px solid #6d668b;border-radius:7px;background:rgba(27,25,53,.88);box-shadow:2px 2px 0 #17152d;color:#fff;font:700 11px/1.2 "Trebuchet MS",sans-serif}
+.room-dances>span{color:#7ff5ff;font-size:15px}
+.room-dances button{border:1px solid #8580a9;border-radius:4px;background:#393454;color:#fff;padding:5px 7px;font:inherit;cursor:pointer}
+.room-dances button[aria-pressed="true"]{background:#ff79cf;color:#25152b;border-color:#ffd2f0}
+.room-dances button:hover{filter:brightness(1.18)}
+@media(max-width:640px){.room-dances{left:6px;top:6px;gap:3px;padding:4px;max-width:calc(100% - 70px)}.room-dances button{padding:5px 5px;font-size:10px}}
