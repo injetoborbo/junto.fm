@@ -47,6 +47,7 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   await new Promise(r=>setTimeout(r,550));const peopleUpdate=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'enter',{owner:a})).own,false);
   const present=await peopleUpdate;assert.equal(present.find(p=>p.accountId===b)?.wardrobe.outfit,'punk','presence shares the account wardrobe for the 3D avatar');
   assert.equal((await emit(visitor,'interact',{itemId:'welcome-sofa'})).pose,'sitting','sofas trigger a synchronized sitting interaction');
+  await new Promise(r=>setTimeout(r,400));
   assert.equal((await emit(visitor,'interact',{itemId:'test-bed'})).pose,'lying','beds trigger a synchronized lying interaction');
   assert.match((await emit(visitor,'walk',{x:1,y:7})).error,/chegar/);
   const owner=await connect(a);assert.equal((await emit(owner,'enter',{owner:a})).own,true);
