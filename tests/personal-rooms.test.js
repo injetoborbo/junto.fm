@@ -53,6 +53,7 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   const movingUpdate=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'walk',step)).ok,true,'walking interrupts a furniture pose');
   assert.equal((await movingUpdate).find(p=>p.accountId===b)?.pose,'walking');
   const standingUpdate=new Promise(r=>visitor.once('people',r));const settled=await standingUpdate;assert.equal(settled.find(p=>p.accountId===b)?.pose,'standing','walking returns the avatar to standing');
+  await new Promise(r=>setTimeout(r,180));
   assert.match((await emit(visitor,'walk',{x:1,y:7})).error,/chegar/);
   const owner=await connect(a);assert.equal((await emit(owner,'enter',{owner:a})).own,true);
   const message=new Promise(r=>owner.once('chat',r));assert.equal((await emit(visitor,'chat',{text:'Olá!'})).ok,true);assert.equal((await message).text,'Olá!');
