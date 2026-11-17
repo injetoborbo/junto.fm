@@ -1,5 +1,5 @@
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {createWardrobeFittedAvatar} from "/wardrobe.js";
+import {createDanceAvatar} from "/wardrobe.js?v=arena-fit-12";
 
 const canvas=document.getElementById("quarto3d");
 if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
@@ -70,10 +70,11 @@ function removeAvatar(id,record){
 }
 async function createAvatar(person,scale,record){
  try{
-  const avatar=await createWardrobeFittedAvatar(person.wardrobe||{},{local:!!person.local});
+  const avatar=await createDanceAvatar(person.wardrobe||{},"default",()=>{}, {local:!!person.local});
   if(avatars.get(person.id)!==record){avatar.dispose();return;}
   const height=Math.max(44,Math.min(92,68*scale));
-  avatar.group.scale.setScalar(height/1.8);
+  avatar.group.scale.setScalar(height/1.5);
+  avatar.group.rotation.y=.65;
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.root=avatar.group;record.dispose=avatar.dispose;
   record.legs=[];
@@ -105,7 +106,7 @@ function update(payload){
   record.pose=p.pose||"standing";
   if(record.root){
    const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
-   record.root.scale.setScalar(height/1.8);
+   record.root.scale.setScalar(height/1.5);
    if(!record.walking&&record.lastPose!==record.pose)bonePose(record,record.pose,performance.now());
   }
  }
