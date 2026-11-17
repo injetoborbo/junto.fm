@@ -12,7 +12,7 @@ const socket=demoMode?{
  once(event,fn){const once=(...a)=>{this.off(event,once);fn(...a);};return this.on(event,once);},
  off(event,fn){demoHandlers.set(event,(demoHandlers.get(event)||[]).filter(f=>f!==fn));return this;},
  fire(event,value){for(const fn of demoHandlers.get(event)||[])fn(value);},
- connect(){this.connected=true;this.fire('connect');},
+ connect(){this.connected=true;setTimeout(()=>this.fire('connect'),0);},
  disconnect(){this.connected=false;this.fire('disconnect');},
  timeout(){return this;},
  emit(event,payload,ack){let result={ok:true};
