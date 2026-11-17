@@ -74,7 +74,7 @@ function setupRooms(app,io,accounts){
    let target=null,path=null;
    for(const [x,y] of candidates){const route=rules.route(r.layout,person,{x,y});if(route){target={x,y};path=route;break;}}
    if(!target)throw err('Não há espaço livre ao redor desse móvel.');
-   person.path=path;person.pendingPose=pose;person.pose=path.length?'walking':pose;
+   person.path=path;person.pendingPose=path.length?pose:null;person.pose=path.length?'walking':pose;
    broadcast(id);reply({ok:true,pose});
   });
   on('chat',700,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const text=typeof p?.text==='string'?p.text.trim().slice(0,240):'';if(!text)return;ns.to(id).emit('chat',{id:s.id,name:String(a.nickname||'Macaco').slice(0,24),text});reply({ok:true});});
