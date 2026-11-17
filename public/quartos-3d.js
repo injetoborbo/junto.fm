@@ -5,6 +5,44 @@ const canvas=document.getElementById("quarto3d");
 if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
 let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
+let animationFrame=0,lastFrame=0;
+function bonePose(record,pose,time){
+ const bones=record.legs||[];
+ for(const b of bones){
+  const side=b.name.toLowerCase().includes("left")?-1:1;
+  let x=0;
+  if(pose==="walking")x=Math.sin(time*.012+(side<0?0:Math.PI))*.42;
+  else if(pose==="sitting")x=b.name.toLowerCase().includes("leg")&&!b.name.toLowerCase().includes("upper")?1.05:-.95;
+  else if(pose==="lying")x=b.name.toLowerCase().includes("leg")?-.15:0;
+  b.rotation.x=b.userData.jfRoomBaseX+x;
+ }
+}
+function animate(now){
+ animationFrame=0;
+ const dt=Math.min(48,now-(lastFrame||now));lastFrame=now;
+ let moving=false;
+ for(const record of avatars.values()){
+  if(!record.root||!record.target)continue;
+  const p=record.root.position,t=record.target;
+  const dx=t.x-p.x,dy=t.y-p.y,d=Math.hypot(dx,dy);
+  if(d>.7){
+   const step=Math.min(1,dt*.009);
+   p.x+=dx*step;p.y+=dy*step;record.walking=true;moving=true;
+   if(Math.abs(dx)>Math.abs(dy))record.root.rotation.y=dx<0?-.12:.12;
+  }else{
+   p.x=t.x;p.y=t.y;
+   if(record.walking){record.walking=false;bonePose(record,record.pose||"standing",now);}
+  }
+  const pose=record.walking?"walking":(record.pose||"standing");
+  if(pose!==record.lastPose||pose==="walking")bonePose(record,pose,now);
+  record.lastPose=pose;
+  if(record.walking){p.z=2+Math.abs(Math.sin(now*.018))*2;moving=true;}
+  else p.z=2;
+ }
+ render();
+ if(moving)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
+}
+function scheduleAnimation(){if(!animationFrame)animationFrame=requestAnimationFrame(animate);}
 function init(){
  if(renderer)return;
  scene=new THREE.Scene();
@@ -37,7 +75,16 @@ async function createAvatar(person,scale,record){
   avatar.group.scale.setScalar(height/1.8);
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.root=avatar.group;record.dispose=avatar.dispose;
-  scene.add(record.root);
+  record.legs=[];
+  avatar.rig?.traverse?.(bone=>{
+   if(!bone.isBone)return;
+   const name=bone.name.toLowerCase();
+   if(/(left|right).*(upleg|thigh|leg)$/.test(name)||/(upleg|thigh|leg).*(left|right)/.test(name)){
+    bone.userData.jfRoomBaseX=bone.rotation.x;record.legs.push(bone);
+   }
+  });
+  if(record.target)record.root.position.copy(record.target);
+  scene.add(record.root);scheduleAnimation();
  }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
 }
 function update(payload){
@@ -50,16 +97,18 @@ function update(payload){
   let record=old;
   if(!record||record.signature!==key){
    if(record)removeAvatar(p.id,record);
-   record={signature:key,root:null,dispose:null};avatars.set(p.id,record);
+   record={signature:key,root:null,dispose:null,target:null,pose:"standing",walking:false,legs:[]};avatars.set(p.id,record);
    void createAvatar(p,payload.scale||1,record);
   }
   if(record.root){
    const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
    record.root.scale.setScalar(height/1.8);
-   record.root.position.set(p.x-payload.width/2,payload.height/2-p.y,2);
+   record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y,2);
+   record.pose=p.pose||"standing";
+   if(!record.walking&&record.lastPose!==record.pose)bonePose(record,record.pose,performance.now());
   }
  }
- render();
+ render();scheduleAnimation();
 }
 window.JFQuartos3D={update};
 window.dispatchEvent(new Event("jf-quartos-3d-ready"));
