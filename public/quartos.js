@@ -65,11 +65,12 @@ function draw(){const rect=canvas.getBoundingClientRect();if(!rect.width)return;
  l.items.filter(i=>i.type==='rug').forEach(i=>furniture(i));
  const objects=[...l.items.filter(i=>i.type!=='rug').map(i=>({depth:i.x+i.y+Math.max(...R.cells(i).map(c=>c[0]+c[1]))-i.x-i.y,draw:()=>furniture(i)}))];objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
  // Avatares 3D usam a mesma posição isométrica e o mesmo estado de presença do quarto.
- window.JFQuartos3D?.update({width:w,height:h,scale,avatars:people.map(p=>{const q=iso(p.x+.5,p.y+.5);return {id:p.id,name:p.name,wardrobe:p.wardrobe||{},x:q.x,y:q.y+5,local:p.id===socket.id};})});
+ window.JFQuartos3D?.update({width:w,height:h,scale,avatars:people.map(p=>{const q=iso(p.x+.5,p.y+.5);return {id:p.id,name:p.name,wardrobe:p.wardrobe||{},pose:p.pose||"standing",x:q.x,y:q.y+5,local:p.id===socket.id};})});
  for(const p of people)monkeyName(p);
  if(editing&&selected&&hover)furniture({...selected,...hover},true);
  for(const p of people){const b=bubbles.get(p.id);if(!b||b.until<Date.now())continue;const q=iso(p.x+.5,p.y+.5,90);ctx.font=`${12*scale}px Trebuchet MS`;ctx.textAlign='center';const lines=b.text.match(/.{1,32}(?:\s|$)|.{1,32}/g)||[];const bw=218*scale,bh=(Math.min(lines.length,3)*17+12)*scale;ctx.fillStyle='#f5efda';ctx.strokeStyle='#1d3026';ctx.lineWidth=2;ctx.fillRect(q.x-bw/2,q.y-bh,bw,bh);ctx.strokeRect(q.x-bw/2,q.y-bh,bw,bh);ctx.fillStyle='#20352a';lines.slice(0,3).forEach((line,i)=>ctx.fillText(line,q.x,q.y-bh+(19+i*17)*scale));}
 }
+window.addEventListener("jf-quartos-3d-ready",()=>draw());
 function tile(e){const r=canvas.getBoundingClientRect(),dx=(e.clientX-r.left-ox)/(32*scale),dy=(e.clientY-r.top-oy)/(16*scale);return {x:Math.floor((dx+dy)/2),y:Math.floor((dy-dx)/2)};}
 function furnitureAt(e){if(!current)return null;const r=canvas.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;let best=null,score=Infinity;for(const item of current.layout.items){if(!['sofa','chair','bed'].includes(item.type))continue;const t=R.itemType(item.type),q=iso(item.x+t.w/2,item.y+t.h/2,item.type==='bed'?22:28),dx=px-q.x,dy=py-q.y,d=Math.hypot(dx,dy),limit=Math.max(48*scale,(t.w+t.h)*18*scale);if(d<limit&&d<score){best=item;score=d;}}return best;}
 canvas.onpointermove=e=>{if(editing){hover=tile(e);draw();}};
