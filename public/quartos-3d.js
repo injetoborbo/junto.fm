@@ -1,5 +1,6 @@
 import * as THREE from "https://esm.sh/three@0.170.0";
 import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import {FBXLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/FBXLoader.js";
 
 import {createDanceAvatar} from "/wardrobe.js?v=arena-fit-12";
 
@@ -50,7 +51,17 @@ async function syncFurniture(items,width,height,scale){
 }
 
 const CLUB_DANCES={shake:"/dance/macacochaqualha.glb",macarena:"/dance/macacomacarena.glb",party:"/dance/macacodanca.glb",capoeira:"/dance/macacocapoera.glb",groove:"/dance/macacodancagay.glb"};
-const clipLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
+const clipLoader=new GLTFLoader(),fbxLoader=new FBXLoader(),clipPromises=new Map(),animationClips=new Map();
+let sittingClipPromise=null;
+function loadClubSittingClip(){
+ if(!sittingClipPromise)sittingClipPromise=fbxLoader.loadAsync("/poses/sentadobalanca.fbx").then(source=>{
+  const score=clip=>clip.tracks.reduce((n,t)=>n+(t.name.endsWith(".quaternion")&&t.times?.length>2?t.times.length:0),0);
+  const clip=[...(source.animations||[])].sort((a,b)=>score(b)-score(a))[0];
+  if(!clip?.tracks?.length)throw Error("FBX sem animação de sentar");
+  animationClips.set("sitting",{clip,scene:source});return clip;
+ }).catch(error=>{console.warn("Junto Club: pose sentadobalanca indisponível",error);return null;});
+ return sittingClipPromise;
+}
 const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 function loadClubClip(style){
  if(!CLUB_DANCES[style])return Promise.resolve(null);
@@ -94,20 +105,27 @@ function switchClubDance(record,style){
  if(record.currentDance===style)return;
  record.action?.fadeOut(.24);record.currentDance=style;record.action=null;
  if(style==="idle")return;
- if(!animationClips.has(style)){loadClubClip(style).then(clip=>{if(clip&&record.currentDance===style&&avatars.get(record.id)===record){record.currentDance="idle";switchClubDance(record,style);scheduleAnimation();}});return;}
+ if(!animationClips.has(style)){const loading=style==="sitting"?loadClubSittingClip():loadClubClip(style);loading.then(clip=>{if(clip&&record.currentDance===style&&avatars.get(record.id)===record){record.currentDance="idle";switchClubDance(record,style);scheduleAnimation();}});return;}
  const action=buildClubAction(record,style);
  if(action){action.reset().fadeIn(.24).play();record.action=action;}
 }
 let animationFrame=0,lastFrame=0;
 function bonePose(record,pose,time){
- const bones=record.legs||[];
- for(const b of bones){
-  const side=b.name.toLowerCase().includes("left")?-1:1;
-  let x=0;
-  if(pose==="walking")x=Math.sin(time*.012+(side<0?0:Math.PI))*.42;
-  else if(pose==="sitting")x=b.name.toLowerCase().includes("leg")&&!b.name.toLowerCase().includes("upper")?1.05:-.95;
-  else if(pose==="lying")x=b.name.toLowerCase().includes("leg")?-.15:0;
-  b.rotation.x=b.userData.jfRoomBaseX+x;
+ const stride=Math.sin((record.walkTime||0)),bones=record.animationBones||[];
+ for(const bone of bones){
+  const rest=record.restEuler?.get(bone.uuid);if(!rest)continue;
+  const n=bone.name.toLowerCase(),isLeft=/left|(?:^|_)l_(?:arm|hand|thigh|calf|leg|shoulder)/.test(n),side=isLeft?1:-1;
+  const upperLeg=/(upleg|upperleg|thigh)/.test(n),lowerLeg=/(calf|shin|lowerleg|leg$)/.test(n)&&!upperLeg;
+  const forearm=/(forearm|lowerarm)/.test(n),upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm,torso=/spine/.test(n);
+  let x=rest.x,y=rest.y,z=rest.z;
+  if(pose==="walking"){
+   if(upperLeg)x+=side*.36*stride;
+   if(lowerLeg)x+=.15*Math.max(0,-side*stride);
+   if(upperArm)x-=side*.26*stride;
+   if(forearm)x-=side*.10*stride;
+   if(torso)z+=.022*stride;
+  }
+  bone.rotation.set(x,y,z);
  }
 }
 function animate(now){
@@ -128,6 +146,8 @@ function animate(now){
    if(record.walking){record.walking=false;bonePose(record,record.pose||"standing",now);}
   }
   const pose=record.walking?"walking":(record.pose||"standing");
+  const danceStyle=record.walking?"idle":pose==="sitting"?"sitting":record.dance||"idle";
+  switchClubDance(record,danceStyle);
   record.root.rotation.z=pose==="lying"?-1.25:0;
   if(pose!==record.lastPose||pose==="walking")bonePose(record,pose,now);
   record.lastPose=pose;
@@ -172,9 +192,9 @@ async function createAvatar(person,scale,record){
   avatar.group.rotation.y=.65;
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.id=person.id;record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;record.experimentalRig=Boolean(avatar.experimentalUsed);
-  record.restBones=new Map();record.restWorldBones=new Map();
+  record.restBones=new Map();record.restWorldBones=new Map();record.restEuler=new Map();record.animationBones=[];
   avatar.rig?.updateMatrixWorld(true);
-  avatar.rig?.traverse?.(bone=>{if(bone.isBone){record.restBones.set(bone.uuid,bone.quaternion.clone());record.restWorldBones.set(bone.uuid,bone.getWorldQuaternion(new THREE.Quaternion()));}});
+  avatar.rig?.traverse?.(bone=>{if(bone.isBone){record.restBones.set(bone.uuid,bone.quaternion.clone());record.restWorldBones.set(bone.uuid,bone.getWorldQuaternion(new THREE.Quaternion()));record.restEuler.set(bone.uuid,bone.rotation.clone());record.animationBones.push(bone);}});
   record.legs=[];
   avatar.rig?.traverse?.(bone=>{
    if(!bone.isBone)return;
