@@ -2,8 +2,8 @@
 const $=id=>document.getElementById(id),R=RoomRules,canvas=$('canvas'),ctx=canvas.getContext('2d');
 let data,current,own=false,editing=false,draft,selected=null,people=[],bubbles=new Map(),zoom=1,hover=null,saving=false;
 const socket=io('/quartos',{autoConnect:false});
-const status=text=>$('status').textContent=text;
-async function api(url,method='GET',body){const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok){if(r.status===401)$('login').hidden=false;throw Error(d.error||'Falha na conexão.');}return d;}
+const status=text=>$('status').textContent=text;\nfunction showLoginGate(message='Entre na sua conta do Junto.fm para acessar os quartos.'){ $('lobby').hidden=true;$('room').hidden=true;$('authGate').hidden=false;status(message); }
+async function api(url,method='GET',body){const r=await fetch(url,{method,credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const d=await r.json();if(!r.ok){if(r.status===401)showLoginGate(d.error);throw Error(d.error||'Falha na conexão.');}return d;}
 function run(fn){return async(...args)=>{try{await fn(...args);}catch(e){status(e.message);}};}
 function button(text,fn){const b=document.createElement('button');b.textContent=text;b.onclick=run(fn);return b;}
 function card(name,subtitle,action){const el=document.createElement('div');el.className='invite-card';const text=document.createElement('div');text.textContent=name;const small=document.createElement('small');small.textContent=subtitle;text.append(small);el.append(text,action);return el;}
@@ -77,5 +77,5 @@ canvas.onclick=run(async e=>{if(!current||saving)return;const p=tile(e);if(p.x<0
  if(selected){const item={...selected,...p},candidate={...draft,items:[...draft.items.filter(i=>i.id!==item.id),item]};R.validate(candidate);draft=candidate;selected=null;selection();status('Móvel colocado. Salve para todos verem.');}
  else {const item=[...draft.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(item)selected={...item};selection();}draw();});
 $('zoomIn').onclick=()=>{zoom=Math.min(1.6,zoom+.15);draw();};$('zoomOut').onclick=()=>{zoom=Math.max(.65,zoom-.15);draw();};new ResizeObserver(draw).observe(canvas.parentElement);window.addEventListener('jf-quartos-3d-ready',draw);
-run(async()=>{await load();const id=new URLSearchParams(location.search).get('room');if(id)await enter(id);})();
+run(async()=>{const response=await fetch('/api/account/status',{credentials:'same-origin',cache:'no-store'});const auth=await response.json();if(!response.ok||!auth.loggedIn){showLoginGate('É necessário entrar em uma conta do Junto.fm para acessar os quartos.');return;} $('authGate').hidden=true;await load();const id=new URLSearchParams(location.search).get('room');if(id)await enter(id);})();
 })();
