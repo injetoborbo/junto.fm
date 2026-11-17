@@ -23,7 +23,7 @@ Critério: priorizar arquivos GLB, baixo peso/poligonagem e licença CC0 1.0 (de
 ## Assets efetivamente ligados ao quarto nesta etapa
 
 - Cadeira e mesa lounge: `public/club/cadeirabalada.glb` e `public/club/mesabalada.glb`, reaproveitados diretamente da Junto Club.
-- Plantas, luminária, estante e caixa de som: `ap_plant_small.glb`, `ap_floor_lamp.glb`, `ap_nightstand.glb` e `ap_book_stack.glb`, servidos diretamente do commit CC0 fixado acima.
+- Sofá, cama, estante, planta, luminária e TV: GLBs do Kenney Furniture Kit, servidos do repositório OpenTaiko, commit `50b190a2303742202dc9cb44d946a524da2d4fff`. O manifesto `OpenTaiko/Global/Modules/Stages/my_room/Models/ASSETS.md` identifica os arquivos `sofa.glb`, `bed.glb`, `bookshelf.glb`, `plant.glb`, `floorlamp.glb` e `tv.glb` como Kenney Furniture Kit sob CC0 1.0; o pack original contém 140 assets.
 - Danças: os cinco GLBs já existentes em `public/dance/` são os mesmos clipes carregados pela Junto Club. A pose sentada reutiliza `public/poses/sentadobalanca.fbx`.
 
 ## Regras de integração
