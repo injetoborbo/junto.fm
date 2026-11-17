@@ -41,8 +41,10 @@ async function syncFurniture(items,width,height,scale){
   if(furniture.get(item.id)!==token)continue;
   const object=source?source.clone(true):fallbackFurniture(item.type,item.color,w,h);
   const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-  const targetW=Math.max(16,w*.78),targetH=Math.max(14,h*.95,(item.type==="plant"||item.type==="lamp")?58*scale:0);
-  const fit=Math.min(targetW/Math.max(size.x,.001),targetH/Math.max(size.y,.001),1.8);
+  const clubHeight=item.type==="chair"?1.16*45*scale:item.type==="table"?.78*45*scale:0;
+  const targetW=item.type==="chair"?1.02*45*scale:item.type==="table"?1.42*45*scale:Math.max(16,w*.9);
+  const targetH=clubHeight||Math.max(14,h*.95,(item.type==="plant"||item.type==="lamp")?58*scale:0);
+  const fit=Math.min(targetW/Math.max(size.x,.001),targetH/Math.max(size.y,.001));
   object.scale.setScalar(fit);object.position.sub(center.multiplyScalar(fit));object.position.y+=targetH*.48;
   if(item.rotation)object.rotation.y=item.rotation*Math.PI/2;
   object.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.frustumCulled=false;}});root.add(object);
