@@ -20,6 +20,12 @@ Critério: priorizar arquivos GLB, baixo peso/poligonagem e licença CC0 1.0 (de
 - Modelos úteis como decoração temática/urbana: `banco_praca`, `orelhao`, `poste_luz`, `vaso_planta`, `parquinho`, `ponto_onibus` e `lixeira`.
 - Limitação: o pacote é mobiliário urbano, não mobiliário residencial; usar seletivamente como decoração temática, não como substituto de sofá/cama.
 
+## Assets efetivamente ligados ao quarto nesta etapa
+
+- Cadeira e mesa lounge: `public/club/cadeirabalada.glb` e `public/club/mesabalada.glb`, reaproveitados diretamente da Junto Club.
+- Plantas, luminária, estante e caixa de som: `ap_plant_small.glb`, `ap_floor_lamp.glb`, `ap_nightstand.glb` e `ap_book_stack.glb`, servidos diretamente do commit CC0 fixado acima.
+- Danças: os cinco GLBs já existentes em `public/dance/` são os mesmos clipes carregados pela Junto Club. A pose sentada reutiliza `public/poses/sentadobalanca.fbx`.
+
 ## Regras de integração
 
 - Baixar somente os GLBs realmente usados; não carregar o pacote inteiro.
