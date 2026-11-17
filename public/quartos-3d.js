@@ -10,7 +10,7 @@ const avatars=new Map();
 
 const furniture=new Map(), furnitureLoader=new GLTFLoader(), furnitureAssets=new Map();
 const CC0="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/41b06c6223d847d9de6519dd25a493d40e65992d/GLB/";
-const ASSET_PATHS={chair:CC0+"Kitchen/ap_dining_chair.glb",table:CC0+"Living/ap_coffee_table.glb",plant:CC0+"Living/ap_plant_small.glb",lamp:CC0+"Living/ap_floor_lamp.glb",shelf:CC0+"Bedroom/ap_nightstand.glb",speaker:CC0+"Clutter/ap_book_stack.glb"};
+const ASSET_PATHS={chair:"/club/cadeirabalada.glb",table:"/club/mesabalada.glb",plant:CC0+"Living/ap_plant_small.glb",lamp:CC0+"Living/ap_floor_lamp.glb",shelf:CC0+"Bedroom/ap_nightstand.glb",speaker:CC0+"Clutter/ap_book_stack.glb",banana:"/club/bananasims_otimizada.glb"};
 const material=color=>new THREE.MeshStandardMaterial({color,roughness:.88});
 function block(g,w,h,d,color,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));m.position.set(x,y,z);g.add(m);}
 function fallbackFurniture(type,color,w,h){
@@ -49,6 +49,55 @@ async function syncFurniture(items,width,height,scale){
  }
 }
 
+const CLUB_DANCES={shake:"/dance/macacochaqualha.glb",macarena:"/dance/macacomacarena.glb",party:"/dance/macacodanca.glb",capoeira:"/dance/macacocapoera.glb",groove:"/dance/macacodancagay.glb"};
+const clipLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
+const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+function loadClubClip(style){
+ if(!CLUB_DANCES[style])return Promise.resolve(null);
+ if(!clipPromises.has(style))clipPromises.set(style,clipLoader.loadAsync(CLUB_DANCES[style]).then(gltf=>{
+  const clip=gltf.animations?.find(c=>c.tracks?.length)||null;
+  if(clip)animationClips.set(style,{clip,scene:gltf.scene});
+  return clip;
+ }).catch(error=>{console.warn("Junto Club: animação indisponível",style,error);return null;}));
+ return clipPromises.get(style);
+}
+function buildClubAction(record,style){
+ const data=animationClips.get(style);if(!record.rig||!data)return null;
+ const sourceBones=new Map(),targetBones=new Map();data.scene.updateMatrixWorld(true);record.rig.updateMatrixWorld(true);
+ data.scene.traverse(o=>{if(o.name&&/^mixamorig/i.test(o.name))sourceBones.set(boneKey(o.name),o);});
+ record.rig.traverse(o=>{if(o.isBone)targetBones.set(boneKey(o.name),o);});
+ const tracks=[],sample=new THREE.Quaternion(),corrected=new THREE.Quaternion(),reference=new THREE.Quaternion();
+ for(const track of data.clip.tracks){
+  const dot=track.name.lastIndexOf(".");if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+  const key=boneKey(track.name.slice(0,dot)),source=sourceBones.get(key),target=targetBones.get(key);
+  if(!source||!target)continue;
+  const rest=record.restBones?.get(target.uuid)||target.quaternion.clone();
+  const sourceWorld=source.getWorldQuaternion(new THREE.Quaternion());
+  const targetWorld=record.restWorldBones?.get(target.uuid)||target.getWorldQuaternion(new THREE.Quaternion());
+  const sourceToTarget=targetWorld.clone().invert().multiply(sourceWorld),targetToSource=sourceToTarget.clone().invert();
+  const invSource=source.quaternion.clone().invert(),values=new Float32Array(track.values.length);
+  for(let i=0;i<track.values.length;i+=4){
+   sample.fromArray(track.values,i);corrected.copy(invSource).multiply(sample);
+   if(record.experimentalRig)corrected.premultiply(sourceToTarget).multiply(targetToSource);
+   corrected.premultiply(rest).normalize();
+   if(i>0){reference.fromArray(values,i-4);if(reference.dot(corrected)<0)corrected.set(-corrected.x,-corrected.y,-corrected.z,-corrected.w);}
+   corrected.toArray(values,i);
+  }
+  tracks.push(new THREE.QuaternionKeyframeTrack(target.name+".quaternion",track.times.slice(),values));
+ }
+ if(tracks.length<5)return null;
+ record.mixer ||=new THREE.AnimationMixer(record.rig);
+ const action=record.mixer.clipAction(new THREE.AnimationClip("junto-club-"+style,data.clip.duration,tracks));
+ action.setLoop(THREE.LoopRepeat,Infinity);return action;
+}
+function switchClubDance(record,style){
+ if(record.currentDance===style)return;
+ record.action?.fadeOut(.24);record.currentDance=style;record.action=null;
+ if(style==="idle"||!animationClips.has(style))return;
+ const action=buildClubAction(record,style);
+ if(action){action.reset().fadeIn(.24).play();record.action=action;}
+}
+for(const style of Object.keys(CLUB_DANCES))void loadClubClip(style);
 let animationFrame=0,lastFrame=0;
 function bonePose(record,pose,time){
  const bones=record.legs||[];
@@ -68,6 +117,7 @@ function animate(now){
  for(const record of avatars.values()){
   if(!record.root||!record.target)continue;
   const p=record.root.position,t=record.target;
+  record.mixer?.update(dt/1000);
   const dx=t.x-p.x,dy=t.y-p.y,d=Math.hypot(dx,dy);
   if(d>.7){
    const step=Math.min(1,dt*.009);
@@ -85,7 +135,8 @@ function animate(now){
   else p.z=2;
  }
  render();
- if(moving)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
+ const dancing=[...avatars.values()].some(record=>Boolean(record.action));
+ if(moving||dancing)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
 }
 function scheduleAnimation(){if(!animationFrame)animationFrame=requestAnimationFrame(animate);}
 function init(){
@@ -120,7 +171,10 @@ async function createAvatar(person,scale,record){
   avatar.group.scale.setScalar(height/1.5);
   avatar.group.rotation.y=.65;
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
-  record.root=avatar.group;record.dispose=avatar.dispose;
+  record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;record.experimentalRig=Boolean(avatar.experimentalUsed);
+  record.restBones=new Map();record.restWorldBones=new Map();
+  avatar.rig?.updateMatrixWorld(true);
+  avatar.rig?.traverse?.(bone=>{if(bone.isBone){record.restBones.set(bone.uuid,bone.quaternion.clone());record.restWorldBones.set(bone.uuid,bone.getWorldQuaternion(new THREE.Quaternion()));}});
   record.legs=[];
   avatar.rig?.traverse?.(bone=>{
    if(!bone.isBone)return;
@@ -144,12 +198,15 @@ function update(payload){
   let record=old;
   if(!record||record.signature!==key){
    if(record)removeAvatar(p.id,record);
-   record={signature:key,root:null,dispose:null,target:null,pose:"standing",walking:false,legs:[]};avatars.set(p.id,record);
+   record={signature:key,root:null,dispose:null,target:null,pose:"standing",dance:"idle",walking:false,legs:[]};avatars.set(p.id,record);
    void createAvatar(p,payload.scale||1,record);
   }
   record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y,2);
   record.pose=p.pose||"standing";
+  record.dance=p.dance||"idle";
   if(record.root){
+   const style=record.walking||record.pose==="sitting"||record.pose==="lying"?"idle":record.dance;
+   switchClubDance(record,style);
    const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
    record.root.scale.setScalar(height/1.5);
    if(!record.walking&&record.lastPose!==record.pose)bonePose(record,record.pose,performance.now());
