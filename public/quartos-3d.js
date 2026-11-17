@@ -93,11 +93,11 @@ function buildClubAction(record,style){
 function switchClubDance(record,style){
  if(record.currentDance===style)return;
  record.action?.fadeOut(.24);record.currentDance=style;record.action=null;
- if(style==="idle"||!animationClips.has(style))return;
+ if(style==="idle")return;
+ if(!animationClips.has(style)){loadClubClip(style).then(clip=>{if(clip&&record.currentDance===style&&avatars.get(record.id)===record){record.currentDance="idle";switchClubDance(record,style);scheduleAnimation();}});return;}
  const action=buildClubAction(record,style);
  if(action){action.reset().fadeIn(.24).play();record.action=action;}
 }
-for(const style of Object.keys(CLUB_DANCES))void loadClubClip(style);
 let animationFrame=0,lastFrame=0;
 function bonePose(record,pose,time){
  const bones=record.legs||[];
@@ -171,7 +171,7 @@ async function createAvatar(person,scale,record){
   avatar.group.scale.setScalar(height/1.5);
   avatar.group.rotation.y=.65;
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
-  record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;record.experimentalRig=Boolean(avatar.experimentalUsed);
+  record.id=person.id;record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;record.experimentalRig=Boolean(avatar.experimentalUsed);
   record.restBones=new Map();record.restWorldBones=new Map();
   avatar.rig?.updateMatrixWorld(true);
   avatar.rig?.traverse?.(bone=>{if(bone.isBone){record.restBones.set(bone.uuid,bone.quaternion.clone());record.restWorldBones.set(bone.uuid,bone.getWorldQuaternion(new THREE.Quaternion()));}});
