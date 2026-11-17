@@ -35,14 +35,17 @@ async function syncFurniture(items,width,height,scale){
   const dims={sofa:[2,1],chair:[1,1],table:[2,1],bed:[2,3],shelf:[2,1],plant:[1,1],lamp:[1,1],tv:[2,1],rug:[3,3],speaker:[1,1],arcade:[1,1],banana:[1,1]}[item.type]||[1,1];
   const px=32*scale,py=16*scale,w=(item.rotation%2?dims[1]:dims[0])*px,h=(item.rotation%2?dims[0]:dims[1])*py;
   const root=new THREE.Group();root.position.set((item.x-item.y)*px,height/2-(item.x+item.y)*py,0);
-  const source=await loadFurniture(item.type);const object=source?source.clone(true):fallbackFurniture(item.type,item.color,w,h);
+  const token={key,root,pending:true};furniture.set(item.id,token);
+  const source=await loadFurniture(item.type);
+  if(furniture.get(item.id)!==token)continue;
+  const object=source?source.clone(true):fallbackFurniture(item.type,item.color,w,h);
   const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   const targetW=Math.max(16,w*.78),targetH=Math.max(14,h*.95,(item.type==="plant"||item.type==="lamp")?58*scale:0);
   const fit=Math.min(targetW/Math.max(size.x,.001),targetH/Math.max(size.y,.001),1.8);
   object.scale.setScalar(fit);object.position.sub(center.multiplyScalar(fit));object.position.y+=targetH*.48;
   if(item.rotation)object.rotation.y=item.rotation*Math.PI/2;
   object.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.frustumCulled=false;}});root.add(object);
-  scene.add(root);furniture.set(item.id,{key,root});
+  scene.add(root);token.pending=false;
  }
 }
 
