@@ -48,8 +48,9 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   const present=await peopleUpdate;assert.equal(present.find(p=>p.accountId===b)?.wardrobe.outfit,'punk','presence shares the account wardrobe for the 3D avatar');
   assert.equal((await emit(visitor,'interact',{itemId:'welcome-sofa'})).pose,'sitting','sofas trigger a synchronized sitting interaction');
   await new Promise(r=>setTimeout(r,400));
-  assert.equal((await emit(visitor,'interact',{itemId:'test-bed'})).pose,'lying','beds trigger a synchronized lying interaction');
-  const movingUpdate=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'walk',{x:0,y:1})).ok,true,'walking interrupts a furniture pose');
+  const bedPresence=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'interact',{itemId:'test-bed'})).pose,'lying','beds trigger a synchronized lying interaction');
+  const atBed=await bedPresence,walker=atBed.find(p=>p.accountId===b);const step=[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>({x:walker.x+dx,y:walker.y+dy})).find(tile=>rules.route(layout,walker,tile)?.length===1);assert.ok(step,'a free adjacent walking tile exists');
+  const movingUpdate=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'walk',step)).ok,true,'walking interrupts a furniture pose');
   assert.equal((await movingUpdate).find(p=>p.accountId===b)?.pose,'walking');
   const standingUpdate=new Promise(r=>visitor.once('people',r));const settled=await standingUpdate;assert.equal(settled.find(p=>p.accountId===b)?.pose,'standing','walking returns the avatar to standing');
   assert.match((await emit(visitor,'walk',{x:1,y:7})).error,/chegar/);
