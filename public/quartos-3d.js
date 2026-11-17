@@ -1,11 +1,10 @@
 import * as THREE from "https://esm.sh/three@0.170.0";
-import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
-import {clone as cloneSkeleton} from "https://esm.sh/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
+import {createWardrobeFittedAvatar} from "/wardrobe.js";
 
 const canvas=document.getElementById("quarto3d");
 if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
-let renderer,scene,camera,basePromise=null,base=null,lastSize={width:0,height:0},avatars=new Map(),frame=0;
-const loader=new GLTFLoader();
+let renderer,scene,camera,lastSize={width:0,height:0};
+const avatars=new Map();
 function init(){
  if(renderer)return;
  scene=new THREE.Scene();
@@ -18,45 +17,47 @@ function init(){
  const key=new THREE.DirectionalLight(0xffffff,2.0);key.position.set(-120,220,300);scene.add(key);
  const fill=new THREE.DirectionalLight(0x9deaff,.7);fill.position.set(160,-80,180);scene.add(fill);
 }
-async function loadBase(){
- if(basePromise)return basePromise;
- basePromise=loader.loadAsync("/macaco.glb").then(gltf=>{
-  base=gltf.scene;
-  base.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
-  return base;
- }).catch(error=>{console.error("Quartos: não foi possível carregar macaco.glb",error);basePromise=null;throw error;});
- return basePromise;
-}
-function makeAvatar(person,scale){
- const model=cloneSkeleton(base),bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
- const height=Math.max(44,Math.min(92,68*scale)),factor=height/(size.y||1);
- model.scale.setScalar(factor);model.position.set(-center.x*factor,-bounds.min.y*factor,0);
- const root=new THREE.Group();root.add(model);root.userData={id:person.id,name:person.name||"Macaco",local:!!person.local,height};
- root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.renderOrder=10;}});
- scene.add(root);return root;
-}
 function resize(width,height){
  if(lastSize.width===width&&lastSize.height===height)return;
  lastSize={width,height};renderer.setSize(width,height,false);
  camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.updateProjectionMatrix();
 }
-function render(){
- if(!renderer)return;
- renderer.render(scene,camera);
+function render(){if(renderer)renderer.render(scene,camera);}
+function signature(wardrobe){return JSON.stringify(wardrobe||{});}
+function removeAvatar(id,record){
+ if(record.root)scene.remove(record.root);
+ record.dispose?.();
+ avatars.delete(id);
 }
-async function update(payload){
+async function createAvatar(person,scale,record){
+ try{
+  const avatar=await createWardrobeFittedAvatar(person.wardrobe||{},{local:!!person.local});
+  if(avatars.get(person.id)!==record){avatar.dispose();return;}
+  const height=Math.max(44,Math.min(92,68*scale));
+  avatar.group.scale.setScalar(height/1.8);
+  avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
+  record.root=avatar.group;record.dispose=avatar.dispose;
+  scene.add(record.root);
+ }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
+}
+function update(payload){
  if(!payload||!Number.isFinite(payload.width)||!Number.isFinite(payload.height))return;
  init();resize(payload.width,payload.height);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
- for(const [id,root] of avatars)if(!visible.has(id)){scene.remove(root);root.traverse(o=>{if(o.geometry)o.geometry.dispose();});avatars.delete(id);}
- if(!payload.avatars?.length){render();return;}
- try{await loadBase();}catch(_){render();return;}
- for(const p of payload.avatars){
-  let root=avatars.get(p.id);
-  if(!root||Math.abs((root.userData.scale||1)-(payload.scale||1))>.01){if(root)scene.remove(root);root=makeAvatar(p,payload.scale||1);root.userData.scale=payload.scale||1;avatars.set(p.id,root);}
-  const height=root.userData.height;
-  root.position.set(p.x-payload.width/2,payload.height/2-p.y,2);
-  root.rotation.y=p.local?-.12:0;
+ for(const [id,record] of avatars)if(!visible.has(id))removeAvatar(id,record);
+ for(const p of payload.avatars||[]){
+  const key=signature(p.wardrobe),old=avatars.get(p.id);
+  let record=old;
+  if(!record||record.signature!==key){
+   if(record)removeAvatar(p.id,record);
+   record={signature:key,root:null,dispose:null};avatars.set(p.id,record);
+   void createAvatar(p,payload.scale||1,record);
+  }
+  if(record.root){
+   const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
+   record.root.scale.setScalar(height/1.8);
+   record.root.position.set(p.x-payload.width/2,payload.height/2-p.y,2);
+  }
  }
  render();
 }
