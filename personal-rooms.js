@@ -56,7 +56,7 @@ function setupRooms(app,io,accounts){
    const r=await room(id);if(!r)throw err('Quarto não encontrado.',404);
    if((presence.get(id)?.size||0)>=12&&s.data.owner!==id)throw err('Quarto cheio (12 visitantes).');
    leave(s);if(!s.connected)return;await s.join(id);s.data.owner=id;
-   if(!presence.has(id))presence.set(id,new Map());presence.get(id).set(s.id,{id:s.id,accountId:a.id,name:String(a.nickname||'Macaco').slice(0,24),x:0,y:0,path:[]});
+   if(!presence.has(id))presence.set(id,new Map());presence.get(id).set(s.id,{id:s.id,accountId:a.id,name:String(a.nickname||'Macaco').slice(0,24),wardrobe:a.wardrobe||{},x:0,y:0,path:[]});
    reply({room:r,own:id===a.id});broadcast(id);
   });
   on('walk',150,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;const route=rules.route(r.layout,person,p);if(!route)throw err('Não dá para chegar aí.');person.path=route;reply({ok:true});});
