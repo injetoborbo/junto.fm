@@ -67,8 +67,9 @@ function setupRooms(app,io,accounts){
    const pose=item.type==='bed'?'lying':['sofa','chair'].includes(item.type)?'sitting':null;
    if(!pose)throw err('Esse móvel ainda não tem interação.');
    const occupied=new Set(r.layout.items.filter(i=>rules.itemType(i.type).solid).flatMap(rules.cells).map(cell=>cell.join(',')));
+   const occupiedByPeople=new Set([...(presence.get(id)?.values()||[])].filter(other=>other.id!==s.id).map(other=>other.x+','+other.y));
    const candidates=rules.cells(item).flatMap(([x,y])=>[[x+1,y],[x-1,y],[x,y+1],[x,y-1]])
-    .filter((v,index,all)=>v[0]>=0&&v[1]>=0&&v[0]<10&&v[1]<10&&!occupied.has(v.join(','))&&all.findIndex(w=>w[0]===v[0]&&w[1]===v[1])===index)
+    .filter((v,index,all)=>v[0]>=0&&v[1]>=0&&v[0]<10&&v[1]<10&&!occupied.has(v.join(','))&&!occupiedByPeople.has(v.join(','))&&all.findIndex(w=>w[0]===v[0]&&w[1]===v[1])===index)
     .sort((u,v)=>Math.abs(u[0]-person.x)+Math.abs(u[1]-person.y)-Math.abs(v[0]-person.x)-Math.abs(v[1]-person.y));
    let target=null,path=null;
    for(const [x,y] of candidates){const route=rules.route(r.layout,person,{x,y});if(route){target={x,y};path=route;break;}}
