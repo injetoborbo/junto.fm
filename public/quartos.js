@@ -93,12 +93,11 @@ function draw(){const rect=canvas.getBoundingClientRect();if(!rect.width)return;
  box(0,0,10,.07,7,'#d5c8a7');box(0,0,.07,10,7,'#d5c8a7');
  for(let x=0;x<10;x++)for(let y=0;y<10;y++)poly([iso(x,y),iso(x+1,y),iso(x+1,y+1),iso(x,y+1)],tint(l.floor,(x+y)%2?0:8),editing?'#8b8d72':'#99896c');
  poly([iso(0,0,1),iso(1,0,1),iso(1,1,1),iso(0,1,1)],'#a8b9a0');const sign=iso(0,5,75);ctx.save();ctx.translate(sign.x,sign.y);ctx.transform(1,.5,0,1,0,0);ctx.fillStyle='#233b32';ctx.fillRect(-62*scale,-23*scale,124*scale,42*scale);ctx.fillStyle='#e5c76d';ctx.font=`bold ${14*scale}px Trebuchet MS`;ctx.textAlign='center';ctx.fillText('THE SÍMIOS',0,3*scale);ctx.restore();
- l.items.filter(i=>i.type==='rug').forEach(i=>furniture(i));
- const objects=[...l.items.filter(i=>i.type!=='rug').map(i=>({depth:i.x+i.y+Math.max(...R.cells(i).map(c=>c[0]+c[1]))-i.x-i.y,draw:()=>furniture(i)}))];objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
+ // Mobiliário renderizado pela camada Three.js (GLB CC0 e malhas 3D locais).
  // Avatares 3D usam a mesma posição isométrica e o mesmo estado de presença do quarto.
- window.JFQuartos3D?.update({width:w,height:h,scale,avatars:people.map(p=>{const q=iso(p.x+.5,p.y+.5);return {id:p.id,name:p.name,wardrobe:p.wardrobe||{},pose:p.pose||"standing",x:q.x,y:q.y+5,local:p.id===socket.id};})});
+ window.JFQuartos3D?.update({width:w,height:h,scale,items:l.items,avatars:people.map(p=>{const q=iso(p.x+.5,p.y+.5);return {id:p.id,name:p.name,wardrobe:p.wardrobe||{},pose:p.pose||"standing",x:q.x,y:q.y+5,local:p.id===socket.id};})});
  for(const p of people)monkeyName(p);
- if(editing&&selected&&hover)furniture({...selected,...hover},true);
+ // Pré-visualização do móvel selecionado aparece na camada 3D.
  for(const p of people){const b=bubbles.get(p.id);if(!b||b.until<Date.now())continue;const q=iso(p.x+.5,p.y+.5,90);ctx.font=`${12*scale}px Trebuchet MS`;ctx.textAlign='center';const lines=b.text.match(/.{1,32}(?:\s|$)|.{1,32}/g)||[];const bw=218*scale,bh=(Math.min(lines.length,3)*17+12)*scale;ctx.fillStyle='#f5efda';ctx.strokeStyle='#1d3026';ctx.lineWidth=2;ctx.fillRect(q.x-bw/2,q.y-bh,bw,bh);ctx.strokeRect(q.x-bw/2,q.y-bh,bw,bh);ctx.fillStyle='#20352a';lines.slice(0,3).forEach((line,i)=>ctx.fillText(line,q.x,q.y-bh+(19+i*17)*scale));}
 }
 window.addEventListener("jf-quartos-3d-ready",()=>draw());
