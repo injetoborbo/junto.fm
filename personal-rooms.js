@@ -80,7 +80,7 @@ function setupRooms(app,io,accounts){
   on('chat',700,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const text=typeof p?.text==='string'?p.text.trim().slice(0,240):'';if(!text)return;ns.to(id).emit('chat',{id:s.id,name:String(a.nickname||'Macaco').slice(0,24),text});reply({ok:true});});
   s.on('leave',()=>leave(s));s.on('disconnect',()=>leave(s));
  });
- const timer=setInterval(()=>{for(const [id,people] of presence){let moved=false;for(const p of people.values())if(p.path.length){Object.assign(p,p.path.shift());if(!p.path.length&&p.pendingPose){p.pose=p.pendingPose;p.pendingPose=null;}moved=true;}if(moved)broadcast(id);}},220);timer.unref();
+ const timer=setInterval(()=>{for(const [id,people] of presence){let moved=false;for(const p of people.values())if(p.path.length){Object.assign(p,p.path.shift());if(!p.path.length){if(p.pendingPose){p.pose=p.pendingPose;p.pendingPose=null;}else if(p.pose==='walking')p.pose='standing';}moved=true;}if(moved)broadcast(id);}},220);timer.unref();
  return {ready,close:()=>clearInterval(timer)};
 }
 module.exports={setupRooms,initial};
