@@ -27,7 +27,7 @@ function setupRooms(app,io,accounts){
   const name=String(req.body?.name||'').trim();if(!name||name.length>48||!Number.isInteger(req.body?.revision))throw err('Nome ou versão inválidos.');
   const result=await pool.query('UPDATE junto_personal_rooms SET name=$2,layout=$3,revision=revision+1 WHERE owner_id=$1 AND revision=$4 RETURNING *',[a.id,name,JSON.stringify(layout),req.body.revision]);
   if(!result.rowCount)throw err('O quarto mudou em outra aba. Reabra antes de editar.',409);
-  for(const p of presence.get(a.id)?.values()||[]){p.x=0;p.y=0;p.path=[];}
+  for(const p of presence.get(a.id)?.values()||[]){p.x=0;p.y=0;p.path=[];p.pose='standing';p.pendingPose=null;}
   ns.to(a.id).emit('layout',result.rows[0]);broadcast(a.id);res.json(result.rows[0]);
  }));
  app.post('/api/quartos/invites',wrap(async(req,res,a)=>{
