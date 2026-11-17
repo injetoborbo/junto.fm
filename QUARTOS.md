@@ -11,7 +11,7 @@ Abra **Quartos** na recepção ou na barra superior do Junto.fm. É necessário 
 - O acesso persiste até o dono remover o convidado. Remover também retira suas sessões abertas. Um link de quarto sozinho não concede acesso.
 - Até 12 conexões simultâneas. O dono não precisa estar presente. Caminhos e mensagens são sincronizados por Socket.IO, em namespace separado das salas de música.
 - Decoração salva redefine as posições dos visitantes para a entrada, evitando personagens dentro de móveis novos.
-- Os avatares agora são instâncias 3D do modelo base `macaco.glb`, renderizadas numa camada WebGL transparente sobre o cenário isométrico. A câmera permanece fixa; posição e escala dos macacos acompanham a grade e o zoom do quarto. O modelo é carregado sob demanda ao entrar num quarto, compartilhado como recurso-base e clonado para cada visitante. Nesta etapa, os trajes equipados no guarda-roupa ainda não são sincronizados com o quarto; sentar, economia, compra/troca de móveis e reprodução de mídia nos objetos também não estão incluídos.
+- Os avatares são instâncias 3D do modelo `macaco.glb` com os trajes equipados na conta, montados pelo mesmo sistema `createWardrobeFittedAvatar` do guarda-roupa. Cada participante recebe apenas as escolhas sanitizadas salvas na conta; os acessórios são carregados conforme necessário e cada personagem tem sua própria instância. A câmera permanece fixa; posição e escala acompanham a grade e o zoom. Sentar, economia, compra/troca de móveis e reprodução de mídia nos objetos ainda não estão incluídos.
 
 ## Persistência e integração
 
