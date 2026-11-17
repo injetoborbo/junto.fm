@@ -59,11 +59,27 @@ function setupRooms(app,io,accounts){
    if(!presence.has(id))presence.set(id,new Map());presence.get(id).set(s.id,{id:s.id,accountId:a.id,name:String(a.nickname||'Macaco').slice(0,24),wardrobe:a.wardrobe||{},x:0,y:0,path:[]});
    reply({room:r,own:id===a.id});broadcast(id);
   });
-  on('walk',150,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;const route=rules.route(r.layout,person,p);if(!route)throw err('Não dá para chegar aí.');person.path=route;reply({ok:true});});
+  on('walk',150,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;const route=rules.route(r.layout,person,p);if(!route)throw err('Não dá para chegar aí.');person.path=route;person.pose='walking';person.pendingPose=null;if(!route.length)person.pose='standing';broadcast(id);reply({ok:true});});
+  on('interact',350,async(p,a,reply)=>{
+   const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');
+   const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;
+   const item=r.layout.items.find(i=>i.id===p?.itemId);if(!item)throw err('Esse móvel não está mais no quarto.');
+   const pose=item.type==='bed'?'lying':['sofa','chair'].includes(item.type)?'sitting':null;
+   if(!pose)throw err('Esse móvel ainda não tem interação.');
+   const occupied=new Set(r.layout.items.filter(i=>rules.itemType(i.type).solid).flatMap(rules.cells).map(cell=>cell.join(',')));
+   const candidates=rules.cells(item).flatMap(([x,y])=>[[x+1,y],[x-1,y],[x,y+1],[x,y-1]])
+    .filter((v,index,all)=>v[0]>=0&&v[1]>=0&&v[0]<10&&v[1]<10&&!occupied.has(v.join(','))&&all.findIndex(w=>w[0]===v[0]&&w[1]===v[1])===index)
+    .sort((u,v)=>Math.abs(u[0]-person.x)+Math.abs(u[1]-person.y)-Math.abs(v[0]-person.x)-Math.abs(v[1]-person.y));
+   let target=null,path=null;
+   for(const [x,y] of candidates){const route=rules.route(r.layout,person,{x,y});if(route){target={x,y};path=route;break;}}
+   if(!target)throw err('Não há espaço livre ao redor desse móvel.');
+   person.path=path;person.pendingPose=pose;person.pose=path.length?'walking':pose;
+   broadcast(id);reply({ok:true,pose});
+  });
   on('chat',700,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const text=typeof p?.text==='string'?p.text.trim().slice(0,240):'';if(!text)return;ns.to(id).emit('chat',{id:s.id,name:String(a.nickname||'Macaco').slice(0,24),text});reply({ok:true});});
   s.on('leave',()=>leave(s));s.on('disconnect',()=>leave(s));
  });
- const timer=setInterval(()=>{for(const [id,people] of presence){let moved=false;for(const p of people.values())if(p.path.length){Object.assign(p,p.path.shift());moved=true;}if(moved)broadcast(id);}},220);timer.unref();
+ const timer=setInterval(()=>{for(const [id,people] of presence){let moved=false;for(const p of people.values())if(p.path.length){Object.assign(p,p.path.shift());if(!p.path.length&&p.pendingPose){p.pose=p.pendingPose;p.pendingPose=null;}moved=true;}if(moved)broadcast(id);}},220);timer.unref();
  return {ready,close:()=>clearInterval(timer)};
 }
 module.exports={setupRooms,initial};
