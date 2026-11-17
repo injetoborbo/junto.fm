@@ -50,3 +50,13 @@ footer b{color:var(--pink);font-size:14px}
 #room aside{background:#211e4d;border:2px solid #5d5798;border-radius:2px;box-shadow:4px 4px 0 #09091d}
 #room button{border-radius:2px}
 @media(max-width:800px){header{padding:12px 4%}.nav-sticker{display:none}main{padding:20px 4%}#lobby{gap:10px;min-height:0}.intro{padding:25px 0 10px}.intro h1{font-size:clamp(45px,13vw,68px)}.lobby-side{padding:22px 10px}.sticker{right:-4px;top:-10px}footer{padding:16px 4%;font-size:8px}}
+
+.auth-gate{max-width:760px;margin:9vh auto;padding:0;background:#1d1a43;border:2px solid #8b7bc5;box-shadow:7px 7px 0 #09091d}
+.auth-gate[hidden]{display:none!important}
+.auth-gate-inner{display:flex;gap:24px;align-items:center;padding:34px}
+.auth-lock{flex:0 0 82px;height:82px;display:grid;place-items:center;background:#292657;border:2px solid #7972bd;color:var(--yellow);font-size:43px;box-shadow:4px 4px 0 #09091d}
+.auth-gate h1{margin:16px 0 10px;font: bold clamp(30px,5vw,48px) Georgia,serif;color:#fff}
+.auth-gate p{max-width:500px;color:#c5c1e8;font-size:13px;line-height:1.7}
+.auth-login{margin-top:9px;text-decoration:none}
+.auth-note{font-size:10px!important;color:#9994c8!important}
+@media(max-width:600px){.auth-gate{margin:4vh auto}.auth-gate-inner{padding:22px;display:block}.auth-lock{margin-bottom:20px;width:68px;height:68px}}
