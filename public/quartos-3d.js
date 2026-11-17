@@ -53,9 +53,9 @@ async function update(payload){
  try{await loadBase();}catch(_){render();return;}
  for(const p of payload.avatars){
   let root=avatars.get(p.id);
-  if(!root){root=makeAvatar(p,payload.scale||1);avatars.set(p.id,root);}
+  if(!root||Math.abs((root.userData.scale||1)-(payload.scale||1))>.01){if(root)scene.remove(root);root=makeAvatar(p,payload.scale||1);root.userData.scale=payload.scale||1;avatars.set(p.id,root);}
   const height=root.userData.height;
-  root.position.set(p.x-payload.width/2,payload.height/2-p.y-height/2,2);
+  root.position.set(p.x-payload.width/2,payload.height/2-p.y,2);
   root.rotation.y=p.local?-.12:0;
  }
  render();
