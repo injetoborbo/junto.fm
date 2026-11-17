@@ -57,7 +57,12 @@ const clipLoader=new GLTFLoader(),fbxLoader=new FBXLoader(),clipPromises=new Map
 let sittingClipPromise=null;
 function loadClubSittingClip(){
  if(!sittingClipPromise)sittingClipPromise=fbxLoader.loadAsync("/poses/sentadobalanca.fbx").then(source=>{
-  const score=clip=>clip.tracks.reduce((n,t)=>n+(t.name.endsWith(".quaternion")&&t.times?.length>2?t.times.length:0),0);
+  const score=clip=>{let total=0;for(const track of clip.tracks){
+   if(!track.name.endsWith(".quaternion")||!/^.*mixamorig/i.test(track.name))continue;
+   const values=track.values;if(!values||values.length<8)continue;let moving=false;
+   for(let i=4;i+3<values.length;i+=4){let diff=0;for(let a=0;a<4;a++)diff+=Math.abs(values[i+a]-values[a]);if(diff>.005){moving=true;break;}}
+   total+=(moving?1000:0)+Math.min(track.times?.length||0,120);
+  }return total;};
   const clip=[...(source.animations||[])].sort((a,b)=>score(b)-score(a))[0];
   if(!clip?.tracks?.length)throw Error("FBX sem animação de sentar");
   animationClips.set("sitting",{clip,scene:source});return clip;
@@ -106,7 +111,11 @@ function buildClubAction(record,style){
 function switchClubDance(record,style){
  if(record.currentDance===style)return;
  record.action?.fadeOut(.24);record.currentDance=style;record.action=null;
- if(style==="idle")return;
+ if(style==="idle"){
+  record.mixer?.stopAllAction();
+  for(const [uuid,rest] of record.restBones||[])record.rig?.traverse?.(bone=>{if(bone.uuid===uuid)bone.quaternion.copy(rest);});
+  return;
+ }
  if(!animationClips.has(style)){const loading=style==="sitting"?loadClubSittingClip():loadClubClip(style);loading.then(clip=>{if(clip&&record.currentDance===style&&avatars.get(record.id)===record){record.currentDance="idle";switchClubDance(record,style);scheduleAnimation();}});return;}
  const action=buildClubAction(record,style);
  if(action){action.reset().fadeIn(.24).play();record.action=action;}
@@ -147,6 +156,7 @@ function animate(now){
    p.x=t.x;p.y=t.y;
    if(record.walking){record.walking=false;bonePose(record,record.pose||"standing",now);}
   }
+  record.walkTime=(record.walkTime||0)+(record.walking?dt/1000*7.8:0);
   const pose=record.walking?"walking":(record.pose||"standing");
   const danceStyle=record.walking?"idle":pose==="sitting"?"sitting":record.dance||"idle";
   switchClubDance(record,danceStyle);
