@@ -72,7 +72,7 @@ socket.on('connect_error',e=>status(e.message));
 window.addEventListener('beforeunload',e=>{if(editing){e.preventDefault();e.returnValue='';}});
 // Isometric canvas. Furniture is drawn locally: no heavy model downloads.
 let scale=1,ox=500,oy=180,turn=null;
-function iso(x,y,z=0){if(turn){const dx=x-turn.x,dy=y-turn.y,t=R.itemType(turn.type);if(turn.rotation===1){x=turn.x+t.h-dy;y=turn.y+dx;}else if(turn.rotation===2){x=turn.x+t.w-dx;y=turn.y+t.h-dy;}else if(turn.rotation===3){x=turn.x+dy;y=turn.y+t.w-dx;}}return {x:ox+(x-y)*32*scale,y:oy+(x+y)*16*scale-z*scale};}
+function iso(x,y,z=0){if(turn){const dx=x-turn.x,dy=y-turn.y,t=R.itemType(turn.type);if(turn.rotation===1){x=turn.x+t.h-dy;y=turn.y+dx;}else if(turn.rotation===2){x=turn.x+t.w-dx;y=turn.y+t.h-dy;}else if(turn.rotation===3){x=turn.x+dy;y=turn.y+t.w-dx;}}const w=canvas.clientWidth,h=canvas.clientHeight,ppu=h/(8.5/zoom),wx=(x-5)*.55,wz=(y-5)*.55;return {x:w/2+.70710678*(wx-wz)*ppu,y:h/2+(.4714*(wx+wz)+.485)*ppu-z*scale};}
 function poly(points,fill,stroke='#273b35'){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=1.5*scale;ctx.stroke();}
 function tint(hex,n){return '#'+[1,3,5].map(i=>Math.max(0,Math.min(255,parseInt(hex.slice(i,i+2),16)+n)).toString(16).padStart(2,'0')).join('');}
 function box(x,y,w,h,z,c,base=0){poly([iso(x,y,base),iso(x+w,y,base),iso(x+w,y,base+z),iso(x,y,base+z)],tint(c,-32));poly([iso(x+w,y,base),iso(x+w,y+h,base),iso(x+w,y+h,base+z),iso(x+w,y,base+z)],tint(c,-18));poly([iso(x,y+h,base),iso(x+w,y+h,base),iso(x+w,y+h,base+z),iso(x,y+h,base+z)],tint(c,-10));poly([iso(x,y,base+z),iso(x+w,y,base+z),iso(x+w,y+h,base+z),iso(x,y+h,base+z)],c);}
@@ -93,13 +93,13 @@ function monkeyName(p){const q=iso(p.x+.5,p.y+.5),me=p.id===socket.id;ellipse(q,
 function draw(){const rect=canvas.getBoundingClientRect();if(!rect.width)return;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const w=rect.width,h=rect.height;scale=Math.min(w/760,h/580)*zoom;ox=w/2;oy=(h-320*scale)/2+40*scale;if(!current)return;const l=editing?draft:current.layout;
  ctx.clearRect(0,0,w,h);
  // Cenário, piso, paredes, avatares e móveis compartilham agora o renderer 3D isométrico.
- window.JFQuartos3D?.update({width:w,height:h,scale,wall:l.wall,floor:l.floor,items:l.items,avatars:people.map(p=>({id:p.id,name:p.name,wardrobe:p.wardrobe||{},pose:p.pose||"standing",dance:p.dance||"idle",gridX:p.x+.5,gridY:p.y+.5,local:p.id===socket.id}))});
+ window.JFQuartos3D?.update({width:w,height:h,scale,zoom,wall:l.wall,floor:l.floor,items:l.items,avatars:people.map(p=>({id:p.id,name:p.name,wardrobe:p.wardrobe||{},pose:p.pose||"standing",dance:p.dance||"idle",gridX:p.x+.5,gridY:p.y+.5,local:p.id===socket.id}))});
  for(const p of people)monkeyName(p);
  // Pré-visualização do móvel selecionado aparece na camada 3D.
  for(const p of people){const b=bubbles.get(p.id);if(!b||b.until<Date.now())continue;const q=iso(p.x+.5,p.y+.5,90);ctx.font=`${12*scale}px Trebuchet MS`;ctx.textAlign='center';const lines=b.text.match(/.{1,32}(?:\s|$)|.{1,32}/g)||[];const bw=218*scale,bh=(Math.min(lines.length,3)*17+12)*scale;ctx.fillStyle='#f5efda';ctx.strokeStyle='#1d3026';ctx.lineWidth=2;ctx.fillRect(q.x-bw/2,q.y-bh,bw,bh);ctx.strokeRect(q.x-bw/2,q.y-bh,bw,bh);ctx.fillStyle='#20352a';lines.slice(0,3).forEach((line,i)=>ctx.fillText(line,q.x,q.y-bh+(19+i*17)*scale));}
 }
 window.addEventListener("jf-quartos-3d-ready",()=>draw());
-function tile(e){const r=canvas.getBoundingClientRect(),dx=(e.clientX-r.left-ox)/(32*scale),dy=(e.clientY-r.top-oy)/(16*scale);return {x:Math.floor((dx+dy)/2),y:Math.floor((dy-dx)/2)};}
+function tile(e){const r=canvas.getBoundingClientRect(),ppu=r.height/(8.5/zoom),sx=(e.clientX-r.left-r.width/2)/(.70710678*ppu),sy=(e.clientY-r.top-r.height/2)/ppu,a=(sy-.485)/.4714,b=sx;const wx=(a+b)/2,wz=(a-b)/2;return {x:Math.floor(wx/.55+5),y:Math.floor(wz/.55+5)};}
 function furnitureAt(e){if(!current)return null;const r=canvas.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;let best=null,score=Infinity;for(const item of current.layout.items){if(!['sofa','chair','bed'].includes(item.type))continue;const t=R.itemType(item.type),q=iso(item.x+t.w/2,item.y+t.h/2,item.type==='bed'?22:28),dx=px-q.x,dy=py-q.y,d=Math.hypot(dx,dy),limit=Math.max(48*scale,(t.w+t.h)*18*scale);if(d<limit&&d<score){best=item;score=d;}}return best;}
 canvas.onpointermove=e=>{if(editing){hover=tile(e);draw();}};
 canvas.onclick=run(async e=>{if(!current||saving)return;const p=tile(e);if(p.x<0||p.y<0||p.x>=10||p.y>=10)return;
