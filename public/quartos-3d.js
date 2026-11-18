@@ -11,8 +11,7 @@ const avatars=new Map();
 
 const furniture=new Map(), furnitureLoader=new GLTFLoader(), furnitureAssets=new Map();
 const KENNEY_CC0="https://raw.githubusercontent.com/0auBSQ/OpenTaiko/50b190a2303742202dc9cb44d946a524da2d4fff/OpenTaiko/Global/Modules/Stages/my_room/Models/";
-const APARTMENT_CC0="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/41b06c6223d847d9de6519dd25a493d40e65992d/GLB/";
-const ASSET_PATHS={chair:APARTMENT_CC0+"Kitchen/ap_dining_chair.glb",table:APARTMENT_CC0+"Living/ap_coffee_table.glb",sofa:KENNEY_CC0+"sofa.glb",bed:KENNEY_CC0+"bed.glb",shelf:KENNEY_CC0+"bookshelf.glb",plant:APARTMENT_CC0+"Living/ap_plant_small.glb",lamp:APARTMENT_CC0+"Living/ap_floor_lamp.glb",tv:KENNEY_CC0+"tv.glb",banana:"/club/bananasims_otimizada.glb"};
+const ASSET_PATHS={chair:KENNEY_CC0+"chair.glb",table:KENNEY_CC0+"table.glb",sofa:KENNEY_CC0+"sofa.glb",bed:KENNEY_CC0+"bed.glb",shelf:KENNEY_CC0+"bookshelf.glb",plant:KENNEY_CC0+"plant.glb",lamp:KENNEY_CC0+"floorlamp.glb",tv:KENNEY_CC0+"tv.glb",arcade:KENNEY_CC0+"arcade.glb",speaker:KENNEY_CC0+"jukebox.glb",banana:"/club/bananasims_otimizada.glb"};
 const material=color=>new THREE.MeshStandardMaterial({color,roughness:.88});
 function block(g,w,h,d,color,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));m.position.set(x,y,z);g.add(m);}
 function fallbackFurniture(type,color,w,h){
@@ -55,7 +54,7 @@ async function syncFurniture(items,layout){
   let rec=furniture.get(item.id);if(rec?.key===key)continue;if(rec)clearFurniture(item.id);
   const dims={sofa:[2,1],chair:[1,1],table:[2,1],bed:[2,3],shelf:[2,1],plant:[1,1],lamp:[1,1],tv:[2,1],rug:[3,3],speaker:[1,1],arcade:[1,1],banana:[1,1]}[item.type]||[1,1];
   const fw=item.rotation%2?dims[1]:dims[0],fh=item.rotation%2?dims[0]:dims[1];
-  const width=fw*tile*.88,height=({sofa:.78,chair:.82,table:.55,bed:.48,shelf:1.22,plant:.82,lamp:1.3,tv:.92,rug:.035,arcade:1.2,speaker:.55,banana:.8}[item.type]||.8);
+  const width=fw*tile*.88,height=({sofa:.78,chair:.82,table:.55,bed:.48,shelf:1.22,plant:.82,lamp:1.3,tv:.92,rug:.035,arcade:1.2,speaker:.82,banana:.8}[item.type]||.8);
   const root=new THREE.Group();
   root.position.set((item.x+fw/2-5)*tile,0,(item.y+fh/2-5)*tile);
   const token={key,root,pending:true};furniture.set(item.id,token);
