@@ -15,15 +15,32 @@ const ASSET_PATHS={chair:"/club/cadeirabalada.glb",table:"/club/mesabalada.glb",
 const material=color=>new THREE.MeshStandardMaterial({color,roughness:.88});
 function block(g,w,h,d,color,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));m.position.set(x,y,z);g.add(m);}
 function fallbackFurniture(type,color,w,h){
- const g=new THREE.Group(),wood="#8b6047",fabric=color||"#c96c4d";
- if(type==="sofa"){block(g,w*.92,h*.35,18,fabric,0,8,0);block(g,w*.92,34,18,fabric,0,28,-3);block(g,12,38,24,wood,-w*.43,17,0);block(g,12,38,24,wood,w*.43,17,0);}
- else if(type==="bed"){block(g,w,h*.24,24,wood,0,8,0);block(g,w*.94,h*.72,20,"#eee1c4",0,23,2);block(g,w*.94,10,22,fabric,0,39,0);}
- else if(type==="tv"){block(g,w,h*.2,20,wood,0,5,0);block(g,w*.88,h*.72,24,"#202632",0,28,0);block(g,w*.72,h*.54,3,"#8ad9d5",0,29,13);}
- else if(type==="shelf"||type==="arcade"){block(g,w*.9,h,15,wood,0,h/2,0);for(let y=10;y<h;y+=18)block(g,w*.84,3,17,"#d5b68a",0,y,10);}
- else if(type==="rug"){block(g,w,h,2,fabric,0,0,-4);}
- else if(type==="plant"||type==="banana"){block(g,w*.35,15,16,"#a96f4b",0,7,0);for(let i=0;i<5;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(12,7,5),material(i%2?"#5d9b58":"#78b96c"));leaf.scale.set(.65,1.35,.45);leaf.position.set(Math.cos(i*1.25)*10,27+Math.sin(i*1.25)*7,0);g.add(leaf);}}
- else if(type==="lamp"){block(g,4,h*.7,4,"#b6a17a",0,h*.36,0);const shade=new THREE.Mesh(new THREE.ConeGeometry(13,18,8),material("#f4d88c"));shade.position.y=h*.78;g.add(shade);}
- else {block(g,w*.8,h*.35,18,fabric,0,10,0);}
+ const g=new THREE.Group(),wood="#8b6047",fabric=color||"#c96c4d",depth=.30;
+ if(type==="sofa"){
+  block(g,w*.92,.22,depth,fabric,0,.13,0);block(g,w*.92,.48,depth*.72,fabric,0,.46,-.07);
+  block(g,.12,.52,depth,wood,-w*.43,.27,0);block(g,.12,.52,depth,wood,w*.43,.27,0);
+ }else if(type==="bed"){
+  block(g,w,.18,depth*1.8,wood,0,.09,0);block(g,w*.94,.17,depth*1.7,"#eee1c4",0,.25,0);
+  block(g,w,.34,.08,wood,0,.25,-depth*.82);
+ }else if(type==="tv"){
+  block(g,w,.12,.30,wood,0,.06,0);block(g,w*.88,h*.72,.12,"#202632",0,h*.56,0);
+  block(g,w*.72,h*.54,.012,"#8ad9d5",0,h*.56,.07);
+ }else if(type==="shelf"||type==="arcade"){
+  block(g,w*.9,h,.18,wood,0,h/2,0);
+  for(let y=.18;y<h;y+=.22)block(g,w*.84,.035,.2,"#d5b68a",0,y,.04);
+ }else if(type==="rug"){
+  block(g,w,.025,depth*1.8,fabric,0,.015,0);
+ }else if(type==="plant"||type==="banana"){
+  block(g,w*.42,.22,.24,"#a96f4b",0,.11,0);
+  for(let i=0;i<5;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(.12,7,5),material(i%2?"#5d9b58":"#78b96c"));leaf.scale.set(.65,1.35,.45);leaf.position.set(Math.cos(i*1.25)*.10,.38+Math.sin(i*1.25)*.07,0);g.add(leaf);}
+ }else if(type==="lamp"){
+  block(g,.06,h*.7,.06,"#b6a17a",0,h*.35,0);
+  const shade=new THREE.Mesh(new THREE.ConeGeometry(.17,.22,8),material("#f4d88c"));shade.position.y=h*.78;g.add(shade);
+ }else if(type==="speaker"){
+  block(g,w*.7,h,.24,"#30343c",0,h/2,0);
+ }else{
+  block(g,w*.8,.25,.28,fabric,0,.13,0);
+ }
  return g;
 }
 function loadFurniture(type){if(!ASSET_PATHS[type])return Promise.resolve(null);if(!furnitureAssets.has(type))furnitureAssets.set(type,furnitureLoader.loadAsync(ASSET_PATHS[type]).then(g=>g.scene).catch(e=>{console.warn("Móvel CC0 indisponível:",type,e);return null;}));return furnitureAssets.get(type);}
