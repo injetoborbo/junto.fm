@@ -227,17 +227,17 @@ function init(){
  const room=new THREE.Group();room.name="junto-room-shell";scene.add(room);scene.userData.room=room;
  const floor=new THREE.Group();room.add(floor);scene.userData.floorTiles=[];
  const tile=.55;
- for(let x=0;x<10;x++)for(let z=0;z<10;z++){
+ for(let x=0;x<12;x++)for(let z=0;z<12;z++){
   const mat=new THREE.MeshStandardMaterial({color:(x+z)%2?0xc8ad8a:0xd7bd98,roughness:.94});
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(tile-.012,.045,tile-.012),mat);
-  mesh.position.set((x-4.5)*tile,-.025,(z-4.5)*tile);mesh.receiveShadow=true;floor.add(mesh);scene.userData.floorTiles.push(mesh);
+  mesh.position.set((x-5.5)*tile,-.025,(z-5.5)*tile);mesh.receiveShadow=true;floor.add(mesh);scene.userData.floorTiles.push(mesh);
  }
  const wallMat=new THREE.MeshStandardMaterial({color:0x8caaa5,roughness:.9});
- const back=new THREE.Mesh(new THREE.BoxGeometry(5.62,3.25,.10),wallMat);back.position.set(0,1.62,-2.78);back.receiveShadow=true;room.add(back);
- const left=new THREE.Mesh(new THREE.BoxGeometry(.10,3.25,5.62),wallMat);left.position.set(-2.78,1.62,0);left.receiveShadow=true;room.add(left);
+ const back=new THREE.Mesh(new THREE.BoxGeometry(6.72,3.25,.10),wallMat);back.position.set(0,1.62,-3.33);back.receiveShadow=true;room.add(back);
+ const left=new THREE.Mesh(new THREE.BoxGeometry(.10,3.25,6.72),wallMat);left.position.set(-3.33,1.62,0);left.receiveShadow=true;room.add(left);
  const trimMat=new THREE.MeshStandardMaterial({color:0xd5c8a7,roughness:.7});
- const trimBack=new THREE.Mesh(new THREE.BoxGeometry(5.62,.07,.13),trimMat);trimBack.position.set(0,.08,-2.72);room.add(trimBack);
- const trimLeft=new THREE.Mesh(new THREE.BoxGeometry(.13,.07,5.62),trimMat);trimLeft.position.set(-2.72,.08,0);room.add(trimLeft);
+ const trimBack=new THREE.Mesh(new THREE.BoxGeometry(6.72,.07,.13),trimMat);trimBack.position.set(0,.08,-3.27);room.add(trimBack);
+ const trimLeft=new THREE.Mesh(new THREE.BoxGeometry(.13,.07,6.72),trimMat);trimLeft.position.set(-3.27,.08,0);room.add(trimLeft);
  const ceilingGlow=new THREE.PointLight(0xffd9a0,.7,8);ceilingGlow.position.set(0,2.8,0);room.add(ceilingGlow);
 }
 function resize(width,height){
