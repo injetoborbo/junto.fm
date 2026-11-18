@@ -7,7 +7,7 @@ const catalog=[
  ['table','Mesa de centro',2,1,'#ab7954'],['bed','Cama',2,3,'#669eaa'],
  ['shelf','Estante de discos',2,1,'#98684c'],['plant','Costela de adão',1,1,'#629c66'],
  ['lamp','Luminária',1,1,'#ebcd79'],['tv','TV de tubo',2,1,'#7d8090'],
- ['rug','Tapete',3,3,'#a6779b'],['speaker','Caixa de som',1,1,'#525b6e'],
+ ['rug','Tapete',3,3,'#a6779b'],['speaker','Jukebox',1,1,'#525b6e'],
  ['arcade','Fliperama',1,1,'#b273ba'],['banana','Bananeira',1,1,'#7fba70']
 ].map(([type,name,w,h,color])=>({type,name,w,h,color,solid:type!=='rug'}));
 const itemType=t=>catalog.find(i=>i.type===t);
