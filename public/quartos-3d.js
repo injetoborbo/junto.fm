@@ -28,33 +28,28 @@ function fallbackFurniture(type,color,w,h){
 }
 function loadFurniture(type){if(!ASSET_PATHS[type])return Promise.resolve(null);if(!furnitureAssets.has(type))furnitureAssets.set(type,furnitureLoader.loadAsync(ASSET_PATHS[type]).then(g=>g.scene).catch(e=>{console.warn("Móvel CC0 indisponível:",type,e);return null;}));return furnitureAssets.get(type);}
 function clearFurniture(id){const r=furniture.get(id);if(r){scene.remove(r.root);furniture.delete(id);}}
-async function syncFurniture(items,width,height,scale){
- const wanted=new Set((items||[]).map(i=>i.id));for(const id of furniture.keys())if(!wanted.has(id))clearFurniture(id);
+async function syncFurniture(items,layout){
+ const wanted=new Set((items||[]).map(i=>i.id));
+ for(const id of furniture.keys())if(!wanted.has(id))clearFurniture(id);
+ const tile=.55;
  for(const item of items||[]){
-  const key=JSON.stringify([item.type,item.x,item.y,item.rotation]);
+  const key=JSON.stringify([item.type,item.x,item.y,item.rotation,item.color]);
   let rec=furniture.get(item.id);if(rec?.key===key)continue;if(rec)clearFurniture(item.id);
   const dims={sofa:[2,1],chair:[1,1],table:[2,1],bed:[2,3],shelf:[2,1],plant:[1,1],lamp:[1,1],tv:[2,1],rug:[3,3],speaker:[1,1],arcade:[1,1],banana:[1,1]}[item.type]||[1,1];
-  const px=32*scale,py=16*scale,w=(item.rotation%2?dims[1]:dims[0])*px,h=(item.rotation%2?dims[0]:dims[1])*py;
-  const footprintW=item.rotation%2?dims[1]:dims[0],footprintH=item.rotation%2?dims[0]:dims[1];
-  // A camada 2D projeta a origem em (ox, oy); o overlay Three.js usa o centro da tela.
-  // Converte o centro da célula para o mesmo referencial, com Y invertido do canvas para o mundo.
+  const fw=item.rotation%2?dims[1]:dims[0],fh=item.rotation%2?dims[0]:dims[1];
+  const width=fw*tile*.88,height=({sofa:.78,chair:.82,table:.55,bed:.48,shelf:1.22,plant:.82,lamp:1.3,tv:.92,rug:.035,arcade:1.2,speaker:.55,banana:.8}[item.type]||.8);
   const root=new THREE.Group();
-  root.position.set(((item.x-item.y)+(footprintW-footprintH)/2)*px,
-   height/2-(height/2-120*scale+(item.x+item.y+(footprintW+footprintH)/2)*py),0);
+  root.position.set((item.x+fw/2-5)*tile,0,(item.y+fh/2-5)*tile);
   const token={key,root,pending:true};furniture.set(item.id,token);
   const source=await loadFurniture(item.type);
   if(furniture.get(item.id)!==token)continue;
-  const object=source?source.clone(true):fallbackFurniture(item.type,item.color,w,h);
+  const object=source?source.clone(true):fallbackFurniture(item.type,item.color,width,height);
   const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-  const modelSize={sofa:[1.85,.78],chair:[1.02,1.16],table:[1.42,.78],bed:[1.9,.55],shelf:[1.25,1.35],plant:[.82,1.12],lamp:[.68,1.55],tv:[1.72,.92],banana:[.9,1.3]};
-  const [widthFactor,heightFactor]=modelSize[item.type]||[Math.max(.65,w/45),Math.max(.45,h/45)];
-  const targetW=widthFactor*45*scale,targetH=heightFactor*45*scale;
-  const fit=Math.min(targetW/Math.max(size.x,.001),targetH/Math.max(size.y,.001));
-  object.scale.setScalar(fit);object.position.sub(center.multiplyScalar(fit));object.position.y+=targetH*.48;
+  const fit=Math.min(width/Math.max(size.x,.001),height/Math.max(size.y,.001),fw*tile*.92/Math.max(size.z,.001));
+  object.scale.setScalar(fit);object.position.sub(center.multiplyScalar(fit));object.position.y+=height*.5;
   if(item.rotation)object.rotation.y=item.rotation*Math.PI/2;
-  object.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.frustumCulled=false;}});root.add(object);
-  scene.add(root);token.pending=false;
- }
+  object.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;}});
+  root.add(object);scene.add(root);token.pending=false;
 }
 
 const CLUB_DANCES={shake:"/dance/macacochaqualha.glb",macarena:"/dance/macacomacarena.glb",party:"/dance/macacodanca.glb",capoeira:"/dance/macacocapoera.glb",groove:"/dance/macacodancagay.glb"};
@@ -157,59 +152,31 @@ function bonePose(record,pose,time){
 function animate(now){
  animationFrame=0;
  const dt=Math.min(.065,Math.max(0,(now-(lastFrame||now))/1000));lastFrame=now;
- let moving=false;
+ let moving=false;const tile=.55;
  for(const record of avatars.values()){
   if(!record.root||!record.gridTarget)continue;
-  const d=record.gridTarget;
-  const dx=d.x-record.gridX,dz=d.y-record.gridY,distance=Math.hypot(dx,dz);
+  const target=record.gridTarget,dx=target.x-record.gridX,dz=target.y-record.gridY,distance=Math.hypot(dx,dz);
   record.mixer?.update(dt);
-  const walking=distance>.025;
-  // Mesmo deslocamento da Junto Club: 1,35 casas/s, sem saltos entre atualizações do servidor.
+  const walking=distance>.025;record.walking=walking;
   switchClubDance(record,(record.pose==="sitting"||record.pose==="lying")?"idle":walking?"idle":record.dance||"idle");
   if(walking){
-   const step=Math.min(1.35*dt,distance);
-   record.gridX+=dx/distance*step;
-   record.gridY+=dz/distance*step;
-   const heading=Math.atan2(dx,dz);
-   const angleDiff=Math.atan2(Math.sin(heading-record.root.rotation.y),Math.cos(heading-record.root.rotation.y));
-   record.root.rotation.y+=Math.max(-dt*4,Math.min(dt*4,angleDiff));
-   moving=true;
+   const step=Math.min(1.35*dt,distance);record.gridX+=dx/distance*step;record.gridY+=dz/distance*step;
+   const heading=Math.atan2(dx,dz),diff=Math.atan2(Math.sin(heading-record.root.rotation.y),Math.cos(heading-record.root.rotation.y));
+   record.root.rotation.y+=Math.max(-dt*4,Math.min(dt*4,diff));moving=true;
   }else{
-   record.gridX=d.x;record.gridY=d.y;
-   const targetYaw=Math.PI/4;
-   record.root.rotation.y+=Math.atan2(Math.sin(targetYaw-record.root.rotation.y),Math.cos(targetYaw-record.root.rotation.y))*Math.min(1,dt*1.6);
+   record.gridX=target.x;record.gridY=target.y;
+   const diff=Math.atan2(Math.sin(.65-record.root.rotation.y),Math.cos(.65-record.root.rotation.y));
+   record.root.rotation.y+=diff*Math.min(1,dt*1.6);
   }
   record.walkTime=(record.walkTime||0)+(walking?dt*7.8:0);
-  const stride=Math.sin(record.walkTime),style=record.dance||"idle";
-  const phase=now*.002, pulse=Math.sin(phase),bounce=Math.abs(pulse);
-  record.root.position.x=(record.gridX-record.gridY)*record.tileX;
-  record.root.position.y=record.baseY-(record.gridX+record.gridY)*record.tileY+(walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
-  record.root.position.z=2;
+  const style=record.dance||"idle",phase=now*.002,pulse=Math.sin(phase),bounce=Math.abs(pulse);
+  record.root.position.set((record.gridX-5)*tile,.77+(walking?.018*Math.abs(Math.sin(record.walkTime)):style==="idle"?.006*pulse:.025*bounce),(record.gridY-5)*tile);
   record.root.rotation.x=record.pose==="sitting"?-.12:0;
   record.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
   if(record.rig&&!record.action){
-   for(const bone of record.animationBones||[]){
-    const rest=record.restEuler?.get(bone.uuid);if(!rest)continue;
-    const [rx,ry,rz]=[rest.x,rest.y,rest.z],n=bone.name.toLowerCase();
-    const left=/left|(?:^|_)l_(?:arm|hand|thigh|calf|leg|shoulder)/.test(n),side=left?1:-1;
-    const upperLeg=/(upleg|upperleg|thigh)/.test(n),lowerLeg=/(calf|shin|lowerleg|leg$)/.test(n)&&!upperLeg;
-    const forearm=/(forearm|lowerarm)/.test(n),upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm,torso=/spine/.test(n);
-    let x=rx,y=ry,z=rz;
-    // Copiado do dance-floor.js: mesma passada, balanço de braços e tronco.
-    if(walking){
-     if(upperLeg)x+=side*.36*stride;
-     if(lowerLeg)x+=.15*Math.max(0,-side*stride);
-     if(upperArm)x-=side*.26*stride;
-     if(forearm)x-=side*.10*stride;
-     if(torso)z+=.022*stride;
-    }else if(style==="shake"){
-     if(upperArm){x+=side*.26*Math.sin(phase*12);z+=side*.22*Math.cos(phase*12);}
-     if(forearm)x+=side*.22*Math.sin(phase*12+1);
-     if(upperLeg)x+=side*.08*Math.sin(phase*12);
-     if(torso){y+=.09*Math.sin(phase*12);z+=.055*Math.cos(phase*12);}
-    }
-    bone.rotation.set(x,y,z);
-   }
+   if(walking)bonePose(record,"walking",now);
+   else if(style!=="idle")bonePose(record,style,now);
+   else for(const bone of record.animationBones||[]){const rest=record.restEuler?.get(bone.uuid);if(rest)bone.rotation.copy(rest);}
   }
  }
  render();
@@ -219,15 +186,44 @@ function animate(now){
 function scheduleAnimation(){if(!animationFrame)animationFrame=requestAnimationFrame(animate);}
 function init(){
  if(renderer)return;
- scene=new THREE.Scene();
- camera=new THREE.OrthographicCamera(-1,1,1,-1,.1,3000);
- camera.position.set(0,0,1200);camera.lookAt(0,0,0);
- renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false,powerPreference:"low-power"});
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x20233b);
+ camera=new THREE.OrthographicCamera(-4.25,4.25,4.25,-4.25,.1,100);
+ camera.position.set(9,12,9);camera.lookAt(0,.65,0);
+ renderer=new THREE.WebGLRenderer({canvas,alpha:false,antialias:true,powerPreference:"low-power"});
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.matchMedia("(max-width:760px)").matches?1:1.25));
- renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;
- scene.add(new THREE.HemisphereLight(0xffffff,0x51406b,2.0));
- const key=new THREE.DirectionalLight(0xffffff,2.0);key.position.set(-120,220,300);scene.add(key);
- const fill=new THREE.DirectionalLight(0x9deaff,.7);fill.position.set(160,-80,180);scene.add(fill);
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setClearColor(0x20233b,1);
+ scene.add(new THREE.HemisphereLight(0xf4e8ff,0x51405b,2.0));
+ const key=new THREE.DirectionalLight(0xffe6c7,2.2);key.position.set(-4,9,6);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
+ const fill=new THREE.DirectionalLight(0x9deaff,.7);fill.position.set(5,5,-5);scene.add(fill);
+ const room=new THREE.Group();room.name="junto-room-shell";scene.add(room);scene.userData.room=room;
+ const floor=new THREE.Group();room.add(floor);scene.userData.floorTiles=[];
+ const tile=.55;
+ for(let x=0;x<10;x++)for(let z=0;z<10;z++){
+  const mat=new THREE.MeshStandardMaterial({color:(x+z)%2?0xc8ad8a:0xd7bd98,roughness:.94});
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(tile-.012,.045,tile-.012),mat);
+  mesh.position.set((x-4.5)*tile,-.025,(z-4.5)*tile);mesh.receiveShadow=true;floor.add(mesh);scene.userData.floorTiles.push(mesh);
+ }
+ const wallMat=new THREE.MeshStandardMaterial({color:0x8caaa5,roughness:.9});
+ const back=new THREE.Mesh(new THREE.BoxGeometry(5.62,3.25,.10),wallMat);back.position.set(0,1.62,-2.78);back.receiveShadow=true;room.add(back);
+ const left=new THREE.Mesh(new THREE.BoxGeometry(.10,3.25,5.62),wallMat);left.position.set(-2.78,1.62,0);left.receiveShadow=true;room.add(left);
+ const trimMat=new THREE.MeshStandardMaterial({color:0xd5c8a7,roughness:.7});
+ const trimBack=new THREE.Mesh(new THREE.BoxGeometry(5.62,.07,.13),trimMat);trimBack.position.set(0,.08,-2.72);room.add(trimBack);
+ const trimLeft=new THREE.Mesh(new THREE.BoxGeometry(.13,.07,5.62),trimMat);trimLeft.position.set(-2.72,.08,0);room.add(trimLeft);
+ const ceilingGlow=new THREE.PointLight(0xffd9a0,.7,8);ceilingGlow.position.set(0,2.8,0);room.add(ceilingGlow);
+}
+function resize(width,height){
+ if(lastSize.width===width&&lastSize.height===height)return;
+ lastSize={width,height};renderer.setSize(width,height,false);
+ const aspect=width/Math.max(1,height),halfH=4.25;
+ camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
+}
+function updateRoomStyle(floorColor,wallColor){
+ const floor=new THREE.Color(floorColor||"#c9ad85"),wall=new THREE.Color(wallColor||"#8caaa5");
+ for(const mesh of scene.userData.floorTiles||[])mesh.material.color.copy(floor).multiplyScalar(mesh.position.x*mesh.position.z>0?1:.96);
+ for(const mesh of scene.userData.room?.children||[]){
+  if(mesh.geometry?.type==="BoxGeometry"&&mesh.position.y>1&&mesh.material?.color)mesh.material.color.copy(wall);
+ }
 }
 function resize(width,height){
  if(lastSize.width===width&&lastSize.height===height)return;
@@ -245,10 +241,8 @@ async function createAvatar(person,scale,record){
  try{
   const avatar=await createDanceAvatar(person.wardrobe||{},"default",()=>{}, {local:!!person.local});
   if(avatars.get(person.id)!==record){avatar.dispose();return;}
-  const height=Math.max(44,Math.min(92,68*scale));
-  avatar.group.scale.setScalar(height/1.5);
-  // Três quartos, como os macacos da pista: evita a leitura de boneco chapado de frente.
-  avatar.group.rotation.y=Math.PI/4;
+  avatar.group.scale.setScalar(1);
+  avatar.group.rotation.y=.65;
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.id=person.id;record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;record.experimentalRig=Boolean(avatar.experimentalUsed);
   record.restBones=new Map();record.restWorldBones=new Map();record.restEuler=new Map();record.animationBones=[];
@@ -262,38 +256,27 @@ async function createAvatar(person,scale,record){
     bone.userData.jfRoomBaseX=bone.rotation.x;record.legs.push(bone);
    }
   });
-  record.root.position.set((record.gridX-record.gridY)*record.tileX,
-   record.baseY-(record.gridX+record.gridY)*record.tileY,2);
+  record.root.position.set((record.gridX-5)*.55,.77,(record.gridY-5)*.55);
   scene.add(record.root);scheduleAnimation();
  }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
 }
 function update(payload){
  if(!payload||!Number.isFinite(payload.width)||!Number.isFinite(payload.height))return;
- init();resize(payload.width,payload.height);
+ init();resize(payload.width,payload.height);updateRoomStyle(payload.floor,payload.wall);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
- void syncFurniture(payload.items||[],payload.width,payload.height,payload.scale||1);
+ void syncFurniture(payload.items||[],payload);
  for(const [id,record] of avatars)if(!visible.has(id))removeAvatar(id,record);
  for(const p of payload.avatars||[]){
-  const key=signature(p.wardrobe),old=avatars.get(p.id);
-  let record=old;
+  const key=signature(p.wardrobe),old=avatars.get(p.id);let record=old;
   if(!record||record.signature!==key){
    if(record)removeAvatar(p.id,record);
-   record={signature:key,root:null,dispose:null,target:null,gridX:p.gridX??0,gridY:p.gridY??0,gridTarget:{x:p.gridX??0,y:p.gridY??0},tileX:32*(payload.scale||1),tileY:16*(payload.scale||1),baseY:0,pose:"standing",dance:"idle",walking:false,legs:[]};avatars.set(p.id,record);
-   void createAvatar(p,payload.scale||1,record);
+   record={signature:key,root:null,dispose:null,gridX:p.gridX??0,gridY:p.gridY??0,gridTarget:{x:p.gridX??0,y:p.gridY??0},pose:"standing",dance:"idle",walking:false,walkTime:0};
+   avatars.set(p.id,record);void createAvatar(p,1,record);
   }
-  const avatarHeight=Math.max(44,Math.min(92,68*(payload.scale||1)));
-  record.gridTarget={x:p.gridX??0,y:p.gridY??0};
-  record.tileX=32*(payload.scale||1);record.tileY=16*(payload.scale||1);
-  record.baseY=payload.height/2-(p.y-(p.gridX+p.gridY)*16*(payload.scale||1))-avatarHeight/2;
-  if(!record.root){record.gridX=record.gridTarget.x;record.gridY=record.gridTarget.y;}
-  record.pose=p.pose||"standing";
-  record.dance=p.dance||"idle";
+  record.gridTarget={x:p.gridX??0,y:p.gridY??0};record.pose=p.pose||"standing";record.dance=p.dance||"idle";
   if(record.root){
-   const style=record.walking||record.pose==="sitting"||record.pose==="lying"?"idle":record.dance;
-   switchClubDance(record,style);
-   const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
-   record.root.scale.setScalar(height/1.5);
-   if(!record.walking&&record.lastPose!==record.pose)bonePose(record,record.pose,performance.now());
+   switchClubDance(record,record.walking||record.pose==="sitting"||record.pose==="lying"?"idle":record.dance);
+   if(record.lastPose!==record.pose){bonePose(record,record.pose,performance.now());record.lastPose=record.pose;}
   }
  }
  render();scheduleAnimation();
