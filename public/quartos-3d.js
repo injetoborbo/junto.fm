@@ -8,6 +8,7 @@ const canvas=document.getElementById("quarto3d");
 if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
 let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
+let previewRoot=null,previewKey="";
 
 const furniture=new Map(), furnitureLoader=new GLTFLoader(), furnitureAssets=new Map();
 const KENNEY_CC0="https://raw.githubusercontent.com/0auBSQ/OpenTaiko/50b190a2303742202dc9cb44d946a524da2d4fff/OpenTaiko/Global/Modules/Stages/my_room/Models/";
@@ -215,7 +216,7 @@ function init(){
  if(renderer)return;
  scene=new THREE.Scene();scene.background=new THREE.Color(0x20233b);
  camera=new THREE.OrthographicCamera(-4.25,4.25,4.25,-4.25,.1,100);
- camera.position.set(9,12,9);camera.lookAt(0,.65,0);
+ camera.position.set(9,12,9);camera.lookAt(0,.9,0);
  renderer=new THREE.WebGLRenderer({canvas,alpha:false,antialias:true,powerPreference:"low-power"});
  renderer.outputColorSpace=THREE.SRGBColorSpace;
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.matchMedia("(max-width:760px)").matches?1:1.25));
@@ -242,8 +243,28 @@ function init(){
 function resize(width,height){
  if(lastSize.width===width&&lastSize.height===height)return;
  lastSize={width,height};renderer.setSize(width,height,false);
- const aspect=width/Math.max(1,height),halfH=3.95;
+ const aspect=width/Math.max(1,height),halfH=3.25;
  camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
+}
+async function syncPreview(preview){
+ if(!preview){if(previewRoot){scene.remove(previewRoot);previewRoot=null;}previewKey="";return;}
+ const key=JSON.stringify(preview);
+ if(key===previewKey&&previewRoot)return;
+ previewKey=key;
+ if(previewRoot){scene.remove(previewRoot);previewRoot=null;}
+ const t={sofa:[2,1],chair:[1,1],table:[2,1],bed:[2,3],shelf:[2,1],plant:[1,1],lamp:[1,1],tv:[2,1],rug:[3,3],speaker:[1,1],arcade:[1,1],banana:[1,1]}[preview.type]||[1,1];
+ const fw=preview.rotation%2?t[1]:t[0],fh=preview.rotation%2?t[0]:t[1],tile=.55;
+ const width=fw*tile*.88,height=({sofa:.78,chair:.82,table:.55,bed:.48,shelf:1.22,plant:.82,lamp:1.3,tv:.92,rug:.035,arcade:1.2,speaker:.82,banana:.8}[preview.type]||.8);
+ const source=await loadFurniture(preview.type);
+ if(previewKey!==key)return;
+ const root=new THREE.Group();root.position.set((preview.x+fw/2-5)*tile,.012,(preview.y+fh/2-5)*tile);
+ const object=source?source.clone(true):fallbackFurniture(preview.type,"#75e5d5",width,height);
+ const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
+ const fit=Math.min(width/Math.max(size.x,.001),height/Math.max(size.y,.001),fw*tile*.92/Math.max(size.z,.001));
+ object.scale.setScalar(fit);object.position.sub(center.multiplyScalar(fit));object.position.y+=height*.5;
+ object.rotation.y=preview.rotation*Math.PI/2;
+ object.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.material=o.material.clone();o.material.transparent=true;o.material.opacity=.48;o.material.depthWrite=false;o.material.color.set(preview.valid?"#8bfff0":"#ff555f");}});
+ root.add(object);scene.add(root);previewRoot=root;render();
 }
 function updateRoomStyle(floorColor,wallColor){
  const floor=new THREE.Color(floorColor||"#c9ad85"),wall=new THREE.Color(wallColor||"#8caaa5");
@@ -286,11 +307,11 @@ function update(payload){
  if(!payload||!Number.isFinite(payload.width)||!Number.isFinite(payload.height))return;
  init();resize(payload.width,payload.height);
  scene.userData.zoom=Math.max(.7,Math.min(1.8,payload.zoom||1));
- const halfH=3.95/scene.userData.zoom,aspect=payload.width/Math.max(1,payload.height);
+ const halfH=3.25/scene.userData.zoom,aspect=payload.width/Math.max(1,payload.height);
  camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
  updateRoomStyle(payload.floor,payload.wall);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
- void syncFurniture(payload.items||[],payload);
+ void syncFurniture(payload.items||[],payload);\n void syncPreview(payload.preview||null);
  for(const [id,record] of avatars)if(!visible.has(id))removeAvatar(id,record);
  for(const p of payload.avatars||[]){
   const key=signature(p.wardrobe),old=avatars.get(p.id);let record=old;
