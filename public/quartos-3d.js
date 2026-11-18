@@ -35,7 +35,12 @@ async function syncFurniture(items,width,height,scale){
   let rec=furniture.get(item.id);if(rec?.key===key)continue;if(rec)clearFurniture(item.id);
   const dims={sofa:[2,1],chair:[1,1],table:[2,1],bed:[2,3],shelf:[2,1],plant:[1,1],lamp:[1,1],tv:[2,1],rug:[3,3],speaker:[1,1],arcade:[1,1],banana:[1,1]}[item.type]||[1,1];
   const px=32*scale,py=16*scale,w=(item.rotation%2?dims[1]:dims[0])*px,h=(item.rotation%2?dims[0]:dims[1])*py;
-  const root=new THREE.Group();root.position.set((item.x-item.y)*px,height/2-(item.x+item.y)*py,0);
+  const footprintW=item.rotation%2?dims[1]:dims[0],footprintH=item.rotation%2?dims[0]:dims[1];
+  // A camada 2D projeta a origem em (ox, oy); o overlay Three.js usa o centro da tela.
+  // Converte o centro da célula para o mesmo referencial, com Y invertido do canvas para o mundo.
+  const root=new THREE.Group();
+  root.position.set(((item.x-item.y)+(footprintW-footprintH)/2)*px,
+   height/2-(height/2-120*scale+(item.x+item.y+(footprintW+footprintH)/2)*py),0);
   const token={key,root,pending:true};furniture.set(item.id,token);
   const source=await loadFurniture(item.type);
   if(furniture.get(item.id)!==token)continue;
@@ -159,9 +164,10 @@ function animate(now){
   record.mixer?.update(dt/1000);
   const dx=t.x-p.x,dy=t.y-p.y,d=Math.hypot(dx,dy);
   if(d>.7){
-   const step=Math.min(1,dt*.009);
+   // Velocidade constante em pixels CSS/s: deslocamento contínuo, sem easing que parece teleporte.
+   const step=Math.min(d,dt*.22)/d;
    p.x+=dx*step;p.y+=dy*step;record.walking=true;moving=true;
-   if(Math.abs(dx)>Math.abs(dy))record.root.rotation.y=dx<0?-.12:.12;
+   if(Math.abs(dx)>Math.abs(dy))record.root.rotation.y=Math.PI/4+(dx<0?-.32:.32);
   }else{
    p.x=t.x;p.y=t.y;
    if(record.walking){record.walking=false;bonePose(record,record.pose||"standing",now);}
@@ -173,7 +179,7 @@ function animate(now){
   record.root.rotation.z=pose==="lying"?-1.25:0;
   if(pose!==record.lastPose||pose==="walking"||(record.dance||"idle")!=="idle")bonePose(record,pose,now);
   record.lastPose=pose;
-  if(record.walking){p.z=2+Math.abs(Math.sin(now*.018))*2;moving=true;}
+  if(record.walking){p.z=2+Math.abs(Math.sin(now*.018))*.65;moving=true;}
   else p.z=2;
  }
  render();
