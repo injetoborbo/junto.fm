@@ -156,34 +156,64 @@ function bonePose(record,pose,time){
 }
 function animate(now){
  animationFrame=0;
- const dt=Math.min(48,now-(lastFrame||now));lastFrame=now;
+ const dt=Math.min(.065,Math.max(0,(now-(lastFrame||now))/1000));lastFrame=now;
  let moving=false;
  for(const record of avatars.values()){
-  if(!record.root||!record.target)continue;
-  const p=record.root.position,t=record.target;
-  record.mixer?.update(dt/1000);
-  const dx=t.x-p.x,dy=t.y-p.y,d=Math.hypot(dx,dy);
-  if(d>.7){
-   // Velocidade constante em pixels CSS/s: deslocamento contínuo, sem easing que parece teleporte.
-   const step=Math.min(d,dt*.22)/d;
-   p.x+=dx*step;p.y+=dy*step;record.walking=true;moving=true;
-   if(Math.abs(dx)>Math.abs(dy))record.root.rotation.y=Math.PI/4+(dx<0?-.32:.32);
+  if(!record.root||!record.gridTarget)continue;
+  const d=record.gridTarget;
+  const dx=d.x-record.gridX,dz=d.y-record.gridY,distance=Math.hypot(dx,dz);
+  record.mixer?.update(dt);
+  const walking=distance>.025;
+  // Mesmo deslocamento da Junto Club: 1,35 casas/s, sem saltos entre atualizações do servidor.
+  switchClubDance(record,(record.pose==="sitting"||record.pose==="lying")?"idle":walking?"idle":record.dance||"idle");
+  if(walking){
+   const step=Math.min(1.35*dt,distance);
+   record.gridX+=dx/distance*step;
+   record.gridY+=dz/distance*step;
+   const heading=Math.atan2(dx,dz);
+   const angleDiff=Math.atan2(Math.sin(heading-record.root.rotation.y),Math.cos(heading-record.root.rotation.y));
+   record.root.rotation.y+=Math.max(-dt*4,Math.min(dt*4,angleDiff));
+   moving=true;
   }else{
-   p.x=t.x;p.y=t.y;
-   if(record.walking){record.walking=false;bonePose(record,record.pose||"standing",now);}
+   record.gridX=d.x;record.gridY=d.y;
+   const targetYaw=Math.PI/4;
+   record.root.rotation.y+=Math.atan2(Math.sin(targetYaw-record.root.rotation.y),Math.cos(targetYaw-record.root.rotation.y))*Math.min(1,dt*1.6);
   }
-  record.walkTime=(record.walkTime||0)+(record.walking?dt/1000*7.8:0);
-  const pose=record.walking?"walking":(record.pose||"standing");
-  const danceStyle=record.walking?"idle":pose==="sitting"?"sitting":record.dance||"idle";
-  switchClubDance(record,danceStyle);
-  record.root.rotation.z=pose==="lying"?-1.25:0;
-  if(pose!==record.lastPose||pose==="walking"||(record.dance||"idle")!=="idle")bonePose(record,pose,now);
-  record.lastPose=pose;
-  if(record.walking){p.z=2+Math.abs(Math.sin(now*.018))*.65;moving=true;}
-  else p.z=2;
+  record.walkTime=(record.walkTime||0)+(walking?dt*7.8:0);
+  const stride=Math.sin(record.walkTime),style=record.dance||"idle";
+  const phase=now*.002, pulse=Math.sin(phase),bounce=Math.abs(pulse);
+  record.root.position.x=(record.gridX-record.gridY)*record.tileX;
+  record.root.position.y=record.baseY-(record.gridX+record.gridY)*record.tileY+(walking?.032*Math.abs(stride):style==="idle"?.009*pulse:style==="capoeira"?.025*bounce:.045*bounce);
+  record.root.position.z=2;
+  record.root.rotation.x=record.pose==="sitting"?-.12:0;
+  record.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
+  if(record.rig&&!record.action){
+   for(const bone of record.animationBones||[]){
+    const rest=record.restEuler?.get(bone.uuid);if(!rest)continue;
+    const [rx,ry,rz]=[rest.x,rest.y,rest.z],n=bone.name.toLowerCase();
+    const left=/left|(?:^|_)l_(?:arm|hand|thigh|calf|leg|shoulder)/.test(n),side=left?1:-1;
+    const upperLeg=/(upleg|upperleg|thigh)/.test(n),lowerLeg=/(calf|shin|lowerleg|leg$)/.test(n)&&!upperLeg;
+    const forearm=/(forearm|lowerarm)/.test(n),upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm,torso=/spine/.test(n);
+    let x=rx,y=ry,z=rz;
+    // Copiado do dance-floor.js: mesma passada, balanço de braços e tronco.
+    if(walking){
+     if(upperLeg)x+=side*.36*stride;
+     if(lowerLeg)x+=.15*Math.max(0,-side*stride);
+     if(upperArm)x-=side*.26*stride;
+     if(forearm)x-=side*.10*stride;
+     if(torso)z+=.022*stride;
+    }else if(style==="shake"){
+     if(upperArm){x+=side*.26*Math.sin(phase*12);z+=side*.22*Math.cos(phase*12);}
+     if(forearm)x+=side*.22*Math.sin(phase*12+1);
+     if(upperLeg)x+=side*.08*Math.sin(phase*12);
+     if(torso){y+=.09*Math.sin(phase*12);z+=.055*Math.cos(phase*12);}
+    }
+    bone.rotation.set(x,y,z);
+   }
+  }
  }
  render();
- const dancing=[...avatars.values()].some(record=>(record.dance||"idle")!=="idle"&&!["sitting","lying"].includes(record.pose));
+ const dancing=[...avatars.values()].some(r=>(r.dance||"idle")!=="idle"&&!["sitting","lying"].includes(r.pose));
  if(moving||dancing)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
 }
 function scheduleAnimation(){if(!animationFrame)animationFrame=requestAnimationFrame(animate);}
@@ -247,12 +277,14 @@ function update(payload){
   let record=old;
   if(!record||record.signature!==key){
    if(record)removeAvatar(p.id,record);
-   record={signature:key,root:null,dispose:null,target:null,pose:"standing",dance:"idle",walking:false,legs:[]};avatars.set(p.id,record);
+   record={signature:key,root:null,dispose:null,target:null,gridX:p.gridX??0,gridY:p.gridY??0,gridTarget:{x:p.gridX??0,y:p.gridY??0},tileX:32*(payload.scale||1),tileY:16*(payload.scale||1),baseY:0,pose:"standing",dance:"idle",walking:false,legs:[]};avatars.set(p.id,record);
    void createAvatar(p,payload.scale||1,record);
   }
   const avatarHeight=Math.max(44,Math.min(92,68*(payload.scale||1)));
-  // O ponto recebido é o centro do ladrilho (pé do personagem), não o centro do modelo.
-  record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y-avatarHeight/2,2);
+  record.gridTarget={x:p.gridX??0,y:p.gridY??0};
+  record.tileX=32*(payload.scale||1);record.tileY=16*(payload.scale||1);
+  record.baseY=payload.height/2-(p.y-(p.gridX+p.gridY)*16*(payload.scale||1))-avatarHeight/2;
+  if(!record.root){record.gridX=record.gridTarget.x;record.gridY=record.gridTarget.y;}
   record.pose=p.pose||"standing";
   record.dance=p.dance||"idle";
   if(record.root){
