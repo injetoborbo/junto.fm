@@ -242,11 +242,6 @@ function updateRoomStyle(floorColor,wallColor){
   if(mesh.geometry?.type==="BoxGeometry"&&mesh.position.y>1&&mesh.material?.color)mesh.material.color.copy(wall);
  }
 }
-function resize(width,height){
- if(lastSize.width===width&&lastSize.height===height)return;
- lastSize={width,height};renderer.setSize(width,height,false);
- camera.left=-width/2;camera.right=width/2;camera.top=height/2;camera.bottom=-height/2;camera.updateProjectionMatrix();
-}
 function render(){if(renderer)renderer.render(scene,camera);}
 function signature(wardrobe){return JSON.stringify(wardrobe||{});}
 function removeAvatar(id,record){
