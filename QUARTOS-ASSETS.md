@@ -2,34 +2,20 @@
 
 Critério: priorizar arquivos GLB, baixo peso/poligonagem e licença CC0 1.0 (dedicação ao domínio público). Não importar modelos apenas descritos como "free" sem conferir a licença do arquivo/pacote.
 
-## 1. Free Apartment Props — Vuena / Popyca
+## Kenney Furniture Kit — OpenTaiko
 
-- Repositório: https://github.com/Vuena/free-apartment-props-cc0
-- Commit consultado: `41b06c6223d847d9de6519dd25a493d40e65992d`
-- Licença: CC0 1.0; o README declara uso comercial, modificação e redistribuição sem atribuição. A licença cobre somente os 14 modelos desta amostra, não o kit completo vendido separadamente.
-- Formato: 14 GLBs autocontidos com texturas PBR embutidas, além de FBX.
-- Modelos úteis para o quarto: `ap_coffee_table`, `ap_dining_chair`, `ap_nightstand`, `ap_floor_lamp`, `ap_table_lamp`, `ap_plant_small`, `ap_plant_cactus`, `ap_vase`, `ap_book_stack`, `ap_pillow_square` e `ap_basket`.
-- Limitação: não inclui sofá nem cama no sample gratuito. Não usar os arquivos do kit completo sob esta licença; a CC0 vale apenas para os 14 assets listados no repositório.
-
-## 2. Kit Cidade Low Poly — kayquer
-
-- Repositório: https://github.com/kayquer/kit-cidade-lowpoly
-- Commit consultado: `ed5ba11d026ffc6c990035d117c7886b40ed3fb7`
-- Licença: CC0 1.0, conforme README em português e arquivo LICENSE.
-- Formato: 129 modelos GLB low-poly, cores chapadas, sem texturas, até 1.500 triângulos e 150 KB por modelo.
-- Modelos úteis como decoração temática/urbana: `banco_praca`, `orelhao`, `poste_luz`, `vaso_planta`, `parquinho`, `ponto_onibus` e `lixeira`.
-- Limitação: o pacote é mobiliário urbano, não mobiliário residencial; usar seletivamente como decoração temática, não como substituto de sofá/cama.
-
-## Assets efetivamente ligados ao quarto nesta etapa
-
-- Sofá, cama, estante e TV: Kenney Furniture Kit, arquivos GLB do repositório OpenTaiko (commit `50b190a2303742202dc9cb44d946a524da2d4fff`), identificados no manifesto do kit como CC0 1.0.
-- Cadeira, mesa de centro, planta e luminária: `ap_dining_chair.glb`, `ap_coffee_table.glb`, `ap_plant_small.glb` e `ap_floor_lamp.glb`, do repositório [Vuena/free-apartment-props-cc0](https://github.com/Vuena/free-apartment-props-cc0), revisão `41b06c6223d847d9de6519dd25a493d40e65992d`. Os quatro arquivos pertencem à amostra gratuita CC0 1.0; a licença da amostra está em `LICENSE-FREE-SAMPLE-CC0.txt`. Não usar outros arquivos do pacote sob essa licença.
-- Danças: os cinco GLBs já existentes em `public/dance/` são os mesmos clipes carregados pela Junto Club. A pose sentada reutiliza `public/poses/sentadobalanca.fbx`.
+- Repositório de distribuição: https://github.com/0auBSQ/OpenTaiko
+- Revisão fixada: `50b190a2303742202dc9cb44d946a524da2d4fff`
+- Pacote original: [Kenney Furniture Kit](https://kenney.nl/assets/furniture-kit), autor Kenney, licença CC0 1.0.
+- Modelos residenciais utilizados: `sofa.glb`, `chair.glb`, `table.glb`, `bed.glb`, `bookshelf.glb`, `plant.glb`, `floorlamp.glb` e `tv.glb`. São modelos do mesmo kit e mantêm uma linguagem low-poly coerente.
+- O fliperama usa `arcade.glb`, modelo "Arcade Machine" de J-Toastie, CC BY 3.0. Atribuição: J-Toastie, [Arcade Machine](https://poly.pizza/m/GLDkMhiynM), CC BY 3.0.
+- A caixa de som foi substituída por `jukebox.glb`, modelo de Rescue3D Assets, CC BY 4.0. Atribuição: Rescue3D Assets, [Jukebox](https://sketchfab.com/3d-models/jukebox-188e71ce378f4b6786054d9f74dd3a25), CC BY 4.0.
+- Os modelos são GLB e carregados individualmente, sem importar o pacote inteiro.
 
 ## Regras de integração
 
 - Baixar somente os GLBs realmente usados; não carregar o pacote inteiro.
-- Os quatro modelos Vuena são carregados por URLs raw do GitHub fixadas na revisão acima; isso evita duplicar arquivos no repositório, mas depende do CDN do GitHub. Se o carregamento externo se mostrar instável, baixar apenas os quatro GLBs e a licença para `public/models/quartos/`.
+
 - Manter este registro e a cópia da licença CC0 junto dos assets importados.
 - Conferir escala, pivô, orientação, materiais e peso real antes de publicar.
 - Não incorporar modelos de páginas agregadoras sem abrir a licença específica de cada asset.
