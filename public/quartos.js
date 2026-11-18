@@ -89,7 +89,7 @@ function furniture(i,ghost=false){const t=R.itemType(i.type),w=t.w,h=t.h,x=i.x,y
  else if(i.type==='arcade'){box(x+.08,y+.08,.84,.84,58,c);box(x+.18,y+.88,.64,.04,23,'#182e38',29);box(x,y+.6,1,.4,8,'#ddbc67',22);box(x+.1,y, .8,1,9,'#e8ce83',57);}
  else {box(x+.1,y+.1,.8,.8,40,c);const p=iso(x+.5,y+.94,22);ellipse(p,11,15,'#1d2a2b');ellipse(p,4,6,'#7e8b83');}ctx.restore();turn=null;
 }
-function monkeyName(p){const q=iso(p.x+.5,p.y+.5),me=p.id===socket.id;ellipse(q,13,6,'#00000044');ctx.font=`bold ${11*scale}px Trebuchet MS`;ctx.textAlign='center';ctx.fillStyle='#14251d';ctx.fillRect(q.x-49*scale,q.y+9*scale,98*scale,18*scale);ctx.fillStyle=me?'#f1cd6c':'#eee7d2';ctx.fillText(p.name.slice(0,17),q.x,q.y+22*scale);}
+function monkeyName(p){const q=iso(p.x+.5,p.y+.5),me=p.id===socket.id;ellipse(q,13,6,'#00000044');ctx.font=`bold ${11*scale}px Trebuchet MS`;ctx.textAlign='center';const labelY=q.y-70*scale;ctx.fillStyle='#14251d';ctx.fillRect(q.x-49*scale,labelY-13*scale,98*scale,18*scale);ctx.fillStyle=me?'#f1cd6c':'#eee7d2';ctx.fillText(p.name.slice(0,17),q.x,labelY);}
 function draw(){const rect=canvas.getBoundingClientRect();if(!rect.width)return;const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const w=rect.width,h=rect.height;scale=Math.min(w/760,h/580)*zoom;ox=w/2;oy=(h-320*scale)/2+40*scale;if(!current)return;const l=editing?draft:current.layout;
  poly([iso(0,0),iso(10,0),iso(10,0,110),iso(0,0,110)],tint(l.wall,-12));poly([iso(0,0),iso(0,10),iso(0,10,110),iso(0,0,110)],l.wall);
  // Wall trims, framed club print and the entry marker.
