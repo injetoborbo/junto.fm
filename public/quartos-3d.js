@@ -243,7 +243,7 @@ function init(){
 function resize(width,height){
  if(lastSize.width===width&&lastSize.height===height)return;
  lastSize={width,height};renderer.setSize(width,height,false);
- const aspect=width/Math.max(1,height),halfH=3.25;
+ const aspect=width/Math.max(1,height),halfH=3.5;
  camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
 }
 async function syncPreview(preview){
@@ -263,7 +263,7 @@ async function syncPreview(preview){
  const fit=Math.min(width/Math.max(size.x,.001),height/Math.max(size.y,.001),fw*tile*.92/Math.max(size.z,.001));
  object.scale.setScalar(fit);object.position.sub(center.multiplyScalar(fit));object.position.y+=height*.5;
  object.rotation.y=preview.rotation*Math.PI/2;
- object.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.material=o.material.clone();o.material.transparent=true;o.material.opacity=.48;o.material.depthWrite=false;o.material.color.set(preview.valid?"#8bfff0":"#ff555f");}});
+ object.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.material=Array.isArray(o.material)?o.material.map(m=>m.clone()):o.material.clone();for(const m of (Array.isArray(o.material)?o.material:[o.material])){m.transparent=true;m.opacity=.48;m.depthWrite=false;m.color.set(preview.valid?"#8bfff0":"#ff555f");}}});
  root.add(object);scene.add(root);previewRoot=root;render();
 }
 function updateRoomStyle(floorColor,wallColor){
@@ -307,7 +307,7 @@ function update(payload){
  if(!payload||!Number.isFinite(payload.width)||!Number.isFinite(payload.height))return;
  init();resize(payload.width,payload.height);
  scene.userData.zoom=Math.max(.7,Math.min(1.8,payload.zoom||1));
- const halfH=3.25/scene.userData.zoom,aspect=payload.width/Math.max(1,payload.height);
+ const halfH=3.5/scene.userData.zoom,aspect=payload.width/Math.max(1,payload.height);
  camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
  updateRoomStyle(payload.floor,payload.wall);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
