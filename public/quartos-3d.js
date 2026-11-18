@@ -67,6 +67,7 @@ async function syncFurniture(items,layout){
   if(item.rotation)object.rotation.y=item.rotation*Math.PI/2;
   object.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;}});
   root.add(object);scene.add(root);token.pending=false;
+ }
 }
 
 const CLUB_DANCES={shake:"/dance/macacochaqualha.glb",macarena:"/dance/macacomacarena.glb",party:"/dance/macacodanca.glb",capoeira:"/dance/macacocapoera.glb",groove:"/dance/macacodancagay.glb"};
