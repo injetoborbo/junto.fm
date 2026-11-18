@@ -311,7 +311,8 @@ function update(payload){
  camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
  updateRoomStyle(payload.floor,payload.wall);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
- void syncFurniture(payload.items||[],payload);\n void syncPreview(payload.preview||null);
+ void syncFurniture(payload.items||[],payload);
+ void syncPreview(payload.preview||null);
  for(const [id,record] of avatars)if(!visible.has(id))removeAvatar(id,record);
  for(const p of payload.avatars||[]){
   const key=signature(p.wardrobe),old=avatars.get(p.id);let record=old;
