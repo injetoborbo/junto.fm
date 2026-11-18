@@ -262,7 +262,8 @@ async function createAvatar(person,scale,record){
     bone.userData.jfRoomBaseX=bone.rotation.x;record.legs.push(bone);
    }
   });
-  if(record.target)record.root.position.copy(record.target);
+  record.root.position.set((record.gridX-record.gridY)*record.tileX,
+   record.baseY-(record.gridX+record.gridY)*record.tileY,2);
   scene.add(record.root);scheduleAnimation();
  }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
 }
