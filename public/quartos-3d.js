@@ -11,7 +11,7 @@ const avatars=new Map();
 
 const furniture=new Map(), furnitureLoader=new GLTFLoader(), furnitureAssets=new Map();
 const KENNEY_CC0="https://raw.githubusercontent.com/0auBSQ/OpenTaiko/50b190a2303742202dc9cb44d946a524da2d4fff/OpenTaiko/Global/Modules/Stages/my_room/Models/";
-const ASSET_PATHS={chair:KENNEY_CC0+"chair.glb",table:KENNEY_CC0+"table.glb",sofa:KENNEY_CC0+"sofa.glb",bed:KENNEY_CC0+"bed.glb",shelf:KENNEY_CC0+"bookshelf.glb",plant:KENNEY_CC0+"plant.glb",lamp:KENNEY_CC0+"floorlamp.glb",tv:KENNEY_CC0+"tv.glb",arcade:KENNEY_CC0+"arcade.glb",speaker:KENNEY_CC0+"jukebox.glb",banana:"/club/bananasims_otimizada.glb"};
+const ASSET_PATHS={chair:KENNEY_CC0+"chair.glb",table:KENNEY_CC0+"table.glb",sofa:KENNEY_CC0+"sofa.glb",bed:KENNEY_CC0+"bed.glb",shelf:KENNEY_CC0+"bookshelf.glb",plant:KENNEY_CC0+"plant.glb",lamp:KENNEY_CC0+"floorlamp.glb",tv:KENNEY_CC0+"tv.glb",arcade:KENNEY_CC0+"arcade.glb",banana:"/club/bananasims_otimizada.glb"};
 const material=color=>new THREE.MeshStandardMaterial({color,roughness:.88});
 function block(g,w,h,d,color,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));m.position.set(x,y,z);g.add(m);}
 function fallbackFurniture(type,color,w,h){
@@ -25,7 +25,16 @@ function fallbackFurniture(type,color,w,h){
  }else if(type==="tv"){
   block(g,w,.12,.30,wood,0,.06,0);block(g,w*.88,h*.72,.12,"#202632",0,h*.56,0);
   block(g,w*.72,h*.54,.012,"#8ad9d5",0,h*.56,.07);
- }else if(type==="shelf"||type==="arcade"){
+ }else if(type==="arcade"){
+  block(g,w*.76,h*.72,.38,"#302b48",0,h*.36,0);
+  block(g,w*.68,h*.42,.035,"#151827",0,h*.58,.205);
+  block(g,w*.62,.09,.16,"#8b4eaa",0,h*.31,.22);
+  block(g,.045,.06,.045,"#f04f9b",-w*.19,h*.31,.32);
+  block(g,.045,.06,.045,"#53e5ef",-w*.08,h*.31,.32);
+  block(g,.045,.06,.045,"#f4d36b",w*.08,h*.31,.32);
+  block(g,.045,.06,.045,"#53e5ef",w*.19,h*.31,.32);
+  block(g,w*.9,.12,.46,"#201d32",0,.06,0);
+ }else if(type==="shelf"){
   block(g,w*.9,h,.18,wood,0,h/2,0);
   for(let y=.18;y<h;y+=.22)block(g,w*.84,.035,.2,"#d5b68a",0,y,.04);
  }else if(type==="rug"){
