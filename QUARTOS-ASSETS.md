@@ -24,13 +24,12 @@ Critério: priorizar arquivos GLB, baixo peso/poligonagem e licença CC0 1.0 (de
 
 - Sofá, cama, estante e TV: Kenney Furniture Kit, arquivos GLB do repositório OpenTaiko (commit `50b190a2303742202dc9cb44d946a524da2d4fff`), identificados no manifesto do kit como CC0 1.0.
 - Cadeira, mesa de centro, planta e luminária: `ap_dining_chair.glb`, `ap_coffee_table.glb`, `ap_plant_small.glb` e `ap_floor_lamp.glb`, do repositório [Vuena/free-apartment-props-cc0](https://github.com/Vuena/free-apartment-props-cc0), revisão `41b06c6223d847d9de6519dd25a493d40e65992d`. Os quatro arquivos pertencem à amostra gratuita CC0 1.0; a licença da amostra está em `LICENSE-FREE-SAMPLE-CC0.txt`. Não usar outros arquivos do pacote sob essa licença.
-- Sofá, cama, estante, planta, luminária e TV: GLBs do Kenney Furniture Kit, servidos do repositório OpenTaiko, commit `50b190a2303742202dc9cb44d946a524da2d4fff`. O manifesto `OpenTaiko/Global/Modules/Stages/my_room/Models/ASSETS.md` identifica os arquivos `sofa.glb`, `bed.glb`, `bookshelf.glb`, `plant.glb`, `floorlamp.glb` e `tv.glb` como Kenney Furniture Kit sob CC0 1.0; o pack original contém 140 assets.
 - Danças: os cinco GLBs já existentes em `public/dance/` são os mesmos clipes carregados pela Junto Club. A pose sentada reutiliza `public/poses/sentadobalanca.fbx`.
 
 ## Regras de integração
 
 - Baixar somente os GLBs realmente usados; não carregar o pacote inteiro.
-- Preferir assets locais em `public/models/quartos/` para evitar dependência de CDN de terceiros em tempo de execução.
+- Os quatro modelos Vuena são carregados por URLs raw do GitHub fixadas na revisão acima; isso evita duplicar arquivos no repositório, mas depende do CDN do GitHub. Se o carregamento externo se mostrar instável, baixar apenas os quatro GLBs e a licença para `public/models/quartos/`.
 - Manter este registro e a cópia da licença CC0 junto dos assets importados.
 - Conferir escala, pivô, orientação, materiais e peso real antes de publicar.
 - Não incorporar modelos de páginas agregadoras sem abrir a licença específica de cada asset.
