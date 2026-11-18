@@ -122,19 +122,29 @@ function switchClubDance(record,style){
 }
 let animationFrame=0,lastFrame=0;
 function bonePose(record,pose,time){
- const stride=Math.sin((record.walkTime||0)),bones=record.animationBones||[];
+ const phase=(time||0)*.0048,walk=Math.sin(record.walkTime||0),dance=record.dance||"idle",bones=record.animationBones||[];
  for(const bone of bones){
   const rest=record.restEuler?.get(bone.uuid);if(!rest)continue;
-  const n=bone.name.toLowerCase(),isLeft=/left|(?:^|_)l_(?:arm|hand|thigh|calf|leg|shoulder)/.test(n),side=isLeft?1:-1;
+  const n=bone.name.toLowerCase(),left=/left|(?:^|_)l_(?:arm|hand|thigh|calf|leg|shoulder)/.test(n),side=left?1:-1;
   const upperLeg=/(upleg|upperleg|thigh)/.test(n),lowerLeg=/(calf|shin|lowerleg|leg$)/.test(n)&&!upperLeg;
-  const forearm=/(forearm|lowerarm)/.test(n),upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm,torso=/spine/.test(n);
+  const forearm=/(forearm|lowerarm)/.test(n),upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm,hand=/hand/.test(n),torso=/spine|chest/.test(n),head=/head|neck/.test(n);
   let x=rest.x,y=rest.y,z=rest.z;
   if(pose==="walking"){
-   if(upperLeg)x+=side*.36*stride;
-   if(lowerLeg)x+=.15*Math.max(0,-side*stride);
-   if(upperArm)x-=side*.26*stride;
-   if(forearm)x-=side*.10*stride;
-   if(torso)z+=.022*stride;
+   if(upperLeg)x+=side*.36*walk;
+   if(lowerLeg)x+=.15*Math.max(0,-side*walk);
+   if(upperArm)x-=side*.26*walk;
+   if(forearm)x-=side*.10*walk;
+   if(torso)z+=.022*walk;
+  }else if(dance!=="idle"&&pose!=="sitting"&&pose!=="lying"){
+   const beat=dance==="macarena"?Math.sin(phase*.72):Math.sin(phase);
+   const bounce=Math.abs(Math.sin(phase*1.35));
+   if(upperLeg)x+=side*(dance==="capoeira"?.42:.12)*beat;
+   if(lowerLeg)x+=dance==="capoeira"?.28*bounce:.08*bounce;
+   if(upperArm){x+=dance==="macarena"?-.95:.42*beat;z+=side*(dance==="party"?.55:.22);}
+   if(forearm){x+=dance==="macarena"?-.72:.28*Math.sin(phase+side);}
+   if(hand)z+=side*.18*Math.sin(phase*1.7);
+   if(torso){x+=.12*Math.sin(phase*2);z+=.13*Math.sin(phase);}
+   if(head)y+=.08*Math.sin(phase*1.2);
   }
   bone.rotation.set(x,y,z);
  }
@@ -161,13 +171,13 @@ function animate(now){
   const danceStyle=record.walking?"idle":pose==="sitting"?"sitting":record.dance||"idle";
   switchClubDance(record,danceStyle);
   record.root.rotation.z=pose==="lying"?-1.25:0;
-  if(pose!==record.lastPose||pose==="walking")bonePose(record,pose,now);
+  if(pose!==record.lastPose||pose==="walking"||(record.dance||"idle")!=="idle")bonePose(record,pose,now);
   record.lastPose=pose;
   if(record.walking){p.z=2+Math.abs(Math.sin(now*.018))*2;moving=true;}
   else p.z=2;
  }
  render();
- const dancing=[...avatars.values()].some(record=>Boolean(record.action));
+ const dancing=[...avatars.values()].some(record=>(record.dance||"idle")!=="idle"&&!["sitting","lying"].includes(record.pose));
  if(moving||dancing)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
 }
 function scheduleAnimation(){if(!animationFrame)animationFrame=requestAnimationFrame(animate);}
@@ -201,7 +211,8 @@ async function createAvatar(person,scale,record){
   if(avatars.get(person.id)!==record){avatar.dispose();return;}
   const height=Math.max(44,Math.min(92,68*scale));
   avatar.group.scale.setScalar(height/1.5);
-  avatar.group.rotation.y=.65;
+  // Três quartos, como os macacos da pista: evita a leitura de boneco chapado de frente.
+  avatar.group.rotation.y=Math.PI/4;
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.id=person.id;record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;record.experimentalRig=Boolean(avatar.experimentalUsed);
   record.restBones=new Map();record.restWorldBones=new Map();record.restEuler=new Map();record.animationBones=[];
@@ -233,7 +244,9 @@ function update(payload){
    record={signature:key,root:null,dispose:null,target:null,pose:"standing",dance:"idle",walking:false,legs:[]};avatars.set(p.id,record);
    void createAvatar(p,payload.scale||1,record);
   }
-  record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y,2);
+  const avatarHeight=Math.max(44,Math.min(92,68*(payload.scale||1)));
+  // O ponto recebido é o centro do ladrilho (pé do personagem), não o centro do modelo.
+  record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y-avatarHeight/2,2);
   record.pose=p.pose||"standing";
   record.dance=p.dance||"idle";
   if(record.root){
