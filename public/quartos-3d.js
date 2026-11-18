@@ -11,7 +11,8 @@ const avatars=new Map();
 
 const furniture=new Map(), furnitureLoader=new GLTFLoader(), furnitureAssets=new Map();
 const KENNEY_CC0="https://raw.githubusercontent.com/0auBSQ/OpenTaiko/50b190a2303742202dc9cb44d946a524da2d4fff/OpenTaiko/Global/Modules/Stages/my_room/Models/";
-const ASSET_PATHS={chair:"/club/cadeirabalada.glb",table:"/club/mesabalada.glb",sofa:KENNEY_CC0+"sofa.glb",bed:KENNEY_CC0+"bed.glb",shelf:KENNEY_CC0+"bookshelf.glb",plant:KENNEY_CC0+"plant.glb",lamp:KENNEY_CC0+"floorlamp.glb",tv:KENNEY_CC0+"tv.glb",banana:"/club/bananasims_otimizada.glb"};
+const APARTMENT_CC0="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/main/GLB/";
+const ASSET_PATHS={chair:APARTMENT_CC0+"Kitchen/ap_dining_chair.glb",table:APARTMENT_CC0+"Living/ap_coffee_table.glb",sofa:KENNEY_CC0+"sofa.glb",bed:KENNEY_CC0+"bed.glb",shelf:KENNEY_CC0+"bookshelf.glb",plant:APARTMENT_CC0+"Living/ap_plant_small.glb",lamp:APARTMENT_CC0+"Living/ap_floor_lamp.glb",tv:KENNEY_CC0+"tv.glb",banana:"/club/bananasims_otimizada.glb"};
 const material=color=>new THREE.MeshStandardMaterial({color,roughness:.88});
 function block(g,w,h,d,color,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(color));m.position.set(x,y,z);g.add(m);}
 function fallbackFurniture(type,color,w,h){
@@ -233,7 +234,7 @@ function init(){
 function resize(width,height){
  if(lastSize.width===width&&lastSize.height===height)return;
  lastSize={width,height};renderer.setSize(width,height,false);
- const aspect=width/Math.max(1,height),halfH=4.25;
+ const aspect=width/Math.max(1,height),halfH=3.95;
  camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
 }
 function updateRoomStyle(floorColor,wallColor){
@@ -277,7 +278,7 @@ function update(payload){
  if(!payload||!Number.isFinite(payload.width)||!Number.isFinite(payload.height))return;
  init();resize(payload.width,payload.height);
  scene.userData.zoom=Math.max(.7,Math.min(1.8,payload.zoom||1));
- const halfH=4.25/scene.userData.zoom,aspect=payload.width/Math.max(1,payload.height);
+ const halfH=3.95/scene.userData.zoom,aspect=payload.width/Math.max(1,payload.height);
  camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
  updateRoomStyle(payload.floor,payload.wall);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
