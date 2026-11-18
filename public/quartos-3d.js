@@ -198,7 +198,7 @@ function animate(now){
   }
   record.walkTime=(record.walkTime||0)+(walking?dt*7.8:0);
   const style=record.dance||"idle",phase=now*.002,pulse=Math.sin(phase),bounce=Math.abs(pulse);
-  record.root.position.set((record.gridX-5)*tile,.77+(walking?.018*Math.abs(Math.sin(record.walkTime)):style==="idle"?.006*pulse:.025*bounce),(record.gridY-5)*tile);
+  record.root.position.set((record.gridX-5)*tile,.60+(walking?.018*Math.abs(Math.sin(record.walkTime)):style==="idle"?.006*pulse:.025*bounce),(record.gridY-5)*tile);
   record.root.rotation.x=record.pose==="sitting"?-.12:0;
   record.root.rotation.z=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
   if(record.rig&&!record.action){
@@ -284,7 +284,7 @@ async function createAvatar(person,scale,record){
  try{
   const avatar=await createDanceAvatar(person.wardrobe||{},"default",()=>{}, {local:!!person.local});
   if(avatars.get(person.id)!==record){avatar.dispose();return;}
-  avatar.group.scale.setScalar(1);
+  avatar.group.scale.setScalar(.78);
   avatar.group.rotation.y=.65;
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.id=person.id;record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;record.experimentalRig=Boolean(avatar.experimentalUsed);
@@ -299,7 +299,7 @@ async function createAvatar(person,scale,record){
     bone.userData.jfRoomBaseX=bone.rotation.x;record.legs.push(bone);
    }
   });
-  record.root.position.set((record.gridX-5)*.55,.77,(record.gridY-5)*.55);
+  record.root.position.set((record.gridX-5)*.55,.60,(record.gridY-5)*.55);
   scene.add(record.root);scheduleAnimation();
  }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
 }
