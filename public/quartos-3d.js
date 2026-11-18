@@ -8,7 +8,7 @@ const canvas=document.getElementById("quarto3d");
 if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
 let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
-let previewRoot=null,previewKey="";
+let previewRoot=null,previewKey="",previewPendingKey="";
 
 const furniture=new Map(), furnitureLoader=new GLTFLoader(), furnitureAssets=new Map();
 const KENNEY_CC0="https://raw.githubusercontent.com/0auBSQ/OpenTaiko/50b190a2303742202dc9cb44d946a524da2d4fff/OpenTaiko/Global/Modules/Stages/my_room/Models/";
@@ -249,14 +249,14 @@ function resize(width,height){
 async function syncPreview(preview){
  if(!preview){if(previewRoot){scene.remove(previewRoot);previewRoot=null;}previewKey="";return;}
  const key=JSON.stringify(preview);
- if(key===previewKey&&previewRoot)return;
- previewKey=key;
+ if(key===previewKey&&(previewRoot||previewPendingKey===key))return;
+ previewKey=key;previewPendingKey=key;
  if(previewRoot){scene.remove(previewRoot);previewRoot=null;}
  const t={sofa:[2,1],chair:[1,1],table:[2,1],bed:[2,3],shelf:[2,1],plant:[1,1],lamp:[1,1],tv:[2,1],rug:[3,3],speaker:[1,1],arcade:[1,1],banana:[1,1]}[preview.type]||[1,1];
  const fw=preview.rotation%2?t[1]:t[0],fh=preview.rotation%2?t[0]:t[1],tile=.55;
  const width=fw*tile*.88,height=({sofa:.78,chair:.82,table:.55,bed:.48,shelf:1.22,plant:.82,lamp:1.3,tv:.92,rug:.035,arcade:1.2,speaker:.82,banana:.8}[preview.type]||.8);
  const source=await loadFurniture(preview.type);
- if(previewKey!==key)return;
+ if(previewKey!==key)return;previewPendingKey="";
  const root=new THREE.Group();root.position.set((preview.x+fw/2-5)*tile,.012,(preview.y+fh/2-5)*tile);
  const object=source?source.clone(true):fallbackFurniture(preview.type,"#75e5d5",width,height);
  const bounds=new THREE.Box3().setFromObject(object),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
