@@ -279,7 +279,11 @@ async function createAvatar(person,scale,record){
 }
 function update(payload){
  if(!payload||!Number.isFinite(payload.width)||!Number.isFinite(payload.height))return;
- init();resize(payload.width,payload.height);updateRoomStyle(payload.floor,payload.wall);
+ init();resize(payload.width,payload.height);
+ scene.userData.zoom=Math.max(.7,Math.min(1.8,payload.zoom||1));
+ const halfH=4.25/scene.userData.zoom,aspect=payload.width/Math.max(1,payload.height);
+ camera.left=-halfH*aspect;camera.right=halfH*aspect;camera.top=halfH;camera.bottom=-halfH;camera.updateProjectionMatrix();
+ updateRoomStyle(payload.floor,payload.wall);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
  void syncFurniture(payload.items||[],payload);
  for(const [id,record] of avatars)if(!visible.has(id))removeAvatar(id,record);
