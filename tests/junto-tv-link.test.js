@@ -218,6 +218,16 @@ test("Falha definitiva do ADM pausa todos os espectadores",async()=>{
   assert.match(host.el("jfTvLinkHealth").textContent,/não pôde/);
 });
 
+test("Buffer temporário do ADM não pausa a sala pelo watchdog",async()=>{
+  const app=await createRoom(),host=app.connect("host"),guest=app.connect("guest");
+  loadLink(host);guest.openLink();host.el("jfTvLinkPlay").onclick();
+  const video=host.el("jfTvLinkVideo");video.readyState=4;video.on_waiting();
+  for(let i=0;i<8;i++)host.tick();
+  assert.equal(host.el("jfTvLinkHealth").textContent,"Carregando buffer…");
+  assert.equal(host.sent.some(x=>x.name==="tv:control"&&x.payload?.action==="pause"),false);
+  assert.equal(guest.el("jfTvLinkVideo").paused,false);
+});
+
 test("HLS recupera decodificação uma vez; falha repetida pausa a sala e libera retry",async()=>{
   const instances=[];
   class Hls{
