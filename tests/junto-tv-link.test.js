@@ -224,7 +224,7 @@ test("HLS recupera decodificação uma vez; falha repetida pausa a sala e libera
     static isSupported(){return true;}
     static Events={MANIFEST_PARSED:"manifest",AUDIO_TRACKS_UPDATED:"audio",SUBTITLE_TRACKS_UPDATED:"subs",ERROR:"error"};
     static ErrorTypes={MEDIA_ERROR:"media",NETWORK_ERROR:"network"};
-    constructor(){this.handlers=new Map();this.recoveries=0;instances.push(this);}
+    constructor(config){this.config=config;this.handlers=new Map();this.recoveries=0;instances.push(this);}
     on(n,fn){this.handlers.set(n,fn);}loadSource(url){this.url=url;}attachMedia(v){this.video=v;}
     recoverMediaError(){this.recoveries++;}destroy(){this.destroyed=true;}
   }
@@ -232,7 +232,14 @@ test("HLS recupera decodificação uma vez; falha repetida pausa a sala e libera
   host.openLink();host.el("jfTvLinkUrl").value="https://media.example.org/episode.m3u8";host.el("jfTvLinkFormat").value="hls";
   host.el("jfTvLinkForm").onsubmit({preventDefault(){}});guest.openLink();
   for(let i=0;i<4;i++)await Promise.resolve();
-  assert.equal(instances.length,2);const h=instances[0];host.el("jfTvLinkPlay").onclick();
+  assert.equal(instances.length,2);const h=instances[0];
+  assert.equal(h.config.lowLatencyMode,false);
+  assert.equal(h.config.maxBufferLength,45);
+  assert.equal(h.config.maxMaxBufferLength,60);
+  assert.equal(h.config.maxBufferSize,60*1000*1000);
+  assert.equal(h.config.startFragPrefetch,true);
+  assert.match(source,/preload="auto"/);
+  host.el("jfTvLinkPlay").onclick();
   h.handlers.get("error")(null,{fatal:true,type:"media"});assert.equal(h.recoveries,1);assert.equal(h.destroyed,undefined);
   h.handlers.get("error")(null,{fatal:true,type:"media"});assert.equal(h.recoveries,1);assert.equal(h.destroyed,true);
   assert.equal(guest.el("jfTvLinkVideo").paused,true);
