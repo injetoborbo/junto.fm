@@ -238,3 +238,24 @@ test("HLS recupera decodificação uma vez; falha repetida pausa a sala e libera
   assert.equal(guest.el("jfTvLinkVideo").paused,true);
   host.el("jfTvLinkRetry").onclick();for(let i=0;i<4;i++)await Promise.resolve();assert.equal(instances.length,3);
 });
+
+test("Correção de deriva do espectador suaviza diferenças pequenas sem seek",async()=>{
+  const app=await createRoom(),host=app.connect("host"),guest=app.connect("guest");
+  loadLink(host);guest.openLink();host.el("jfTvLinkPlay").onclick();
+  const v=guest.el("jfTvLinkVideo");
+  v.currentTime=10;
+  guest.serverEmit("tv:state",{mode:"link",url:mediaUrl,format:"direct",playing:true,seconds:11,updatedAt:Date.now(),serverNow:Date.now(),rate:1,revision:800});
+  guest.tick();
+  assert.equal(v.currentTime,10);
+  assert.ok(v.playbackRate>1&&v.playbackRate<=1.04);
+});
+test("Buffering suspende correção de velocidade e retoma taxa normal",async()=>{
+  const app=await createRoom(),host=app.connect("host"),guest=app.connect("guest");
+  loadLink(host);guest.openLink();host.el("jfTvLinkPlay").onclick();
+  const v=guest.el("jfTvLinkVideo");
+  v.currentTime=10;v.on_waiting();v.playbackRate=1.04;
+  guest.serverEmit("tv:state",{mode:"link",url:mediaUrl,format:"direct",playing:true,seconds:11,updatedAt:Date.now(),serverNow:Date.now(),rate:1,revision:801});
+  guest.tick();
+  assert.equal(v.currentTime,10);
+  assert.equal(v.playbackRate,1);
+});
