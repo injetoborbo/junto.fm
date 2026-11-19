@@ -266,8 +266,9 @@ test("Diagnóstico mostra perda de quadros sem confundir com buffer",async()=>{
   const app=await createRoom(),host=app.connect("host"),guest=app.connect("guest");
   loadLink(host);guest.openLink();
   const video=guest.el("jfTvLinkVideo");
-  video.getVideoPlaybackQuality=()=>({droppedVideoFrames:12,totalVideoFrames:240});
-  guest.tick();
+  let total=100;
+  video.getVideoPlaybackQuality=()=>({droppedVideoFrames:12,totalVideoFrames:total});
+  guest.tick();total=124;await new Promise(resolve=>setTimeout(resolve,15));guest.tick();
   assert.match(guest.el("jfTvLinkBuffer").textContent,/Perdidos: 12/);
   assert.match(guest.el("jfTvLinkBuffer").textContent,/fps/);
 });
