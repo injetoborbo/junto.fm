@@ -62,6 +62,8 @@
     function destroySource() {
       ++generation; source="";sourceRevision=0;playingPromise=null;
       buffering=false;fatalError=false;mediaRecoveries=0;
+      droppedFrames=0;lastDroppedFrames=0;lastFrameSampleAt=0;lastTotalFrames=0;frameRate=0;
+      $("jfTvLinkBuffer").dataset.frameLoss="0";
       hls?.destroy();hls=null;hlsAttempted=false;
       video.pause();video.removeAttribute("src");video.load();
       if(subtitleTrack){subtitleTrack.remove();subtitleTrack=null;}
