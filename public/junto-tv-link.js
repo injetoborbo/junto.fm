@@ -312,7 +312,6 @@
     video.addEventListener("stalled",()=>{if(active()){buffering=true;report("A origem parou de enviar dados. Mantendo a posição da sala…");}});
     video.addEventListener("progress",()=>{if(active()&&video.readyState>=3&&buffering){buffering=false;report("Dados recebidos; preparando reprodução…");}});
     video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
-    video.addEventListener("playing",()=>{if(active()&&buffering){buffering=false;}});
     video.addEventListener("ended",()=>{if(active()&&isAdmin())command("pause",video.duration);report("Vídeo encerrado.");});
     video.addEventListener("error",()=>{
       if(!active()||!source)return;
