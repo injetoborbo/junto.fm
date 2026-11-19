@@ -46,6 +46,7 @@
     let buffering=false, fatalError=false, mediaRecoveries=0;
     let lastPlaying=false, lastRate=1;
     let lastPosition=-1, stalledTicks=0;
+    let droppedFrames=0,lastDroppedFrames=0,lastFrameSampleAt=0,lastTotalFrames=0,frameRate=0;
     const active=()=>getState()?.mode==="link"&&isOpen();
     function report(text,error=false) {
       $("jfTvLinkHealth").textContent=text;
@@ -61,6 +62,8 @@
     function destroySource() {
       ++generation; source="";sourceRevision=0;playingPromise=null;
       buffering=false;fatalError=false;mediaRecoveries=0;
+      droppedFrames=0;lastDroppedFrames=0;lastFrameSampleAt=0;lastTotalFrames=0;frameRate=0;
+      $("jfTvLinkBuffer").dataset.frameLoss="0";
       hls?.destroy();hls=null;hlsAttempted=false;
       video.pause();video.removeAttribute("src");video.load();
       if(subtitleTrack){subtitleTrack.remove();subtitleTrack=null;}
@@ -98,7 +101,7 @@
           if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=url;video.load();return;}
           throw new Error("Este navegador não oferece suporte a HLS.");
         }
-        hls=new Hls({maxBufferLength:20,maxMaxBufferLength:40,backBufferLength:20});
+        hls=new Hls({lowLatencyMode:false,capLevelToPlayerSize:true,maxBufferLength:45,maxMaxBufferLength:60,maxBufferSize:60*1000*1000,backBufferLength:15,maxBufferHole:0.5,startFragPrefetch:true});
         hls.on(Hls.Events.MANIFEST_PARSED,()=>{if(token===generation){tracks();sync(true);}});
         hls.on(Hls.Events.AUDIO_TRACKS_UPDATED,tracks);
         hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,tracks);
@@ -148,12 +151,26 @@
     function sync(force=false) {
       if(!active()||!source||fatalError)return;
       const s=getState(), wanted=targetTime();
-      video.playbackRate=s.rate||1;
-      // Do not continually seek a buffering host. It is the playback clock.
+      const baseRate=s.rate||1;
+      video.playbackRate=baseRate;
+      // The ADM is the clock. Viewers ease small drift with a tiny rate
+      // adjustment instead of repeatedly seeking and visibly stuttering.
       const finite=Number.isFinite(video.duration)&&video.duration>0;
       const bounded=finite?Math.min(wanted,Math.max(0,video.duration-0.05)):wanted;
-      if(video.readyState>=1&&finite&&(force||(!isAdmin()&&!buffering&&!video.seeking))&&Math.abs(video.currentTime-bounded)>(force?0.35:1.5)){
-        try{video.currentTime=bounded;}catch(_){}
+      if(video.readyState>=1&&finite&&!video.seeking){
+        const drift=bounded-video.currentTime;
+        if(force&&Math.abs(drift)>0.35){
+          try{video.currentTime=bounded;}catch(_){}
+          video.playbackRate=baseRate;
+        }else if(!isAdmin()&&!buffering&&video.readyState>=3){
+          if(Math.abs(drift)>3.5){
+            try{video.currentTime=bounded;}catch(_){}
+            video.playbackRate=baseRate;
+          }else if(Math.abs(drift)>0.45){
+            const trim=Math.min(0.04,Math.max(0.012,Math.abs(drift)*0.018));
+            video.playbackRate=baseRate*(1+(drift>0?trim:-trim));
+          }
+        }else video.playbackRate=baseRate;
       }
       if(s.playing)play();else {
         playingPromise=null;
@@ -171,7 +188,25 @@
       $("jfTvLinkTime").textContent=time(video.currentTime||0)+" / "+(finite?time(video.duration):video.readyState?"AO VIVO":"—:—");
       let buffered=0;
       for(let i=0;i<(video.buffered?.length||0);i++)if(video.buffered.start(i)<=video.currentTime&&video.buffered.end(i)>=video.currentTime)buffered=video.buffered.end(i)-video.currentTime;
-      $("jfTvLinkBuffer").textContent=video.readyState<1?"Carregando metadados…":"Buffer: "+Math.floor(buffered)+"s";
+      const quality=typeof video.getVideoPlaybackQuality==="function"?video.getVideoPlaybackQuality():null;
+      const total=quality?.totalVideoFrames??null;
+      const dropped=quality?.droppedVideoFrames??video.webkitDroppedFrameCount??null;
+      const now=Date.now();
+      if(dropped!==null){
+        droppedFrames=dropped;
+        if(lastFrameSampleAt&&now>lastFrameSampleAt){
+          const elapsed=(now-lastFrameSampleAt)/1000;
+          const lost=Math.max(0,dropped-lastDroppedFrames);
+          const rendered=total!==null?Math.max(0,total-lastTotalFrames):0;
+          frameRate=rendered/elapsed;
+          $("jfTvLinkBuffer").dataset.frameLoss=String(lost);
+        }
+        lastDroppedFrames=dropped;
+        if(total!==null)lastTotalFrames=total;
+        lastFrameSampleAt=now;
+      }
+      const loss=Number($("jfTvLinkBuffer").dataset.frameLoss||0);
+      $("jfTvLinkBuffer").textContent=video.readyState<1?"Carregando metadados…":"Buffer: "+Math.floor(buffered)+"s · Perdidos: "+droppedFrames+" (+"+loss+")"+(frameRate>0?" · "+Math.round(frameRate)+" fps":"");
       $("jfTvLinkPlay").textContent=s.playing?"Ⅱ Pausar":"▶ Reproduzir";
       $("jfTvLinkRate").value=String(s.rate||1);
       $("jfTvLinkBack").disabled=$("jfTvLinkForward").disabled=!isAdmin()||!finite;
@@ -271,15 +306,19 @@
     video.addEventListener("volumechange",volumeUi);
     video.addEventListener("playing",()=>{
       if(!active()||fatalError||!getState().playing){video.pause();return;}
-      buffering=false;stalledTicks=0;lastPosition=video.currentTime;message.hidden=true;report("Reproduzindo com a sala.");
+      buffering=false;stalledTicks=0;lastPosition=video.currentTime;video.playbackRate=getState().rate||1;message.hidden=true;report("Reproduzindo com a sala.");
     });
-    video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Carregando buffer…");}});
+    video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Aguardando dados da fonte…");}});
+    video.addEventListener("stalled",()=>{if(active()){buffering=true;report("A origem parou de enviar dados. Mantendo a posição da sala…");}});
+    video.addEventListener("progress",()=>{if(active()&&video.readyState>=3&&buffering){buffering=false;report("Dados recebidos; preparando reprodução…");}});
     video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
     video.addEventListener("ended",()=>{if(active()&&isAdmin())command("pause",video.duration);report("Vídeo encerrado.");});
     video.addEventListener("error",()=>{
       if(!active()||!source)return;
       if(getState().format==="auto"&&!hlsAttempted){void startHls(source,generation);return;}
-      failSource("A fonte não pôde ser reproduzida. O link pode ter expirado, bloquear acesso externo ou usar um formato incompatível.");
+      const mediaError=video.error;
+      const detail=mediaError?(" (código "+mediaError.code+")"):"";
+      failSource("A fonte não pôde ser reproduzida"+detail+". O link pode ter expirado, bloquear acesso externo ou usar um formato incompatível.");
     });
     function tick(){
       if(!active())return;
