@@ -272,3 +272,13 @@ test("Diagnóstico mostra perda de quadros sem confundir com buffer",async()=>{
   assert.match(guest.el("jfTvLinkBuffer").textContent,/Perdidos: 12/);
   assert.match(guest.el("jfTvLinkBuffer").textContent,/fps/);
 });
+
+test("Player distingue origem parada e retomada de dados",async()=>{
+  const app=await createRoom(),host=app.connect("host"),guest=app.connect("guest");
+  loadLink(host);guest.openLink();
+  const video=guest.el("jfTvLinkVideo");
+  video.on_stalled();
+  assert.match(guest.el("jfTvLinkHealth").textContent,/origem parou de enviar dados/);
+  video.readyState=4;video.on_progress();
+  assert.match(guest.el("jfTvLinkHealth").textContent,/preparando reprodução/);
+});
