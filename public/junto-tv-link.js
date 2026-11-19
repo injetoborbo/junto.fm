@@ -23,7 +23,7 @@
     const {socket,overlay,isAdmin,status,targetTime,getState,isOpen}=ctx;
     const $=id=>document.getElementById(id);
     const root=$("jfTvLinkStage"), controls=$("jfTvLinkControls"), tools=$("jfTvLinkTools");
-    root.innerHTML=`<video id="jfTvLinkVideo" playsinline preload="metadata" referrerpolicy="no-referrer" disableRemotePlayback></video>
+    root.innerHTML=`<video id="jfTvLinkVideo" playsinline preload="auto" referrerpolicy="no-referrer" disableRemotePlayback></video>
       <div id="jfTvLinkMessage" class="jf-link-message" role="status">Preparando vídeo…</div>
       <button type="button" id="jfTvLinkUnlock" class="jf-link-unlock" hidden>🔊 Ativar reprodução / som</button>`;
     tools.innerHTML=`<form id="jfTvLinkForm" class="jf-link-form">
@@ -271,9 +271,9 @@
     video.addEventListener("volumechange",volumeUi);
     video.addEventListener("playing",()=>{
       if(!active()||fatalError||!getState().playing){video.pause();return;}
-      buffering=false;message.hidden=true;report("Reproduzindo com a sala.");
+      buffering=false;stalledTicks=0;lastPosition=video.currentTime;message.hidden=true;report("Reproduzindo com a sala.");
     });
-    video.addEventListener("waiting",()=>{if(active()){buffering=true;report("Carregando buffer…");}});
+    video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Carregando buffer…");}});
     video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
     video.addEventListener("ended",()=>{if(active()&&isAdmin())command("pause",video.duration);report("Vídeo encerrado.");});
     video.addEventListener("error",()=>{
@@ -286,7 +286,7 @@
       if(isAdmin()&&getState().playing&&!video.paused&&video.readyState>=3&&Date.now()-lastSync>=15000){
         lastSync=Date.now();socket.emit("tv:sync",{seconds:currentPosition(),playing:true,revision:getState().revision});
       }else if(!isAdmin())sync(false);
-      if(isAdmin()&&getState().playing&&!video.paused){
+      if(isAdmin()&&getState().playing&&!video.paused&&!buffering&&video.readyState>=3){
         stalledTicks=lastPosition===video.currentTime?stalledTicks+1:0;lastPosition=video.currentTime;
         // Freeze the room clock if the host loses its source, rather than letting
         // late joiners advance indefinitely through a stalled movie.
