@@ -46,7 +46,7 @@
     let buffering=false, fatalError=false, mediaRecoveries=0;
     let lastPlaying=false, lastRate=1;
     let lastPosition=-1, stalledTicks=0;
-    let droppedFrames=0;
+    let droppedFrames=0,lastDroppedFrames=0,lastFrameSampleAt=0,lastTotalFrames=0,frameRate=0;
     const active=()=>getState()?.mode==="link"&&isOpen();
     function report(text,error=false) {
       $("jfTvLinkHealth").textContent=text;
@@ -99,7 +99,7 @@
           if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=url;video.load();return;}
           throw new Error("Este navegador não oferece suporte a HLS.");
         }
-        hls=new Hls({maxBufferLength:20,maxMaxBufferLength:40,backBufferLength:20});
+        hls=new Hls({lowLatencyMode:false,capLevelToPlayerSize:true,maxBufferLength:45,maxMaxBufferLength:60,maxBufferSize:60*1000*1000,backBufferLength:15,maxBufferHole:0.5,startFragPrefetch:true});
         hls.on(Hls.Events.MANIFEST_PARSED,()=>{if(token===generation){tracks();sync(true);}});
         hls.on(Hls.Events.AUDIO_TRACKS_UPDATED,tracks);
         hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,tracks);
@@ -187,8 +187,24 @@
       let buffered=0;
       for(let i=0;i<(video.buffered?.length||0);i++)if(video.buffered.start(i)<=video.currentTime&&video.buffered.end(i)>=video.currentTime)buffered=video.buffered.end(i)-video.currentTime;
       const quality=typeof video.getVideoPlaybackQuality==="function"?video.getVideoPlaybackQuality():null;
-      droppedFrames=quality?.droppedVideoFrames??video.webkitDroppedFrameCount??droppedFrames;
-      $("jfTvLinkBuffer").textContent=video.readyState<1?"Carregando metadados…":"Buffer: "+Math.floor(buffered)+"s · Quadros perdidos: "+droppedFrames;
+      const total=quality?.totalVideoFrames??null;
+      const dropped=quality?.droppedVideoFrames??video.webkitDroppedFrameCount??null;
+      const now=Date.now();
+      if(dropped!==null){
+        droppedFrames=dropped;
+        if(lastFrameSampleAt&&now>lastFrameSampleAt){
+          const elapsed=(now-lastFrameSampleAt)/1000;
+          const lost=Math.max(0,dropped-lastDroppedFrames);
+          const rendered=total!==null?Math.max(0,total-lastTotalFrames):0;
+          frameRate=rendered/elapsed;
+          $("jfTvLinkBuffer").dataset.frameLoss=String(lost);
+        }
+        lastDroppedFrames=dropped;
+        if(total!==null)lastTotalFrames=total;
+        lastFrameSampleAt=now;
+      }
+      const loss=Number($("jfTvLinkBuffer").dataset.frameLoss||0);
+      $("jfTvLinkBuffer").textContent=video.readyState<1?"Carregando metadados…":"Buffer: "+Math.floor(buffered)+"s · Perdidos: "+droppedFrames+" (+"+loss+")"+(frameRate>0?" · "+Math.round(frameRate)+" fps":"");
       $("jfTvLinkPlay").textContent=s.playing?"Ⅱ Pausar":"▶ Reproduzir";
       $("jfTvLinkRate").value=String(s.rate||1);
       $("jfTvLinkBack").disabled=$("jfTvLinkForward").disabled=!isAdmin()||!finite;
@@ -290,13 +306,18 @@
       if(!active()||fatalError||!getState().playing){video.pause();return;}
       buffering=false;stalledTicks=0;lastPosition=video.currentTime;video.playbackRate=getState().rate||1;message.hidden=true;report("Reproduzindo com a sala.");
     });
-    video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Carregando buffer…");}});
+    video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Aguardando dados da fonte…");}});
+    video.addEventListener("stalled",()=>{if(active()){buffering=true;report("A origem parou de enviar dados. Mantendo a posição da sala…");}});
+    video.addEventListener("progress",()=>{if(active()&&video.readyState>=3&&buffering){buffering=false;report("Dados recebidos; preparando reprodução…");}});
     video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
+    video.addEventListener("playing",()=>{if(active()&&buffering){buffering=false;}});
     video.addEventListener("ended",()=>{if(active()&&isAdmin())command("pause",video.duration);report("Vídeo encerrado.");});
     video.addEventListener("error",()=>{
       if(!active()||!source)return;
       if(getState().format==="auto"&&!hlsAttempted){void startHls(source,generation);return;}
-      failSource("A fonte não pôde ser reproduzida. O link pode ter expirado, bloquear acesso externo ou usar um formato incompatível.");
+      const mediaError=video.error;
+      const detail=mediaError?(" (código "+mediaError.code+")"):"";
+      failSource("A fonte não pôde ser reproduzida"+detail+". O link pode ter expirado, bloquear acesso externo ou usar um formato incompatível.");
     });
     function tick(){
       if(!active())return;
