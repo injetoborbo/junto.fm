@@ -284,7 +284,7 @@
       if(!active()||fatalError||!getState().playing){video.pause();return;}
       buffering=false;message.hidden=true;report("Reproduzindo com a sala.");
     });
-    video.addEventListener("waiting",()=>{if(active()){buffering=true;report("Carregando buffer…");}});
+    video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Carregando buffer…");}});
     video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
     video.addEventListener("ended",()=>{if(active()&&isAdmin())command("pause",video.duration);report("Vídeo encerrado.");});
     video.addEventListener("error",()=>{
@@ -297,7 +297,7 @@
       if(isAdmin()&&getState().playing&&!video.paused&&video.readyState>=3&&Date.now()-lastSync>=15000){
         lastSync=Date.now();socket.emit("tv:sync",{seconds:currentPosition(),playing:true,revision:getState().revision});
       }else if(!isAdmin())sync(false);
-      if(isAdmin()&&getState().playing&&!video.paused){
+      if(isAdmin()&&getState().playing&&!video.paused&&!buffering&&video.readyState>=3){
         stalledTicks=lastPosition===video.currentTime?stalledTicks+1:0;lastPosition=video.currentTime;
         // Freeze the room clock if the host loses its source, rather than letting
         // late joiners advance indefinitely through a stalled movie.
