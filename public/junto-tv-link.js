@@ -46,6 +46,7 @@
     let buffering=false, fatalError=false, mediaRecoveries=0;
     let lastPlaying=false, lastRate=1;
     let lastPosition=-1, stalledTicks=0;
+    let droppedFrames=0;
     const active=()=>getState()?.mode==="link"&&isOpen();
     function report(text,error=false) {
       $("jfTvLinkHealth").textContent=text;
@@ -148,12 +149,26 @@
     function sync(force=false) {
       if(!active()||!source||fatalError)return;
       const s=getState(), wanted=targetTime();
-      video.playbackRate=s.rate||1;
-      // Do not continually seek a buffering host. It is the playback clock.
+      const baseRate=s.rate||1;
+      video.playbackRate=baseRate;
+      // The ADM is the clock. Viewers ease small drift with a tiny rate
+      // adjustment instead of repeatedly seeking and visibly stuttering.
       const finite=Number.isFinite(video.duration)&&video.duration>0;
       const bounded=finite?Math.min(wanted,Math.max(0,video.duration-0.05)):wanted;
-      if(video.readyState>=1&&finite&&(force||(!isAdmin()&&!buffering&&!video.seeking))&&Math.abs(video.currentTime-bounded)>(force?0.35:1.5)){
-        try{video.currentTime=bounded;}catch(_){}
+      if(video.readyState>=1&&finite&&!video.seeking){
+        const drift=bounded-video.currentTime;
+        if(force&&Math.abs(drift)>0.35){
+          try{video.currentTime=bounded;}catch(_){}
+          video.playbackRate=baseRate;
+        }else if(!isAdmin()&&!buffering&&video.readyState>=3){
+          if(Math.abs(drift)>3.5){
+            try{video.currentTime=bounded;}catch(_){}
+            video.playbackRate=baseRate;
+          }else if(Math.abs(drift)>0.45){
+            const trim=Math.min(0.04,Math.max(0.012,Math.abs(drift)*0.018));
+            video.playbackRate=baseRate*(1+(drift>0?trim:-trim));
+          }
+        }else video.playbackRate=baseRate;
       }
       if(s.playing)play();else {
         playingPromise=null;
@@ -171,7 +186,9 @@
       $("jfTvLinkTime").textContent=time(video.currentTime||0)+" / "+(finite?time(video.duration):video.readyState?"AO VIVO":"—:—");
       let buffered=0;
       for(let i=0;i<(video.buffered?.length||0);i++)if(video.buffered.start(i)<=video.currentTime&&video.buffered.end(i)>=video.currentTime)buffered=video.buffered.end(i)-video.currentTime;
-      $("jfTvLinkBuffer").textContent=video.readyState<1?"Carregando metadados…":"Buffer: "+Math.floor(buffered)+"s";
+      const quality=typeof video.getVideoPlaybackQuality==="function"?video.getVideoPlaybackQuality():null;
+      droppedFrames=quality?.droppedVideoFrames??video.webkitDroppedFrameCount??droppedFrames;
+      $("jfTvLinkBuffer").textContent=video.readyState<1?"Carregando metadados…":"Buffer: "+Math.floor(buffered)+"s · Quadros perdidos: "+droppedFrames;
       $("jfTvLinkPlay").textContent=s.playing?"Ⅱ Pausar":"▶ Reproduzir";
       $("jfTvLinkRate").value=String(s.rate||1);
       $("jfTvLinkBack").disabled=$("jfTvLinkForward").disabled=!isAdmin()||!finite;
@@ -271,7 +288,7 @@
     video.addEventListener("volumechange",volumeUi);
     video.addEventListener("playing",()=>{
       if(!active()||fatalError||!getState().playing){video.pause();return;}
-      buffering=false;stalledTicks=0;lastPosition=video.currentTime;message.hidden=true;report("Reproduzindo com a sala.");
+      buffering=false;stalledTicks=0;lastPosition=video.currentTime;video.playbackRate=getState().rate||1;message.hidden=true;report("Reproduzindo com a sala.");
     });
     video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Carregando buffer…");}});
     video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
