@@ -44,7 +44,7 @@ async function createRoom(){
     };
     function el(name){
       if(!elements.has(name))elements.set(name,{
-        id:name,parentNode:pageParent,hidden:false,disabled:false,value:"",title:"",style:{},tagName:"DIV",currentTime:0,duration:120,readyState:4,paused:true,muted:false,volume:1,playbackRate:1,buffered:{length:0},textTracks:[],
+        id:name,parentNode:pageParent,hidden:false,disabled:false,value:"",title:"",style:{},dataset:{},tagName:"DIV",currentTime:0,duration:120,readyState:4,paused:true,muted:false,volume:1,playbackRate:1,buffered:{length:0},textTracks:[],
         play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},load(){},removeAttribute(){},canPlayType(){return "";},remove(){},
         closest(selector){return selector==="[role=dialog]"?tvDialog:null;},
         classList:{toggle(){},contains(){return false}},
@@ -224,7 +224,7 @@ test("HLS recupera decodificação uma vez; falha repetida pausa a sala e libera
     static isSupported(){return true;}
     static Events={MANIFEST_PARSED:"manifest",AUDIO_TRACKS_UPDATED:"audio",SUBTITLE_TRACKS_UPDATED:"subs",ERROR:"error"};
     static ErrorTypes={MEDIA_ERROR:"media",NETWORK_ERROR:"network"};
-    constructor(){this.handlers=new Map();this.recoveries=0;instances.push(this);}
+    constructor(config){this.config=config;this.handlers=new Map();this.recoveries=0;instances.push(this);}
     on(n,fn){this.handlers.set(n,fn);}loadSource(url){this.url=url;}attachMedia(v){this.video=v;}
     recoverMediaError(){this.recoveries++;}destroy(){this.destroyed=true;}
   }
@@ -232,7 +232,9 @@ test("HLS recupera decodificação uma vez; falha repetida pausa a sala e libera
   host.openLink();host.el("jfTvLinkUrl").value="https://media.example.org/episode.m3u8";host.el("jfTvLinkFormat").value="hls";
   host.el("jfTvLinkForm").onsubmit({preventDefault(){}});guest.openLink();
   for(let i=0;i<4;i++)await Promise.resolve();
-  assert.equal(instances.length,2);const h=instances[0];host.el("jfTvLinkPlay").onclick();
+  assert.equal(instances.length,2);const h=instances[0];
+  assert.equal(h.config.lowLatencyMode,false);assert.equal(h.config.maxBufferLength,45);assert.equal(h.config.maxMaxBufferLength,60);
+  assert.equal(h.config.maxBufferSize,60*1000*1000);host.el("jfTvLinkPlay").onclick();
   h.handlers.get("error")(null,{fatal:true,type:"media"});assert.equal(h.recoveries,1);assert.equal(h.destroyed,undefined);
   h.handlers.get("error")(null,{fatal:true,type:"media"});assert.equal(h.recoveries,1);assert.equal(h.destroyed,true);
   assert.equal(guest.el("jfTvLinkVideo").paused,true);
@@ -258,4 +260,14 @@ test("Buffering suspende correção de velocidade e retoma taxa normal",async()=
   guest.tick();
   assert.equal(v.currentTime,10);
   assert.equal(v.playbackRate,1);
+});
+
+test("Diagnóstico mostra perda de quadros sem confundir com buffer",async()=>{
+  const app=await createRoom(),host=app.connect("host"),guest=app.connect("guest");
+  loadLink(host);guest.openLink();
+  const video=guest.el("jfTvLinkVideo");
+  video.getVideoPlaybackQuality=()=>({droppedVideoFrames:12,totalVideoFrames:240});
+  guest.tick();
+  assert.match(guest.el("jfTvLinkBuffer").textContent,/Perdidos: 12/);
+  assert.match(guest.el("jfTvLinkBuffer").textContent,/fps/);
 });
