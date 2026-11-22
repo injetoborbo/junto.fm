@@ -498,7 +498,7 @@ body:not(.jf-in-room) #jfHomeSocial,body:not(.jf-in-room) #jfOpenWardrobe,body:n
  body:not(.jf-in-room) .jf-topbar{padding-top:58px}
 }
 
-body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(#jfHomeCommunity):not(.jf-modal-backdrop){display:none!important}
+body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(#jfHomeCommunity):not(#jfPublicProfile):not(.jf-modal-backdrop){display:none!important}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{justify-content:center;flex-wrap:wrap}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{flex:1 1 190px;min-height:52px}
 .jf-entry-account{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--jf-primary) 20%,transparent);text-align:center}
@@ -1003,6 +1003,19 @@ body:not(.jf-in-room) #jfHomeCommunity{display:block!important}
 body.jf-in-room #jfHomeCommunity{display:none!important}
 @media(max-width:620px){.jf-home-community{padding:10px;margin:10px auto 14px}.jf-home-lead{grid-template-columns:minmax(0,1fr) 88px;gap:8px;padding:11px 2px}.jf-home-lead-art{min-height:94px}.jf-home-lead-art b{font-size:12px}.jf-home-community-grid{grid-template-columns:1fr;gap:6px}.jf-home-paper-foot{font-size:7px;flex-wrap:wrap}.jf-home-story{padding:8px}}
 </style>
+<style>
+body.jf-public-profile-page #jfHomeCommunity,body.jf-public-profile-page #jfRoomEntryPanel,body.jf-public-profile-page main>h1,body.jf-public-profile-page main>.jf-hero-description{display:none!important}
+body.jf-public-profile-page #jfPublicProfile{display:block!important}
+.jf-public-profile{width:min(720px,100%);margin:34px auto;padding:20px;border:1px solid #b9e8ff;border-radius:9px;color:#193c60;background:linear-gradient(145deg,#f2fbff,#c9e5fa);box-shadow:inset 0 1px #fff,0 0 0 3px #263b70,0 8px 0 #111b46,0 14px 30px #0005;font-family:Tahoma,Verdana,sans-serif}
+.jf-public-profile-head{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid #a7c7e4}
+.jf-public-profile-avatar{width:92px;height:92px;flex:0 0 92px;display:grid;place-items:center;overflow:hidden;border:3px ridge #fff;border-radius:8px;background:linear-gradient(145deg,#fff,#b7dfff);color:#3e70a0;font-size:36px;font-weight:900;box-shadow:0 3px 9px #315d8733}
+.jf-public-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.jf-public-profile h2{margin:0 0 4px;color:#214f80;font:900 26px Georgia,serif}.jf-public-profile .jf-public-handle{color:#5280a5;font-size:11px}.jf-public-profile .jf-public-motto{margin:10px 0 0;color:#496d8c;font-size:12px;line-height:1.5}
+.jf-public-profile-meta{display:flex;gap:12px;flex-wrap:wrap;margin:13px 0;color:#6885a0;font-size:10px}
+.jf-public-badges{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 16px}.jf-public-badge{padding:7px 9px;border:1px ridge #c79c4c;border-radius:5px;color:#62491d;background:linear-gradient(#fff7d2,#edc56b);font-size:10px;font-weight:900;box-shadow:inset 0 1px #fff}
+.jf-public-profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.jf-public-profile-actions a,.jf-public-profile-actions button{font:900 11px Tahoma}
+@media(max-width:520px){.jf-public-profile{margin:14px auto;padding:14px}.jf-public-profile-avatar{width:72px;height:72px;flex-basis:72px}.jf-public-profile h2{font-size:21px}}
+</style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
@@ -1025,7 +1038,7 @@ body.jf-in-room #jfHomeCommunity{display:none!important}
       <div class="jf-home-edition"><strong>EDIÇÃO Nº 001</strong><small>JUNTO.FM · 2026</small><span>🐒</span></div>
     </div>
     <article class="jf-home-lead">
-      <div class="jf-home-lead-copy"><span class="jf-home-label">BOLETIM DA COMUNIDADE</span><h3>A internet fica melhor quando a gente se encontra.</h3><p>O Junto.fm está crescendo para virar um ponto de encontro: faça amizades, converse no privado, visite espaços, jogue e compartilhe suas criações.</p><button class="jf-home-action" type="button" id="jfHomeMessenger">✉ Abrir Junto Messenger</button></div>
+      <div class="jf-home-lead-copy"><span class="jf-home-label">BOLETIM DA COMUNIDADE</span><h3>A internet fica melhor quando a gente se encontra.</h3><p>O Junto.fm está crescendo para virar um ponto de encontro: faça amizades, converse no privado, visite espaços, jogue e compartilhe suas criações.</p><button class="jf-home-action" type="button" id="jfHomeMessenger">✉ Abrir Junto Messenger</button> <a class="jf-home-action" id="jfHomeMyProfile" href="#" hidden>☺ Meu perfil público</a></div>
       <div class="jf-home-lead-art" aria-hidden="true"><span>♫</span><b>JUNTO<br>ONLINE!</b><small>✦ EST. 2026 ✦</small></div>
     </article>
     <div class="jf-home-community-grid">
@@ -2798,6 +2811,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       refuse.onclick=()=>socket.emit("friend-request-response",{fromAccountId:person.id,accepted:false});
       row.append(accept,refuse);
     }else{
+      if(person.username){
+        const profile=document.createElement("a");profile.className="btn secondary";profile.textContent="Perfil";profile.href="/u/"+encodeURIComponent(person.username);profile.title="Ver perfil público de @"+person.username;
+        row.appendChild(profile);
+      }
       const follow=document.createElement("button");follow.className="btn";follow.textContent="Seguir";
       follow.disabled=!person.room;
       follow.title=person.room?"Seguir para a sala":"Amigo offline";
