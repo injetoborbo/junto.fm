@@ -8,7 +8,7 @@ let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
 let animationFrame=0,lastFrame=0;
 const DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
-function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
+function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig\\d*[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
 const animationFiles={
  shake:"/dance/macacochaqualha.glb",
  macarena:"/dance/macacomacarena.glb",
