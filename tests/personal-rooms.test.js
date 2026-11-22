@@ -45,7 +45,8 @@ test('3D sitting uses the selected seat height and furniture-facing yaw',()=>{
  assert.match(renderer,/record\.poseHeight=sittingTarget/);
  assert.match(renderer,/record\.poseYaw=sittingTarget/);
  assert.match(renderer,/if\(sitting&&Number\.isFinite\(record\.poseYaw\)\)/);
- assert.match(renderer,/record\.root\.position\.set\(logical\.x,sitting\?\(record\.poseHeight\|\|0\.36\)\+bob:bob,logical\.z\)/);
+ assert.match(renderer,/record\.hipOffset=hips\?record\.root\.worldToLocal/);
+ assert.match(renderer,/record\.root\.position\.set\(logical\.x-hipOffset\.x,\(record\.poseHeight\|\|0\.36\)-hipOffset\.y\+bob,logical\.z-hipOffset\.z\)/);
 });
 test('the furniture editor separates catalog groups and rotates from controls on the selected object',()=>{
  const html=fs.readFileSync(require.resolve('../public/quartos.html'),'utf8');
