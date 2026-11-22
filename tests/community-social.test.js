@@ -64,3 +64,41 @@ test("messenger has a compact mobile layout",()=>{
   assert.match(css,/@media\(max-width:620px\)/);
   assert.match(css,/grid-template-columns:112px/);
 });
+
+
+test("Google-created 23-character usernames can open public profile pages",async()=>{
+  const source=read("community-profiles.js");
+  const accounts=read("account-auth.js");
+  assert.match(accounts,/\"macaco_\"\+crypto\.randomBytes\(8\)\.toString\(\"hex\"\)/);
+  assert.ok(source.includes("{3,24}"),"the public route accepts the generated 23-character username");
+  const routes={};
+  const app={get:(route,handler)=>{routes[route]=handler;}};
+  const accountApi={pool:{query:async(sql)=>sql.includes("junto_accounts")?{rowCount:1,rows:[{id:"account-1",username:"macaco_49a47d0c38138731",name:"Macaco",avatar:"",motto:"",created_at:new Date()}]}:{rowCount:0,rows:[]}},ready:Promise.resolve(true),accountFromRequest:async()=>null};
+  require("../community-profiles")(app,accountApi);
+  const username="macaco_49a47d0c38138731";
+  let sentFile=null,nextCalled=false;
+  const pageRes={set(){return this;},sendFile(file){sentFile=file;return file;}};
+  await routes["/u/:username"]({params:{username}},pageRes,()=>{nextCalled=true;});
+  assert.ok(sentFile,"the HTML app shell is served for Google usernames");
+  assert.equal(nextCalled,false);
+  let apiPayload=null,apiStatus=200;
+  const apiRes={set(){return this;},status(value){apiStatus=value;return this;},json(value){apiPayload=value;return value;}};
+  await routes["/api/community/profile/:username"]({params:{username}},apiRes);
+  assert.equal(apiStatus,200);
+  assert.equal(apiPayload.profile.username,username);
+});
+
+
+test("new community and standalone pages inherit the selected site theme",()=>{
+  const bridge=read("public/theme-bridge.js");
+  assert.match(bridge,/localStorage\.getItem\(key\)/);
+  assert.match(bridge,/\"junto_theme\"/);
+  assert.ok(bridge.includes("root.dataset.jfTheme = name"),"the stored theme is applied to the document");
+  assert.match(bridge,/--jf-ui-panel/);
+  assert.match(read("public/index.html"),/theme-bridge\.js/);
+  assert.match(read("public/quartos.html"),/theme-bridge\.js/);
+  assert.match(read("public/mural.html"),/theme-bridge\.js/);
+  assert.match(read("public/community-social.css"),/var\(--jf-ui-panel/);
+  assert.match(read("public/quartos.css"),/herda a aparência escolhida/);
+  assert.match(read("public/mural.css"),/mesma paleta selecionada/);
+});

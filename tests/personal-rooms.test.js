@@ -2,12 +2,12 @@
 const test=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const rules=require('../public/room-rules'),{initial,setupRooms}=require('../personal-rooms');
 test('placement rejects collisions, bounds, blocked entrance and malformed items',()=>{
- const base=initial();assert.equal(rules.validate(base).items.length,3);
+ const base=initial();assert.equal(rules.validate(base).items.length,4);
  const item={id:'test',type:'sofa',x:3,y:2,rotation:0};
- for(const bad of [{...item,x:9},{...item,x:0,y:0},{...item,rotation:NaN},{...item,type:'__proto__'},{...item,x:1,y:7},{...item,id:'welcome-sofa'}])assert.throws(()=>rules.validate({...base,items:[...base.items,bad]}));
+ for(const bad of [{...item,x:9},{...item,x:0,y:0},{...item,rotation:NaN},{...item,type:'__proto__'},{...item,x:1,y:7},{...item,id:'welcome-chair'}])assert.throws(()=>rules.validate({...base,items:[...base.items,bad]}));
  assert.throws(()=>rules.validate({...base,items:Array(61).fill(item)}));
  assert.throws(()=>rules.validate({...base,wall:'url(evil)'}));
- assert.equal(rules.validate({...base,items:[...base.items,{...item,x:3,y:3}]}).items.length,4,'rug may sit beneath furniture');
+ assert.equal(rules.validate({...base,items:[...base.items,{...item,x:3,y:3}]}).items.length,5,'rug may sit beneath furniture');
 });
 test('navigation walks around furniture, rotates footprints and rejects unreachable tiles',()=>{
  const base=initial(),route=rules.route(base,{x:0,y:0},{x:9,y:9});assert.ok(route.length);let last={x:0,y:0};
@@ -31,6 +31,14 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
  const request=(method,path,body,id=a)=>fetch(base+path,{method,headers:{'Content-Type':'application/json',...(id?{'x-test-account':id}:{})},body:body?JSON.stringify(body):undefined});
  const sockets=[];async function connect(id){const s=client(base+'/quartos',{extraHeaders:{'x-test-account':id}});sockets.push(s);await new Promise((resolve,reject)=>{s.once('connect',resolve);s.once('connect_error',reject);});return s;}
  const emit=(s,event,payload)=>new Promise((resolve,reject)=>s.timeout(2000).emit(event,payload,(e,r)=>e?reject(e):resolve(r)));
+ const waitForPose=(socket,accountId,pose)=>new Promise((resolve,reject)=>{
+  const timeout=setTimeout(()=>{socket.off('people',onPeople);reject(new Error('Timed out waiting for avatar pose: '+pose));},5000);
+  function onPeople(people){
+   if(people.find(p=>p.accountId===accountId)?.pose!==pose)return;
+   clearTimeout(timeout);socket.off('people',onPeople);resolve(people);
+  }
+  socket.on('people',onPeople);
+ });
  try{
   assert.equal((await request('POST','/api/quartos',{},null)).status,401);
   const own=await(await request('POST','/api/quartos',{})).json();assert.equal(own.owner_id,a);
@@ -46,13 +54,16 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   // The socket throttles join requests for 500ms.
   await new Promise(r=>setTimeout(r,550));const peopleUpdate=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'enter',{owner:a})).own,false);
   const present=await peopleUpdate;assert.equal(present.find(p=>p.accountId===b)?.wardrobe.outfit,'punk','presence shares the account wardrobe for the 3D avatar');
-  assert.equal((await emit(visitor,'interact',{itemId:'welcome-sofa'})).pose,'sitting','sofas trigger a synchronized sitting interaction');
-  await new Promise(r=>setTimeout(r,400));
-  const bedPresence=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'interact',{itemId:'test-bed'})).pose,'lying','beds trigger a synchronized lying interaction');
+  const sittingUpdate=waitForPose(visitor,b,'sitting');
+  assert.equal((await emit(visitor,'interact',{itemId:'welcome-chair'})).pose,'sitting','chairs trigger a synchronized sitting interaction');
+  await sittingUpdate;
+  const bedPresence=waitForPose(visitor,b,'lying');
+  assert.equal((await emit(visitor,'interact',{itemId:'test-bed'})).pose,'lying','beds trigger a synchronized lying interaction');
   const atBed=await bedPresence,walker=atBed.find(p=>p.accountId===b);const step=[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>({x:walker.x+dx,y:walker.y+dy})).find(tile=>rules.route(layout,walker,tile)?.length===1);assert.ok(step,'a free adjacent walking tile exists');
-  const movingUpdate=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'walk',step)).ok,true,'walking interrupts a furniture pose');
+  const movingUpdate=waitForPose(visitor,b,'walking'),standingUpdate=waitForPose(visitor,b,'standing');
+  assert.equal((await emit(visitor,'walk',step)).ok,true,'walking interrupts a furniture pose');
   assert.equal((await movingUpdate).find(p=>p.accountId===b)?.pose,'walking');
-  const standingUpdate=new Promise(r=>visitor.once('people',r));const settled=await standingUpdate;assert.equal(settled.find(p=>p.accountId===b)?.pose,'standing','walking returns the avatar to standing');
+  const settled=await standingUpdate;assert.equal(settled.find(p=>p.accountId===b)?.pose,'standing','walking returns the avatar to standing');
   await new Promise(r=>setTimeout(r,180));
   assert.match((await emit(visitor,'walk',{x:1,y:7})).error,/chegar/);
   const owner=await connect(a);assert.equal((await emit(owner,'enter',{owner:a})).own,true);

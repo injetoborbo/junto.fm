@@ -1,7 +1,7 @@
 (()=>{
   const socket=window.jfSocialSocket;
   if(!socket)return;
-  const style=document.createElement("link");style.rel="stylesheet";style.href="/community-social.css?v=1";document.head.appendChild(style);
+  const style=document.createElement("link");style.rel="stylesheet";style.href="/community-social.css?v=2";document.head.appendChild(style);
   const dock=document.createElement("div");dock.className="jf-msn-dock";
   dock.innerHTML='<button type="button" class="jf-msn-launcher" id="jfMsnOpen" aria-expanded="false"><span>✉</span><b>Mensagens</b><i id="jfMsnUnread" hidden>0</i></button>';
   const panel=document.createElement("section");panel.className="jf-msn-window";panel.id="jfMsnWindow";panel.hidden=true;
@@ -22,7 +22,7 @@
     const handle=document.createElement("div");handle.className="jf-public-handle";handle.textContent="@"+username;
     const motto=document.createElement("p");motto.className="jf-public-motto";identity.append(name,handle,motto);heading.append(avatar,identity);
     const meta=document.createElement("div");meta.className="jf-public-profile-meta";
-    const badgesTitle=document.createElement("h3");badgesTitle.textContent="🏅 Medalhas conquistadas";badgesTitle.style.cssText="font:900 13px Tahoma;color:#315f8b;margin:14px 0 8px";
+    const badgesTitle=document.createElement("h3");badgesTitle.textContent="🏅 Medalhas conquistadas";badgesTitle.style.cssText="font:900 13px Tahoma;margin:14px 0 8px";
     const badges=document.createElement("div");badges.className="jf-public-badges";badges.textContent="Carregando coleção...";
     const actions=document.createElement("div");actions.className="jf-public-profile-actions";
     const back=document.createElement("a");back.className="jf-home-action";back.href="/";back.textContent="← Voltar ao Junto.fm";actions.append(back);

@@ -60,3 +60,45 @@ footer b{color:var(--pink);font-size:14px}
 .auth-login{margin-top:9px;text-decoration:none}
 .auth-note{font-size:10px!important;color:#9994c8!important}
 @media(max-width:600px){.auth-gate{margin:4vh auto}.auth-gate-inner{padding:22px;display:block}.auth-lock{margin-bottom:20px;width:68px;height:68px}}
+
+/* Catálogo de móveis 3D CC0 */
+#catalog{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#catalog button{min-height:62px;padding:9px 8px;text-align:left;display:flex;align-items:center;gap:10px;font-size:11px;line-height:1.25}
+#catalog button .swatch{flex:0 0 34px;width:34px;height:34px;margin:0;border:1px solid #aaa0d6;border-radius:3px;background:linear-gradient(145deg,#f1d8ad,#8d6b5a);box-shadow:2px 2px 0 #09091d}
+#catalog button.selected{outline:2px solid var(--yellow);background:#39336f}
+#catalog button small{display:block;color:#aaa4d5;font-size:9px;margin-top:3px}
+.scene #canvas{z-index:1}
+.scene #quarto3d{z-index:2;pointer-events:none}
+@media(max-width:800px){#catalog{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.room-dances{position:absolute;left:12px;top:12px;z-index:4;display:flex;flex-wrap:wrap;gap:5px;max-width:calc(100% - 82px);pointer-events:auto}
+.room-dances button{padding:6px 8px;font-size:10px;font-weight:bold;background:#211e4ddd;border:1px solid #8b7bc5;color:#f5f0ff;box-shadow:2px 2px 0 #09091d}
+.room-dances button.active{background:linear-gradient(#fff08a,#ffce57);color:#201b46;border-color:#fff4b5}
+@media(max-width:600px){.room-dances{max-width:calc(100% - 72px);gap:3px}.room-dances button{padding:5px 6px;font-size:9px}}
+
+
+/* A interface dos Quartos herda a aparência escolhida no Junto.fm. */
+:root{color-scheme:dark;--ink:var(--jf-ui-text,#f5f0ff);--muted:var(--jf-ui-muted,#aaa7d1);--edge:var(--jf-ui-border,#45417b);--yellow:var(--jf-primary,#ffe66d);--pink:var(--jf-primary,#ff75cb);--cyan:var(--jf-secondary,#72f4ff);--panel:var(--jf-ui-panel,#201d4b)}
+body{background:var(--jf-ui-page,#0c0c27);color:var(--jf-ui-text,var(--ink));font-family:var(--jf-font-family,Tahoma),Tahoma,Verdana,Arial,sans-serif;background-image:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--jf-glow,#5656a8) 72%,transparent),transparent 72%);background-attachment:fixed}
+header{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:0 4px 0 #0005}
+.brand{color:var(--jf-ui-text);text-shadow:0 2px 0 #0005,0 0 12px color-mix(in srgb,var(--jf-secondary) 35%,transparent)}
+.brand small{color:var(--jf-secondary)}.brand-mark{background:linear-gradient(145deg,var(--jf-primary),var(--jf-ui-panel) 58%,var(--jf-secondary));border-color:var(--jf-ui-border)}
+nav a,nav button{color:var(--jf-ui-text)}.nav-sticker{color:var(--jf-primary)}
+.pixel-kicker{border-color:var(--jf-ui-border);background:var(--jf-ui-panel);color:var(--jf-secondary);box-shadow:3px 3px 0 #0005}.pixel-kicker span{color:var(--jf-primary)}
+.intro h1{color:var(--jf-ui-text);text-shadow:3px 4px 0 color-mix(in srgb,var(--jf-glow) 60%,#000)}.intro p{color:var(--jf-ui-muted)}
+.primary{background:var(--jf-ui-button);border-color:var(--jf-ui-button-border);color:var(--jf-ui-button-text);box-shadow:4px 4px 0 #0006,inset 0 1px #ffffff70}.primary:hover{background:var(--jf-ui-button);filter:brightness(1.08)}
+.lobby-side:before{background:var(--jf-ui-soft);border-color:var(--jf-ui-border);box-shadow:8px 8px 0 #0006}
+.invitation{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:5px 5px 0 #0006}.window-bar{background:linear-gradient(90deg,var(--jf-ui-button),var(--jf-ui-panel));color:var(--jf-ui-text);border-color:var(--jf-ui-border)}
+.invitation h2{color:var(--jf-ui-text)}.invitation p,.hint{color:var(--jf-ui-muted)}.invite-card{border-color:var(--jf-ui-border)}.invite-card small{color:var(--jf-ui-muted)}
+.mail-icon{background:var(--jf-ui-surface);border-color:var(--jf-ui-border);color:var(--jf-primary)}.invitation>button{background:var(--jf-ui-button);border-color:var(--jf-ui-button-border);color:var(--jf-ui-button-text)}
+.sticker{background:var(--jf-primary);color:var(--jf-ui-button-text)}.side-note{color:var(--jf-ui-muted)}.side-note span{color:var(--jf-secondary)}
+#status{color:var(--jf-secondary)}#login{color:var(--jf-primary)}footer{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);color:var(--jf-ui-muted)}footer b{color:var(--jf-primary)}
+#room .room-heading h1{color:var(--jf-ui-text);text-shadow:2px 2px 0 color-mix(in srgb,var(--jf-glow) 60%,#000)}
+#room .scene-column{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:5px 5px 0 #0006}#room .scene{background:var(--jf-ui-scene)}#room aside{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:4px 4px 0 #0006}
+#room button{border-color:var(--jf-ui-border);background:var(--jf-ui-button);color:var(--jf-ui-button-text);box-shadow:0 3px 0 #0005}#room button:hover{filter:brightness(1.1)}
+#room .room-dances button{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);color:var(--jf-ui-text)}#room .room-dances button.active{background:var(--jf-ui-button);color:var(--jf-ui-button-text)}
+#room input{background:var(--jf-ui-soft);border-color:var(--jf-ui-border);color:var(--jf-ui-text)}#room label{color:var(--jf-ui-muted)}#room .scene-tip{color:var(--jf-ui-text)}#chatLog{background:var(--jf-ui-soft);color:var(--jf-ui-text)}#chatLog b{color:var(--jf-primary)}#chatForm{background:var(--jf-ui-panel);border-color:var(--jf-ui-border)}
+#catalog button.selected{outline-color:var(--jf-primary);background:var(--jf-ui-button);color:var(--jf-ui-button-text)}#catalog button .swatch{border-color:var(--jf-ui-border)}
+
+.auth-gate{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:7px 7px 0 #0006;color:var(--jf-ui-text)}
+.auth-gate h1{color:var(--jf-ui-text);text-shadow:0 1px 2px #0005}.auth-gate p{color:var(--jf-ui-muted)}.auth-lock{background:var(--jf-ui-surface);border-color:var(--jf-ui-border);color:var(--jf-primary);box-shadow:4px 4px 0 #0006}.auth-note{color:var(--jf-ui-muted)!important}

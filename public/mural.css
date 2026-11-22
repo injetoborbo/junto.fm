@@ -618,3 +618,25 @@ footer{color:#fff;text-shadow:0 2px 0 #21496c,0 0 10px #21496c;letter-spacing:2.
   .studio{box-shadow:5px 6px 0 #183c62}
   .studio-label span:last-child{font-size:8px}
 }
+
+
+/* O Mural usa a mesma paleta selecionada na aparência do Junto.fm. */
+:root{color:var(--jf-ui-text,var(--paper));--ink:var(--jf-ui-text,#1d1d1f);--paper:var(--jf-ui-panel,#ededed);--accent:var(--jf-primary,#d6d6d6);--concrete:var(--jf-ui-soft,#bcbcbc)}
+body{background-color:var(--jf-ui-page,#8dafc4);color:var(--jf-ui-text);font-family:var(--jf-font-family,Trebuchet MS),"Trebuchet MS",Arial,sans-serif}
+header{color:var(--jf-ui-text)}header a{background:var(--jf-ui-button);color:var(--jf-ui-button-text);border-color:var(--jf-ui-border);box-shadow:3px 3px 0 #0005}header>span{color:var(--jf-ui-text);background:var(--jf-ui-panel);border-color:var(--jf-ui-border)}
+.heading{background:linear-gradient(125deg,var(--jf-ui-panel),var(--jf-ui-soft));border-color:var(--jf-ui-border);box-shadow:inset 0 1px #ffffff25,0 5px 0 #0006,0 12px 26px #0004;color:var(--jf-ui-text)}
+.heading:before{background:var(--jf-ui-button);border-color:var(--jf-ui-border);color:var(--jf-ui-button-text);box-shadow:3px 3px 0 #0005}
+.eyebrow{background:var(--jf-ui-button);border-color:var(--jf-ui-border);color:var(--jf-ui-button-text);box-shadow:3px 3px 0 #0005}
+h1{color:var(--jf-primary);-webkit-text-stroke-color:var(--jf-ui-border);text-shadow:4px 5px 0 #0008,0 0 14px color-mix(in srgb,var(--jf-secondary) 28%,transparent)}h1 em{color:var(--jf-secondary);text-shadow:4px 5px 0 #0008}
+.heading p:not(.eyebrow){background:var(--jf-ui-surface);border-color:var(--jf-ui-border);color:var(--jf-ui-text);box-shadow:3px 3px 0 #0005}
+.studio{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:7px 8px 0 #0006}
+.studio-label{background:linear-gradient(180deg,var(--jf-ui-surface),var(--jf-ui-button));border-color:var(--jf-ui-border);color:var(--jf-ui-text);text-shadow:0 1px 2px #0005}
+.toolbar{background:var(--jf-ui-soft);border-color:var(--jf-ui-border)}.toolbar label{color:var(--jf-ui-text)}
+.tools button,.actions button,.bottom button{background:var(--jf-ui-button);border-color:var(--jf-ui-button-border);color:var(--jf-ui-button-text);box-shadow:2px 3px 0 #0005,inset 0 1px #ffffff65}
+.tools button[aria-pressed=true]{background:var(--jf-primary);color:var(--jf-ui-button-text);border-color:var(--jf-secondary);box-shadow:2px 3px 0 #0006,0 0 12px color-mix(in srgb,var(--jf-secondary) 35%,transparent)}
+.viewport{background:var(--jf-ui-page);box-shadow:inset 0 0 0 5px var(--jf-ui-border),inset 0 0 28px #0008}
+.bottom{background:var(--jf-ui-panel);border-color:var(--jf-ui-border)}#count{color:var(--jf-ui-muted)}
+.publish{background:var(--jf-ui-button)!important;border-color:var(--jf-ui-button-border)!important;color:var(--jf-ui-button-text)!important;box-shadow:2px 4px 0 #0006!important}.publish:not(:disabled):hover{filter:brightness(1.1)}
+.notice,details{color:var(--jf-ui-text);background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:4px 5px 0 #0005}.notice:before{background:var(--jf-ui-button);border-color:var(--jf-ui-border);color:var(--jf-ui-button-text)}.notice small,details ul li small{color:var(--jf-ui-muted)}.notice a,summary{color:var(--jf-secondary)}
+li{background:var(--jf-ui-surface);color:var(--jf-ui-text);border-color:var(--jf-ui-border);box-shadow:3px 3px 0 #0005}li button{background:var(--jf-ui-button);color:var(--jf-ui-button-text)}footer{color:var(--jf-ui-muted);text-shadow:0 1px 3px #000}
+input[type=range]{accent-color:var(--jf-primary)}input[type=color]{border-color:var(--jf-ui-border)}
