@@ -117,8 +117,7 @@ function scheduleAnimation(){if(!animationFrame)animationFrame=requestAnimationF
 function init(){
  if(renderer)return;
  scene=new THREE.Scene();
- camera=new THREE.OrthographicCamera(-1,1,1,-1,.1,3000);
- camera.position.set(0,0,1200);camera.lookAt(0,0,0);
+ camera=new THREE.OrthographicCamera(-1,1,1,-1,.1,1000);
  renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false,powerPreference:"low-power"});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.matchMedia("(max-width:760px)").matches?1:1.25));
  renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -155,7 +154,6 @@ async function createAvatar(person,scale,record){
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;
   record.rest=new Map();record.restQuaternion=new Map();record.animationBones=[];
-  record.rig?.updateMatrixWorld(true);
   record.rig?.updateMatrixWorld(true);
   record.rig?.traverse?.(bone=>{
    if(!bone.isBone)return;
