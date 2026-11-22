@@ -18,7 +18,11 @@ test('tabletop objects require a supporting furniture surface and do not block w
  assert.equal(rules.surfaceHostAt(base.items,{x:3,y:7})?.id,'welcome-table');
  assert.equal(rules.surfaceCellFree([...base.items,mug],{id:'welcome-table'},{x:2,y:7}),false);
  assert.deepEqual(rules.route(layout,{x:0,y:0},{x:9,y:9}),rules.route(base,{x:0,y:0},{x:9,y:9}));
- assert.throws(()=>rules.validate({...base,items:[...base.items,{...mug,parentId:undefined}]}),/objetos de mesa/i);
+ const legacyLayout={...base,items:[...base.items,{...mug,parentId:undefined,x:6,y:6}]};
+ assert.throws(()=>rules.validate(legacyLayout),/objetos de mesa/i,'new objects still cannot be placed on the floor');
+ const migrated=rules.validate(legacyLayout,legacyLayout);
+ assert.equal(migrated.items.at(-1).legacyFloor,true,'old floor decorations keep their saved placement');
+ assert.equal(rules.route(migrated,{x:6,y:5},{x:6,y:6}),null,'old floor decorations still block walking');
  assert.throws(()=>rules.validate({...base,items:[...base.items,{...mug,x:4,y:7}]}),/superfície de apoio/i);
  assert.throws(()=>rules.validate({...base,items:[...base.items,mug,{...mug,id:'second-mug'}]}),/Já existe um objeto/i);
  assert.throws(()=>rules.validate({...base,items:[...base.items,{id:'floor-chair-on-table',type:'chair',x:2,y:7,rotation:0,parentId:'welcome-table'}]}),/Somente objetos de mesa/i);
