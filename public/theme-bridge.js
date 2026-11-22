@@ -103,6 +103,7 @@
     }
 
     root.dataset.jfTheme = name;
+    root.style.colorScheme = name === "classic" ? "light" : "dark";
     root.dataset.jfKodokuPoster = saved.kodokuPoster ? "on" : "off";
     root.style.setProperty("--jf-primary", colors[0]);
     root.style.setProperty("--jf-secondary", colors[1]);
