@@ -36,13 +36,24 @@ test("home newspaper links to existing community features without duplicating th
   assert.match(html,/not\(#jfHomeCommunity\)/);
 });
 
+test("public profiles expose only social fields and existing achievement badges",()=>{
+  const source=read("community-profiles.js");
+  assert.match(source,/app\.get\("\/u\/:username"/);
+  assert.match(source,/app\.get\("\/api\/community\/profile\/:username"/);
+  assert.match(source,/SELECT id,username,nickname AS name,avatar,motto,created_at/);
+  assert.match(source,/SELECT achievement_id,unlocked_at FROM junto_achievements/);
+  assert.doesNotMatch(source,/SELECT .*email|password_hash|google_sub/);
+  const accounts=read("account-auth.js");
+  assert.match(accounts,/a\.username,a\.motto,a\.avatar/);
+});
+
 test("messenger renders user content as text and refreshes its conversation state",()=>{
   const source=read("public/community-social.js");
   assert.match(source,/bubble\.textContent=message\.body/);
   assert.match(source,/socket\.emit\("dm-send"/);
   assert.match(source,/socket\.on\("dm-history"/);
   assert.match(source,/socket\.on\("dm-message"/);
-  assert.match(source,/socket\.emit\("dm-list"/);
+  assert.match(source,/socket\.emit\("dm-list"/);\n  assert.match(source,/Ver perfil/);\n  assert.match(source,/renderPublicProfilePage/);
 });
 
 test("messenger has a compact mobile layout",()=>{
