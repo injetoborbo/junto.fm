@@ -3,13 +3,37 @@
 'use strict';
 const size=10;
 const catalog=[
- ['sofa','Sofá retrô',2,1,'#c96c4d'],['chair','Poltrona',1,1,'#e9ae4e'],
- ['table','Mesa de centro',2,1,'#ab7954'],['bed','Cama',2,3,'#669eaa'],
- ['shelf','Estante de discos',2,1,'#98684c'],['plant','Costela de adão',1,1,'#629c66'],
- ['lamp','Luminária',1,1,'#ebcd79'],['tv','TV de tubo',2,1,'#7d8090'],
- ['rug','Tapete',3,3,'#a6779b'],['speaker','Caixa de som',1,1,'#525b6e'],
- ['arcade','Fliperama',1,1,'#b273ba'],['banana','Bananeira',1,1,'#7fba70']
-].map(([type,name,w,h,color])=>({type,name,w,h,color,solid:type!=='rug'}));
+ // Modelos GLB CC0 importados do pacote Free Apartment Props (Vuena).
+ ['coffeeTable','Mesa de centro',2,1,'#ab7954','coffee-table'],
+ ['diningChair','Cadeira de jantar',1,1,'#e9ae4e','dining-chair'],
+ ['floorLamp','Luminária de chão',1,1,'#ebcd79','floor-lamp'],
+ ['cactus','Cacto decorativo',1,1,'#629c66','cactus'],
+ ['plant','Planta de interior',1,1,'#629c66','plant'],
+ ['sideTable','Mesinha lateral',1,1,'#ab7954','side-table'],
+ ['tableLamp','Abajur de mesa',1,1,'#ebcd79','table-lamp'],
+ ['books','Pilha de livros',1,1,'#98684c','books'],
+ ['vase','Vaso decorativo',1,1,'#b96d87','vase'],
+ ['basket','Cesto de vime',1,1,'#b88d62','basket'],
+ ['pillow','Almofada',1,1,'#7d9eaa','pillow'],
+ ['nightstand','Criado-mudo',1,1,'#98684c','nightstand'],
+ ['kettle','Chaleira',1,1,'#9da5ad','kettle'],
+ ['mug','Caneca',1,1,'#b96d61','mug'],
+ ['bench','Banco low-poly',2,1,'#98684c','bench'],
+ ['planter','Vaso de plantas',1,1,'#629c66','planter'],
+ // Tapete é uma peça plana de piso, não um móvel CSS.
+ ['rug','Tapete retrô',3,3,'#a6779b',null],
+ // Tipos antigos permanecem válidos para não quebrar quartos já salvos.
+ ['sofa','Sofá antigo',2,1,'#c96c4d','dining-chair',true],
+ ['chair','Poltrona antiga',1,1,'#e9ae4e','dining-chair',true],
+ ['table','Mesa antiga',2,1,'#ab7954','coffee-table',true],
+ ['bed','Cama antiga',2,3,'#669eaa','coffee-table',true],
+ ['shelf','Estante antiga',2,1,'#98684c','nightstand',true],
+ ['lamp','Luminária antiga',1,1,'#ebcd79','floor-lamp',true],
+ ['tv','TV antiga',2,1,'#7d8090','nightstand',true],
+ ['speaker','Caixa de som antiga',1,1,'#525b6e','mug',true],
+ ['arcade','Fliperama antigo',1,1,'#b273ba','nightstand',true],
+ ['banana','Bananeira antiga',1,1,'#7fba70','plant',true]
+].map(([type,name,w,h,color,asset,legacy=false])=>({type,name,w,h,color,asset,legacy,solid:type!=='rug',interactive:['diningChair','bench','chair','sofa','bed'].includes(type)}));
 const itemType=t=>catalog.find(i=>i.type===t);
 function cells(item){const t=itemType(item.type);if(!t)return [];const w=item.rotation%2?t.h:t.w,h=item.rotation%2?t.w:t.h;return Array.from({length:w*h},(_,i)=>[item.x+i%w,item.y+Math.floor(i/w)]);}
 function validate(layout){
