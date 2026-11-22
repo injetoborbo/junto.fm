@@ -3,7 +3,7 @@ const path=require('node:path');
 const rules=require('./public/room-rules');
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ROOM_DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
-const initial=()=>({wall:'#8caaa5',floor:'#c9ad85',items:[{id:'welcome-table',type:'coffeeTable',x:2,y:7,rotation:0},{id:'welcome-plant',type:'plant',x:8,y:1,rotation:0},{id:'welcome-rug',type:'rug',x:3,y:3,rotation:0},{id:'welcome-chair',type:'diningChair',x:5,y:6,rotation:1}]});
+const initial=()=>({wall:'#8caaa5',floor:'#c9ad85',items:[{id:'welcome-table',type:'coffeeTable',x:2,y:7,rotation:0},{id:'welcome-plant',type:'plant',x:8,y:1,rotation:0},{id:'welcome-rug',type:'rug',x:3,y:3,rotation:0},{id:'welcome-chair',type:'diningChair',x:1,y:7,rotation:0}]});
 function setupRooms(app,io,accounts){
  const pool=accounts.pool,ns=io.of('/quartos'),presence=new Map();
  const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query(`CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1);
