@@ -9,6 +9,7 @@ const avatars=new Map();
 const furnitureRecords=new Map(),modelCache=new Map(),modelLoads=new Map();
 let previewRecord=null;
 const ASSET_ROOT="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/41b06c6223d847d9de6519dd25a493d40e65992d/GLB/";
+const CITY_ASSET_ROOT="https://raw.githubusercontent.com/kayquer/kit-cidade-lowpoly/d9de7e25d476d8b8572971840b129c28a68e9cf7/models/";
 const FURNITURE_ASSETS={
  coffeeTable:{file:"Living/ap_coffee_table.glb",height:0.62},
  diningChair:{file:"Kitchen/ap_dining_chair.glb",height:1.02},
@@ -24,6 +25,8 @@ const FURNITURE_ASSETS={
  nightstand:{file:"Bedroom/ap_nightstand.glb",height:0.72},
  kettle:{file:"Kitchen/ap_kettle.glb",height:0.38},
  mug:{file:"Clutter/ap_mug.glb",height:0.22},
+ bench:{file:"mobiliario/banco_praca.glb",height:0.72,city:true},
+ planter:{file:"mobiliario/vaso_planta.glb",height:0.9,city:true},
  sofa:{file:"Kitchen/ap_dining_chair.glb",height:0.88},
  chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02},
  table:{file:"Living/ap_coffee_table.glb",height:0.62},
@@ -92,7 +95,7 @@ function switchDance(record,style){
  if(action){action.reset().fadeIn(.24).play();record.action=action;}
 }
 function furnitureAssetUrl(type){
- const spec=FURNITURE_ASSETS[type];return spec?ASSET_ROOT+spec.file:null;
+ const spec=FURNITURE_ASSETS[type];return spec?(spec.city?CITY_ASSET_ROOT:ASSET_ROOT)+spec.file:null;
 }
 function loadFurnitureModel(type){
  const url=furnitureAssetUrl(type);if(!url)return Promise.resolve(null);
