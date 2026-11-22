@@ -145,16 +145,39 @@
       }).finally(()=>{if(playingPromise===attempt)playingPromise=null;});
       playingPromise=attempt;
     }
+    function bufferedAt(seconds) {
+      for(let i=0;i<(video.buffered?.length||0);i++){
+        try{if(video.buffered.start(i)<=seconds&&video.buffered.end(i)>=seconds)return true;}catch(_){}
+      }
+      return false;
+    }
     function sync(force=false) {
       if(!active()||!source||fatalError)return;
-      const s=getState(), wanted=targetTime();
-      video.playbackRate=s.rate||1;
-      // Do not continually seek a buffering host. It is the playback clock.
+      const s=getState(), wanted=targetTime(), baseRate=s.rate||1;
       const finite=Number.isFinite(video.duration)&&video.duration>0;
       const bounded=finite?Math.min(wanted,Math.max(0,video.duration-0.05)):wanted;
-      if(video.readyState>=1&&finite&&(force||(!isAdmin()&&!buffering&&!video.seeking))&&Math.abs(video.currentTime-bounded)>(force?0.35:1.5)){
-        try{video.currentTime=bounded;}catch(_){}
+      let effectiveRate=baseRate;
+      if(video.readyState>=1&&finite){
+        const drift=bounded-video.currentTime, distance=Math.abs(drift);
+        if(force&&distance>0.35){
+          // Explicit play/pause/seek commands are authoritative.
+          try{video.currentTime=bounded;}catch(_){}
+        }else if(!isAdmin()&&s.playing&&!buffering&&!video.seeking&&video.readyState>=2){
+          if(distance>5){
+            // For a large gap, wait until the destination is already buffered.
+            // Speeding up here could consume data faster than a slow source delivers it.
+            if(bufferedAt(bounded)){
+              try{video.currentTime=bounded;}catch(_){}
+            }
+          }else{
+            // Small drift is corrected gradually; seeking on every heartbeat
+            // can repeatedly interrupt progressive MP4 playback.
+            const correction=Math.max(-0.08,Math.min(0.08,drift*0.04));
+            effectiveRate=baseRate*(1+correction);
+          }
+        }
       }
+      video.playbackRate=effectiveRate;
       if(s.playing)play();else {
         playingPromise=null;
         video.pause();
@@ -274,7 +297,7 @@
       buffering=false;stalledTicks=0;lastPosition=video.currentTime;message.hidden=true;report("Reproduzindo com a sala.");
     });
     video.addEventListener("waiting",()=>{if(active()){buffering=true;stalledTicks=0;report("Carregando buffer…");}});
-    video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(true);}});
+    video.addEventListener("canplay",()=>{if(active()&&buffering){buffering=false;sync(false);}});
     video.addEventListener("ended",()=>{if(active()&&isAdmin())command("pause",video.duration);report("Vídeo encerrado.");});
     video.addEventListener("error",()=>{
       if(!active()||!source)return;
