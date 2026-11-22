@@ -25,7 +25,7 @@ test('tabletop objects require a supporting furniture surface and do not block w
  assert.equal(rules.route(migrated,{x:6,y:5},{x:6,y:6}),null,'old floor decorations still block walking');
  assert.throws(()=>rules.validate({...base,items:[...base.items,{...mug,x:4,y:7}]}),/superfície de apoio/i);
  assert.throws(()=>rules.validate({...base,items:[...base.items,mug,{...mug,id:'second-mug'}]}),/Já existe um objeto/i);
- assert.throws(()=>rules.validate({...base,items:[...base.items,{id:'floor-chair-on-table',type:'chair',x:2,y:7,rotation:0,parentId:'welcome-table'}]}),/Somente objetos de mesa/i);
+ assert.throws(()=>rules.validate({...base,items:[...base.items,{id:'floor-chair-on-table',type:'chair',x:4,y:8,rotation:0,parentId:'welcome-table'}]}),/Somente objetos de mesa/i);
 });
 test('navigation walks around furniture, rotates footprints and rejects unreachable tiles',()=>{
  const base=initial(),route=rules.route(base,{x:0,y:0},{x:9,y:9});assert.ok(route.length);let last={x:0,y:0};
