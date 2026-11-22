@@ -9,7 +9,12 @@ function setupRooms(app,io,accounts){
  const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query(`CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1);
  CREATE TABLE IF NOT EXISTS junto_room_invites(owner_id UUID NOT NULL REFERENCES junto_personal_rooms(owner_id),guest_id UUID NOT NULL REFERENCES junto_accounts(id),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(owner_id,guest_id));`);return true;}).catch(e=>{console.error('Quartos:',e.message);return false;});
  const err=(message,status=400)=>Object.assign(Error(message),{status});
- const room=async id=>(await pool.query('SELECT r.*,a.nickname AS owner_name FROM junto_personal_rooms r JOIN junto_accounts a ON a.id=r.owner_id WHERE owner_id=$1',[id])).rows[0];
+ const room=async id=>{
+  const result=await pool.query('SELECT r.*,a.nickname AS owner_name FROM junto_personal_rooms r JOIN junto_accounts a ON a.id=r.owner_id WHERE owner_id=$1',[id]);
+  const record=result.rows[0];
+  if(record?.layout)record.layout=rules.validate(record.layout,record.layout);
+  return record;
+ };
  async function allowed(owner,guest){return owner===guest||!!(await pool.query('SELECT 1 FROM junto_room_invites WHERE owner_id=$1 AND guest_id=$2',[owner,guest])).rowCount;}
  const wrap=fn=>async(req,res)=>{res.set('Cache-Control','no-store');try{
   if(!await ready)throw err('Quartos indisponíveis. Tente novamente em instantes.',503);
