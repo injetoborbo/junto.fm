@@ -148,7 +148,10 @@ function syncFurniture(items,payload){
   if(item.type==="rug")continue;
   const signature=[item.type,item.x,item.y,item.rotation].join(":");
   let record=furnitureRecords.get(item.id);
-  if(record?.signature===signature)continue;
+  if(record?.signature===signature){
+   if(record.object){const ground=furnitureGround(item,payload);record.object.position.x=ground.x;record.object.position.z=ground.z;record.object.rotation.y=-Math.PI/4+(item.rotation||0)*Math.PI/2;}
+   continue;
+  }
   if(record)clearFurnitureRecord(record);
   record={signature,object:null};furnitureRecords.set(item.id,record);
   void loadFurnitureModel(item.type).then(model=>{
@@ -160,6 +163,7 @@ function syncFurniture(items,payload){
  const preview=payload.preview;
  const previewSignature=preview?[preview.type,preview.x,preview.y,preview.rotation].join(":"):null;
  if(previewRecord?.signature!==previewSignature){clearFurnitureRecord(previewRecord);previewRecord=null;}
+ else if(previewRecord?.object&&preview){const ground=furnitureGround(preview,payload);previewRecord.object.position.x=ground.x;previewRecord.object.position.z=ground.z;previewRecord.object.rotation.y=-Math.PI/4+(preview.rotation||0)*Math.PI/2;}
  if(preview&&!previewRecord&&preview.type!=="rug"){
   const record={signature:previewSignature,object:null};previewRecord=record;
   void loadFurnitureModel(preview.type).then(model=>{
