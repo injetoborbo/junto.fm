@@ -48,7 +48,9 @@ test('3D sitting uses the selected seat height and furniture-facing yaw',()=>{
  assert.match(renderer,/sittingTarget\?furnitureGround\(sittingTarget,payload\)/);
  assert.match(renderer,/const calibration=sittingTarget\?getSeatCalibration\(sittingTarget\.type\)/);
  assert.match(renderer,/record\.poseHeight=calibration\?calibration\.seatHeight:0/);
- assert.match(renderer,/record\.poseYaw=sittingTarget\?window\.RoomRules\.rotationRadians\(sittingTarget\.rotation\|\|0\)/);
+ assert.match(renderer,/record\.poseFurnitureYaw=sittingTarget\?window\.RoomRules\.rotationRadians\(sittingTarget\.rotation\|\|0\):null/);
+ assert.match(renderer,/record\.poseYaw=sittingTarget\?record\.poseFurnitureYaw\+THREE\.MathUtils\.degToRad\(calibration\?\.yawOffset\|\|0\):null/);
+ assert.match(renderer,/new THREE\.Vector3\(record\.poseOffsetX\|\|0,0,record\.poseOffsetZ\|\|0\)\.applyAxisAngle\(new THREE\.Vector3\(0,1,0\),Number\.isFinite\(record\.poseFurnitureYaw\)\?record\.poseFurnitureYaw:record\.root\.rotation\.y\)/);
  assert.match(renderer,/record\.poseOffsetX=calibration\?calibration\.offsetX:0/);
  assert.match(renderer,/record\.poseTilt=calibration\?THREE\.MathUtils\.degToRad/);
  assert.match(renderer,/if\(sitting&&Number\.isFinite\(record\.poseYaw\)\)/);
