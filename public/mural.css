@@ -575,12 +575,12 @@ footer {
 
 
 /* Y2K STREET UI — moldura e acabamento da estação do mural. */
-body{background-color:#8cc6df;background-image:radial-gradient(ellipse at 8% 10%,#fff9 0 2px,transparent 3px),radial-gradient(ellipse at 88% 18%,#fff8 0 3px,transparent 4px),linear-gradient(135deg,#b8e7f0 0%,#83c5e4 48%,#d3c5ec 100%);background-attachment:fixed}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.25;background-image:linear-gradient(45deg,transparent 48%,#fff9 49%,#fff9 51%,transparent 52%);background-size:18px 18px}
+body{background-color:#8cc6df;background-image:radial-gradient(ellipse at 8% 10%,#fff9 0 2px,transparent 3px),radial-gradient(ellipse at 88% 18%,#fff8 0 3px,transparent 4px),linear-gradient(135deg,#b8e7f099 0%,#83c5e477 48%,#d3c5ec99 100%),url("/mural-sky-clouds.webp");background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.18;background-image:linear-gradient(45deg,transparent 48%,#fff9 49%,#fff9 51%,transparent 52%);background-size:18px 18px}
 header{max-width:1420px;margin:14px auto 0;padding:12px 18px;background:linear-gradient(180deg,#fff 0%,#dffaff 10%,#78c9ef 48%,#3686c5 52%,#245c9b 100%);border:2px solid #173d65;border-radius:12px 7px 12px 7px;box-shadow:inset 0 2px #fff,0 4px 0 #173d65,0 8px 22px #173d6540;color:#fff;text-shadow:0 1px 2px #173d65;letter-spacing:1.6px}
 header a{border:2px solid #fff;border-radius:7px;background:linear-gradient(#fff,#f7d8ff 48%,#d48be8 52%,#9b58c3);color:#32184d;box-shadow:inset 0 2px #fff,0 3px 0 #44245f,0 0 14px #f8d7ff;transform:rotate(-2deg)}
 header>span{border:1px solid #fff;border-radius:4px;background:linear-gradient(#fff,#e4faff 45%,#9bdaf1);color:#16476b;text-shadow:none;box-shadow:0 2px 0 #16476b;font-size:10px}
-main{padding-top:28px}
+header,main,footer{position:relative;z-index:1}\nmain{padding-top:28px}
 .heading{position:relative;isolation:isolate;padding:18px 20px 16px;margin:0 0 28px;border:2px solid #21496c;border-radius:16px 8px 18px 9px;background:linear-gradient(125deg,#fffdf2ed 0%,#e7faffef 48%,#f6e2ffef 100%);box-shadow:inset 0 2px #fff,0 5px 0 #21496c,0 12px 26px #21496c35}
 .heading::before{content:"★ SPRAY • DRAW • SHARE ★";position:absolute;right:18px;top:-13px;padding:6px 12px;border:2px solid #4c245f;border-radius:4px;background:linear-gradient(#fff6c5,#ffd45e 48%,#f39c31 52%,#df6a35);color:#512c37;font:900 10px/1 "Trebuchet MS",sans-serif;letter-spacing:1px;box-shadow:3px 3px 0 #4c245f;transform:rotate(3deg);z-index:2}
 .eyebrow{background:linear-gradient(#fff,#d9faff 45%,#82d8f4 52%,#47a6dc);border-color:#245078;border-radius:4px;color:#143b5c;box-shadow:3px 3px 0 #245078,0 0 12px #8ce8ff;transform:rotate(-3deg)}
