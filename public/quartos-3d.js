@@ -14,31 +14,33 @@ function animate(now){
  let keepAnimating=false;
  for(const record of avatars.values()){
   if(!record.root||!record.target||!record.rig)continue;
-  const p=record.root.position,t=record.target;
-  const dx=t.x-p.x,dy=t.y-p.y,distance=Math.hypot(dx,dy);
+  const logical=record.logical||(record.logical={x:record.root.position.x,y:record.root.position.y});
+  const t=record.target,dx=t.x-logical.x,dy=t.y-logical.y,distance=Math.hypot(dx,dy);
   const walking=distance>1.25;
-  const style=walking?"idle":(DANCES.has(record.dance)?record.dance:"idle");
+  const sitting=!walking&&record.pose==="sitting",lying=!walking&&record.pose==="lying";
+  const style=walking||sitting||lying?"idle":(DANCES.has(record.dance)?record.dance:"idle");
   if(walking){
-   // Mesma cadência da balada: deslocamento contínuo, sem saltar de célula.
+   // Mesma velocidade-base da balada: 1,35 casas por segundo, interpolada.
    const speed=Math.max(36,48*(record.scale||1))*1.35;
    const step=Math.min(distance,speed*dt);
-   p.x+=dx/distance*step;p.y+=dy/distance*step;
+   logical.x+=dx/distance*step;logical.y+=dy/distance*step;
    const heading=Math.atan2(dx,-dy);
    const diff=Math.atan2(Math.sin(heading-record.root.rotation.z),Math.cos(heading-record.root.rotation.z));
    record.root.rotation.z+=Math.max(-dt*4,Math.min(dt*4,diff));
    record.walkTime=(record.walkTime||0)+dt*7.8;
    keepAnimating=true;
-  }else{
-   p.x=t.x;p.y=t.y;
-  }
+  }else{logical.x=t.x;logical.y=t.y;}
   const phase=now/1000*({shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1}[style]||2);
   const pulse=Math.sin(phase),stride=Math.sin(record.walkTime||0);
-  record.root.position.z=walking?Math.abs(stride)*2.2:style==="idle"?.7*Math.sin(now/1000*2):Math.abs(pulse)*(style==="capoeira"?1.2:2.2);
-  if(!walking){
+  const bob=walking?Math.abs(stride)*2.2:style==="idle"?.7*Math.sin(now/1000*2):Math.abs(pulse)*(style==="capoeira"?1.2:2.2);
+  record.root.position.set(logical.x,logical.y+bob,2);
+  if(!walking&&!lying){
    const targetYaw=record.baseYaw||0;
    record.root.rotation.z+=Math.atan2(Math.sin(targetYaw-record.root.rotation.z),Math.cos(targetYaw-record.root.rotation.z))*Math.min(1,dt*1.6);
   }
-  record.root.rotation.x=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
+  if(lying)record.root.rotation.z=(record.baseYaw||0)+1.25;
+  else if(!walking)record.root.rotation.x=sitting?-.12:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
+  else record.root.rotation.x=0;
   for(const bone of record.animationBones){
    const base=record.rest.get(bone.uuid);if(!base)continue;
    const n=boneName(bone.name);
@@ -49,7 +51,14 @@ function animate(now){
    const upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm;
    const torso=/spine/.test(n);
    let x=base.x,y=base.y,z=base.z;
-   if(walking){
+   if(sitting){
+    if(upperLeg)x-=.88;
+    if(lowerLeg)x+=1.02;
+    if(upperArm)x-=.12;
+   }else if(lying){
+    if(upperLeg)x-=.10;
+    if(lowerLeg)x+=.12;
+   }else if(walking){
     if(upperLeg)x+=side*.36*stride;
     if(lowerLeg)x+=.15*Math.max(0,-side*stride);
     if(upperArm)x-=side*.26*stride;
@@ -86,7 +95,7 @@ function animate(now){
    bone.rotation.set(x,y,z);
   }
   record.walking=walking;record.lastPose=walking?"walking":record.pose;
-  if(walking||style!=="idle")keepAnimating=true;
+  if(walking||sitting||lying||style!=="idle")keepAnimating=true;
  }
  render();
  if(keepAnimating)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
@@ -131,7 +140,7 @@ async function createAvatar(person,scale,record){
    record.animationBones.push(bone);
    record.rest.set(bone.uuid,{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z});
   });
-  if(record.target)record.root.position.copy(record.target);
+  if(record.target){record.logical={x:record.target.x,y:record.target.y};record.root.position.copy(record.target);}
   scene.add(record.root);scheduleAnimation();
  }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
 }
@@ -153,7 +162,7 @@ function update(payload){
   if(record.root){
    const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
    record.root.scale.setScalar(height/1.8);
-   if(!record.walking&&record.lastPose!==record.pose)bonePose(record,record.pose,performance.now());
+   if(!record.logical)record.logical={x:record.root.position.x,y:record.root.position.y};
   }
  }
  render();scheduleAnimation();
