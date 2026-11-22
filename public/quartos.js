@@ -77,6 +77,13 @@ canvas.onclick=run(async e=>{if(!current||saving)return;const p=tile(e);if(p.x<0
  if(!editing){const target=furnitureAt(e)||[...current.layout.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(target&&['sofa','chair','bed'].includes(target.type)){const result=await emit('interact',{itemId:target.id});status(result.pose==='lying'?'Indo descansar na cama…':'Indo sentar no móvel…');}else await emit('walk',p);return;}
  if(selected){const item={...selected,...p},candidate={...draft,items:[...draft.items.filter(i=>i.id!==item.id),item]};R.validate(candidate);draft=candidate;selected=null;selection();status('Móvel colocado. Salve para todos verem.');}
  else {const item=[...draft.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(item)selected={...item};selection();}draw();});
+for(const danceButton of document.querySelectorAll('[data-room-dance]')){
+ danceButton.addEventListener('click',run(async()=>{
+  const dance=danceButton.dataset.roomDance;
+  await emit('dance-style',{dance});
+  for(const button of document.querySelectorAll('[data-room-dance]'))button.classList.toggle('active',button===danceButton);
+ }));
+}
 $('zoomIn').onclick=()=>{zoom=Math.min(1.6,zoom+.15);draw();};$('zoomOut').onclick=()=>{zoom=Math.max(.65,zoom-.15);draw();};new ResizeObserver(draw).observe(canvas.parentElement);window.addEventListener('jf-quartos-3d-ready',draw);
 run(async()=>{const response=await fetch('/api/account/status',{credentials:'same-origin',cache:'no-store'});const auth=await response.json();if(!response.ok||!auth.loggedIn){showLoginGate('É necessário entrar em uma conta do Junto.fm para acessar os quartos.');return;} $('authGate').hidden=true;await load();const id=new URLSearchParams(location.search).get('room');if(id)await enter(id);})();
 })();
