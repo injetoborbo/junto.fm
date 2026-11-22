@@ -122,9 +122,8 @@ module.exports=function setupDirectMessages(io,accounts){
         socket.emit("dm-message",message);
         for(const peer of io.sockets.sockets.values()){
           if(peer.id!==socket.id&&peer.data.account?.id===peerId){
-            peer.emit("dm-message",message);
             const other=await currentAccount(peer);
-            if(other)await emitConversations(peer,other);
+            if(other?.id===peerId){peer.emit("dm-message",message);await emitConversations(peer,other);}
           }
         }
         await emitConversations(socket,account);
