@@ -192,7 +192,7 @@ test("Buffering não dispara seek para ponto ainda não carregado; recupera quan
   g.serverEmit("tv:state",state);g.tick();g.tick();assert.equal(v.currentTime,5);
   v.on_canplay();
   assert.equal(v.currentTime,5,"não deve saltar para um ponto fora do buffer");
-  assert.ok(v.playbackRate>1,"deve recuperar o atraso gradualmente");
+  assert.equal(v.playbackRate,1,"não deve consumir o buffer mais rápido quando o destino ainda não foi carregado");
   v.buffered={length:1,start:()=>0,end:()=>60};
   g.tick();
   assert.ok(Math.abs(v.currentTime-30)<0.2,"pode corrigir com seek quando o destino já está carregado");
