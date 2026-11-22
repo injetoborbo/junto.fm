@@ -70,3 +70,8 @@ footer b{color:var(--pink);font-size:14px}
 .scene #canvas{z-index:1}
 .scene #quarto3d{z-index:2;pointer-events:none}
 @media(max-width:800px){#catalog{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.room-dances{position:absolute;left:12px;top:12px;z-index:4;display:flex;flex-wrap:wrap;gap:5px;max-width:calc(100% - 82px);pointer-events:auto}
+.room-dances button{padding:6px 8px;font-size:10px;font-weight:bold;background:#211e4ddd;border:1px solid #8b7bc5;color:#f5f0ff;box-shadow:2px 2px 0 #09091d}
+.room-dances button.active{background:linear-gradient(#fff08a,#ffce57);color:#201b46;border-color:#fff4b5}
+@media(max-width:600px){.room-dances{max-width:calc(100% - 72px);gap:3px}.room-dances button{padding:5px 6px;font-size:9px}}
