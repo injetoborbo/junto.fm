@@ -57,7 +57,7 @@
       const name=document.createElement("b");name.textContent=person.name||"Macaco";
       const last=document.createElement("small");last.textContent=person.last_message||"Clique para iniciar uma conversa";
       details.append(name,last);button.append(avatar,details);
-      const count=unread.get(person.id)||person.unread||0;if(count){const badge=document.createElement("i");badge.className="jf-msn-contact-unread";badge.textContent=count>9?"9+":String(count);button.append(badge);}
+      const count=unread.has(person.id)?unread.get(person.id):(person.unread||0);if(count){const badge=document.createElement("i");badge.className="jf-msn-contact-unread";badge.textContent=count>9?"9+":String(count);button.append(badge);}
       button.addEventListener("click",()=>openConversation(person));list.append(button);
     }
   }
@@ -96,7 +96,7 @@
   });
   socket.on("dm-conversations",payload=>{
     contacts=Array.isArray(payload?.conversations)?payload.conversations:[];
-    for(const person of contacts)if(person.unread)unread.set(person.id,person.unread);
+    for(const person of contacts){if(person.unread)unread.set(person.id,person.unread);else unread.delete(person.id);}
     updateUnread();renderContacts();
     if(active){const latest=contacts.find(person=>person.id===active.id);if(latest)active={...active,...latest};}
   });
@@ -110,6 +110,7 @@
     const peerId=message.sender_id===account.id?message.recipient_id:message.sender_id;
     if(active?.id===peerId){
       if(!history.some(item=>String(item.id)===String(message.id))){history.push(message);renderMessages();}
+      unread.delete(peerId);updateUnread();socket.emit("dm-open",{accountId:peerId});
     }else if(message.sender_id!==account.id){
       unread.set(peerId,(unread.get(peerId)||0)+1);updateUnread();
     }
