@@ -185,12 +185,29 @@ test("Sala inteira: 12 espectadores, entrada tardia, seek e pausa",async()=>{
   host.el("jfTvLinkPlay").onclick();
   for(const g of guests)assert.equal(g.el("jfTvLinkVideo").paused,true);
 });
-test("Buffer do ouvinte não entra em ciclo de seek; canplay retorna ao ponto da sala",async()=>{
+test("Buffering não dispara seek para ponto ainda não carregado; recupera quando o destino entra no buffer",async()=>{
   const app=await createRoom(),host=app.connect("host"),g=app.connect("guest");loadLink(host);g.openLink();
   host.el("jfTvLinkPlay").onclick();const v=g.el("jfTvLinkVideo");v.currentTime=5;v.on_waiting();
   const state={mode:"link",url:mediaUrl,format:"direct",playing:true,seconds:30,updatedAt:Date.now(),serverNow:Date.now(),revision:500};
   g.serverEmit("tv:state",state);g.tick();g.tick();assert.equal(v.currentTime,5);
-  v.on_canplay();assert.ok(Math.abs(v.currentTime-30)<0.1);
+  v.on_canplay();
+  assert.equal(v.currentTime,5,"não deve saltar para um ponto fora do buffer");
+  assert.ok(v.playbackRate>1,"deve recuperar o atraso gradualmente");
+  v.buffered={length:1,start:()=>0,end:()=>60};
+  g.tick();
+  assert.ok(Math.abs(v.currentTime-30)<0.2,"pode corrigir com seek quando o destino já está carregado");
+});
+
+test("Pequena deriva entre ouvintes é corrigida pela velocidade, sem seek",async()=>{
+  const app=await createRoom(),host=app.connect("host"),g=app.connect("guest");loadLink(host);g.openLink();
+  host.el("jfTvLinkPlay").onclick();
+  const v=g.el("jfTvLinkVideo");
+  v.currentTime=29;
+  v.buffered={length:1,start:()=>0,end:()=>90};
+  const state={mode:"link",url:mediaUrl,format:"direct",playing:true,seconds:30,updatedAt:Date.now(),serverNow:Date.now(),revision:501};
+  g.serverEmit("tv:state",state);
+  assert.equal(v.currentTime,29,"pequena deriva não deve provocar seek");
+  assert.ok(v.playbackRate>1&&v.playbackRate<=1.08,"a velocidade deve subir suavemente para recuperar a diferença");
 });
 test("Autoplay pendente não se multiplica e falha após heartbeat ainda mostra botão de som",async()=>{
   const app=await createRoom(),host=app.connect("host"),g=app.connect("guest");loadLink(host);g.openLink();
