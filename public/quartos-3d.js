@@ -207,7 +207,10 @@ function animate(now){
   const phase=now/1000*({shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1}[style]||2);
   const pulse=Math.sin(phase),stride=Math.sin(record.walkTime||0);
   const bob=walking?Math.abs(stride)*.045:sitting?.012*Math.sin(now/1000*2):lying?0:style==="idle"?.008*Math.sin(now/1000*2):Math.abs(pulse)*.035;
-  record.root.position.set(logical.x,sitting?(record.poseHeight||0.36)+bob:bob,logical.z);
+  if(sitting){
+   const hipOffset=(record.hipOffset||new THREE.Vector3()).clone().applyAxisAngle(new THREE.Vector3(0,1,0),record.root.rotation.y);
+   record.root.position.set(logical.x-hipOffset.x,(record.poseHeight||0.36)-hipOffset.y+bob,logical.z-hipOffset.z);
+  }else record.root.position.set(logical.x,bob,logical.z);
   if(sitting&&Number.isFinite(record.poseYaw)){
    const diff=Math.atan2(Math.sin(record.poseYaw-record.root.rotation.y),Math.cos(record.poseYaw-record.root.rotation.y));
    record.root.rotation.y+=Math.max(-dt*4,Math.min(dt*4,diff));
@@ -286,6 +289,11 @@ async function createAvatar(person,scale,record){
    record.rest.set(bone.uuid,{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z});
    record.restQuaternion.set(bone.uuid,bone.quaternion.clone());
   });
+  // The avatar group is centered on the normalized monkey mesh, not at its feet.
+  // Align the rig's hips (rather than the mesh origin) with the furniture seat.
+  record.root.updateWorldMatrix(true,true);
+  const hips=record.animationBones.find(bone=>boneName(bone.name)==="hips"||boneName(bone.name).endsWith("hips"));
+  record.hipOffset=hips?record.root.worldToLocal(hips.getWorldPosition(new THREE.Vector3())):new THREE.Vector3();
   if(record.target){record.logical={x:record.target.x,z:record.target.z};record.root.position.copy(record.target);}
   scene.add(record.root);scheduleAnimation();
  }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
