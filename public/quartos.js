@@ -15,14 +15,63 @@ async function enter(id){if(!socket.connected){socket.connect();await new Promis
 function heading(){$('roomTitle').textContent=current.name;$('ownerLabel').textContent='QUARTO DE '+current.owner_name;$('count').textContent=people.length+' / 12 no quarto';}
 function lobby(){if(editing&&!confirm('Sair sem salvar a decoração?'))return;socket.emit('leave');current=null;editing=false;people=[];$('room').hidden=true;$('lobby').hidden=false;history.replaceState(null,'','/quartos');return load();}
 $('lobbyBtn').onclick=run(lobby);$('refresh').onclick=run(load);$('create').onclick=run(async()=>{const r=await api('/api/quartos','POST',{});await enter(r.owner_id);});
-$('editBtn').onclick=()=>{if(editing)return;draft=structuredClone(current.layout);editing=true;selected=null;$('editor').hidden=false;$('guests').hidden=true;$('name').value=current.name;$('wall').value=draft.wall;$('floor').value=draft.floor;$('tip').textContent='Escolha um móvel • Clique para colocar • Girar muda a orientação';draw();};
+$('editBtn').onclick=()=>{if(editing)return;draft=structuredClone(current.layout);editing=true;selected=null;$('editor').hidden=false;$('guests').hidden=true;$('name').value=current.name;$('wall').value=draft.wall;$('floor').value=draft.floor;$('tip').textContent='Selecione um objeto • Posicione no quarto ou sobre uma mesa • Gire pelo controle no próprio objeto';selection();draw();};
 function stopEdit(){editing=false;draft=null;selected=null;$('editor').hidden=true;$('tip').textContent='Clique no chão para andar • Converse com seus amigos';draw();}
 $('cancel').onclick=()=>{if(saving)return;stopEdit();status('Alterações descartadas.');};
 $('save').onclick=run(async()=>{if(saving)return;saving=true;$('save').disabled=true;try{R.validate(draft);const r=await api('/api/quartos','PUT',{layout:draft,name:$('name').value,revision:current.revision});current={...current,...r};stopEdit();heading();status('Decoração salva!');}finally{saving=false;$('save').disabled=false;}});
 for(const key of ['wall','floor'])$(key).oninput=()=>{if(editing){draft[key]=$(key).value;draw();}};
-function selection(){const t=selected&&R.itemType(selected.type);$('selection').textContent=t?t.name+' • '+(selected.rotation*90)+'°':'Nenhum móvel selecionado';for(const b of $('catalog').children)b.classList.toggle('selected',b.dataset.type===selected?.type);}
-for(const t of R.catalog.filter(item=>!item.legacy&&item.type!=='rug')){const b=button(t.name,()=>{selected={id:crypto.randomUUID(),type:t.type,x:0,y:0,rotation:0};selection();draw();});b.dataset.type=t.type;const swatch=document.createElement('span');swatch.className='swatch';swatch.style.background=t.color;b.prepend(swatch);$('catalog').append(b);}
-$('rotate').onclick=()=>{if(selected){selected.rotation=(selected.rotation+1)%4;selection();draw();}};
+function selection(){
+ const t=selected&&R.itemType(selected.type);
+ $('selection').textContent=t?t.name+' • '+(selected.rotation*90)+'° • '+(t.placement==='surface'?'Sobre mesa':'No chão'):'Nenhum móvel selecionado';
+ document.querySelectorAll('#catalog button').forEach(b=>b.classList.toggle('selected',b.dataset.type===selected?.type));
+}
+for(const t of R.catalog.filter(item=>!item.legacy&&item.type!=='rug')){
+ const target=$(t.placement==='surface'?'surfaceCatalog':'floorCatalog');
+ const b=button(t.name,()=>{selected={id:crypto.randomUUID(),type:t.type,x:0,y:0,rotation:0};selection();draw();});
+ b.dataset.type=t.type;const swatch=document.createElement('span');swatch.className='swatch';swatch.style.background=t.color;b.prepend(swatch);target.append(b);
+}
+function previewItem(items){
+ if(!editing||!selected||!hover)return null;
+ const type=R.itemType(selected.type);if(!type)return null;
+ const item={...selected,...hover};
+ if(type.placement==='surface'){
+  const host=R.surfaceHostAt(items,hover);
+  if(!host||!R.surfaceCellFree(items,host,hover,selected.id))return null;
+  item.parentId=host.id;
+ }else delete item.parentId;
+ return item;
+}
+function rotateSelected(step){
+ if(!editing||!selected)return;
+ const rotated={...selected,rotation:(selected.rotation+step+4)%4};
+ if(draft.items.some(item=>item.id===selected.id)){
+  const previous=draft.items.find(item=>item.id===selected.id),before=R.cells(previous),after=R.cells(rotated);
+  const candidateItems=draft.items.map(item=>{
+   if(item.id===rotated.id)return rotated;
+   if(item.parentId===rotated.id){
+    const index=Math.max(0,before.findIndex(([x,y])=>x===item.x&&y===item.y));
+    const cell=after[Math.min(index,after.length-1)];
+    return {...item,x:cell[0],y:cell[1]};
+   }
+   return item;
+  });
+  const candidate={...draft,items:candidateItems};R.validate(candidate);draft=candidate;
+ }
+ selected=rotated;selection();draw();
+}
+function updateObjectControls(items){
+ const controls=$('objectControls');
+ if(!editing||!selected){controls.hidden=true;return;}
+ const preview=previewItem(items),placed=items.find(item=>item.id===selected.id),anchor=preview||placed;
+ if(!anchor){controls.hidden=true;return;}
+ const cells=R.cells(anchor);if(!cells.length){controls.hidden=true;return;}
+ const center=cells.reduce((sum,cell)=>({x:sum.x+cell[0]+.5,y:sum.y+cell[1]+.5}),{x:0,y:0});
+ center.x/=cells.length;center.y/=cells.length;
+ const point=iso(center.x,center.y,R.itemType(anchor.type)?.placement==='surface'?24:58);
+ controls.style.left=point.x+'px';controls.style.top=point.y+'px';controls.hidden=false;
+}
+$('rotateLeft').onclick=run(()=>rotateSelected(-1));
+$('rotateRight').onclick=run(()=>rotateSelected(1));
 $('remove').onclick=()=>{if(selected){draft.items=draft.items.filter(i=>i.id!==selected.id);selected=null;selection();draw();}};
 $('clearSelection').onclick=()=>{selected=null;selection();draw();};
 $('inviteBtn').onclick=run(async()=>{if(editing){status('Salve ou cancele a decoração primeiro.');return;}$('guests').hidden=!$('guests').hidden;if(!$('guests').hidden)await guests();});
@@ -59,9 +108,11 @@ function draw(){const rect=canvas.getBoundingClientRect();if(!rect.width)return;
  l.items.filter(i=>i.type==='rug').forEach(i=>furniture(i));
  const objects=[...l.items.filter(i=>i.type!=='rug').map(i=>({depth:i.x+i.y+Math.max(...R.cells(i).map(c=>c[0]+c[1]))-i.x-i.y,draw:()=>furniture(i)}))];objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
  // Avatares 3D usam a mesma posição isométrica e o mesmo estado de presença do quarto.
- window.JFQuartos3D?.update({width:w,height:h,scale,furniture:l.items,preview:editing&&selected&&hover?{...selected,...hover}:null,avatars:people.map(p=>{const q=iso(p.x+.5,p.y+.5);return {id:p.id,name:p.name,wardrobe:p.wardrobe||{},pose:p.pose||"standing",dance:p.dance||"idle",x:q.x,y:q.y+5,local:p.id===socket.id};})});
+ const preview=previewItem(l.items);
+ window.JFQuartos3D?.update({width:w,height:h,scale,furniture:l.items,preview,avatars:people.map(p=>{const q=iso(p.x+.5,p.y+.5);return {id:p.id,name:p.name,wardrobe:p.wardrobe||{},pose:p.pose||"standing",poseTarget:p.poseTarget||null,dance:p.dance||"idle",x:q.x,y:q.y+5,local:p.id===socket.id};})});
  for(const p of people)monkeyName(p);
  if(editing&&selected&&hover&&selected.type==='rug')furniture({...selected,...hover},true);
+ updateObjectControls(l.items);
  for(const p of people){const b=bubbles.get(p.id);if(!b||b.until<Date.now())continue;const q=iso(p.x+.5,p.y+.5,90);ctx.font=`${12*scale}px Trebuchet MS`;ctx.textAlign='center';const lines=b.text.match(/.{1,32}(?:\s|$)|.{1,32}/g)||[];const bw=218*scale,bh=(Math.min(lines.length,3)*17+12)*scale;ctx.fillStyle='#f5efda';ctx.strokeStyle='#1d3026';ctx.lineWidth=2;ctx.fillRect(q.x-bw/2,q.y-bh,bw,bh);ctx.strokeRect(q.x-bw/2,q.y-bh,bw,bh);ctx.fillStyle='#20352a';lines.slice(0,3).forEach((line,i)=>ctx.fillText(line,q.x,q.y-bh+(19+i*17)*scale));}
 }
 function tile(e){const r=canvas.getBoundingClientRect(),dx=(e.clientX-r.left-ox)/(32*scale),dy=(e.clientY-r.top-oy)/(16*scale);return {x:Math.floor((dx+dy)/2),y:Math.floor((dy-dx)/2)};}
@@ -71,8 +122,11 @@ function furnitureAt(e){
  let best=null,score=Infinity;
  for(const item of current.layout.items){
   const t=R.itemType(item.type);if(!t?.interactive)continue;
-  const q=iso(item.x+t.w/2,item.y+t.h/2,30),dx=px-q.x,dy=py-q.y,d=Math.hypot(dx,dy);
-  const limit=Math.max(48*scale,(t.w+t.h)*18*scale);
+  const cells=R.cells(item);if(!cells.length)continue;
+  const center=cells.reduce((sum,cell)=>({x:sum.x+cell[0]+.5,y:sum.y+cell[1]+.5}),{x:0,y:0});
+  center.x/=cells.length;center.y/=cells.length;
+  const q=iso(center.x,center.y,30),dx=px-q.x,dy=py-q.y,d=Math.hypot(dx,dy);
+  const limit=Math.max(48*scale,(cells.length+1)*18*scale);
   if(d<limit&&d<score){best=item;score=d;}
  }
  return best;
@@ -80,8 +134,32 @@ function furnitureAt(e){
 canvas.onpointermove=e=>{if(editing){hover=tile(e);draw();}};
 canvas.onclick=run(async e=>{if(!current||saving)return;const p=tile(e);if(p.x<0||p.y<0||p.x>=10||p.y>=10)return;
  if(!editing){const target=furnitureAt(e)||[...current.layout.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(target&&R.itemType(target.type)?.interactive){const result=await emit('interact',{itemId:target.id});status(result.pose==='lying'?'Indo descansar na cama…':'Indo sentar no móvel…');}else await emit('walk',p);return;}
- if(selected){const item={...selected,...p},candidate={...draft,items:[...draft.items.filter(i=>i.id!==item.id),item]};R.validate(candidate);draft=candidate;selected=null;selection();status('Móvel colocado. Salve para todos verem.');}
- else {const item=[...draft.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(item)selected={...item};selection();}draw();});
+ if(selected){
+  const type=R.itemType(selected.type),item={...selected,...p};
+  if(type.placement==='surface'){
+   const host=R.surfaceHostAt(draft.items,p);
+   if(!host)throw Error('Esse objeto precisa ser colocado sobre uma mesa, mesinha ou criado-mudo.');
+   if(!R.surfaceCellFree(draft.items,host,p,selected.id))throw Error('Já existe um objeto nesse espaço da mesa.');
+   item.parentId=host.id;
+  }else delete item.parentId;
+  const previous=draft.items.find(entry=>entry.id===item.id),before=previous?R.cells(previous):[],after=R.cells(item);
+  const candidateItems=draft.items.map(entry=>{
+   if(entry.id===item.id)return item;
+   if(previous&&entry.parentId===item.id){
+    const index=Math.max(0,before.findIndex(([x,y])=>x===entry.x&&y===entry.y));
+    const cell=after[Math.min(index,after.length-1)];
+    return {...entry,x:cell[0],y:cell[1]};
+   }
+   return entry;
+  });
+  if(!previous)candidateItems.push(item);
+  const candidate={...draft,items:candidateItems};R.validate(candidate);draft=candidate;selected=item;selection();
+  status(type.placement==='surface'?'Objeto colocado sobre a mesa. Salve para todos verem.':'Móvel colocado. Salve para todos verem.');
+ }else{
+  const item=[...draft.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));
+  if(item)selected={...item};selection();
+ }
+ draw();});
 for(const danceButton of document.querySelectorAll('[data-room-dance]')){
  danceButton.addEventListener('click',run(async()=>{
   const dance=danceButton.dataset.roomDance;
