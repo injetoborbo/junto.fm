@@ -6,6 +6,35 @@ const canvas=document.getElementById("quarto3d");
 if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
 let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
+const furnitureRecords=new Map(),modelCache=new Map(),modelLoads=new Map();
+let previewRecord=null;
+const ASSET_ROOT="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/41b06c6223d847d9de6519dd25a493d40e65992d/GLB/";
+const FURNITURE_ASSETS={
+ coffeeTable:{file:"Living/ap_coffee_table.glb",height:0.62},
+ diningChair:{file:"Kitchen/ap_dining_chair.glb",height:1.02},
+ floorLamp:{file:"Living/ap_floor_lamp.glb",height:1.72},
+ cactus:{file:"Living/ap_plant_cactus.glb",height:1.05},
+ plant:{file:"Living/ap_plant_small.glb",height:1.28},
+ sideTable:{file:"Living/ap_side_table.glb",height:0.68},
+ tableLamp:{file:"Living/ap_table_lamp.glb",height:0.78},
+ books:{file:"Clutter/ap_book_stack.glb",height:0.2},
+ vase:{file:"Clutter/ap_vase.glb",height:0.7},
+ basket:{file:"Clutter/ap_basket.glb",height:0.48},
+ pillow:{file:"Clutter/ap_pillow_square.glb",height:0.28},
+ nightstand:{file:"Bedroom/ap_nightstand.glb",height:0.72},
+ kettle:{file:"Kitchen/ap_kettle.glb",height:0.38},
+ mug:{file:"Clutter/ap_mug.glb",height:0.22},
+ sofa:{file:"Kitchen/ap_dining_chair.glb",height:0.88},
+ chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02},
+ table:{file:"Living/ap_coffee_table.glb",height:0.62},
+ bed:{file:"Living/ap_coffee_table.glb",height:0.52},
+ shelf:{file:"Bedroom/ap_nightstand.glb",height:1.05},
+ lamp:{file:"Living/ap_floor_lamp.glb",height:1.72},
+ tv:{file:"Bedroom/ap_nightstand.glb",height:0.72},
+ speaker:{file:"Clutter/ap_mug.glb",height:0.35},
+ arcade:{file:"Bedroom/ap_nightstand.glb",height:1.15},
+ banana:{file:"Living/ap_plant_small.glb",height:1.28}
+};
 let animationFrame=0,lastFrame=0;
 const DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
 function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig\d*[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
@@ -61,6 +90,83 @@ function switchDance(record,style){
  if(style==="idle"||!animationClips.has(style))return;
  const action=buildAnimationAction(record,style);
  if(action){action.reset().fadeIn(.24).play();record.action=action;}
+}
+function furnitureAssetUrl(type){
+ const spec=FURNITURE_ASSETS[type];return spec?ASSET_ROOT+spec.file:null;
+}
+function loadFurnitureModel(type){
+ const url=furnitureAssetUrl(type);if(!url)return Promise.resolve(null);
+ if(modelCache.has(url))return Promise.resolve(modelCache.get(url));
+ if(!modelLoads.has(url)){
+  modelLoads.set(url,gltfLoader.loadAsync(url).then(gltf=>{
+   const root=gltf.scene;
+   root.traverse(obj=>{
+    if(!obj.isMesh)return;
+    obj.castShadow=false;obj.receiveShadow=false;
+    if(obj.material){obj.material.side=THREE.FrontSide;if("roughness" in obj.material)obj.material.roughness=Math.max(.72,obj.material.roughness||0);}
+   });
+   modelCache.set(url,root);return root;
+  }).catch(error=>{console.warn("Quartos: móvel 3D indisponível",type,error);return null;}));
+ }
+ return modelLoads.get(url);
+}
+function furnitureGround(item,payload){
+ const type=window.RoomRules?.itemType(item.type);if(!type)return {x:0,z:0};
+ const w=item.rotation%2?type.h:type.w,h=item.rotation%2?type.w:type.h;
+ const sx=payload.width/2+((item.x+w/2)-(item.y+h/2))*32*payload.scale;
+ const sy=payload.height/2-120*payload.scale+((item.x+w/2)+(item.y+h/2))*16*payload.scale;
+ return screenToGround(sx,sy,payload.width,payload.height,payload.scale);
+}
+function buildFurnitureObject(item,payload,source,ghost=false){
+ const spec=FURNITURE_ASSETS[item.type],type=window.RoomRules?.itemType(item.type);if(!spec||!type)return null;
+ const root=new THREE.Group(),model=source.clone(true);
+ const box=new THREE.Box3().setFromObject(model),size=new THREE.Vector3(),center=new THREE.Vector3();
+ box.getSize(size);box.getCenter(center);
+ if(size.lengthSq()===0)return null;
+ model.position.set(-center.x,-box.min.y,-center.z);
+ const w=item.rotation%2?type.h:type.w,h=item.rotation%2?type.w:type.h;
+ const targetWidth=Math.max(.28,w*.92),targetDepth=Math.max(.28,h*.92),targetHeight=spec.height;
+ const fit=Math.min(targetWidth/Math.max(size.x,.01),targetDepth/Math.max(size.z,.01),targetHeight/Math.max(size.y,.01));
+ model.scale.setScalar(fit);
+ if(ghost)model.traverse(obj=>{if(!obj.isMesh||!obj.material)return;obj.material=obj.material.clone();obj.material.transparent=true;obj.material.opacity=.48;obj.material.depthWrite=false;});
+ root.add(model);
+ const ground=furnitureGround(item,payload);root.position.set(ground.x,0,ground.z);
+ root.rotation.y=-Math.PI/4+(item.rotation||0)*Math.PI/2;
+ const shadow=new THREE.Mesh(new THREE.CircleGeometry(Math.max(.25,Math.max(w,h)*.38),12),new THREE.MeshBasicMaterial({color:0x09091d,transparent:true,opacity:ghost?.08:.17,depthWrite:false}));
+ shadow.rotation.x=-Math.PI/2;shadow.position.y=.004;root.add(shadow);
+ root.traverse(obj=>{if(obj.isMesh){obj.frustumCulled=true;obj.castShadow=false;obj.receiveShadow=false;}});
+ return root;
+}
+function clearFurnitureRecord(record){if(record?.object)scene.remove(record.object);}
+function syncFurniture(items,payload){
+ const visible=new Set((items||[]).filter(i=>i.type!=="rug").map(i=>i.id));
+ for(const [id,record] of furnitureRecords)if(!visible.has(id)){clearFurnitureRecord(record);furnitureRecords.delete(id);}
+ for(const item of items||[]){
+  if(item.type==="rug")continue;
+  const signature=[item.type,item.x,item.y,item.rotation].join(":");
+  let record=furnitureRecords.get(item.id);
+  if(record?.signature===signature)continue;
+  if(record)clearFurnitureRecord(record);
+  record={signature,object:null};furnitureRecords.set(item.id,record);
+  void loadFurnitureModel(item.type).then(model=>{
+   if(!model||furnitureRecords.get(item.id)!==record)return;
+   const object=buildFurnitureObject(item,payload,model,false);if(!object)return;
+   record.object=object;scene.add(object);render();
+  });
+ }
+ const preview=payload.preview;
+ const previewSignature=preview?[preview.type,preview.x,preview.y,preview.rotation].join(":"):null;
+ if(previewRecord?.signature!==previewSignature){clearFurnitureRecord(previewRecord);previewRecord=null;}
+ if(preview&&!previewRecord&&preview.type!=="rug"){
+  const record={signature:previewSignature,object:null};previewRecord=record;
+  void loadFurnitureModel(preview.type).then(model=>{
+   if(!model||previewRecord!==record)return;
+   record.object=buildFurnitureObject(preview,payload,model,true);if(record.object){scene.add(record.object);render();}
+  });
+ }else if(previewRecord?.object){
+  const next=buildFurnitureObject(preview,payload,modelCache.get(furnitureAssetUrl(preview.type)),true);
+  if(next){clearFurnitureRecord(previewRecord);previewRecord.object=next;scene.add(next);}
+ }
 }
 function animate(now){
  animationFrame=0;
@@ -168,6 +274,7 @@ async function createAvatar(person,scale,record){
 function update(payload){
  if(!payload||!Number.isFinite(payload.width)||!Number.isFinite(payload.height))return;
  init();resize(payload.width,payload.height,payload.scale||1);
+ syncFurniture(payload.furniture||[],payload);
  const visible=new Set((payload.avatars||[]).map(p=>p.id));
  for(const [id,record] of avatars)if(!visible.has(id))removeAvatar(id,record);
  for(const p of payload.avatars||[]){
