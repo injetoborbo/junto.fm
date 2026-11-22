@@ -10,7 +10,7 @@
     "test:rooms": "node --test tests/personal-rooms.test.js",
     "build": "node scripts/precompress-assets.js",
     "postinstall": "npm run build",
-    "test:community": "node --test tests/community-social.test.js"
+    "test:community": "node --test tests/community-social.test.js tests/account-username.test.js"
   },
   "dependencies": {
     "express": "^4.21.2",

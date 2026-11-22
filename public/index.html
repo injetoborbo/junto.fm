@@ -1003,6 +1003,12 @@ body:not(.jf-in-room) #jfHomeCommunity{display:block!important}
 .jf-home-paper-foot{display:flex;justify-content:space-between;gap:8px;padding:8px 4px 0;border-top:1px solid var(--jf-ui-border,var(--jf-secondary));color:var(--jf-ui-muted,var(--muted));font-size:8px;font-weight:900;letter-spacing:.4px}
 body.jf-in-room #jfHomeCommunity{display:none!important}
 @media(max-width:620px){.jf-home-community{padding:10px;margin:10px auto 14px}.jf-home-lead{grid-template-columns:minmax(0,1fr) 88px;gap:8px;padding:11px 2px}.jf-home-lead-art{min-height:94px}.jf-home-lead-art b{font-size:12px}.jf-home-community-grid{grid-template-columns:1fr;gap:6px}.jf-home-paper-foot{font-size:7px;flex-wrap:wrap}.jf-home-story{padding:8px}}
+.jf-handle-editor{margin:16px 0 0;padding:14px;border:1px solid var(--jf-ui-border,var(--jf-secondary));border-radius:8px;background:var(--jf-ui-soft,var(--panel));color:var(--jf-ui-text,var(--ink))}
+.jf-handle-editor[hidden]{display:none!important}.jf-handle-editor>label{display:block;margin:0 0 8px;font-size:12px;font-weight:900;color:var(--jf-ui-text,var(--ink))}
+.jf-handle-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}.jf-handle-prefix{font-size:17px;font-weight:900;color:var(--jf-primary,var(--pink))}
+.jf-handle-row input{box-sizing:border-box;min-width:0;width:100%;padding:11px 12px;border:1px solid var(--jf-ui-border,var(--jf-secondary));border-radius:6px;background:var(--jf-ui-panel,var(--panel));color:var(--jf-ui-text,var(--ink));font:inherit}
+.jf-handle-hint,.jf-handle-status{margin:8px 0 0;color:var(--jf-ui-muted,var(--muted));font-size:11px;line-height:1.5;overflow-wrap:anywhere}.jf-handle-status{min-height:16px;color:var(--jf-secondary)}
+@media(max-width:520px){.jf-handle-editor{padding:11px}.jf-handle-row{grid-template-columns:auto minmax(0,1fr)}.jf-handle-row button{grid-column:1/-1;width:100%}}
 </style>
 <style>
 body.jf-public-profile-page #jfHomeCommunity,body.jf-public-profile-page #jfRoomEntryPanel,body.jf-public-profile-page main>h1,body.jf-public-profile-page main>.jf-hero-description{display:none!important}
@@ -1402,6 +1408,13 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
 <div class="jf-modal-backdrop" id="jfProfileModal" hidden>
   <section class="panel jf-modal" role="dialog" aria-modal="true" aria-labelledby="jfProfileHeading">
     <div class="jf-modal-head"><h2 id="jfProfileHeading">Seu perfil</h2><button class="btn secondary jf-modal-close" type="button" data-close-modal="jfProfileModal" aria-label="Fechar janela">✕</button></div>
+    <div class="jf-handle-editor" id="jfUsernameEditor" hidden>
+      <label for="jfUsername">Seu @ público</label>
+      <div class="jf-handle-row"><span class="jf-handle-prefix" aria-hidden="true">@</span><input id="jfUsername" type="text" maxlength="24" pattern="[A-Za-z0-9_]{3,24}" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="jfUsernameHint jfUsernameStatus" placeholder="seu_usuario"><button class="btn secondary" id="jfSaveUsername" type="button">Salvar @</button></div>
+      <p class="jf-handle-hint" id="jfUsernameHint">De 3 a 24 caracteres: letras, números e _. Seu nome de exibição continua separado.</p>
+      <p class="jf-handle-hint" id="jfUsernamePreview">Seu perfil público terá um link próprio.</p>
+      <p class="jf-handle-status" id="jfUsernameStatus" role="status" aria-live="polite"></p>
+    </div>
     <div class="jf-profile jf-profile-editor">
       <div class="jf-profile-photo"><img id="jfAvatarPreview" class="jf-avatar" alt="Prévia do avatar" hidden><div id="jfAvatarPlaceholder" class="jf-avatar" aria-label="Avatar padrão">☺</div><label class="jf-avatar-upload" for="jfAvatarFile">Trocar foto</label></div>
       <div class="jf-fields">
@@ -2692,6 +2705,11 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
   let jfFriends=[];
   const jfRegisteredPeers=new Map();
   function jfCanUseFriends(){return Boolean(jfAccount?.id);}
+  function jfUpdateUsernamePreview(){
+    const input=$("jfUsername"),preview=$("jfUsernamePreview");if(!input||!preview)return;
+    const value=String(input.value||"").trim().replace(/^@/,"").toLowerCase();
+    preview.textContent=/^[a-z0-9_]{3,24}$/.test(value)?"Seu perfil público ficará em /u/"+value:"Use de 3 a 24 letras, números ou _ para formar seu link público.";
+  }
   async function jfFetchAccount(){
     try{
       const res=await fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"});
@@ -2713,6 +2731,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
         try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}
         window.dispatchEvent(new CustomEvent("jf-local-profile-updated",{detail:{wardrobe:jfProfile.wardrobe}}));
         $("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;
+        $("jfUsernameEditor").hidden=false;$("jfUsername").value=jfAccount.username||"";jfUpdateUsernamePreview();
         jfRenderAvatar();
         if(joined)socket.emit("profile-update",{profile:jfProfile});
         socket.emit("friends-list");
@@ -2723,6 +2742,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       $("jfGoogleLogout").hidden=true;
       $("jfEntryAccountLoggedIn").hidden=true;
       $("jfEntryAccountHint").hidden=false;
+      $("jfUsernameEditor").hidden=true;
     }
     jfAccountLoaded=true;
     if(jfPendingWardrobeSave&&jfCanUseFriends()){
@@ -2931,6 +2951,30 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       const file=$("jfAvatarFile").files&&$("jfAvatarFile").files[0];if(!file)return;
       if(!file.type.startsWith("image/")||file.size>8*1024*1024){$("jfProfileStatus").textContent="Escolha uma imagem de até 8 MB.";return;}
       const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const c=document.createElement("canvas"),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));c.getContext("2d").drawImage(img,0,0,c.width,c.height);jfProfile.avatar=c.toDataURL("image/jpeg",.76);jfRenderAvatar();$("jfProfileStatus").textContent="Prévia pronta. Salve para aplicar.";};img.onerror=()=>{$("jfProfileStatus").textContent="Não foi possível ler essa imagem.";};img.src=String(reader.result||"");};reader.readAsDataURL(file);
+    });
+    $("jfUsername").addEventListener("input",jfUpdateUsernamePreview);
+    $("jfSaveUsername").addEventListener("click",async()=>{
+      const input=$("jfUsername"),button=$("jfSaveUsername"),status=$("jfUsernameStatus");
+      const username=String(input.value||"").trim().replace(/^@/,"").toLowerCase();
+      if(!jfCanUseFriends()){status.textContent="Entre na sua conta para alterar seu @.";return;}
+      if(!/^[a-z0-9_]{3,24}$/.test(username)){status.textContent="Use de 3 a 24 letras, números ou _.";input.focus();return;}
+      const previous=String(jfAccount.username||"");
+      if(username===previous){status.textContent="Esse já é seu @ atual.";return;}
+      button.disabled=true;status.textContent="Salvando seu novo @...";
+      try{
+        const response=await fetch("/api/account/username",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({username})});
+        const data=await response.json();
+        if(!response.ok)throw Error(data.error||"Não foi possível alterar seu @.");
+        jfAccount=data.profile;
+        input.value=jfAccount.username;jfUpdateUsernamePreview();
+        status.textContent="Seu @ foi atualizado! Compartilhe /u/"+jfAccount.username;
+        window.dispatchEvent(new CustomEvent("jf-account-username-updated",{detail:{username:jfAccount.username,previous}}));
+        let currentPathUsername="";
+        const routeParts=location.pathname.split("/");
+        if(routeParts.length===3&&routeParts[1]==="u"){try{currentPathUsername=decodeURIComponent(routeParts[2]);}catch(_){}}
+        if(currentPathUsername&&currentPathUsername.toLowerCase()===previous.toLowerCase())location.assign("/u/"+encodeURIComponent(jfAccount.username));
+      }catch(error){status.textContent=error.message;}
+      finally{button.disabled=false;}
     });
     $("jfSaveProfile").addEventListener("click",()=>{jfProfile.name=$("jfName").value.trim().replace(/\s+/g," ").slice(0,24)||"Ouvinte";jfProfile.motto=$("jfMotto").value.trim().replace(/\s+/g," ").slice(0,90);jfProfile.bubbleStyle=$("jfBubbleStyle").value;$("jfName").value=jfProfile.name;$("jfMotto").value=jfProfile.motto;try{localStorage.setItem("junto_profile",JSON.stringify(jfProfile));}catch(_){}if(joined){socket.emit("profile-update",{profile:jfProfile});}jfRenderPeople();$("jfProfileStatus").textContent=joined?"Perfil salvo e enviado à sala.":"Perfil salvo neste navegador.";if(jfCanUseFriends())jfPersistAccountProfile();});
   }
