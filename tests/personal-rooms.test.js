@@ -9,6 +9,20 @@ test('placement rejects collisions, bounds, blocked entrance and malformed items
  assert.throws(()=>rules.validate({...base,wall:'url(evil)'}));
  assert.equal(rules.validate({...base,items:[...base.items,{...item,x:3,y:3}]}).items.length,5,'rug may sit beneath furniture');
 });
+test('tabletop objects require a supporting furniture surface and do not block walking',()=>{
+ const base=initial(),mug={id:'table-mug',type:'mug',x:2,y:7,rotation:0,parentId:'welcome-table'};
+ const layout=rules.validate({...base,items:[...base.items,mug]});
+ assert.equal(layout.items.at(-1).parentId,'welcome-table');
+ assert.equal(rules.itemType('mug').placement,'surface');
+ assert.equal(rules.itemType('mug').solid,false);
+ assert.equal(rules.surfaceHostAt(base.items,{x:3,y:7})?.id,'welcome-table');
+ assert.equal(rules.surfaceCellFree([...base.items,mug],{id:'welcome-table'},{x:2,y:7}),false);
+ assert.deepEqual(rules.route(layout,{x:0,y:0},{x:9,y:9}),rules.route(base,{x:0,y:0},{x:9,y:9}));
+ assert.throws(()=>rules.validate({...base,items:[...base.items,{...mug,parentId:undefined}]}),/objetos de mesa/i);
+ assert.throws(()=>rules.validate({...base,items:[...base.items,{...mug,x:4,y:7}]}),/superfície de apoio/i);
+ assert.throws(()=>rules.validate({...base,items:[...base.items,mug,{...mug,id:'second-mug'}]}),/Já existe um objeto/i);
+ assert.throws(()=>rules.validate({...base,items:[...base.items,{id:'floor-chair-on-table',type:'chair',x:2,y:7,rotation:0,parentId:'welcome-table'}]}),/Somente objetos de mesa/i);
+});
 test('navigation walks around furniture, rotates footprints and rejects unreachable tiles',()=>{
  const base=initial(),route=rules.route(base,{x:0,y:0},{x:9,y:9});assert.ok(route.length);let last={x:0,y:0};
  for(const p of route){assert.equal(Math.abs(last.x-p.x)+Math.abs(last.y-p.y),1);last=p;}
@@ -24,6 +38,27 @@ test('3D furniture uses the isometric room axes for every quarter-turn',()=>{
  const renderer=fs.readFileSync(require.resolve('../public/quartos-3d.js'),'utf8');
  assert.equal((renderer.match(/rotationRadians\(/g)||[]).length,3,'placed furniture, saved furniture and preview share the same room-axis rotation');
  assert.doesNotMatch(renderer,/-Math\.PI\/4/,'no extra screen-space 45-degree offset remains');
+});
+test('3D sitting uses the selected seat height and furniture-facing yaw',()=>{
+ const renderer=fs.readFileSync(require.resolve('../public/quartos-3d.js'),'utf8');
+ assert.match(renderer,/sittingTarget\?furnitureGround\(sittingTarget,payload\)/);
+ assert.match(renderer,/record\.poseHeight=sittingTarget/);
+ assert.match(renderer,/record\.poseYaw=sittingTarget/);
+ assert.match(renderer,/if\(sitting&&Number\.isFinite\(record\.poseYaw\)\)/);
+ assert.match(renderer,/record\.root\.position\.set\(logical\.x,sitting\?\(record\.poseHeight\|\|0\.36\)\+bob:bob,logical\.z\)/);
+});
+test('the furniture editor separates catalog groups and rotates from controls on the selected object',()=>{
+ const html=fs.readFileSync(require.resolve('../public/quartos.html'),'utf8');
+ const editor=fs.readFileSync(require.resolve('../public/quartos.js'),'utf8');
+ assert.match(html,/id="floorCatalog"/);
+ assert.match(html,/id="surfaceCatalog"/);
+ assert.match(html,/id="objectControls"/);
+ assert.match(html,/id="rotateLeft"/);
+ assert.match(html,/id="rotateRight"/);
+ assert.doesNotMatch(html,/id="rotate"/);
+ assert.match(editor,/updateObjectControls\(l\.items\)/);
+ assert.match(editor,/rotateSelected\(-1\)/);
+ assert.match(editor,/rotateSelected\(1\)/);
 });
 test('persisted rooms, owner-only changes, invitations, optimistic locking and realtime access',{skip:!process.env.PGLITE_TEST_MODULE||!process.env.SOCKET_CLIENT_TEST_MODULE},async()=>{
  const {PGlite}=require(process.env.PGLITE_TEST_MODULE),{io:client}=require(process.env.SOCKET_CLIENT_TEST_MODULE);
@@ -62,7 +97,9 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   const present=await peopleUpdate;assert.equal(present.find(p=>p.accountId===b)?.wardrobe.outfit,'punk','presence shares the account wardrobe for the 3D avatar');
   const sittingUpdate=waitForPose(visitor,b,'sitting');
   assert.equal((await emit(visitor,'interact',{itemId:'welcome-chair'})).pose,'sitting','chairs trigger a synchronized sitting interaction');
-  await sittingUpdate;
+  const sittingPeople=await sittingUpdate,sitter=sittingPeople.find(p=>p.accountId===b);
+  assert.deepEqual(sitter.poseTarget,{itemId:'welcome-chair',type:'diningChair',x:1,y:7,rotation:0},'the server identifies the exact seat so the 3D avatar can sit on it');
+
   const bedPresence=waitForPose(visitor,b,'lying');
   assert.equal((await emit(visitor,'interact',{itemId:'test-bed'})).pose,'lying','beds trigger a synchronized lying interaction');
   const atBed=await bedPresence,walker=atBed.find(p=>p.accountId===b);const step=[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>({x:walker.x+dx,y:walker.y+dy})).find(tile=>rules.route(layout,walker,tile)?.length===1);assert.ok(step,'a free adjacent walking tile exists');
@@ -70,6 +107,7 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   assert.equal((await emit(visitor,'walk',step)).ok,true,'walking interrupts a furniture pose');
   assert.equal((await movingUpdate).find(p=>p.accountId===b)?.pose,'walking');
   const settled=await standingUpdate;assert.equal(settled.find(p=>p.accountId===b)?.pose,'standing','walking returns the avatar to standing');
+  assert.equal(settled.find(p=>p.accountId===b)?.poseTarget,null,'walking clears the previous seat anchor');
   await new Promise(r=>setTimeout(r,180));
   assert.match((await emit(visitor,'walk',{x:1,y:7})).error,/chegar/);
   const owner=await connect(a);assert.equal((await emit(owner,'enter',{owner:a})).own,true);
