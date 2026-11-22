@@ -31,7 +31,7 @@ const catalog=[
  ['speaker','Caixa de som antiga',1,1,'#525b6e','mug',true],
  ['arcade','Fliperama antigo',1,1,'#b273ba','nightstand',true],
  ['banana','Bananeira antiga',1,1,'#7fba70','plant',true]
-].map(([type,name,w,h,color,asset,legacy=false])=>({type,name,w,h,color,asset,legacy,solid:type!=='rug',interactive:['diningChair','chair','sofa','bed'].includes(type)}));.map(([type,name,w,h,color])=>({type,name,w,h,color,solid:type!=='rug'}));
+].map(([type,name,w,h,color,asset,legacy=false])=>({type,name,w,h,color,asset,legacy,solid:type!=='rug',interactive:['diningChair','chair','sofa','bed'].includes(type)}));
 const itemType=t=>catalog.find(i=>i.type===t);
 function cells(item){const t=itemType(item.type);if(!t)return [];const w=item.rotation%2?t.h:t.w,h=item.rotation%2?t.w:t.h;return Array.from({length:w*h},(_,i)=>[item.x+i%w,item.y+Math.floor(i/w)]);}
 function validate(layout){
