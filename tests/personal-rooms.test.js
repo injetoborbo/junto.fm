@@ -22,8 +22,8 @@ test('navigation walks around furniture, rotates footprints and rejects unreacha
 test('3D furniture uses the isometric room axes for every quarter-turn',()=>{
  assert.deepEqual([0,1,2,3].map(rules.rotationRadians),[0,Math.PI/2,Math.PI,3*Math.PI/2]);
  const renderer=fs.readFileSync(require.resolve('../public/quartos-3d.js'),'utf8');
- assert.equal((renderer.match(/rotationRadians\\(/g)||[]).length,3,'placed furniture, saved furniture and preview share the same room-axis rotation');
- assert.doesNotMatch(renderer,/-Math\\.PI\\/4/,'no extra screen-space 45-degree offset remains');
+ assert.equal((renderer.match(/rotationRadians\(/g)||[]).length,3,'placed furniture, saved furniture and preview share the same room-axis rotation');
+ assert.doesNotMatch(renderer,/-Math\.PI\/4/,'no extra screen-space 45-degree offset remains');
 });
 test('persisted rooms, owner-only changes, invitations, optimistic locking and realtime access',{skip:!process.env.PGLITE_TEST_MODULE||!process.env.SOCKET_CLIENT_TEST_MODULE},async()=>{
  const {PGlite}=require(process.env.PGLITE_TEST_MODULE),{io:client}=require(process.env.SOCKET_CLIENT_TEST_MODULE);
