@@ -160,16 +160,19 @@ function syncFurniture(items,payload){
    record.object=object;scene.add(object);render();
   });
  }
- const preview=payload.preview;
- const previewSignature=preview?[preview.type,preview.x,preview.y,preview.rotation].join(":"):null;
+ const preview=payload.preview,previewSignature=preview&&preview.type!=="rug"?preview.type:null;
  if(previewRecord?.signature!==previewSignature){clearFurnitureRecord(previewRecord);previewRecord=null;}
- else if(previewRecord?.object&&preview){const ground=furnitureGround(preview,payload);previewRecord.object.position.x=ground.x;previewRecord.object.position.z=ground.z;previewRecord.object.rotation.y=-Math.PI/4+(preview.rotation||0)*Math.PI/2;}
  if(preview&&!previewRecord&&preview.type!=="rug"){
   const record={signature:previewSignature,object:null};previewRecord=record;
   void loadFurnitureModel(preview.type).then(model=>{
    if(!model||previewRecord!==record)return;
-   record.object=buildFurnitureObject(preview,payload,model,true);if(record.object){scene.add(record.object);render();}
+   record.object=buildFurnitureObject(preview,payload,model,true);
+   if(record.object){scene.add(record.object);render();}
   });
+ }else if(previewRecord?.object&&preview){
+  const ground=furnitureGround(preview,payload);
+  previewRecord.object.position.x=ground.x;previewRecord.object.position.z=ground.z;
+  previewRecord.object.rotation.y=-Math.PI/4+(preview.rotation||0)*Math.PI/2;
  }
 }
 function animate(now){
