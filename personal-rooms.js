@@ -24,7 +24,8 @@ function setupRooms(app,io,accounts){
  }));
  app.post('/api/quartos',wrap(async(req,res,a)=>{await pool.query('INSERT INTO junto_personal_rooms(owner_id,name,layout) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',[a.id,'Quarto de '+String(a.nickname||'Macaco').slice(0,24),JSON.stringify(initial())]);res.json(await room(a.id));}));
  app.put('/api/quartos',wrap(async(req,res,a)=>{
-  let layout;try{layout=rules.validate(req.body?.layout);}catch(e){throw err(e.message);}
+  const previous=await room(a.id);
+  let layout;try{layout=rules.validate(req.body?.layout,previous?.layout);}catch(e){throw err(e.message);}
   const name=String(req.body?.name||'').trim();if(!name||name.length>48||!Number.isInteger(req.body?.revision))throw err('Nome ou versão inválidos.');
   const result=await pool.query('UPDATE junto_personal_rooms SET name=$2,layout=$3,revision=revision+1 WHERE owner_id=$1 AND revision=$4 RETURNING *',[a.id,name,JSON.stringify(layout),req.body.revision]);
   if(!result.rowCount)throw err('O quarto mudou em outra aba. Reabra antes de editar.',409);
@@ -67,7 +68,7 @@ function setupRooms(app,io,accounts){
    const item=r.layout.items.find(i=>i.id===p?.itemId);if(!item)throw err('Esse móvel não está mais no quarto.');
    const pose=item.type==='bed'?'lying':['sofa','chair','diningChair','bench'].includes(item.type)?'sitting':null;
    if(!pose)throw err('Esse móvel ainda não tem interação.');
-   const occupied=new Set(r.layout.items.filter(i=>rules.itemType(i.type).solid).flatMap(rules.cells).map(cell=>cell.join(',')));
+   const occupied=new Set(r.layout.items.filter(i=>rules.itemType(i.type).solid||i.legacyFloor).flatMap(rules.cells).map(cell=>cell.join(',')));
    const occupiedByPeople=new Set([...(presence.get(id)?.values()||[])].filter(other=>other.id!==s.id).map(other=>other.x+','+other.y));
    const candidates=rules.cells(item).flatMap(([x,y])=>[[x+1,y],[x-1,y],[x,y+1],[x,y-1]])
     .filter((v,index,all)=>v[0]>=0&&v[1]>=0&&v[0]<10&&v[1]<10&&!occupied.has(v.join(','))&&!occupiedByPeople.has(v.join(','))&&all.findIndex(w=>w[0]===v[0]&&w[1]===v[1])===index)
