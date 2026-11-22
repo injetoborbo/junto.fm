@@ -99,3 +99,6 @@ nav a,nav button{color:var(--jf-ui-text)}.nav-sticker{color:var(--jf-primary)}
 #room .room-dances button{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);color:var(--jf-ui-text)}#room .room-dances button.active{background:var(--jf-ui-button);color:var(--jf-ui-button-text)}
 #room input{background:var(--jf-ui-soft);border-color:var(--jf-ui-border);color:var(--jf-ui-text)}#room label{color:var(--jf-ui-muted)}#room .scene-tip{color:var(--jf-ui-text)}#chatLog{background:var(--jf-ui-soft);color:var(--jf-ui-text)}#chatLog b{color:var(--jf-primary)}#chatForm{background:var(--jf-ui-panel);border-color:var(--jf-ui-border)}
 #catalog button.selected{outline-color:var(--jf-primary);background:var(--jf-ui-button);color:var(--jf-ui-button-text)}#catalog button .swatch{border-color:var(--jf-ui-border)}
+
+.auth-gate{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:7px 7px 0 #0006;color:var(--jf-ui-text)}
+.auth-gate h1{color:var(--jf-ui-text);text-shadow:0 1px 2px #0005}.auth-gate p{color:var(--jf-ui-muted)}.auth-lock{background:var(--jf-ui-surface);border-color:var(--jf-ui-border);color:var(--jf-primary);box-shadow:4px 4px 0 #0006}.auth-note{color:var(--jf-ui-muted)!important}
