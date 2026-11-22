@@ -208,7 +208,7 @@
       avatar.textContent=(person.name.trim()[0]||"?").toLocaleUpperCase("pt-BR");
       const name=document.createElement("span");name.className="jf-tv-person-name";
       name.textContent=person.name+(person.you?" (você)":"")+(person.id===ownerId?" 👑":"");
-      chip.append(avatar,name);list.appendChild(chip);
+      chip.appendChild(avatar);chip.appendChild(name);list.appendChild(chip);
     }
   }
   function fmt(t){t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
