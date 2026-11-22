@@ -65,7 +65,7 @@ function setupRooms(app,io,accounts){
    const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');
    const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;
    const item=r.layout.items.find(i=>i.id===p?.itemId);if(!item)throw err('Esse móvel não está mais no quarto.');
-   const pose=item.type==='bed'?'lying':['sofa','chair','diningChair'].includes(item.type)?'sitting':null;
+   const pose=item.type==='bed'?'lying':['sofa','chair','diningChair','bench'].includes(item.type)?'sitting':null;
    if(!pose)throw err('Esse móvel ainda não tem interação.');
    const occupied=new Set(r.layout.items.filter(i=>rules.itemType(i.type).solid).flatMap(rules.cells).map(cell=>cell.join(',')));
    const occupiedByPeople=new Set([...(presence.get(id)?.values()||[])].filter(other=>other.id!==s.id).map(other=>other.x+','+other.y));
