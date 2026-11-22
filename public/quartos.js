@@ -22,7 +22,7 @@ $('save').onclick=run(async()=>{if(saving)return;saving=true;$('save').disabled=
 for(const key of ['wall','floor'])$(key).oninput=()=>{if(editing){draft[key]=$(key).value;draw();}};
 function selection(){
  const t=selected&&R.itemType(selected.type);
- $('selection').textContent=t?t.name+' • '+(selected.rotation*90)+'° • '+(t.placement==='surface'?'Sobre mesa':'No chão'):'Nenhum móvel selecionado';
+ $('selection').textContent=t?t.name+' • '+(selected.rotation*90)+'° • '+(selected.legacyFloor?'No chão (antigo)':t.placement==='surface'?'Sobre mesa':'No chão'):'Nenhum móvel selecionado';
  document.querySelectorAll('#catalog button').forEach(b=>b.classList.toggle('selected',b.dataset.type===selected?.type));
 }
 for(const t of R.catalog.filter(item=>!item.legacy&&item.type!=='rug')){
@@ -67,7 +67,9 @@ function updateObjectControls(items){
  const cells=R.cells(anchor);if(!cells.length){controls.hidden=true;return;}
  const center=cells.reduce((sum,cell)=>({x:sum.x+cell[0]+.5,y:sum.y+cell[1]+.5}),{x:0,y:0});
  center.x/=cells.length;center.y/=cells.length;
- const point=iso(center.x,center.y,R.itemType(anchor.type)?.placement==='surface'?24:58);
+ const anchorType=R.itemType(anchor.type);
+ const lift=anchorType?.placement==='surface'&&!anchor.legacyFloor?24:58;
+ const point=iso(center.x,center.y,lift);
  controls.style.left=point.x+'px';controls.style.top=point.y+'px';controls.hidden=false;
 }
 $('rotateLeft').onclick=run(()=>rotateSelected(-1));
