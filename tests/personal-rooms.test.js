@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const rules=require('../public/room-rules'),{initial,setupRooms}=require('../personal-rooms');
 test('placement rejects collisions, bounds, blocked entrance and malformed items',()=>{
- const base=initial();assert.equal(rules.validate(base).items.length,3);
+ const base=initial();assert.equal(rules.validate(base).items.length,4);
  const item={id:'test',type:'sofa',x:3,y:2,rotation:0};
  for(const bad of [{...item,x:9},{...item,x:0,y:0},{...item,rotation:NaN},{...item,type:'__proto__'},{...item,x:1,y:7},{...item,id:'welcome-sofa'}])assert.throws(()=>rules.validate({...base,items:[...base.items,bad]}));
  assert.throws(()=>rules.validate({...base,items:Array(61).fill(item)}));
