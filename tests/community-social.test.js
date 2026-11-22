@@ -87,3 +87,18 @@ test("Google-created 23-character usernames can open public profile pages",async
   assert.equal(apiStatus,200);
   assert.equal(apiPayload.profile.username,username);
 });
+
+
+test("new community and standalone pages inherit the selected site theme",()=>{
+  const bridge=read("public/theme-bridge.js");
+  assert.match(bridge,/localStorage\.getItem\(key\)/);
+  assert.match(bridge,/\"junto_theme\"/);
+  assert.match(bridge,/dataset\.jfTheme=name/);
+  assert.match(bridge,/--jf-ui-panel/);
+  assert.match(read("public/index.html"),/theme-bridge\.js/);
+  assert.match(read("public/quartos.html"),/theme-bridge\.js/);
+  assert.match(read("public/mural.html"),/theme-bridge\.js/);
+  assert.match(read("public/community-social.css"),/var\(--jf-ui-panel/);
+  assert.match(read("public/quartos.css"),/herda a aparência escolhida/);
+  assert.match(read("public/mural.css"),/mesma paleta selecionada/);
+});
