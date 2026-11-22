@@ -12,6 +12,7 @@ Abra **Quartos** na recepção ou na barra superior do Junto.fm. É necessário 
 - O acesso persiste até o dono remover o convidado. Remover também retira suas sessões abertas. Um link de quarto sozinho não concede acesso.
 - Até 12 conexões simultâneas. O dono não precisa estar presente. Caminhos e mensagens são sincronizados por Socket.IO, em namespace separado das salas de música.
 - Decoração salva redefine as posições dos visitantes para a entrada, evitando personagens dentro de móveis novos.
+- A movimentação usa interpolação contínua (1,35 casas/s), giro suave e ciclo de caminhada sincronizado; sentar/deitar e as cinco danças do Club usam os mesmos estados e arquivos de animação do sistema da balada. As danças disponíveis são Shake, Macarena, Party, Capoeira e Groove, sincronizadas entre os participantes.
 - Os avatares são instâncias 3D do modelo `macaco.glb` com os trajes equipados na conta, montados pelo mesmo sistema `createWardrobeFittedAvatar` do guarda-roupa. Cada participante recebe apenas as escolhas sanitizadas salvas na conta; os acessórios são carregados conforme necessário e cada personagem tem sua própria instância. A câmera permanece fixa; posição e escala acompanham a grade e o zoom. O deslocamento recebe interpolação e ciclo leve de caminhada; os membros inferiores recebem poses simples de sentado/deitado. A decoração continua desenhada em 2D leve e clicável, enquanto os macacos são 3D.
 
 ## Persistência e integração
