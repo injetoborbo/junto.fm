@@ -33,7 +33,7 @@ test("home newspaper links to existing community features without duplicating th
   assert.match(html,/href="\/mural"/);
   assert.match(html,/href="\/quartos"/);
   assert.match(html,/id="jfHomeAchievements"/);
-  assert.match(html,/not\\(#jfHomeCommunity\\)/);
+  assert.match(html,/not\(#jfHomeCommunity\)/);
 });
 
 test("messenger renders user content as text and refreshes its conversation state",()=>{
