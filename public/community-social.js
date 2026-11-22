@@ -10,7 +10,7 @@
   const $=id=>document.getElementById(id);
   let account=null,contacts=[],active=null,history=[];
   function renderPublicProfilePage(){
-    const match=location.pathname.match(/^\\/u\\/([^/]+)\\/?$/);
+    const match=location.pathname.match(/^\/u\/([^/]+)\/?$/);
     if(!match)return;
     document.body.classList.add("jf-public-profile-page");
     let username="";try{username=decodeURIComponent(match[1]);}catch(_){username=match[1];}
@@ -31,7 +31,7 @@
     fetch("/api/community/profile/"+encodeURIComponent(username),{credentials:"same-origin",cache:"no-store"}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||"Perfil indisponível.");return data;}).then(data=>{
       const profile=data.profile||{};name.textContent=profile.name||"Macaco";handle.textContent="@"+(profile.username||username);
       motto.textContent=profile.motto||"Esse macaco ainda não deixou uma frase por aqui.";
-      avatar.replaceChildren();if(profile.avatar&&/^data:image\\/(png|jpeg|webp);base64,/i.test(profile.avatar)){const img=document.createElement("img");img.src=profile.avatar;img.alt="";avatar.append(img);}else avatar.textContent=(profile.name||"M").slice(0,1).toUpperCase();
+      avatar.replaceChildren();if(profile.avatar&&/^data:image\/(png|jpeg|webp);base64,/i.test(profile.avatar)){const img=document.createElement("img");img.src=profile.avatar;img.alt="";avatar.append(img);}else avatar.textContent=(profile.name||"M").slice(0,1).toUpperCase();
       const created=profile.createdAt?new Date(profile.createdAt):null;
       meta.textContent="🐒 Na comunidade desde "+(created&&!Number.isNaN(created.getTime())?created.toLocaleDateString("pt-BR"):"recentemente")+" · 🏅 "+(data.achievements?.length||0)+" medalhas";
       badges.replaceChildren();const unlocked=Array.isArray(data.achievements)?data.achievements:[];
