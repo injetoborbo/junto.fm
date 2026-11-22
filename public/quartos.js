@@ -72,7 +72,7 @@ function updateObjectControls(items){
 }
 $('rotateLeft').onclick=run(()=>rotateSelected(-1));
 $('rotateRight').onclick=run(()=>rotateSelected(1));
-$('remove').onclick=()=>{if(selected){draft.items=draft.items.filter(i=>i.id!==selected.id);selected=null;selection();draw();}};
+$('remove').onclick=()=>{if(selected){const removedId=selected.id,hadSurfaceItems=draft.items.some(i=>i.parentId===removedId);draft.items=draft.items.filter(i=>i.id!==removedId&&i.parentId!==removedId);selected=null;selection();draw();status(hadSurfaceItems?'Móvel e objetos que estavam sobre ele removidos.':'Objeto removido.');}};
 $('clearSelection').onclick=()=>{selected=null;selection();draw();};
 $('inviteBtn').onclick=run(async()=>{if(editing){status('Salve ou cancele a decoração primeiro.');return;}$('guests').hidden=!$('guests').hidden;if(!$('guests').hidden)await guests();});
 async function guests(){const invited=await api('/api/quartos/guests');data=await api('/api/quartos');$('friendList').replaceChildren();$('guestList').replaceChildren();for(const f of data.friends){const b=button(invited.some(i=>i.id===f.id)?'Convidado':'Convidar',async()=>{await api('/api/quartos/invites','POST',{guestId:f.id});status('Convite disponível nos Quartos de '+f.name+'.');await guests();});b.disabled=invited.some(i=>i.id===f.id);$('friendList').append(card(f.name,'Amigo',b));}if(!data.friends.length)$('friendList').textContent='Adicione amigos pelo Social do Junto.fm.';for(const g of invited)$('guestList').append(card(g.name,'Acesso ao quarto',button('Remover',async()=>{await api('/api/quartos/invites/'+g.id,'DELETE');await guests();})));}
