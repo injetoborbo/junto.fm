@@ -11,29 +11,29 @@ let previewRecord=null,latestPayload=null;
 const ASSET_ROOT="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/41b06c6223d847d9de6519dd25a493d40e65992d/GLB/";
 const CITY_ASSET_ROOT="https://raw.githubusercontent.com/kayquer/kit-cidade-lowpoly/d9de7e25d476d8b8572971840b129c28a68e9cf7/models/";
 const FURNITURE_ASSETS={
- coffeeTable:{file:"Living/ap_coffee_table.glb",height:0.62},
- diningChair:{file:"Kitchen/ap_dining_chair.glb",height:1.02},
+ coffeeTable:{file:"Living/ap_coffee_table.glb",height:0.62,surfaceHeight:0.43},
+ diningChair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.41},
  floorLamp:{file:"Living/ap_floor_lamp.glb",height:1.72},
  cactus:{file:"Living/ap_plant_cactus.glb",height:1.05},
  plant:{file:"Living/ap_plant_small.glb",height:1.28},
- sideTable:{file:"Living/ap_side_table.glb",height:0.68},
+ sideTable:{file:"Living/ap_side_table.glb",height:0.68,surfaceHeight:0.48},
  tableLamp:{file:"Living/ap_table_lamp.glb",height:0.78},
  books:{file:"Clutter/ap_book_stack.glb",height:0.2},
  vase:{file:"Clutter/ap_vase.glb",height:0.7},
  basket:{file:"Clutter/ap_basket.glb",height:0.48},
  pillow:{file:"Clutter/ap_pillow_square.glb",height:0.28},
- nightstand:{file:"Bedroom/ap_nightstand.glb",height:0.72},
+ nightstand:{file:"Bedroom/ap_nightstand.glb",height:0.72,surfaceHeight:0.55},
  kettle:{file:"Kitchen/ap_kettle.glb",height:0.38},
  mug:{file:"Clutter/ap_mug.glb",height:0.22},
- bench:{file:"mobiliario/banco_praca.glb",height:0.72,city:true},
+ bench:{file:"mobiliario/banco_praca.glb",height:0.72,seatHeight:0.32,city:true},
  planter:{file:"mobiliario/vaso_planta.glb",height:0.9,city:true},
- sofa:{file:"mobiliario/banco_praca.glb",height:0.78,city:true},
- chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02},
- table:{file:"Living/ap_coffee_table.glb",height:0.62},
+ sofa:{file:"mobiliario/banco_praca.glb",height:0.78,seatHeight:0.36,city:true},
+ chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.41},
+ table:{file:"Living/ap_coffee_table.glb",height:0.62,surfaceHeight:0.43},
  bed:{file:"Living/ap_coffee_table.glb",height:0.52},
- shelf:{file:"Bedroom/ap_nightstand.glb",height:1.05},
+ shelf:{file:"Bedroom/ap_nightstand.glb",height:1.05,surfaceHeight:0.82},
  lamp:{file:"Living/ap_floor_lamp.glb",height:1.72},
- tv:{file:"Bedroom/ap_nightstand.glb",height:0.72},
+ tv:{file:"Bedroom/ap_nightstand.glb",height:0.72,surfaceHeight:0.55},
  speaker:{file:"Clutter/ap_mug.glb",height:0.35},
  arcade:{file:"Bedroom/ap_nightstand.glb",height:1.15},
  banana:{file:"Living/ap_plant_small.glb",height:1.28}
@@ -133,7 +133,10 @@ function buildFurnitureObject(item,payload,source,ghost=false){
  model.scale.setScalar(fit);
  if(ghost)model.traverse(obj=>{if(!obj.isMesh||!obj.material)return;obj.material=obj.material.clone();obj.material.transparent=true;obj.material.opacity=.48;obj.material.depthWrite=false;});
  root.add(model);
- const ground=furnitureGround(item,payload);root.position.set(ground.x,0,ground.z);
+ const ground=furnitureGround(item,payload);
+ const support=item.parentId?(payload.furniture||[]).find(entry=>entry.id===item.parentId):null;
+ const supportHeight=support?(FURNITURE_ASSETS[support.type]?.surfaceHeight||0):0;
+ root.position.set(ground.x,supportHeight,ground.z);
  root.rotation.y=window.RoomRules.rotationRadians(item.rotation);
  const shadow=new THREE.Mesh(new THREE.CircleGeometry(Math.max(.25,Math.max(w,h)*.38),12),new THREE.MeshBasicMaterial({color:0x09091d,transparent:true,opacity:ghost?.08:.17,depthWrite:false}));
  shadow.rotation.x=-Math.PI/2;shadow.position.y=.004;root.add(shadow);
@@ -147,7 +150,7 @@ function syncFurniture(items,payload){
  for(const [id,record] of furnitureRecords)if(!visible.has(id)){clearFurnitureRecord(record);furnitureRecords.delete(id);}
  for(const item of items||[]){
   if(item.type==="rug")continue;
-  const signature=[item.type,item.x,item.y,item.rotation].join(":");
+  const signature=[item.type,item.x,item.y,item.rotation,item.parentId||""].join(":");
   let record=furnitureRecords.get(item.id);
   if(record?.signature===signature){
    if(record.object){const ground=furnitureGround(item,payload);record.object.position.x=ground.x;record.object.position.z=ground.z;record.object.rotation.y=window.RoomRules.rotationRadians(item.rotation);}
@@ -161,7 +164,7 @@ function syncFurniture(items,payload){
    record.object=object;scene.add(object);render();
   });
  }
- const preview=payload.preview,previewSignature=preview&&preview.type!=="rug"?preview.type:null;
+ const preview=payload.preview,previewSignature=preview&&preview.type!=="rug"?[preview.type,preview.parentId||""].join(":"):null;
  if(previewRecord?.signature!==previewSignature){clearFurnitureRecord(previewRecord);previewRecord=null;}
  if(preview&&!previewRecord&&preview.type!=="rug"){
   const record={signature:previewSignature,object:null};previewRecord=record;
@@ -170,13 +173,14 @@ function syncFurniture(items,payload){
    // The model may finish loading after the cursor has moved. Use the latest
    // preview payload so the ghost never appears at an obsolete position.
    const latest=latestPayload?.preview;
-   if(!latest||latest.type==="rug"||latest.type!==record.signature)return;
+   if(!latest||latest.type==="rug"||[latest.type,latest.parentId||""].join(":")!==record.signature)return;
    record.object=buildFurnitureObject(latest,latestPayload,model,true);
    if(record.object){scene.add(record.object);render();}
   });
  }else if(previewRecord?.object&&preview){
   const ground=furnitureGround(preview,payload);
-  previewRecord.object.position.x=ground.x;previewRecord.object.position.z=ground.z;
+  const support=preview.parentId?(payload.furniture||[]).find(entry=>entry.id===preview.parentId):null;
+  previewRecord.object.position.set(ground.x,support?(FURNITURE_ASSETS[support.type]?.surfaceHeight||0):0,ground.z);
   previewRecord.object.rotation.y=window.RoomRules.rotationRadians(preview.rotation);
  }
 }
@@ -189,7 +193,7 @@ function animate(now){
   const logical=record.logical||(record.logical={x:record.root.position.x,z:record.root.position.z});
   const target=record.target,dx=target.x-logical.x,dz=target.z-logical.z,distance=Math.hypot(dx,dz);
   const walking=distance>.035;
-  const sitting=!walking&&record.pose==="sitting",lying=!walking&&record.pose==="lying";
+  const sitting=!walking&&record.pose==="sitting"&&record.poseTarget,lying=!walking&&record.pose==="lying";
   const style=walking||sitting||lying?"idle":(DANCES.has(record.dance)?record.dance:"idle");
   if(walking){
    const step=Math.min(distance,1.35*dt);
@@ -203,8 +207,14 @@ function animate(now){
   const phase=now/1000*({shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1}[style]||2);
   const pulse=Math.sin(phase),stride=Math.sin(record.walkTime||0);
   const bob=walking?Math.abs(stride)*.045:sitting?.012*Math.sin(now/1000*2):lying?0:style==="idle"?.008*Math.sin(now/1000*2):Math.abs(pulse)*.035;
-  record.root.position.set(logical.x,bob,logical.z);
-  if(!walking&&!lying){
+  if(sitting){
+   const hipOffset=(record.hipOffset||new THREE.Vector3()).clone().applyAxisAngle(new THREE.Vector3(0,1,0),record.root.rotation.y);
+   record.root.position.set(logical.x-hipOffset.x,(record.poseHeight||0.36)-hipOffset.y+bob,logical.z-hipOffset.z);
+  }else record.root.position.set(logical.x,bob,logical.z);
+  if(sitting&&Number.isFinite(record.poseYaw)){
+   const diff=Math.atan2(Math.sin(record.poseYaw-record.root.rotation.y),Math.cos(record.poseYaw-record.root.rotation.y));
+   record.root.rotation.y+=Math.max(-dt*4,Math.min(dt*4,diff));
+  }else if(!walking&&!lying&&!sitting){
    const targetYaw=record.baseYaw||0;
    record.root.rotation.y+=Math.atan2(Math.sin(targetYaw-record.root.rotation.y),Math.cos(targetYaw-record.root.rotation.y))*Math.min(1,dt*1.6);
   }
@@ -279,6 +289,11 @@ async function createAvatar(person,scale,record){
    record.rest.set(bone.uuid,{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z});
    record.restQuaternion.set(bone.uuid,bone.quaternion.clone());
   });
+  // The avatar group is centered on the normalized monkey mesh, not at its feet.
+  // Align the rig's hips (rather than the mesh origin) with the furniture seat.
+  record.root.updateWorldMatrix(true,true);
+  const hips=record.animationBones.find(bone=>boneName(bone.name)==="hips"||boneName(bone.name).endsWith("hips"));
+  record.hipOffset=hips?record.root.worldToLocal(hips.getWorldPosition(new THREE.Vector3())):new THREE.Vector3();
   if(record.target){record.logical={x:record.target.x,z:record.target.z};record.root.position.copy(record.target);}
   scene.add(record.root);scheduleAnimation();
  }catch(error){console.warn("Quartos: não foi possível montar o traje 3D de "+(person.name||"visitante"),error);}
@@ -297,9 +312,13 @@ function update(payload){
    record={signature:key,root:null,rig:null,dispose:null,target:null,pose:"standing",dance:p.dance||"idle",walking:false,rest:new Map(),animationBones:[],walkTime:0,baseYaw:0,scale:payload.scale||1};avatars.set(p.id,record);
    void createAvatar(p,payload.scale||1,record);
   }
-  const ground=screenToGround(p.x,p.y,payload.width,payload.height,payload.scale||1);
+  const sittingTarget=p.pose==="sitting"&&p.poseTarget&&FURNITURE_ASSETS[p.poseTarget.type]?p.poseTarget:null;
+  const ground=sittingTarget?furnitureGround(sittingTarget,payload):screenToGround(p.x,p.y,payload.width,payload.height,payload.scale||1);
   record.target=new THREE.Vector3(ground.x,0,ground.z);
-  record.pose=p.pose||"standing";record.dance=p.dance||"idle";record.scale=payload.scale||1;
+  record.pose=p.pose||"standing";record.poseTarget=Boolean(sittingTarget);
+  record.poseHeight=sittingTarget?(FURNITURE_ASSETS[sittingTarget.type].seatHeight||0.36):0;
+  record.poseYaw=sittingTarget?window.RoomRules.rotationRadians(sittingTarget.rotation||0):null;
+  record.dance=p.dance||"idle";record.scale=payload.scale||1;
   if(record.dance!=="idle"&&!animationClips.has(record.dance))void loadClip(record.dance).then(clip=>{
    if(clip&&avatars.get(p.id)===record&&record.dance===p.dance){record.currentDance=null;scheduleAnimation();}
   });

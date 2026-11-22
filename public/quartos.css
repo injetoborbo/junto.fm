@@ -102,3 +102,21 @@ nav a,nav button{color:var(--jf-ui-text)}.nav-sticker{color:var(--jf-primary)}
 
 .auth-gate{background:var(--jf-ui-panel);border-color:var(--jf-ui-border);box-shadow:7px 7px 0 #0006;color:var(--jf-ui-text)}
 .auth-gate h1{color:var(--jf-ui-text);text-shadow:0 1px 2px #0005}.auth-gate p{color:var(--jf-ui-muted)}.auth-lock{background:var(--jf-ui-surface);border-color:var(--jf-ui-border);color:var(--jf-primary);box-shadow:4px 4px 0 #0006}.auth-note{color:var(--jf-ui-muted)!important}
+
+
+/* Catálogo separado: peças de piso e objetos que dependem de uma superfície. */
+#catalog{display:flex;flex-direction:column;gap:16px}
+.catalog-section{min-width:0;padding-top:10px;border-top:1px solid var(--jf-ui-border,var(--edge))}
+.catalog-section h3{margin:0 0 4px;color:var(--jf-ui-text,var(--ink));font-size:13px}
+.catalog-help{margin:0 0 9px;color:var(--jf-ui-muted,var(--muted));font-size:10px;line-height:1.45}
+.catalog-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.catalog-grid button{min-width:0}
+.catalog-grid button.selected{outline:2px solid var(--jf-primary,var(--yellow));background:var(--jf-ui-button,var(--yellow));color:var(--jf-ui-button-text,#201b46)}
+.catalog-grid button small{font-size:9px}
+.object-controls{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;transform:translate(-50%,-100%);pointer-events:auto}
+.object-controls[hidden]{display:none!important}
+.object-controls button{display:grid;place-items:center;width:32px;height:30px;min-width:32px;padding:0;border:2px solid var(--jf-ui-border,var(--jf-secondary));border-radius:4px;background:var(--jf-ui-panel,var(--panel));color:var(--jf-ui-text,var(--ink));font:bold 19px/1 Tahoma,sans-serif;box-shadow:0 3px 0 #0007,0 0 0 2px #0003}
+.object-controls button:hover{background:var(--jf-ui-button,var(--yellow));color:var(--jf-ui-button-text,#201b46);transform:translateY(-1px)}
+.object-controls button:active{transform:translateY(1px);box-shadow:0 1px 0 #0007}
+@media(max-width:800px){#catalog{display:flex}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.catalog-grid{grid-template-columns:1fr}.object-controls button{width:29px;height:28px;min-width:29px;font-size:17px}}
