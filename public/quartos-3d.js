@@ -78,9 +78,9 @@ function animate(now){
    const speed=Math.max(36,48*(record.scale||1))*1.35;
    const step=Math.min(distance,speed*dt);
    logical.x+=dx/distance*step;logical.y+=dy/distance*step;
-   const heading=Math.atan2(dx,-dy);
-   const diff=Math.atan2(Math.sin(heading-record.root.rotation.z),Math.cos(heading-record.root.rotation.z));
-   record.root.rotation.z+=Math.max(-dt*4,Math.min(dt*4,diff));
+   const heading=dx<0?-.12:dx>0?.12:0;
+   const diff=Math.atan2(Math.sin(heading-record.root.rotation.y),Math.cos(heading-record.root.rotation.y));
+   record.root.rotation.y+=Math.max(-dt*4,Math.min(dt*4,diff));
    record.walkTime=(record.walkTime||0)+dt*7.8;
    keepAnimating=true;
   }else{logical.x=t.x;logical.y=t.y;}
@@ -92,9 +92,9 @@ function animate(now){
   record.root.position.set(logical.x,logical.y+bob,2);
   if(!walking&&!lying){
    const targetYaw=record.baseYaw||0;
-   record.root.rotation.z+=Math.atan2(Math.sin(targetYaw-record.root.rotation.z),Math.cos(targetYaw-record.root.rotation.z))*Math.min(1,dt*1.6);
+   record.root.rotation.y+=Math.atan2(Math.sin(targetYaw-record.root.rotation.y),Math.cos(targetYaw-record.root.rotation.y))*Math.min(1,dt*1.6);
   }
-  if(lying)record.root.rotation.z=(record.baseYaw||0)+1.25;
+  record.root.rotation.z=lying?1.25:0;
   else if(!walking)record.root.rotation.x=sitting?-.12:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
   else record.root.rotation.x=0;
   if(!record.action)for(const bone of record.animationBones){
