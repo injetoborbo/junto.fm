@@ -64,3 +64,26 @@ test("messenger has a compact mobile layout",()=>{
   assert.match(css,/@media\(max-width:620px\)/);
   assert.match(css,/grid-template-columns:112px/);
 });
+
+
+test("Google-created 23-character usernames can open public profile pages",async()=>{
+  const source=read("community-profiles.js");
+  const accounts=read("account-auth.js");
+  assert.match(accounts,/\"macaco_\"\+crypto\.randomBytes\(8\)\.toString\(\"hex\"\)/);
+  assert.match(source,/USERNAME=\/\^\[a-z0-9_\]\{3,24\}\$\/i);
+  const routes={};
+  const app={get:(route,handler)=>{routes[route]=handler;}};
+  const accountApi={pool:{query:async(sql)=>sql.includes("junto_accounts")?{rowCount:1,rows:[{id:"account-1",username:"macaco_49a47d0c38138731",name:"Macaco",avatar:"",motto:"",created_at:new Date()}]}:{rowCount:0,rows:[]}},ready:Promise.resolve(true),accountFromRequest:async()=>null};
+  require("../community-profiles")(app,accountApi);
+  const username="macaco_49a47d0c38138731";
+  let sentFile=null,nextCalled=false;
+  const pageRes={set(){return this;},sendFile(file){sentFile=file;return file;}};
+  await routes["/u/:username"]({params:{username}},pageRes,()=>{nextCalled=true;});
+  assert.ok(sentFile,"the HTML app shell is served for Google usernames");
+  assert.equal(nextCalled,false);
+  let apiPayload=null,apiStatus=200;
+  const apiRes={set(){return this;},status(value){apiStatus=value;return this;},json(value){apiPayload=value;return value;}};
+  await routes["/api/community/profile/:username"]({params:{username}},apiRes);
+  assert.equal(apiStatus,200);
+  assert.equal(apiPayload.profile.username,username);
+});
