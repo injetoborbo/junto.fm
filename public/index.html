@@ -2555,6 +2555,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     getProfile:()=>jfProfile,
     getPeerProfile:id=>jfPeerProfiles.get(id),
     getPeerIds:()=>[...jfPeerProfiles.keys()],
+    getPeerClientId:id=>jfPeerClientIds.get(id)||null,
     getSkin:()=>jfMySkin(),
     getPeerSkin:id=>jfPeerSkins.get(id)||"default"
   };
@@ -2694,6 +2695,7 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     return box;
   }
   function jfRenderPeople(){
+    window.dispatchEvent(new Event("jf-room-people-update"));
     const list=$("jfPeople");list.replaceChildren();
     if(!joined){const p=document.createElement("p");p.className="small";p.textContent="Entre em uma sala para ver os participantes.";list.appendChild(p);return;}
     // Render a single entry for each browser tab, not each transient Socket.IO ID.
@@ -2888,9 +2890,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     if(clientId)jfPeerClientIds.set(id,clientId);
     jfPeerRegistered.set(id,Boolean(registered));
     jfPeerProfiles.set(id,{name:"Ouvinte",avatar:"",motto:""});
+    jfPresenceSound("enter");
     jfRenderPeople();jfRenderFriends();
   });
-  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerClientIds.delete(id);jfPeerRegistered.delete(id);jfPeerSkins.delete(id);jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
+  socket.on("peer-left",({id})=>{jfPeerProfiles.delete(id);jfPeerClientIds.delete(id);jfPeerRegistered.delete(id);jfPeerSkins.delete(id);jfPresenceSound("leave");jfRenderPeople();jfRenderFriends();jfNotifyTransmitterAppearance();});
   socket.on("joined-room",({profiles={},avatarSkins={},clientIds={},registeredPeers={}})=>{
     jfPeerProfiles.clear();jfPeerSkins.clear();jfPeerClientIds.clear();jfPeerRegistered.clear();
     for(const [id,value] of Object.entries(registeredPeers))jfPeerRegistered.set(id,Boolean(value));
@@ -2981,6 +2984,42 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       jfChatSound.currentTime=0;
       jfChatSound.play().catch(error=>console.debug("Som de mensagem bloqueado pelo navegador:",error));
     }catch(error){console.debug("Falha ao reproduzir notificação:",error);}
+  }
+
+  // Efeitos curtos de presença, sintetizados localmente (sem baixar arquivos).
+  // O AudioContext é desbloqueado na primeira interação do usuário por política do navegador.
+  let jfPresenceAudio=null;
+  function jfUnlockPresenceAudio(){
+    try{
+      const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+      if(!AudioContextClass)return;
+      if(!jfPresenceAudio)jfPresenceAudio=new AudioContextClass();
+      if(jfPresenceAudio.state==="suspended")void jfPresenceAudio.resume().catch(()=>{});
+    }catch(error){console.debug("Áudio de presença indisponível:",error);}
+  }
+  document.addEventListener("pointerdown",jfUnlockPresenceAudio,{passive:true});
+  document.addEventListener("keydown",jfUnlockPresenceAudio);
+  let jfLastPresenceSound=0;
+  function jfPresenceSound(kind){
+    const now=Date.now();
+    if(now-jfLastPresenceSound<180)return;
+    jfLastPresenceSound=now;
+    jfUnlockPresenceAudio();
+    const ctx=jfPresenceAudio;
+    if(!ctx||ctx.state!=="running")return;
+    const entering=kind==="enter";
+    const notes=entering?[660,880]:[520,370];
+    const start=ctx.currentTime+.015;
+    notes.forEach((frequency,index)=>{
+      const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+      oscillator.type="sine";
+      oscillator.frequency.setValueAtTime(frequency,start+index*.105);
+      gain.gain.setValueAtTime(.0001,start+index*.105);
+      gain.gain.exponentialRampToValueAtTime(.075,start+index*.105+.012);
+      gain.gain.exponentialRampToValueAtTime(.0001,start+index*.105+.105);
+      oscillator.connect(gain);gain.connect(ctx.destination);
+      oscillator.start(start+index*.105);oscillator.stop(start+index*.105+.12);
+    });
   }
   socket.on("chat-message",message=>{
     if(joined&&message&&message.room===room){
