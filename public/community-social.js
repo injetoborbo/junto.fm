@@ -54,6 +54,9 @@
     if(open&&!account){setStatus("Faça login para desbloquear mensagens privadas.");}
   });
   $("jfMsnClose").addEventListener("click",()=>setOpen(false));
+  document.getElementById("jfHomeMessenger")?.addEventListener("click",()=>setOpen(true));
+  document.getElementById("jfHomeArcade")?.addEventListener("click",()=>document.getElementById("jfOpenArena")?.click());
+  document.getElementById("jfHomeAchievements")?.addEventListener("click",()=>document.getElementById("jfAchievementsOpen")?.click());
   $("jfMsnForm").addEventListener("submit",event=>{
     event.preventDefault();const input=$("jfMsnInput"),text=input.value.trim();
     if(!text||!active)return;
