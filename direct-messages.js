@@ -48,7 +48,7 @@ module.exports=function setupDirectMessages(io,accounts){
         SELECT CASE WHEN user_a=$1 THEN user_b ELSE user_a END AS peer_id
         FROM junto_friendships WHERE user_a=$1 OR user_b=$1
       ), latest AS (
-        SELECT DISTINCT ON (peer_id) peer_id,body,created_at,sender_id
+        SELECT DISTINCT ON (peer_id) peer_id,body,created_at,sender_id,id
         FROM (
           SELECT id,CASE WHEN sender_id=$1 THEN recipient_id ELSE sender_id END AS peer_id,
                  body,created_at,sender_id
