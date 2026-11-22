@@ -11,7 +11,7 @@ Revisão de 15/11/2026. Este documento descreve a implementação atual; os trec
 
 ## Recuperação e controles
 
-Os espectadores por link não recebem seeks durante buffering. Ao recuperar, o player não salta para uma posição que ainda não foi carregada: pequenas diferenças de relógio são corrigidas gradualmente pela velocidade de reprodução, e um seek automático grande só ocorre quando o destino já está no buffer. Comandos explícitos de play/pause/seek continuam autoritativos. Promessas de autoplay pendentes não se acumulam; o botão de som continua aparecendo mesmo se um heartbeat chegar durante o bloqueio do navegador.
+Os espectadores por link não recebem seeks durante buffering. Ao recuperar, o player não salta para uma posição que ainda não foi carregada: pequenas diferenças de relógio são corrigidas gradualmente pela velocidade de reprodução, atrasos grandes não aceleram o consumo de um buffer ainda incompleto, e um seek automático grande só ocorre quando o destino já está no buffer. Comandos explícitos de play/pause/seek continuam autoritativos. Promessas de autoplay pendentes não se acumulam; o botão de som continua aparecendo mesmo se um heartbeat chegar durante o bloqueio do navegador.
 
 Uma falha fatal da fonte do ADM pausa a sala. HLS tenta uma recuperação de erro de decodificação; falhas definitivas mantêm a mensagem e permitem Tentar novamente, sem repetir indefinidamente. Pausas e sincronizações não apagam o erro.
 
