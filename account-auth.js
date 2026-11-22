@@ -3,6 +3,7 @@ const crypto=require("crypto");
 const {Pool}=require("pg");
 const {promisify}=require("util");
 const scrypt=promisify(crypto.scrypt);
+const {normalizeUsername,isValidUsername}=require("./username-rules");
 
 module.exports=function setupAccounts(app){
   const clientId=process.env.GOOGLE_CLIENT_ID||"";
@@ -235,6 +236,26 @@ module.exports=function setupAccounts(app){
         [input.name,input.avatar,input.motto,JSON.stringify(input.wardrobe),account.id]);
       res.json({ok:true,profile:safeAccount(r.rows[0])});
     }catch(error){res.status(503).json({error:"Não foi possível salvar seu perfil."});}
+  });
+  app.post("/api/account/username",async(req,res)=>{
+    try{
+      const account=await accountFromRequest(req);
+      if(!account)return res.status(401).json({error:"Entre na sua conta para alterar seu @."});
+      const username=normalizeUsername(req.body?.username);
+      if(!isValidUsername(username))return res.status(400).json({error:"Use de 3 a 24 letras, números ou _."});
+      try{
+        const result=await pool.query("UPDATE junto_accounts SET username=$1 WHERE id=$2 RETURNING *",[username,account.id]);
+        if(!result.rowCount)return res.status(404).json({error:"Conta não encontrada."});
+        res.set("Cache-Control","no-store");
+        return res.json({ok:true,profile:safeAccount(result.rows[0])});
+      }catch(error){
+        if(error.code==="23505")return res.status(409).json({error:"Esse @ já está em uso. Escolha outro."});
+        throw error;
+      }
+    }catch(error){
+      console.error("Alteração de @:",error.message);
+      return res.status(503).json({error:"Não foi possível alterar seu @ agora."});
+    }
   });
   async function friends(accountId){
     const result=await pool.query(`SELECT a.id,a.nickname AS name,a.username,a.motto,a.avatar
