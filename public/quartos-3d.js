@@ -12,7 +12,7 @@ const ASSET_ROOT="https://raw.githubusercontent.com/Vuena/free-apartment-props-c
 const CITY_ASSET_ROOT="https://raw.githubusercontent.com/kayquer/kit-cidade-lowpoly/d9de7e25d476d8b8572971840b129c28a68e9cf7/models/";
 const FURNITURE_ASSETS={
  coffeeTable:{file:"Living/ap_coffee_table.glb",height:0.62,surfaceHeight:0.43},
- diningChair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.41},
+ diningChair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.73},
  floorLamp:{file:"Living/ap_floor_lamp.glb",height:1.72},
  cactus:{file:"Living/ap_plant_cactus.glb",height:1.05},
  plant:{file:"Living/ap_plant_small.glb",height:1.28},
@@ -25,7 +25,7 @@ const FURNITURE_ASSETS={
  nightstand:{file:"Bedroom/ap_nightstand.glb",height:0.72,surfaceHeight:0.55},
  kettle:{file:"Kitchen/ap_kettle.glb",height:0.38},
  mug:{file:"Clutter/ap_mug.glb",height:0.22},
- bench:{file:"mobiliario/banco_praca.glb",height:0.72,seatHeight:0.32,city:true},
+ bench:{file:"mobiliario/banco_praca.glb",height:0.72,seatHeight:0.48,city:true},
  planter:{file:"mobiliario/vaso_planta.glb",height:0.9,city:true},
  sofa:{file:"mobiliario/banco_praca.glb",height:0.78,seatHeight:0.36,city:true},
  chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.41},
@@ -240,7 +240,7 @@ function animate(now){
   const pulse=Math.sin(phase),stride=Math.sin(record.walkTime||0);
   const bob=walking?Math.abs(stride)*.045:sitting?.012*Math.sin(now/1000*2):lying?0:style==="idle"?.008*Math.sin(now/1000*2):Math.abs(pulse)*.035;
   if(sitting){
-   const seatOffset=new THREE.Vector3(record.poseOffsetX||0,0,record.poseOffsetZ||0).applyAxisAngle(new THREE.Vector3(0,1,0),record.root.rotation.y);
+   const seatOffset=new THREE.Vector3(record.poseOffsetX||0,0,record.poseOffsetZ||0).applyAxisAngle(new THREE.Vector3(0,1,0),Number.isFinite(record.poseFurnitureYaw)?record.poseFurnitureYaw:record.root.rotation.y);
    const hipOffset=(record.hipOffset||new THREE.Vector3()).clone().applyAxisAngle(new THREE.Vector3(0,1,0),record.root.rotation.y);
    record.root.position.set(logical.x+seatOffset.x-hipOffset.x,(record.poseHeight||0.36)-hipOffset.y+bob,logical.z+seatOffset.z-hipOffset.z);
   }else record.root.position.set(logical.x,bob,logical.z);
@@ -353,7 +353,8 @@ function update(payload){
   record.poseHeight=calibration?calibration.seatHeight:0;
   record.poseOffsetX=calibration?calibration.offsetX:0;record.poseOffsetZ=calibration?calibration.offsetZ:0;
   record.poseTilt=calibration?THREE.MathUtils.degToRad(calibration.bodyTilt):-.12;
-  record.poseYaw=sittingTarget?window.RoomRules.rotationRadians(sittingTarget.rotation||0)+THREE.MathUtils.degToRad(calibration?.yawOffset||0):null;
+  record.poseFurnitureYaw=sittingTarget?window.RoomRules.rotationRadians(sittingTarget.rotation||0):null;
+  record.poseYaw=sittingTarget?record.poseFurnitureYaw+THREE.MathUtils.degToRad(calibration?.yawOffset||0):null;
   record.dance=p.dance||"idle";record.scale=payload.scale||1;
   if(record.dance!=="idle"&&!animationClips.has(record.dance))void loadClip(record.dance).then(clip=>{
    if(clip&&avatars.get(p.id)===record&&record.dance===p.dance){record.currentDance=null;scheduleAnimation();}
