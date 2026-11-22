@@ -27,6 +27,7 @@ jobs:
           node --check public/junto-tv.js
           node --check direct-messages.js
           node --check community-profiles.js
+          node --check public/theme-bridge.js
           node --check public/community-social.js
           node --check tests/community-social.test.js
           node --check tests/junto-tv-presence.test.js
