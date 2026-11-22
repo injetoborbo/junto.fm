@@ -194,9 +194,9 @@ for(const danceButton of document.querySelectorAll('[data-room-dance]')){
 
 const SEAT_CALIBRATION_STORAGE='juntofm.quartos.seat-calibration.v1';
 const seatCalibrationDefaults={
- diningChair:{seatHeight:.41,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
- chair:{seatHeight:.41,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
- bench:{seatHeight:.32,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ diningChair:{seatHeight:.73,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ chair:{seatHeight:.73,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ bench:{seatHeight:.48,offsetX:0,offsetZ:-.1,bodyTilt:-7,yawOffset:-180},
  sofa:{seatHeight:.36,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0}
 };
 let seatCalibrationValues={},seatDevkitEnabled=false;
