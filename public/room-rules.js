@@ -37,9 +37,11 @@ const catalog=[
 const itemType=t=>catalog.find(i=>i.type===t);
 const TABLETOP_TYPES=new Set(['tableLamp','books','vase','kettle','mug']);
 const SURFACE_HOST_TYPES=new Set(['coffeeTable','sideTable','nightstand','table','shelf','tv']);
+const SURFACE_LIFTS={coffeeTable:20,sideTable:22,nightstand:25,table:20,shelf:37,tv:25};
 for(const item of catalog){
  item.placement=TABLETOP_TYPES.has(item.type)?'surface':'floor';
  item.canSupport=SURFACE_HOST_TYPES.has(item.type);
+ item.surfaceLift=SURFACE_LIFTS[item.type]||20;
  item.solid=item.type!=='rug'&&item.placement!=='surface';
 }
 // Furniture quarter-turns use the room's world axes, not screen-space rotation.
