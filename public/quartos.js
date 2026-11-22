@@ -191,6 +191,68 @@ for(const danceButton of document.querySelectorAll('[data-room-dance]')){
   for(const button of document.querySelectorAll('[data-room-dance]'))button.classList.toggle('active',button===danceButton);
  }));
 }
+
+const SEAT_CALIBRATION_STORAGE='juntofm.quartos.seat-calibration.v1';
+const seatCalibrationDefaults={
+ diningChair:{seatHeight:.41,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ chair:{seatHeight:.41,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ bench:{seatHeight:.32,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ sofa:{seatHeight:.36,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0}
+};
+let seatCalibrationValues={},seatDevkitEnabled=false;
+function currentSeatCalibration(type){
+ const runtime=window.JFQuartos3D?.getSeatCalibration?.(type);
+ return runtime||{...seatCalibrationDefaults[type],...(seatCalibrationValues[type]||{})};
+}
+function paintSeatCalibration(){
+ const type=$('seatCalibrationType').value,values=currentSeatCalibration(type);
+ for(const input of document.querySelectorAll('[data-seat-calibration]')){
+  const field=input.dataset.seatCalibration;input.value=String(values[field]);
+  const output=$('seatCalibrationValue-'+field);
+  if(output)output.textContent=field==='seatHeight'?values[field].toFixed(2)+' m':(field==='offsetX'||field==='offsetZ'?values[field].toFixed(2)+' m':Math.round(values[field])+'°');
+ }
+ $('seatCalibrationJson').value=JSON.stringify({[type]:values},null,2);
+}
+function saveSeatCalibrations(){
+ try{localStorage.setItem(SEAT_CALIBRATION_STORAGE,JSON.stringify(seatCalibrationValues));}catch(error){status('Não foi possível salvar os ajustes neste navegador.');}
+ window.JFQuartos3D?.setSeatCalibrations?.(seatCalibrationValues);
+ paintSeatCalibration();
+}
+function setupSeatDevkit(){
+ if(seatDevkitEnabled)return;seatDevkitEnabled=true;
+ try{
+  const saved=JSON.parse(localStorage.getItem(SEAT_CALIBRATION_STORAGE)||'{}');
+  if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
+   for(const type of Object.keys(seatCalibrationDefaults))if(saved[type]&&typeof saved[type]==='object')seatCalibrationValues[type]=saved[type];
+  }
+ }catch(error){seatCalibrationValues={};}
+ $('seatDevkitToggle').hidden=false;
+ $('seatDevkitToggle').onclick=()=>{$('seatDevkit').hidden=!$('seatDevkit').hidden;if(!$('seatDevkit').hidden)paintSeatCalibration();};
+ $('seatDevkitClose').onclick=()=>{$('seatDevkit').hidden=true;};
+ $('seatCalibrationType').onchange=paintSeatCalibration;
+ for(const input of document.querySelectorAll('[data-seat-calibration]')){
+  input.oninput=()=>{
+   const type=$('seatCalibrationType').value,field=input.dataset.seatCalibration;
+   seatCalibrationValues[type]={...currentSeatCalibration(type),[field]:Number(input.value)};
+   saveSeatCalibrations();
+  };
+ }
+ $('seatCalibrationReset').onclick=()=>{
+  delete seatCalibrationValues[$('seatCalibrationType').value];
+  saveSeatCalibrations();status('Preset restaurado para este tipo de assento.');
+ };
+ $('seatCalibrationCopy').onclick=run(async()=>{
+  const type=$('seatCalibrationType').value,json=JSON.stringify({[type]:currentSeatCalibration(type)},null,2);
+  $('seatCalibrationJson').value=json;$('seatCalibrationJson').focus();$('seatCalibrationJson').select();
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(json);status('Preset copiado. Ele ainda está salvo só neste navegador.');}
+  else status('JSON selecionado. Copie com Ctrl+C.');
+ });
+ window.JFQuartos3D?.setSeatCalibrations?.(seatCalibrationValues);
+ paintSeatCalibration();
+}
+window.addEventListener('jf-quartos-3d-ready',()=>{
+ if(seatDevkitEnabled){window.JFQuartos3D?.setSeatCalibrations?.(seatCalibrationValues);paintSeatCalibration();}
+});
 $('zoomIn').onclick=()=>{zoom=Math.min(1.6,zoom+.15);draw();};$('zoomOut').onclick=()=>{zoom=Math.max(.65,zoom-.15);draw();};new ResizeObserver(draw).observe(canvas.parentElement);window.addEventListener('jf-quartos-3d-ready',draw);
-run(async()=>{const response=await fetch('/api/account/status',{credentials:'same-origin',cache:'no-store'});const auth=await response.json();if(!response.ok||!auth.loggedIn){showLoginGate('É necessário entrar em uma conta do Junto.fm para acessar os quartos.');return;} $('authGate').hidden=true;await load();const id=new URLSearchParams(location.search).get('room');if(id)await enter(id);})();
+run(async()=>{const response=await fetch('/api/account/status',{credentials:'same-origin',cache:'no-store'});const auth=await response.json();if(!response.ok||!auth.loggedIn){showLoginGate('É necessário entrar em uma conta do Junto.fm para acessar os quartos.');return;} $('authGate').hidden=true;setupSeatDevkit();await load();const id=new URLSearchParams(location.search).get('room');if(id)await enter(id);})();
 })();
