@@ -53,7 +53,8 @@ test("messenger renders user content as text and refreshes its conversation stat
   assert.match(source,/socket\.emit\("dm-send"/);
   assert.match(source,/socket\.on\("dm-history"/);
   assert.match(source,/socket\.on\("dm-message"/);
-  assert.match(source,/socket\.emit\("dm-list"/);\n  assert.match(source,/socket\.emit\("dm-open"/);
+  assert.match(source,/socket\.emit\("dm-list"/);
+  assert.match(source,/socket\.emit\("dm-open"/);
   assert.match(source,/Ver perfil/);
   assert.match(source,/renderPublicProfilePage/);
 });
