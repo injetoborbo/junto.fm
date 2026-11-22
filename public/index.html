@@ -3006,20 +3006,25 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
     jfLastPresenceSound=now;
     jfUnlockPresenceAudio();
     const ctx=jfPresenceAudio;
-    if(!ctx||ctx.state!=="running")return;
-    const entering=kind==="enter";
-    const notes=entering?[660,880]:[520,370];
-    const start=ctx.currentTime+.015;
-    notes.forEach((frequency,index)=>{
-      const oscillator=ctx.createOscillator(),gain=ctx.createGain();
-      oscillator.type="sine";
-      oscillator.frequency.setValueAtTime(frequency,start+index*.105);
-      gain.gain.setValueAtTime(.0001,start+index*.105);
-      gain.gain.exponentialRampToValueAtTime(.075,start+index*.105+.012);
-      gain.gain.exponentialRampToValueAtTime(.0001,start+index*.105+.105);
-      oscillator.connect(gain);gain.connect(ctx.destination);
-      oscillator.start(start+index*.105);oscillator.stop(start+index*.105+.12);
-    });
+    if(!ctx)return;
+    const play=()=>{
+      if(ctx.state!=="running")return;
+      const entering=kind==="enter";
+      const notes=entering?[660,880]:[520,370];
+      const start=ctx.currentTime+.015;
+      notes.forEach((frequency,index)=>{
+        const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+        oscillator.type="sine";
+        oscillator.frequency.setValueAtTime(frequency,start+index*.105);
+        gain.gain.setValueAtTime(.0001,start+index*.105);
+        gain.gain.exponentialRampToValueAtTime(.075,start+index*.105+.012);
+        gain.gain.exponentialRampToValueAtTime(.0001,start+index*.105+.105);
+        oscillator.connect(gain);gain.connect(ctx.destination);
+        oscillator.start(start+index*.105);oscillator.stop(start+index*.105+.12);
+      });
+    };
+    if(ctx.state==="running")play();
+    else void ctx.resume().then(play).catch(()=>{});
   }
   socket.on("chat-message",message=>{
     if(joined&&message&&message.room===room){
