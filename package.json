@@ -2,14 +2,15 @@
   "name": "junto-fm",
   "version": "0.1.0",
   "private": true,
-  "description": "Prot\u00f3tipo de sala privada para transmitir \u00e1udio do navegador em tempo real",
+  "description": "Protótipo de sala privada para transmitir áudio do navegador em tempo real",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "test:tv": "node --test tests/junto-tv*.test.js tests/archive-video.test.js",
     "test:rooms": "node --test tests/personal-rooms.test.js",
     "build": "node scripts/precompress-assets.js",
-    "postinstall": "npm run build"
+    "postinstall": "npm run build",
+    "test:community": "node --test tests/community-social.test.js"
   },
   "dependencies": {
     "express": "^4.21.2",
