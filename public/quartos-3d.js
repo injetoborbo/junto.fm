@@ -163,9 +163,6 @@ function syncFurniture(items,payload){
    if(!model||previewRecord!==record)return;
    record.object=buildFurnitureObject(preview,payload,model,true);if(record.object){scene.add(record.object);render();}
   });
- }else if(previewRecord?.object){
-  const next=buildFurnitureObject(preview,payload,modelCache.get(furnitureAssetUrl(preview.type)),true);
-  if(next){clearFurnitureRecord(previewRecord);previewRecord.object=next;scene.add(next);}
  }
 }
 function animate(now){
