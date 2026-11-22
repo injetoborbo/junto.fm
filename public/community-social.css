@@ -13,3 +13,5 @@
 @media(max-width:620px){.jf-msn-dock{top:auto;right:12px;bottom:82px}.jf-msn-launcher{padding:8px 10px}.jf-msn-launcher b{display:none}.jf-msn-window{top:auto;right:8px;bottom:78px;width:calc(100vw - 16px);height:min(72dvh,520px)}.jf-msn-body{grid-template-columns:112px minmax(0,1fr);gap:5px;padding:5px}.jf-msn-contact{gap:4px;padding:5px}.jf-msn-avatar{width:25px;height:25px;flex-basis:25px}.jf-msn-contact-details b{font-size:10px}.jf-msn-contact-details small{display:none}.jf-msn-compose{padding:6px}.jf-msn-compose button{padding:7px 8px}}
 body:not(.jf-in-room) .jf-msn-dock{top:68px;right:18px}
 @media(max-width:760px){body:not(.jf-in-room) .jf-msn-dock{top:58px;right:10px}.jf-msn-window{z-index:15000}}
+
+.jf-msn-profile-link{margin-left:8px;color:#2675b4;font-size:10px;font-weight:900;text-decoration:underline;white-space:nowrap}
