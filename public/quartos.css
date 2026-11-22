@@ -120,3 +120,21 @@ nav a,nav button{color:var(--jf-ui-text)}.nav-sticker{color:var(--jf-primary)}
 .object-controls button:active{transform:translateY(1px);box-shadow:0 1px 0 #0007}
 @media(max-width:800px){#catalog{display:flex}.catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.catalog-grid{grid-template-columns:1fr}.object-controls button{width:29px;height:28px;min-width:29px;font-size:17px}}
+
+
+/* Devkit local de calibração dos assentos: disponível para qualquer conta autenticada. */
+#seatDevkitToggle{border-color:var(--jf-secondary,#72f4ff);color:var(--jf-secondary,#72f4ff)}
+.seat-devkit{position:absolute;top:56px;right:12px;z-index:8;width:min(310px,calc(100% - 24px));max-height:calc(100% - 105px);overflow:auto;padding:12px;border:2px solid var(--jf-ui-border,var(--edge));border-radius:5px;background:var(--jf-ui-panel,var(--panel));color:var(--jf-ui-text,var(--ink));box-shadow:5px 5px 0 #0008,0 0 22px #0007;pointer-events:auto}
+.seat-devkit[hidden]{display:none!important}
+.seat-devkit-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--jf-primary,var(--yellow));font-size:12px;letter-spacing:.06em}
+.seat-devkit-heading button{width:28px;min-width:28px;height:26px;padding:0;font-size:18px}
+.seat-devkit p{margin:7px 0 12px;color:var(--jf-ui-muted,var(--muted));font-size:10px;line-height:1.4}
+.seat-devkit label{display:block;margin:9px 0;color:var(--jf-ui-text,var(--ink));font-size:10px;font-weight:bold}
+.seat-devkit label output{float:right;color:var(--jf-secondary,var(--cyan));font-variant-numeric:tabular-nums}
+.seat-devkit select,.seat-devkit input[type=range],.seat-devkit textarea{display:block;width:100%;margin-top:5px}
+.seat-devkit select{min-height:30px;padding:5px;background:var(--jf-ui-soft);border:1px solid var(--jf-ui-border);color:var(--jf-ui-text)}
+.seat-devkit input[type=range]{accent-color:var(--jf-primary,var(--yellow))}
+.seat-devkit-actions{display:flex;gap:6px;margin:12px 0 7px}
+.seat-devkit-actions button{flex:1;padding:7px 5px;font-size:10px}
+.seat-devkit textarea{resize:vertical;min-height:92px;padding:7px;border:1px solid var(--jf-ui-border);background:var(--jf-ui-soft);color:var(--jf-ui-text);font:10px/1.4 Consolas,monospace}
+@media(max-width:600px){.seat-devkit{top:54px;right:8px;width:min(300px,calc(100% - 16px));max-height:58%;padding:10px}.room-dances{max-width:calc(100% - 72px)}}

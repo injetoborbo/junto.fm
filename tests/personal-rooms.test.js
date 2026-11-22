@@ -46,11 +46,31 @@ test('3D furniture uses the isometric room axes for every quarter-turn',()=>{
 test('3D sitting uses the selected seat height and furniture-facing yaw',()=>{
  const renderer=fs.readFileSync(require.resolve('../public/quartos-3d.js'),'utf8');
  assert.match(renderer,/sittingTarget\?furnitureGround\(sittingTarget,payload\)/);
- assert.match(renderer,/record\.poseHeight=sittingTarget/);
- assert.match(renderer,/record\.poseYaw=sittingTarget/);
+ assert.match(renderer,/const calibration=sittingTarget\?getSeatCalibration\(sittingTarget\.type\)/);
+ assert.match(renderer,/record\.poseHeight=calibration\?calibration\.seatHeight:0/);
+ assert.match(renderer,/record\.poseYaw=sittingTarget\?window\.RoomRules\.rotationRadians\(sittingTarget\.rotation\|\|0\)/);
+ assert.match(renderer,/record\.poseOffsetX=calibration\?calibration\.offsetX:0/);
+ assert.match(renderer,/record\.poseTilt=calibration\?THREE\.MathUtils\.degToRad/);
  assert.match(renderer,/if\(sitting&&Number\.isFinite\(record\.poseYaw\)\)/);
  assert.match(renderer,/record\.hipOffset=hips\?record\.root\.worldToLocal/);
- assert.match(renderer,/record\.root\.position\.set\(logical\.x-hipOffset\.x,\(record\.poseHeight\|\|0\.36\)-hipOffset\.y\+bob,logical\.z-hipOffset\.z\)/);
+ assert.match(renderer,/const seatOffset=new THREE\.Vector3\(record\.poseOffsetX\|\|0,0,record\.poseOffsetZ\|\|0\)/);
+ assert.match(renderer,/record\.root\.position\.set\(logical\.x\+seatOffset\.x-hipOffset\.x/);
+});
+test('the seat devkit is available to logged-in room accounts and keeps local calibration presets',()=>{
+ const html=fs.readFileSync(require.resolve('../public/quartos.html'),'utf8');
+ const editor=fs.readFileSync(require.resolve('../public/quartos.js'),'utf8');
+ const renderer=fs.readFileSync(require.resolve('../public/quartos-3d.js'),'utf8');
+ assert.match(html,/id="seatDevkitToggle"/);
+ assert.match(html,/id="seatDevkit"/);
+ assert.match(html,/data-seat-calibration="seatHeight"/);
+ assert.match(html,/data-seat-calibration="offsetX"/);
+ assert.match(html,/data-seat-calibration="offsetZ"/);
+ assert.match(html,/data-seat-calibration="bodyTilt"/);
+ assert.match(html,/data-seat-calibration="yawOffset"/);
+ assert.match(editor,/setupSeatDevkit\(\);await load\(\)/,'the panel is initialized only after the account status gate succeeds');
+ assert.match(editor,/localStorage\.setItem\(SEAT_CALIBRATION_STORAGE/);
+ assert.match(editor,/seatCalibrationCopy/);
+ assert.match(renderer,/window\.JFQuartos3D=\{update,getSeatCalibration,setSeatCalibrations,seatTypes:SEAT_TYPES\}/);
 });
 test('the furniture editor separates catalog groups and rotates from controls on the selected object',()=>{
  const html=fs.readFileSync(require.resolve('../public/quartos.html'),'utf8');

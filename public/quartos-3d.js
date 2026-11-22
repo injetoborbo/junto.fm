@@ -38,6 +38,38 @@ const FURNITURE_ASSETS={
  arcade:{file:"Bedroom/ap_nightstand.glb",height:1.15},
  banana:{file:"Living/ap_plant_small.glb",height:1.28}
 };
+const SEAT_TYPES=["diningChair","bench","sofa","chair"];
+let seatCalibrationOverrides={};
+const clampSeatValue=(value,fallback,min,max)=>{
+ const number=Number(value);return Number.isFinite(number)?Math.max(min,Math.min(max,number)):fallback;
+};
+function getSeatCalibration(type){
+ const spec=FURNITURE_ASSETS[type];if(!spec?.seatHeight)return null;
+ const saved=seatCalibrationOverrides[type]||{};
+ return {
+  seatHeight:clampSeatValue(saved.seatHeight,spec.seatHeight,.1,.9),
+  offsetX:clampSeatValue(saved.offsetX,0,-.5,.5),
+  offsetZ:clampSeatValue(saved.offsetZ,0,-.5,.5),
+  bodyTilt:clampSeatValue(saved.bodyTilt,-7,-30,30),
+  yawOffset:clampSeatValue(saved.yawOffset,0,-180,180)
+ };
+}
+function setSeatCalibrations(values={}){
+ const source=values&&typeof values==="object"?values:{},clean={};
+ for(const type of SEAT_TYPES){
+  const saved=source[type];if(!saved||typeof saved!=="object")continue;
+  const base=FURNITURE_ASSETS[type]?.seatHeight||.36;
+  clean[type]={
+   seatHeight:clampSeatValue(saved.seatHeight,base,.1,.9),
+   offsetX:clampSeatValue(saved.offsetX,0,-.5,.5),
+   offsetZ:clampSeatValue(saved.offsetZ,0,-.5,.5),
+   bodyTilt:clampSeatValue(saved.bodyTilt,-7,-30,30),
+   yawOffset:clampSeatValue(saved.yawOffset,0,-180,180)
+  };
+ }
+ seatCalibrationOverrides=clean;
+ if(latestPayload)update(latestPayload);
+}
 let animationFrame=0,lastFrame=0;
 const DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
 function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig\d*[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
@@ -208,8 +240,9 @@ function animate(now){
   const pulse=Math.sin(phase),stride=Math.sin(record.walkTime||0);
   const bob=walking?Math.abs(stride)*.045:sitting?.012*Math.sin(now/1000*2):lying?0:style==="idle"?.008*Math.sin(now/1000*2):Math.abs(pulse)*.035;
   if(sitting){
+   const seatOffset=new THREE.Vector3(record.poseOffsetX||0,0,record.poseOffsetZ||0).applyAxisAngle(new THREE.Vector3(0,1,0),record.root.rotation.y);
    const hipOffset=(record.hipOffset||new THREE.Vector3()).clone().applyAxisAngle(new THREE.Vector3(0,1,0),record.root.rotation.y);
-   record.root.position.set(logical.x-hipOffset.x,(record.poseHeight||0.36)-hipOffset.y+bob,logical.z-hipOffset.z);
+   record.root.position.set(logical.x+seatOffset.x-hipOffset.x,(record.poseHeight||0.36)-hipOffset.y+bob,logical.z+seatOffset.z-hipOffset.z);
   }else record.root.position.set(logical.x,bob,logical.z);
   if(sitting&&Number.isFinite(record.poseYaw)){
    const diff=Math.atan2(Math.sin(record.poseYaw-record.root.rotation.y),Math.cos(record.poseYaw-record.root.rotation.y));
@@ -219,7 +252,7 @@ function animate(now){
    record.root.rotation.y+=Math.atan2(Math.sin(targetYaw-record.root.rotation.y),Math.cos(targetYaw-record.root.rotation.y))*Math.min(1,dt*1.6);
   }
   record.root.rotation.z=lying?1.25:0;
-  record.root.rotation.x=sitting?-.12:!walking&&style==="capoeira"?.14*pulse:!walking&&style==="groove"?.12*pulse:!walking&&style==="shake"?.07*pulse:0;
+  record.root.rotation.x=sitting?(Number.isFinite(record.poseTilt)?record.poseTilt:-.12):!walking&&style==="capoeira"?.14*pulse:!walking&&style==="groove"?.12*pulse:!walking&&style==="shake"?.07*pulse:0;
   if(!record.action)for(const bone of record.animationBones){
    const base=record.rest.get(bone.uuid);if(!base)continue;
    const n=boneName(bone.name),left=/left|^l(?:arm|hand|thigh|calf|leg)/.test(n),side=left?1:-1;
@@ -313,11 +346,14 @@ function update(payload){
    void createAvatar(p,payload.scale||1,record);
   }
   const sittingTarget=p.pose==="sitting"&&p.poseTarget&&FURNITURE_ASSETS[p.poseTarget.type]?p.poseTarget:null;
+  const calibration=sittingTarget?getSeatCalibration(sittingTarget.type):null;
   const ground=sittingTarget?furnitureGround(sittingTarget,payload):screenToGround(p.x,p.y,payload.width,payload.height,payload.scale||1);
   record.target=new THREE.Vector3(ground.x,0,ground.z);
   record.pose=p.pose||"standing";record.poseTarget=Boolean(sittingTarget);
-  record.poseHeight=sittingTarget?(FURNITURE_ASSETS[sittingTarget.type].seatHeight||0.36):0;
-  record.poseYaw=sittingTarget?window.RoomRules.rotationRadians(sittingTarget.rotation||0):null;
+  record.poseHeight=calibration?calibration.seatHeight:0;
+  record.poseOffsetX=calibration?calibration.offsetX:0;record.poseOffsetZ=calibration?calibration.offsetZ:0;
+  record.poseTilt=calibration?THREE.MathUtils.degToRad(calibration.bodyTilt):-.12;
+  record.poseYaw=sittingTarget?window.RoomRules.rotationRadians(sittingTarget.rotation||0)+THREE.MathUtils.degToRad(calibration?.yawOffset||0):null;
   record.dance=p.dance||"idle";record.scale=payload.scale||1;
   if(record.dance!=="idle"&&!animationClips.has(record.dance))void loadClip(record.dance).then(clip=>{
    if(clip&&avatars.get(p.id)===record&&record.dance===p.dance){record.currentDance=null;scheduleAnimation();}
@@ -329,5 +365,5 @@ function update(payload){
  }
  render();scheduleAnimation();
 }
-window.JFQuartos3D={update};
+window.JFQuartos3D={update,getSeatCalibration,setSeatCalibrations,seatTypes:SEAT_TYPES};
 window.dispatchEvent(new Event("jf-quartos-3d-ready"));
