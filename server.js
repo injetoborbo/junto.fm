@@ -143,6 +143,7 @@ async function validSpotifyAccessToken(session, req=null, res=null) {
 app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
+require("./direct-messages")(io,accountAuth);
 require("./mural").setupMural(app,io,accountAuth,adminAuth);
 require("./personal-rooms").setupRooms(app,io,accountAuth);
 const achievements=require("./achievements")(app,io,accountAuth);
