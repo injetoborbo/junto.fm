@@ -39,19 +39,25 @@ const FURNITURE_ASSETS={
  banana:{file:"Living/ap_plant_small.glb",height:1.28}
 };
 const SEAT_TYPES=["diningChair","bench","sofa","chair"];
+const SEAT_CALIBRATION_DEFAULTS={
+ diningChair:{offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ chair:{offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ bench:{offsetX:0,offsetZ:-.1,bodyTilt:-7,yawOffset:-180},
+ sofa:{offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0}
+};
 let seatCalibrationOverrides={};
 const clampSeatValue=(value,fallback,min,max)=>{
  const number=Number(value);return Number.isFinite(number)?Math.max(min,Math.min(max,number)):fallback;
 };
 function getSeatCalibration(type){
  const spec=FURNITURE_ASSETS[type];if(!spec?.seatHeight)return null;
- const saved=seatCalibrationOverrides[type]||{};
+ const saved=seatCalibrationOverrides[type]||{},defaults=SEAT_CALIBRATION_DEFAULTS[type]||{};
  return {
   seatHeight:clampSeatValue(saved.seatHeight,spec.seatHeight,.1,.9),
-  offsetX:clampSeatValue(saved.offsetX,0,-.5,.5),
-  offsetZ:clampSeatValue(saved.offsetZ,0,-.5,.5),
-  bodyTilt:clampSeatValue(saved.bodyTilt,-7,-30,30),
-  yawOffset:clampSeatValue(saved.yawOffset,0,-180,180)
+  offsetX:clampSeatValue(saved.offsetX,defaults.offsetX??0,-.5,.5),
+  offsetZ:clampSeatValue(saved.offsetZ,defaults.offsetZ??0,-.5,.5),
+  bodyTilt:clampSeatValue(saved.bodyTilt,defaults.bodyTilt??-7,-30,30),
+  yawOffset:clampSeatValue(saved.yawOffset,defaults.yawOffset??0,-180,180)
  };
 }
 function setSeatCalibrations(values={}){
@@ -59,12 +65,13 @@ function setSeatCalibrations(values={}){
  for(const type of SEAT_TYPES){
   const saved=source[type];if(!saved||typeof saved!=="object")continue;
   const base=FURNITURE_ASSETS[type]?.seatHeight||.36;
+  const defaults=SEAT_CALIBRATION_DEFAULTS[type]||{};
   clean[type]={
    seatHeight:clampSeatValue(saved.seatHeight,base,.1,.9),
-   offsetX:clampSeatValue(saved.offsetX,0,-.5,.5),
-   offsetZ:clampSeatValue(saved.offsetZ,0,-.5,.5),
-   bodyTilt:clampSeatValue(saved.bodyTilt,-7,-30,30),
-   yawOffset:clampSeatValue(saved.yawOffset,0,-180,180)
+   offsetX:clampSeatValue(saved.offsetX,defaults.offsetX??0,-.5,.5),
+   offsetZ:clampSeatValue(saved.offsetZ,defaults.offsetZ??0,-.5,.5),
+   bodyTilt:clampSeatValue(saved.bodyTilt,defaults.bodyTilt??-7,-30,30),
+   yawOffset:clampSeatValue(saved.yawOffset,defaults.yawOffset??0,-180,180)
   };
  }
  seatCalibrationOverrides=clean;
