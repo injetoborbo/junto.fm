@@ -18,6 +18,8 @@ const catalog=[
  ['nightstand','Criado-mudo',1,1,'#98684c','nightstand'],
  ['kettle','Chaleira',1,1,'#9da5ad','kettle'],
  ['mug','Caneca',1,1,'#b96d61','mug'],
+ ['bench','Banco low-poly',2,1,'#98684c','bench'],
+ ['planter','Vaso de plantas',1,1,'#629c66','planter'],
  // Tapete é uma peça plana de piso, não um móvel CSS.
  ['rug','Tapete retrô',3,3,'#a6779b',null],
  // Tipos antigos permanecem válidos para não quebrar quartos já salvos.
@@ -31,7 +33,7 @@ const catalog=[
  ['speaker','Caixa de som antiga',1,1,'#525b6e','mug',true],
  ['arcade','Fliperama antigo',1,1,'#b273ba','nightstand',true],
  ['banana','Bananeira antiga',1,1,'#7fba70','plant',true]
-].map(([type,name,w,h,color,asset,legacy=false])=>({type,name,w,h,color,asset,legacy,solid:type!=='rug',interactive:['diningChair','chair','sofa','bed'].includes(type)}));
+].map(([type,name,w,h,color,asset,legacy=false])=>({type,name,w,h,color,asset,legacy,solid:type!=='rug',interactive:['diningChair','bench','chair','sofa','bed'].includes(type)}));
 const itemType=t=>catalog.find(i=>i.type===t);
 function cells(item){const t=itemType(item.type);if(!t)return [];const w=item.rotation%2?t.h:t.w,h=item.rotation%2?t.w:t.h;return Array.from({length:w*h},(_,i)=>[item.x+i%w,item.y+Math.floor(i/w)]);}
 function validate(layout){
