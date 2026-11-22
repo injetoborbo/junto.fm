@@ -134,7 +134,7 @@ function buildFurnitureObject(item,payload,source,ghost=false){
  if(ghost)model.traverse(obj=>{if(!obj.isMesh||!obj.material)return;obj.material=obj.material.clone();obj.material.transparent=true;obj.material.opacity=.48;obj.material.depthWrite=false;});
  root.add(model);
  const ground=furnitureGround(item,payload);root.position.set(ground.x,0,ground.z);
- root.rotation.y=-Math.PI/4+(item.rotation||0)*Math.PI/2;
+ root.rotation.y=window.RoomRules.rotationRadians(item.rotation);
  const shadow=new THREE.Mesh(new THREE.CircleGeometry(Math.max(.25,Math.max(w,h)*.38),12),new THREE.MeshBasicMaterial({color:0x09091d,transparent:true,opacity:ghost?.08:.17,depthWrite:false}));
  shadow.rotation.x=-Math.PI/2;shadow.position.y=.004;root.add(shadow);
  root.traverse(obj=>{if(obj.isMesh){obj.frustumCulled=true;obj.castShadow=false;obj.receiveShadow=false;}});
@@ -150,7 +150,7 @@ function syncFurniture(items,payload){
   const signature=[item.type,item.x,item.y,item.rotation].join(":");
   let record=furnitureRecords.get(item.id);
   if(record?.signature===signature){
-   if(record.object){const ground=furnitureGround(item,payload);record.object.position.x=ground.x;record.object.position.z=ground.z;record.object.rotation.y=-Math.PI/4+(item.rotation||0)*Math.PI/2;}
+   if(record.object){const ground=furnitureGround(item,payload);record.object.position.x=ground.x;record.object.position.z=ground.z;record.object.rotation.y=window.RoomRules.rotationRadians(item.rotation);}
    continue;
   }
   if(record)clearFurnitureRecord(record);
@@ -177,7 +177,7 @@ function syncFurniture(items,payload){
  }else if(previewRecord?.object&&preview){
   const ground=furnitureGround(preview,payload);
   previewRecord.object.position.x=ground.x;previewRecord.object.position.z=ground.z;
-  previewRecord.object.rotation.y=-Math.PI/4+(preview.rotation||0)*Math.PI/2;
+  previewRecord.object.rotation.y=window.RoomRules.rotationRadians(preview.rotation);
  }
 }
 function animate(now){

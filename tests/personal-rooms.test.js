@@ -1,5 +1,5 @@
 'use strict';
-const test=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const test=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs');
 const rules=require('../public/room-rules'),{initial,setupRooms}=require('../personal-rooms');
 test('placement rejects collisions, bounds, blocked entrance and malformed items',()=>{
  const base=initial();assert.equal(rules.validate(base).items.length,4);
@@ -18,6 +18,12 @@ test('navigation walks around furniture, rotates footprints and rejects unreacha
  assert.deepEqual(rules.cells({type:'bed',x:0,y:0,rotation:1}),[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]]);
  const wall={...base,items:Array.from({length:10},(_,y)=>({id:'w'+y,type:'chair',x:1,y,rotation:0}))};
  assert.equal(rules.route(wall,{x:0,y:0},{x:2,y:0}),null);
+});
+test('3D furniture uses the isometric room axes for every quarter-turn',()=>{
+ assert.deepEqual([0,1,2,3].map(rules.rotationRadians),[0,Math.PI/2,Math.PI,3*Math.PI/2]);
+ const renderer=fs.readFileSync(require.resolve('../public/quartos-3d.js'),'utf8');
+ assert.equal((renderer.match(/rotationRadians\(/g)||[]).length,3,'placed furniture, saved furniture and preview share the same room-axis rotation');
+ assert.doesNotMatch(renderer,/-Math\.PI\/4/,'no extra screen-space 45-degree offset remains');
 });
 test('persisted rooms, owner-only changes, invitations, optimistic locking and realtime access',{skip:!process.env.PGLITE_TEST_MODULE||!process.env.SOCKET_CLIENT_TEST_MODULE},async()=>{
  const {PGlite}=require(process.env.PGLITE_TEST_MODULE),{io:client}=require(process.env.SOCKET_CLIENT_TEST_MODULE);

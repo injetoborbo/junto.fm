@@ -35,6 +35,8 @@ const catalog=[
  ['banana','Bananeira antiga',1,1,'#7fba70','plant',true]
 ].map(([type,name,w,h,color,asset,legacy=false])=>({type,name,w,h,color,asset,legacy,solid:type!=='rug',interactive:['diningChair','bench','chair','sofa','bed'].includes(type)}));
 const itemType=t=>catalog.find(i=>i.type===t);
+// Furniture quarter-turns use the room's world axes, not screen-space rotation.
+function rotationRadians(rotation){return rotation*Math.PI/2;}
 function cells(item){const t=itemType(item.type);if(!t)return [];const w=item.rotation%2?t.h:t.w,h=item.rotation%2?t.w:t.h;return Array.from({length:w*h},(_,i)=>[item.x+i%w,item.y+Math.floor(i/w)]);}
 function validate(layout){
  if(!layout||!Array.isArray(layout.items)||layout.items.length>60)throw Error('Use até 60 móveis.');
@@ -58,5 +60,5 @@ function route(layout,start,end){
  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const n={x:last.x+dx,y:last.y+dy},k=key(n);if(n.x<0||n.y<0||n.x>=size||n.y>=size||seen.has(k)||blocked.has(k))continue;seen.add(k);queue.push([...p,n]);}}
  return null;
 }
-const api={size,catalog,cells,validate,route,itemType};if(typeof module!=='undefined')module.exports=api;else root.RoomRules=api;
+const api={size,catalog,cells,validate,route,itemType,rotationRadians};if(typeof module!=='undefined')module.exports=api;else root.RoomRules=api;
 })(typeof window!=='undefined'?window:globalThis);
