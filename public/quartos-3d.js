@@ -1,4 +1,5 @@
 import * as THREE from "https://esm.sh/three@0.170.0";
+import {GLTFLoader} from "https://esm.sh/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
 import {createWardrobeFittedAvatar} from "/wardrobe.js";
 
 const canvas=document.getElementById("quarto3d");
@@ -8,6 +9,59 @@ const avatars=new Map();
 let animationFrame=0,lastFrame=0;
 const DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
 function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
+const animationFiles={
+ shake:"/dance/macacochaqualha.glb",
+ macarena:"/dance/macacomacarena.glb",
+ party:"/dance/macacodanca.glb",
+ capoeira:"/dance/macacocapoera.glb",
+ groove:"/dance/macacodancagay.glb"
+};
+const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
+const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+function loadClip(style){
+ if(!animationFiles[style])return Promise.resolve(null);
+ if(!clipPromises.has(style)){
+  clipPromises.set(style,gltfLoader.loadAsync(animationFiles[style]).then(gltf=>{
+   const clip=gltf.animations?.find(c=>c.tracks?.length)||null;
+   if(clip)animationClips.set(style,{clip,scene:gltf.scene});
+   return clip;
+  }).catch(error=>{console.warn("Quartos: animação indisponível",style,error);return null;}));
+ }
+ return clipPromises.get(style);
+}
+function buildAnimationAction(record,style){
+ const data=animationClips.get(style);if(!record.rig||!data)return null;
+ const sourceBones=new Map(),targetBones=new Map();
+ data.scene.updateMatrixWorld(true);record.rig.updateMatrixWorld(true);
+ data.scene.traverse(obj=>{if(obj.name)sourceBones.set(boneKey(obj.name),obj);});
+ record.rig.traverse(obj=>{if(obj.isBone)targetBones.set(boneKey(obj.name),obj);});
+ const tracks=[],invSourceRest=new THREE.Quaternion(),sample=new THREE.Quaternion(),corrected=new THREE.Quaternion(),reference=new THREE.Quaternion();
+ for(const track of data.clip.tracks){
+  const dot=track.name.lastIndexOf(".");if(dot<0||track.name.slice(dot+1)!=="quaternion")continue;
+  const key=boneKey(track.name.slice(0,dot)),source=sourceBones.get(key),target=targetBones.get(key);
+  if(!source||!target)continue;
+  const rest=record.restQuaternion?.get(target.uuid)||target.quaternion.clone();
+  const baseline=source.quaternion.clone();invSourceRest.copy(baseline).invert();
+  const values=new Float32Array(track.values.length);
+  for(let i=0;i<track.values.length;i+=4){
+   sample.fromArray(track.values,i);corrected.copy(invSourceRest).multiply(sample).premultiply(rest).normalize();
+   if(i>0){reference.fromArray(values,i-4);if(reference.dot(corrected)<0)corrected.set(-corrected.x,-corrected.y,-corrected.z,-corrected.w);}
+   corrected.toArray(values,i);
+  }
+  tracks.push(new THREE.QuaternionKeyframeTrack(target.name+".quaternion",track.times.slice(),values));
+ }
+ if(tracks.length<5)return null;
+ record.mixer ||=new THREE.AnimationMixer(record.rig);
+ const clip=new THREE.AnimationClip("quarto-"+style,data.clip.duration,tracks);
+ const action=record.mixer.clipAction(clip);action.setLoop(THREE.LoopRepeat,Infinity);return action;
+}
+function switchDance(record,style){
+ if(record.currentDance===style)return;
+ record.action?.fadeOut(.24);record.action=null;record.currentDance=style;
+ if(style==="idle"||!animationClips.has(style))return;
+ const action=buildAnimationAction(record,style);
+ if(action){action.reset().fadeIn(.24).play();record.action=action;}
+}
 function animate(now){
  animationFrame=0;
  const dt=Math.min(.065,Math.max(0,(now-(lastFrame||now))/1000));lastFrame=now;
@@ -30,6 +84,8 @@ function animate(now){
    record.walkTime=(record.walkTime||0)+dt*7.8;
    keepAnimating=true;
   }else{logical.x=t.x;logical.y=t.y;}
+  switchDance(record,style);
+  record.mixer?.update(dt);
   const phase=now/1000*({shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1}[style]||2);
   const pulse=Math.sin(phase),stride=Math.sin(record.walkTime||0);
   const bob=walking?Math.abs(stride)*2.2:style==="idle"?.7*Math.sin(now/1000*2):Math.abs(pulse)*(style==="capoeira"?1.2:2.2);
@@ -41,7 +97,7 @@ function animate(now){
   if(lying)record.root.rotation.z=(record.baseYaw||0)+1.25;
   else if(!walking)record.root.rotation.x=sitting?-.12:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
   else record.root.rotation.x=0;
-  for(const bone of record.animationBones){
+  if(!record.action)for(const bone of record.animationBones){
    const base=record.rest.get(bone.uuid);if(!base)continue;
    const n=boneName(bone.name);
    const left=/left|^l(?:arm|hand|thigh|calf|leg)/.test(n),side=left?1:-1;
@@ -122,6 +178,7 @@ function render(){if(renderer)renderer.render(scene,camera);}
 function signature(wardrobe){return JSON.stringify(wardrobe||{});}
 function removeAvatar(id,record){
  if(record.root)scene.remove(record.root);
+ record.mixer?.stopAllAction();record.mixer?.uncacheRoot(record.rig);
  record.dispose?.();
  avatars.delete(id);
 }
@@ -133,12 +190,14 @@ async function createAvatar(person,scale,record){
   avatar.group.scale.setScalar(height/1.8);
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
   record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;
-  record.rest=new Map();record.animationBones=[];
+  record.rest=new Map();record.restQuaternion=new Map();record.animationBones=[];
+  record.rig?.updateMatrixWorld(true);
   record.rig?.updateMatrixWorld(true);
   record.rig?.traverse?.(bone=>{
    if(!bone.isBone)return;
    record.animationBones.push(bone);
    record.rest.set(bone.uuid,{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z});
+   record.restQuaternion.set(bone.uuid,bone.quaternion.clone());
   });
   if(record.target){record.logical={x:record.target.x,y:record.target.y};record.root.position.copy(record.target);}
   scene.add(record.root);scheduleAnimation();
@@ -159,6 +218,9 @@ function update(payload){
   }
   record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y,2);
   record.pose=p.pose||"standing";record.dance=p.dance||"idle";record.scale=payload.scale||1;
+  if(record.dance!=="idle"&&!animationClips.has(record.dance))void loadClip(record.dance).then(clip=>{
+   if(clip&&avatars.get(p.id)===record&&record.dance===p.dance){record.currentDance=null;scheduleAnimation();}
+  });
   if(record.root){
    const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
    record.root.scale.setScalar(height/1.8);
