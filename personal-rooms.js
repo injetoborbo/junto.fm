@@ -28,7 +28,7 @@ function setupRooms(app,io,accounts){
   const name=String(req.body?.name||'').trim();if(!name||name.length>48||!Number.isInteger(req.body?.revision))throw err('Nome ou versão inválidos.');
   const result=await pool.query('UPDATE junto_personal_rooms SET name=$2,layout=$3,revision=revision+1 WHERE owner_id=$1 AND revision=$4 RETURNING *',[a.id,name,JSON.stringify(layout),req.body.revision]);
   if(!result.rowCount)throw err('O quarto mudou em outra aba. Reabra antes de editar.',409);
-  for(const p of presence.get(a.id)?.values()||[]){p.x=0;p.y=0;p.path=[];p.pose='standing';p.pendingPose=null;}
+  for(const p of presence.get(a.id)?.values()||[]){p.x=0;p.y=0;p.path=[];p.pose='standing';p.pendingPose=null;p.poseTarget=null;}
   ns.to(a.id).emit('layout',result.rows[0]);broadcast(a.id);res.json(result.rows[0]);
  }));
  app.post('/api/quartos/invites',wrap(async(req,res,a)=>{
@@ -57,10 +57,10 @@ function setupRooms(app,io,accounts){
    const r=await room(id);if(!r)throw err('Quarto não encontrado.',404);
    if((presence.get(id)?.size||0)>=12&&s.data.owner!==id)throw err('Quarto cheio (12 visitantes).');
    leave(s);if(!s.connected)return;await s.join(id);s.data.owner=id;
-   if(!presence.has(id))presence.set(id,new Map());presence.get(id).set(s.id,{id:s.id,accountId:a.id,name:String(a.nickname||'Macaco').slice(0,24),wardrobe:a.wardrobe||{},x:0,y:0,path:[],pose:"standing",dance:"idle"});
+   if(!presence.has(id))presence.set(id,new Map());presence.get(id).set(s.id,{id:s.id,accountId:a.id,name:String(a.nickname||'Macaco').slice(0,24),wardrobe:a.wardrobe||{},x:0,y:0,path:[],pose:"standing",poseTarget:null,dance:"idle"});
    reply({room:r,own:id===a.id});broadcast(id);
   });
-  on('walk',150,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;const route=rules.route(r.layout,person,p);if(!route)throw err('Não dá para chegar aí.');person.path=route;person.pose='walking';person.pendingPose=null;if(!route.length)person.pose='standing';broadcast(id);reply({ok:true});});
+  on('walk',150,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;const route=rules.route(r.layout,person,p);if(!route)throw err('Não dá para chegar aí.');person.path=route;person.pose='walking';person.pendingPose=null;person.poseTarget=null;if(!route.length)person.pose='standing';broadcast(id);reply({ok:true});});
   on('interact',350,async(p,a,reply)=>{
    const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');
    const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;
@@ -76,6 +76,7 @@ function setupRooms(app,io,accounts){
    for(const [x,y] of candidates){const route=rules.route(r.layout,person,{x,y});if(route){target={x,y};path=route;break;}}
    if(!target)throw err('Não há espaço livre ao redor desse móvel.');
    person.path=path;person.pendingPose=path.length?pose:null;person.pose=path.length?'walking':pose;
+   person.poseTarget=pose==='sitting'?{itemId:item.id,type:item.type,x:item.x,y:item.y,rotation:item.rotation}:null;
    broadcast(id);reply({ok:true,pose});
   });
   on('dance-style',250,async(p,a,reply)=>{
