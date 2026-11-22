@@ -572,3 +572,49 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .mural-mascot img { animation: none; transform: none; }
 }
+
+
+/* Y2K STREET UI — moldura e acabamento da estação do mural. */
+body{background-color:#8cc6df;background-image:radial-gradient(ellipse at 8% 10%,#fff9 0 2px,transparent 3px),radial-gradient(ellipse at 88% 18%,#fff8 0 3px,transparent 4px),linear-gradient(135deg,#b8e7f099 0%,#83c5e477 48%,#d3c5ec99 100%),url("/mural-sky-clouds.webp");background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.18;background-image:linear-gradient(45deg,transparent 48%,#fff9 49%,#fff9 51%,transparent 52%);background-size:18px 18px}
+header{max-width:1420px;margin:14px auto 0;padding:12px 18px;background:linear-gradient(180deg,#fff 0%,#dffaff 10%,#78c9ef 48%,#3686c5 52%,#245c9b 100%);border:2px solid #173d65;border-radius:12px 7px 12px 7px;box-shadow:inset 0 2px #fff,0 4px 0 #173d65,0 8px 22px #173d6540;color:#fff;text-shadow:0 1px 2px #173d65;letter-spacing:1.6px}
+header a{border:2px solid #fff;border-radius:7px;background:linear-gradient(#fff,#f7d8ff 48%,#d48be8 52%,#9b58c3);color:#32184d;box-shadow:inset 0 2px #fff,0 3px 0 #44245f,0 0 14px #f8d7ff;transform:rotate(-2deg)}
+header>span{border:1px solid #fff;border-radius:4px;background:linear-gradient(#fff,#e4faff 45%,#9bdaf1);color:#16476b;text-shadow:none;box-shadow:0 2px 0 #16476b;font-size:10px}
+header,main,footer{position:relative;z-index:1}
+main{padding-top:28px}
+.heading{position:relative;isolation:isolate;padding:18px 20px 16px;margin:0 0 28px;border:2px solid #21496c;border-radius:16px 8px 18px 9px;background:linear-gradient(125deg,#fffdf2ed 0%,#e7faffef 48%,#f6e2ffef 100%);box-shadow:inset 0 2px #fff,0 5px 0 #21496c,0 12px 26px #21496c35}
+.heading::before{content:"★ SPRAY • DRAW • SHARE ★";position:absolute;right:18px;top:-13px;padding:6px 12px;border:2px solid #4c245f;border-radius:4px;background:linear-gradient(#fff6c5,#ffd45e 48%,#f39c31 52%,#df6a35);color:#512c37;font:900 10px/1 "Trebuchet MS",sans-serif;letter-spacing:1px;box-shadow:3px 3px 0 #4c245f;transform:rotate(3deg);z-index:2}
+.eyebrow{background:linear-gradient(#fff,#d9faff 45%,#82d8f4 52%,#47a6dc);border-color:#245078;border-radius:4px;color:#143b5c;box-shadow:3px 3px 0 #245078,0 0 12px #8ce8ff;transform:rotate(-3deg)}
+h1{color:#ffcf55;text-shadow:4px 5px 0 #243d62,0 0 14px #fff;-webkit-text-stroke:1.5px #243d62}
+h1 em{color:#ff79c8;text-shadow:4px 5px 0 #243d62,0 0 16px #ffb7e6}
+.heading p:not(.eyebrow){border-color:#245078;border-radius:5px 10px 5px 10px;background:linear-gradient(110deg,#fff,#e6fbff);box-shadow:3px 3px 0 #245078;color:#1d4568}
+.mural-mascot{filter:drop-shadow(5px 7px 0 #21496c55) drop-shadow(0 0 12px #fff9)}
+.studio{position:relative;border:3px solid #183c62;border-radius:13px 8px 15px 9px;background:#fff;box-shadow:8px 9px 0 #183c62,0 16px 32px #163c6244}
+.studio-label{background:linear-gradient(180deg,#fff 0%,#e8faff 18%,#7ed4f2 50%,#388cc9 53%,#235f9d 100%);border-bottom:3px solid #183c62;color:#fff;text-shadow:0 1px 2px #183c62;letter-spacing:1.7px}
+.studio-label span:first-child::before{content:"●";color:#ff5d8f;text-shadow:0 0 5px #fff;margin-right:8px}
+.studio-label span:last-child{padding:3px 8px;border:1px solid #ffffffaa;border-radius:3px;background:#183c6255}
+.toolbar{background:linear-gradient(135deg,#fff4d9,#d8f5ff 55%,#f4dfff);border-bottom:3px solid #183c62}
+.tools button,.actions button,.bottom button{border:2px solid #254d73;border-radius:5px 8px 5px 8px;background:linear-gradient(#fff 0%,#e9faff 42%,#a6ddf4 50%,#68b7e2 100%);color:#173b5c;box-shadow:2px 3px 0 #254d73,inset 0 1px #fff}
+.tools button[aria-pressed="true"]{background:linear-gradient(#fff5c8,#ffe47a 48%,#f3a93e 52%,#e77a39);color:#492b38;box-shadow:2px 3px 0 #70404a,0 0 12px #ffc85c;transform:translateY(-2px) rotate(-1deg)}
+.toolbar label{color:#204b70;font-weight:900}
+input[type="range"]{accent-color:#e85d9f}
+input[type="color"]{border-color:#254d73;box-shadow:2px 2px 0 #254d73}
+.viewport{background:#4d789b;box-shadow:inset 0 0 0 5px #173d65,inset 0 0 28px #071a33}
+.wall{outline:1px solid #ffffff55;outline-offset:-2px}
+.bottom{background:linear-gradient(110deg,#e7faff,#fff0f8);border-top:3px solid #183c62}
+#count{color:#245078;font-weight:900}
+.publish{border-color:#7c315e!important;background:linear-gradient(#fff7d5,#ffdf72 44%,#ffad45 52%,#ed6d54)!important;color:#532b42!important;box-shadow:2px 4px 0 #7c315e,0 0 15px #ffb94e66!important}
+.publish:not(:disabled):hover{background:linear-gradient(#fff,#ffe9a0 45%,#ffb45c 52%,#ff825e)!important}
+.notice{position:relative;border:2px solid #254d73;border-radius:5px 12px 6px 10px;background:linear-gradient(120deg,#fff,#e8fbff 55%,#fce8ff);box-shadow:4px 5px 0 #254d73,0 10px 20px #254d7325;color:#1b4569}
+.notice::before{content:"✦ RECADO DO MURO";position:absolute;right:12px;top:-12px;padding:4px 8px;background:#ffdf73;border:1px solid #744b32;color:#583b39;font-size:9px;font-weight:900;letter-spacing:1px;transform:rotate(2deg);box-shadow:2px 2px 0 #744b32}
+details{border:2px solid #254d73;border-radius:8px;background:linear-gradient(135deg,#fff,#e9faff);box-shadow:4px 5px 0 #254d73;color:#1b4569}
+summary{color:#23547c}
+li{border:2px solid #254d73;border-radius:4px 8px 4px 8px;background:linear-gradient(#fff,#e7f8ff);box-shadow:2px 3px 0 #254d73;color:#1b4569}
+footer{color:#fff;text-shadow:0 2px 0 #21496c,0 0 10px #21496c;letter-spacing:2.5px}
+@media(max-width:650px){
+  header{margin:8px 8px 0;padding:9px 10px}
+  .heading{padding:16px 12px 13px}
+  .heading::before{right:7px;top:-12px;font-size:8px}
+  .studio{box-shadow:5px 6px 0 #183c62}
+  .studio-label span:last-child{font-size:8px}
+}
