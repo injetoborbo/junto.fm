@@ -7,7 +7,7 @@ if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
 let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
 const furnitureRecords=new Map(),modelCache=new Map(),modelLoads=new Map();
-let previewRecord=null;
+let previewRecord=null,latestPayload=null;
 const ASSET_ROOT="https://raw.githubusercontent.com/Vuena/free-apartment-props-cc0/41b06c6223d847d9de6519dd25a493d40e65992d/GLB/";
 const CITY_ASSET_ROOT="https://raw.githubusercontent.com/kayquer/kit-cidade-lowpoly/d9de7e25d476d8b8572971840b129c28a68e9cf7/models/";
 const FURNITURE_ASSETS={
@@ -142,6 +142,7 @@ function buildFurnitureObject(item,payload,source,ghost=false){
 }
 function clearFurnitureRecord(record){if(record?.object)scene.remove(record.object);}
 function syncFurniture(items,payload){
+ latestPayload=payload;
  const visible=new Set((items||[]).filter(i=>i.type!=="rug").map(i=>i.id));
  for(const [id,record] of furnitureRecords)if(!visible.has(id)){clearFurnitureRecord(record);furnitureRecords.delete(id);}
  for(const item of items||[]){
@@ -166,7 +167,11 @@ function syncFurniture(items,payload){
   const record={signature:previewSignature,object:null};previewRecord=record;
   void loadFurnitureModel(preview.type).then(model=>{
    if(!model||previewRecord!==record)return;
-   record.object=buildFurnitureObject(preview,payload,model,true);
+   // The model may finish loading after the cursor has moved. Use the latest
+   // preview payload so the ghost never appears at an obsolete position.
+   const latest=latestPayload?.preview;
+   if(!latest||latest.type==="rug"||latest.type!==record.signature)return;
+   record.object=buildFurnitureObject(latest,latestPayload,model,true);
    if(record.object){scene.add(record.object);render();}
   });
  }else if(previewRecord?.object&&preview){
