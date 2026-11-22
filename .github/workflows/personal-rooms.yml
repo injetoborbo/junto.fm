@@ -23,6 +23,7 @@ jobs:
           node --check public/quartos.js
           node --check public/room-rules.js
           node --check tests/personal-rooms.test.js
+          node --check public/chat-resize.js
           node --input-type=module --check < public/quartos-3d.js
           node --input-type=module --check < public/wardrobe.js
       - name: Run room rules and Socket.IO/Postgres integration tests
