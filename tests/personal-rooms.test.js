@@ -53,6 +53,7 @@ test('3D sitting uses the selected seat height and furniture-facing yaw',()=>{
  assert.match(renderer,/record\.poseTilt=calibration\?THREE\.MathUtils\.degToRad/);
  assert.match(renderer,/if\(sitting&&Number\.isFinite\(record\.poseYaw\)\)/);
  assert.match(renderer,/record\.hipOffset=hips\?record\.root\.worldToLocal/);
+ assert.match(renderer,/bench:\{offsetX:0,offsetZ:-\.1,bodyTilt:-7,yawOffset:-180\}/);
  assert.match(renderer,/record\.poseFurnitureYaw=sittingTarget\?window\.RoomRules\.rotationRadians\(sittingTarget\.rotation\|\|0\):null/);
  assert.match(renderer,/const seatOffset=new THREE\.Vector3\(record\.poseOffsetX\|\|0,0,record\.poseOffsetZ\|\|0\)\.applyAxisAngle\(new THREE\.Vector3\(0,1,0\),record\.poseFurnitureYaw\|\|0\)/);
  assert.match(renderer,/record\.root\.position\.set\(logical\.x\+seatOffset\.x-hipOffset\.x/);
