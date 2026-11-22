@@ -57,9 +57,12 @@ function surfaceHostAt(items,point){
 function surfaceCellFree(items,host,point,excludeId){
  return !(items||[]).some(item=>item.id!==excludeId&&item.parentId===host?.id&&item.x===point.x&&item.y===point.y);
 }
-function validate(layout){
+function validate(layout,previousLayout=null){
  if(!layout||!Array.isArray(layout.items)||layout.items.length>60)throw Error('Use até 60 móveis.');
  if(!/^#[a-f0-9]{6}$/i.test(layout.wall)||!/^#[a-f0-9]{6}$/i.test(layout.floor))throw Error('Cor inválida.');
+ // Old layouts may already contain small decorations on the floor. Preserve them only
+ // when the same ID/type existed in the previously saved layout without a host.
+ const previousById=new Map((previousLayout?.items||[]).map(item=>[item.id,item]));
  const occupied=new Set(),ids=new Set();
  const items=layout.items.map(i=>{
   if(!i||!itemType(i.type)||typeof i.id!=='string'||! /^[a-zA-Z0-9-]{1,50}$/.test(i.id)||ids.has(i.id)||![i.x,i.y,i.rotation].every(Number.isInteger)||i.rotation<0||i.rotation>3)throw Error('Móvel inválido.');
@@ -68,28 +71,30 @@ function validate(layout){
    if(typeof i.parentId!=='string'||!i.parentId||i.parentId.length>50)throw Error('Mesa inválida.');
    item.parentId=i.parentId;
   }
+  const type=itemType(i.type),previous=previousById.get(i.id);
+  if(type.placement==='surface'&&!item.parentId&&previous?.type===i.type&&!previous.parentId)item.legacyFloor=true;
   for(const [x,y] of cells(item)){
    if(x<0||y<0||x>=size||y>=size||x===0&&y===0)throw Error('Mantenha os móveis dentro do quarto e a entrada livre.');
-   if(itemType(i.type).solid){const k=x+','+y;if(occupied.has(k))throw Error('Os móveis não podem se sobrepor.');occupied.add(k);}
+   if(type.solid||item.legacyFloor){const k=x+','+y;if(occupied.has(k))throw Error('Os móveis não podem se sobrepor.');occupied.add(k);}
   }return item;
  });
  const byId=new Map(items.map(item=>[item.id,item])),usedSurfaceCells=new Set();
  for(const item of items){
   const type=itemType(item.type);
-  if(type.placement==='surface'){
+  if(type.placement==='surface'&&!item.legacyFloor){
    const host=byId.get(item.parentId),hostType=host&&itemType(host.type);
    if(!hostType?.canSupport||!hostType.solid)throw Error('Objetos de mesa precisam ficar sobre uma mesa, mesinha ou criado-mudo.');
    if(!cells(host).some(([x,y])=>x===item.x&&y===item.y))throw Error('Coloque o objeto dentro da superfície de apoio.');
    const key=host.id+':'+item.x+','+item.y;
    if(usedSurfaceCells.has(key))throw Error('Já existe um objeto nesse espaço da mesa.');
    usedSurfaceCells.add(key);
-  }else if(item.parentId)throw Error('Somente objetos de mesa podem ser colocados sobre outros móveis.');
+  }else if(type.placement!=='surface'&&item.parentId)throw Error('Somente objetos de mesa podem ser colocados sobre outros móveis.');
  }
  return {wall:layout.wall,floor:layout.floor,items};
 }
 function route(layout,start,end){
  if(!end||![end.x,end.y].every(Number.isInteger)||end.x<0||end.y<0||end.x>=size||end.y>=size)return null;
- const blocked=new Set(layout.items.filter(i=>itemType(i.type).solid).flatMap(cells).map(c=>c.join(',')));
+ const blocked=new Set(layout.items.filter(i=>itemType(i.type).solid||i.legacyFloor).flatMap(cells).map(c=>c.join(',')));
  const key=p=>p.x+','+p.y,queue=[[start]],seen=new Set([key(start)]);
  while(queue.length){const p=queue.shift(),last=p[p.length-1];if(key(last)===key(end))return p.slice(1);
  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const n={x:last.x+dx,y:last.y+dy},k=key(n);if(n.x<0||n.y<0||n.x>=size||n.y>=size||seen.has(k)||blocked.has(k))continue;seen.add(k);queue.push([...p,n]);}}
