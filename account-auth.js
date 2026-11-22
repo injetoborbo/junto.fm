@@ -237,14 +237,14 @@ module.exports=function setupAccounts(app){
     }catch(error){res.status(503).json({error:"Não foi possível salvar seu perfil."});}
   });
   async function friends(accountId){
-    const result=await pool.query(`SELECT a.id,a.nickname AS name,a.avatar
+    const result=await pool.query(`SELECT a.id,a.nickname AS name,a.username,a.motto,a.avatar
       FROM junto_friendships f JOIN junto_accounts a
       ON a.id=CASE WHEN f.user_a=$1 THEN f.user_b ELSE f.user_a END
       WHERE f.user_a=$1 OR f.user_b=$1 ORDER BY a.nickname LIMIT 150`,[accountId]);
     return result.rows;
   }
   async function requests(accountId){
-    const result=await pool.query(`SELECT a.id,a.nickname AS name,a.avatar
+    const result=await pool.query(`SELECT a.id,a.nickname AS name,a.username,a.motto,a.avatar
       FROM junto_friend_requests r JOIN junto_accounts a ON a.id=r.from_id WHERE r.to_id=$1 ORDER BY r.created_at DESC LIMIT 100`,[accountId]);
     return result.rows;
   }

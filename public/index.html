@@ -498,7 +498,7 @@ body:not(.jf-in-room) #jfHomeSocial,body:not(.jf-in-room) #jfOpenWardrobe,body:n
  body:not(.jf-in-room) .jf-topbar{padding-top:58px}
 }
 
-body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(.jf-modal-backdrop){display:none!important}
+body:not(.jf-in-room) main>*:not(.jf-topbar):not(#jfRoomEntryPanel):not(#jfHomeCommunity):not(#jfPublicProfile):not(.jf-modal-backdrop){display:none!important}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions{justify-content:center;flex-wrap:wrap}
 body:not(.jf-in-room) #jfRoomEntryPanel .jf-room-entry-actions .btn{flex:1 1 190px;min-height:52px}
 .jf-entry-account{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid color-mix(in srgb,var(--jf-primary) 20%,transparent);text-align:center}
@@ -987,6 +987,35 @@ body.jf-in-room #jfAdminEntry{display:none!important}
 </style>
 <!-- Tema Kodoku após os estilos principais, para não ser sobrescrito. -->
 <link rel="stylesheet" href="/kodoku.css">
+<style>
+/* Jornal do Junto — portal social Y2K / web de 2004 */
+body:not(.jf-in-room) #jfHomeCommunity{display:block!important}
+.jf-home-community{margin:18px auto 20px;width:min(100%,940px);padding:14px;border:1px solid #b9e8ff;border-radius:9px;color:#183a5b;background:linear-gradient(145deg,#effaff 0%,#d5edff 48%,#b6d8f6 100%);box-shadow:inset 0 1px 0 #fff,0 0 0 3px #24366b,0 7px 0 #111b46,0 12px 28px #0005;font-family:Tahoma,Verdana,sans-serif}
+.jf-home-paper-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:3px 4px 12px;border-bottom:2px solid #8bb8df}
+.jf-home-kicker{font-size:9px;font-weight:900;letter-spacing:1.4px;color:#3575ac}.jf-home-paper-head h2{margin:3px 0;color:#1a4f83;font:900 clamp(24px,4vw,34px) Georgia,serif;text-shadow:0 1px #fff}.jf-home-paper-head p{margin:0;color:#527494;font-size:11px}
+.jf-home-edition{min-width:88px;padding:8px 10px;text-align:center;border:1px solid #9bbbd8;border-radius:5px;background:linear-gradient(#fff,#d6eaff);box-shadow:inset 0 1px #fff}.jf-home-edition strong,.jf-home-edition small{display:block;font-size:9px;color:#2b5f8f}.jf-home-edition span{display:block;font-size:22px;margin-top:3px}
+.jf-home-lead{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:14px;align-items:center;padding:15px 4px;border-bottom:1px dashed #8eb5d7}
+.jf-home-label{display:inline-block;padding:4px 7px;border-radius:3px;background:#e9a5d7;color:#642d69;font-size:8px;font-weight:900;letter-spacing:1px}.jf-home-lead h3{margin:8px 0 6px;color:#214f80;font:900 clamp(18px,3vw,24px) Georgia,serif;line-height:1.15}.jf-home-lead p{max-width:620px;margin:0 0 10px;color:#496d8c;font-size:11px;line-height:1.6}
+.jf-home-action,.jf-home-link{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #4f8fc4;border-radius:4px;padding:7px 10px;color:#fff;background:linear-gradient(#83c9f5,#347fbd 52%,#2867a6);box-shadow:inset 0 1px #ffffffa8,0 2px 0 #1c4d7d;font:900 10px Tahoma,sans-serif;text-decoration:none;cursor:pointer}.jf-home-action:hover,.jf-home-link:hover{filter:brightness(1.1)}
+.jf-home-lead-art{min-height:122px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px ridge #f5e3a5;border-radius:7px;color:#fff;background:radial-gradient(circle at 30% 20%,#ffb7e6,#8a80dc 42%,#346fb0 80%);box-shadow:inset 0 0 0 3px #ffffff55,0 3px 8px #365c8b55;transform:rotate(1deg)}.jf-home-lead-art span{font-size:25px;text-shadow:0 2px #3e4c8a}.jf-home-lead-art b{text-align:center;font:1000 17px/1 Tahoma,sans-serif;letter-spacing:1px;text-shadow:0 2px #36467d,0 0 10px #fff}.jf-home-lead-art small{margin-top:8px;font-size:8px;letter-spacing:1px}
+.jf-home-community-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 0}.jf-home-story{display:flex;gap:10px;align-items:flex-start;min-width:0;padding:10px;border:1px solid #b0cde6;border-radius:6px;background:linear-gradient(145deg,#fff,#e5f2ff);box-shadow:inset 0 1px #fff,0 2px 4px #527ca222}.jf-home-story-icon{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border:1px solid #9abbd9;border-radius:5px;background:linear-gradient(#fff,#cfe7ff);font-size:21px;box-shadow:inset 0 1px #fff}.jf-home-story small{font-size:8px;letter-spacing:1px;font-weight:900;color:#5481a7}.jf-home-story h3{margin:3px 0;color:#244f79;font-size:12px}.jf-home-story p{margin:0 0 7px;color:#607e99;font-size:10px;line-height:1.45}.jf-home-story .jf-home-link{font-size:9px;padding:5px 8px}
+.jf-home-paper-foot{display:flex;justify-content:space-between;gap:8px;padding:8px 4px 0;border-top:1px solid #a6c8e5;color:#6082a0;font-size:8px;font-weight:900;letter-spacing:.4px}
+body.jf-in-room #jfHomeCommunity{display:none!important}
+@media(max-width:620px){.jf-home-community{padding:10px;margin:10px auto 14px}.jf-home-lead{grid-template-columns:minmax(0,1fr) 88px;gap:8px;padding:11px 2px}.jf-home-lead-art{min-height:94px}.jf-home-lead-art b{font-size:12px}.jf-home-community-grid{grid-template-columns:1fr;gap:6px}.jf-home-paper-foot{font-size:7px;flex-wrap:wrap}.jf-home-story{padding:8px}}
+</style>
+<style>
+body.jf-public-profile-page #jfHomeCommunity,body.jf-public-profile-page #jfRoomEntryPanel,body.jf-public-profile-page main>h1,body.jf-public-profile-page main>.jf-hero-description{display:none!important}
+body.jf-public-profile-page #jfPublicProfile{display:block!important}
+.jf-public-profile{width:min(720px,100%);margin:34px auto;padding:20px;border:1px solid #b9e8ff;border-radius:9px;color:#193c60;background:linear-gradient(145deg,#f2fbff,#c9e5fa);box-shadow:inset 0 1px #fff,0 0 0 3px #263b70,0 8px 0 #111b46,0 14px 30px #0005;font-family:Tahoma,Verdana,sans-serif}
+.jf-public-profile-head{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid #a7c7e4}
+.jf-public-profile-avatar{width:92px;height:92px;flex:0 0 92px;display:grid;place-items:center;overflow:hidden;border:3px ridge #fff;border-radius:8px;background:linear-gradient(145deg,#fff,#b7dfff);color:#3e70a0;font-size:36px;font-weight:900;box-shadow:0 3px 9px #315d8733}
+.jf-public-profile-avatar img{width:100%;height:100%;object-fit:cover}
+.jf-public-profile h2{margin:0 0 4px;color:#214f80;font:900 26px Georgia,serif}.jf-public-profile .jf-public-handle{color:#5280a5;font-size:11px}.jf-public-profile .jf-public-motto{margin:10px 0 0;color:#496d8c;font-size:12px;line-height:1.5}
+.jf-public-profile-meta{display:flex;gap:12px;flex-wrap:wrap;margin:13px 0;color:#6885a0;font-size:10px}
+.jf-public-badges{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 16px}.jf-public-badge{padding:7px 9px;border:1px ridge #c79c4c;border-radius:5px;color:#62491d;background:linear-gradient(#fff7d2,#edc56b);font-size:10px;font-weight:900;box-shadow:inset 0 1px #fff}
+.jf-public-profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.jf-public-profile-actions a,.jf-public-profile-actions button{font:900 11px Tahoma}
+@media(max-width:520px){.jf-public-profile{margin:14px auto;padding:14px}.jf-public-profile-avatar{width:72px;height:72px;flex-basis:72px}.jf-public-profile h2{font-size:21px}}
+</style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
@@ -1002,6 +1031,24 @@ body.jf-in-room #jfAdminEntry{display:none!important}
   </nav></div></div>
   <h1>Música boa é<br>melhor junto. ✦</h1>
   <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+
+  <section class="jf-home-community" id="jfHomeCommunity" aria-label="Jornal e comunidade">
+    <div class="jf-home-paper-head">
+      <div><span class="jf-home-kicker">✦ NOTÍCIAS DA COMUNIDADE ✦</span><h2>Jornal do Junto</h2><p>O que está rolando no nosso cantinho da internet.</p></div>
+      <div class="jf-home-edition"><strong>EDIÇÃO Nº 001</strong><small>JUNTO.FM · 2026</small><span>🐒</span></div>
+    </div>
+    <article class="jf-home-lead">
+      <div class="jf-home-lead-copy"><span class="jf-home-label">BOLETIM DA COMUNIDADE</span><h3>A internet fica melhor quando a gente se encontra.</h3><p>O Junto.fm está crescendo para virar um ponto de encontro: faça amizades, converse no privado, visite espaços, jogue e compartilhe suas criações.</p><button class="jf-home-action" type="button" id="jfHomeMessenger">✉ Abrir Junto Messenger</button> <a class="jf-home-action" id="jfHomeMyProfile" href="#" hidden>☺ Meu perfil público</a></div>
+      <div class="jf-home-lead-art" aria-hidden="true"><span>♫</span><b>JUNTO<br>ONLINE!</b><small>✦ EST. 2026 ✦</small></div>
+    </article>
+    <div class="jf-home-community-grid">
+      <article class="jf-home-story"><span class="jf-home-story-icon">🥊</span><div><small>FLIPERAMA</small><h3>Arena dos Macacos</h3><p>Desafie alguém para um duelo e mostre quem manda no ringue.</p><button type="button" class="jf-home-link" id="jfHomeArcade">Entrar no fliperama ↗</button></div></article>
+      <article class="jf-home-story"><span class="jf-home-story-icon">✎</span><div><small>MURAL COMUNITÁRIO</small><h3>Mural dos Símios</h3><p>Deixe um desenho, recado ou rabisco para todo mundo ver.</p><a class="jf-home-link" href="/mural">Visitar o mural ↗</a></div></article>
+      <article class="jf-home-story"><span class="jf-home-story-icon">⌂</span><div><small>SEU CANTINHO</small><h3>Quartos pessoais</h3><p>Monte seu espaço, decore e convide seus amigos para visitar.</p><a class="jf-home-link" href="/quartos">Explorar os quartos ↗</a></div></article>
+      <article class="jf-home-story"><span class="jf-home-story-icon">🏅</span><div><small>COLECIONÁVEIS</small><h3>Conquistas e medalhas</h3><p>Desbloqueie lembranças das suas aventuras pela comunidade.</p><button type="button" class="jf-home-link" id="jfHomeAchievements">Ver coleção ↗</button></div></article>
+    </div>
+    <div class="jf-home-paper-foot"><span>📡 CONECTE-SE COM A GALERA</span><span>feito com bananas e carinho · Junto.fm</span></div>
+  </section>
 
   <section class="panel jf-room-entry-panel" id="jfRoomEntryPanel">
     <input id="room" type="hidden" value="" autocomplete="off">
@@ -2764,6 +2811,10 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
       refuse.onclick=()=>socket.emit("friend-request-response",{fromAccountId:person.id,accepted:false});
       row.append(accept,refuse);
     }else{
+      if(person.username){
+        const profile=document.createElement("a");profile.className="btn secondary";profile.textContent="Perfil";profile.href="/u/"+encodeURIComponent(person.username);profile.title="Ver perfil público de @"+person.username;
+        row.appendChild(profile);
+      }
       const follow=document.createElement("button");follow.className="btn";follow.textContent="Seguir";
       follow.disabled=!person.room;
       follow.title=person.room?"Seguir para a sala":"Amigo offline";
@@ -3336,5 +3387,6 @@ const turnConfigReady = fetch("/api/turn/ice-servers")
 <script defer src="/junto-tv-mobile.js?v=1"></script>
 <script defer src="/junto-tv.js?v=room-presence-1"></script>
 <script defer src="/chat-resize.js?v=y2k-resize-1"></script>
+<script defer src="/community-social.js?v=1"></script>
 </body>
 </html>
