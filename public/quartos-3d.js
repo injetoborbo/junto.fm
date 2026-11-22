@@ -8,7 +8,7 @@ let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
 let animationFrame=0,lastFrame=0;
 const DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
-function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig\\d*[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
+function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig\d*[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
 const animationFiles={
  shake:"/dance/macacochaqualha.glb",
  macarena:"/dance/macacomacarena.glb",
@@ -17,7 +17,7 @@ const animationFiles={
  groove:"/dance/macacodancagay.glb"
 };
 const gltfLoader=new GLTFLoader(),clipPromises=new Map(),animationClips=new Map();
-const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const boneKey=name=>String(name).split("/").pop().replace(/^.*[|:]/,"").replace(/^mixamorig\d*/i,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 function loadClip(style){
  if(!animationFiles[style])return Promise.resolve(null);
  if(!clipPromises.has(style)){
