@@ -2,18 +2,18 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const source=fs.readFileSync(path.join(__dirname,"../public/junto-tv.js"),"utf8");
 // Browser and LiveKit boundaries are simulated; the production client runs intact.
-function setup({guest=false,provideAudio=true,deferCapture=false,failConnect=false}={}){
+function setup({guest=false,provideAudio=true,deferCapture=false,failConnect=false,useAudioContext=true,nativeCaptureAudio=false,failLocalPlay=false}={}){
   const elements=new Map(),events=new Map(),outbound=[],rooms=[],videos=[],contexts=[];
   let captureConstraints,resolveCapture,stream;
   const parent={insertBefore(n){n.parentNode=this;},appendChild(n){n.parentNode=this;}};
   const el=id=>{
     if(!elements.has(id))elements.set(id,{
-      id,hidden:false,value:"",style:{},parentNode:parent,duration:120,currentTime:0,paused:true,muted:false,volume:1,
+      id,hidden:false,value:"",style:{},parentNode:parent,duration:120,currentTime:0,readyState:4,error:null,paused:true,muted:false,volume:1,
       classList:{toggle(){},contains(){return false;}},setAttribute(){},getAttribute(){return null},
       closest(){return parent;},querySelector(){return {};},querySelectorAll(){return [];},focus(){},replaceChildren(){},
       addEventListener(n,fn){this["on_"+n]=fn;},appendChild(n){n.parentNode=this;return n;},remove(){},removeAttribute(){},load(){},
-      play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},
-      captureStream(){return new Stream([track("video")]);}
+      play(){this.paused=false;return failLocalPlay?Promise.reject(Object.assign(new Error("unsupported codec"),{name:"NotSupportedError"})):Promise.resolve();},pause(){this.paused=true;},
+      captureStream(){return new Stream([track("video"),...(nativeCaptureAudio?[track("audio")]:[])]);}
     });
     return elements.get(id);
   };
@@ -44,7 +44,7 @@ function setup({guest=false,provideAudio=true,deferCapture=false,failConnect=fal
     return deferCapture?new Promise(r=>resolveCapture=()=>r(stream)):Promise.resolve(stream);
   }}};
   const Client={Room,RoomEvent:{Disconnected:"disconnected",TrackSubscribed:"track",TrackUnsubscribed:"untrack",Reconnecting:"reconnecting",Reconnected:"reconnected"},Track:{Kind:{Video:"video",Audio:"audio"},Source:{ScreenShare:"screen",ScreenShareAudio:"audio"}}};
-  vm.runInNewContext(source,{window:{jfSocialSocket:socket,LivekitClient:Client,AudioContext},document,navigator,MediaStream:Stream,
+  vm.runInNewContext(source,{window:{jfSocialSocket:socket,LivekitClient:Client,...(useAudioContext?{AudioContext}:{})},document,navigator,MediaStream:Stream,
     HTMLMediaElement:{prototype:{captureStream(){}}},URL:{createObjectURL:()=>"blob:test",revokeObjectURL(){}},
     console,setTimeout:()=>1,setInterval:()=>1});
   events.get("joined-room")({room:"room",ownerId:"host"});el("jfTvLaunch").onclick();el("jfTvCaptureAudio").checked=true;
@@ -104,4 +104,34 @@ test("Falha na publicação não aparece como transmissão bem-sucedida",async()
  const app=setup({failConnect:true});await app.el("jfTvStartGame").onclick();
  assert.match(app.el("jfTvStatus").textContent,/Falha ao publicar/);
  assert.ok(app.stream.getTracks().every(t=>t.stopped));
+});
+
+
+test("Arquivo local usa o áudio nativo quando Web Audio não existe",async()=>{
+ const app=setup({useAudioContext:false,nativeCaptureAudio:true});
+ app.el("jfTvFile").files=[{type:"video/mp4",name:"episode.mp4",size:1024}];
+ await app.el("jfTvStartLocal").onclick();
+ const room=app.rooms[0];
+ assert.equal(room.published.length,2);
+ assert.equal(room.published[1].track.kind,"audio");
+ assert.match(app.el("jfTvStatus").textContent,/com áudio/);
+});
+
+test("Codec incompatível apresenta erro e não tenta publicar faixa vazia",async()=>{
+ const app=setup({failLocalPlay:true});
+ app.el("jfTvFile").files=[{type:"video/mp4",name:"episode.mp4",size:1024}];
+ await app.el("jfTvStartLocal").onclick();
+ assert.equal(app.rooms.length,0);
+ assert.match(app.el("jfTvStatus").textContent,/Falha no vídeo local/);
+ assert.equal(app.el("jfTvStartLocal").disabled,false);
+});
+
+test("Falha de conexão LiveKit encerra também a reprodução local",async()=>{
+ const app=setup({failConnect:true});
+ app.el("jfTvFile").files=[{type:"video/mp4",name:"episode.mp4",size:1024}];
+ await app.el("jfTvStartLocal").onclick();
+ assert.equal(app.rooms.length,1);
+ assert.equal(app.videos[0].paused,true);
+ assert.match(app.el("jfTvStatus").textContent,/Falha ao publicar/);
+ assert.equal(app.el("jfTvStartLocal").disabled,false);
 });

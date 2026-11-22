@@ -96,7 +96,7 @@
           '</section>',
           '<section id="jfTvLinkTools" class="jf-tv-tools" hidden></section>',
           '<section id="jfTvLocalTools" class="jf-tv-tools" hidden>',
-            '<label>Vídeo do seu computador (não será enviado ao Render)<input type="file" id="jfTvFile" accept="video/*"></label>',
+            '<label>Vídeo do seu computador (não será enviado ao Render)<input type="file" id="jfTvFile" accept="video/*,.mkv,.avi,.mov,.mpg,.mpeg"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartLocal">Transmitir arquivo</button></div>',
             '<div id="jfTvLocalControls" class="jf-tv-actions" hidden><button type="button" id="jfTvLocalBack">−10s</button><button type="button" id="jfTvLocalPlay">Ⅱ Pausar</button><button type="button" id="jfTvLocalForward">+10s</button><label for="jfTvLocalSeek">Posição</label><input id="jfTvLocalSeek" type="range" min="0" max="1" step="0.1" value="0"><span id="jfTvLocalTime">0:00 / 0:00</span></div>',
             '<p class="jf-tv-note">O arquivo fica no seu PC. Toda a sala recebe a reprodução por LiveKit. Só o ADM pausa e avança; o volume é individual.</p>',
@@ -169,7 +169,9 @@
     const volume=streamMuted?0:streamVolume;
     for(const audio of livekitAudio)audio.volume=volume;
     // Monitoring gain is separate from the captured audio sent to the room.
+    // If Web Audio is unavailable, keep the local element's own volume usable.
     if(localMonitor)localMonitor.gain.value=volume;
+    else if(localVideo)localVideo.volume=volume;
     $("jfTvStreamMute").textContent=volume===0?"🔇":"🔊";
     $("jfTvStreamMute").setAttribute("aria-pressed",String(streamMuted||streamVolume===0));
   }
@@ -237,7 +239,14 @@
   function stopLocal(){
     ++captureRequest;
     if(sourceStream){for(const track of sourceStream.getTracks())track.stop();sourceStream=null;}
-    if(localVideo){localVideo.pause();localVideo.removeAttribute("src");localVideo.load();localVideo=null;}
+    if(localVideo){
+      const oldVideo=localVideo;
+      localVideo=null;
+      oldVideo.pause();
+      oldVideo.removeAttribute("src");
+      oldVideo.load();
+      oldVideo.remove?.();
+    }
     if(localUrl){URL.revokeObjectURL(localUrl);localUrl="";}
     if(localAudioContext){localAudioContext.close().catch(()=>{});localAudioContext=null;}
     localMonitor=null;localScrubbing=false;renderLocal();
@@ -502,7 +511,11 @@
     if(!lkLoadPromise)lkLoadPromise=new Promise((resolve,reject)=>{
       const script=document.createElement("script");
       script.src="https://cdn.jsdelivr.net/npm/livekit-client@2.15.0/dist/livekit-client.umd.js";
-      script.onload=()=>window.LivekitClient?resolve(window.LivekitClient):reject(new Error("SDK LiveKit não carregou."));
+      script.onload=()=>{
+        if(window.LivekitClient?.Room&&window.LivekitClient?.Track&&window.LivekitClient?.RoomEvent)
+          resolve(window.LivekitClient);
+        else reject(new Error("O CDN carregou um bundle LiveKit incompatível ou incompleto."));
+      };
       script.onerror=()=>reject(new Error("Falha ao baixar biblioteca LiveKit."));
       document.head.appendChild(script);
     }).catch(error=>{lkLoadPromise=null;throw error;});
@@ -634,8 +647,17 @@
     stage.muted=true;stage.srcObject=stream;
     stage.play().catch(()=>{});
     socket.emit("tv:start-stream",{mode});
-    try{return await connectLivekit(true,stream);}
-    catch(error){if(sourceStream===stream){stopBroadcast();status("Falha ao publicar no LiveKit: "+error.message);}return false;}
+    try{
+      const connected=await connectLivekit(true,stream);
+      if(!connected){
+        if(sourceStream===stream){stopBroadcast();status("A conexão LiveKit foi cancelada antes da publicação.");}
+        return false;
+      }
+      return true;
+    }catch(error){
+      if(sourceStream===stream){stopBroadcast();status("Falha ao publicar no LiveKit: "+(error?.message||String(error)));}
+      return false;
+    }
   }
   $("jfTvStartGame").onclick=async()=>{
     if(!isAdmin()||!navigator.mediaDevices?.getDisplayMedia)return status("Seu navegador não suporta compartilhar janela.");
@@ -665,55 +687,147 @@
       }
     }catch(e){if(e.name!=="NotAllowedError")status("Não foi possível capturar a tela: "+e.message);}
   };
+  function localMediaError(video,file){
+    const code=video.error?.code;
+    const detail={
+      1:"leitura do arquivo cancelada",
+      2:"erro ao ler o arquivo",
+      3:"codec de vídeo/áudio incompatível ou arquivo corrompido",
+      4:"formato/container não suportado pelo navegador"
+    }[code]||"o navegador não conseguiu decodificar o arquivo";
+    return new Error("Não foi possível abrir "+(file.name||"o vídeo")+": "+detail+". Teste um MP4 H.264 com áudio AAC ou um WebM compatível.");
+  }
+  function waitForLocalVideo(video,file){
+    if(video.readyState>=2)return Promise.resolve();
+    return new Promise((resolve,reject)=>{
+      let finished=false;
+      let timer;
+      const cleanup=()=>{
+        clearTimeout(timer);
+        video.removeEventListener("loadeddata",ready);
+        video.removeEventListener("canplay",ready);
+        video.removeEventListener("error",failed);
+      };
+      const done=(error)=>{
+        if(finished)return;
+        finished=true;cleanup();
+        if(error)reject(error);else resolve();
+      };
+      const ready=()=>{if(video.readyState>=2)done();};
+      const failed=()=>done(localMediaError(video,file));
+      timer=setTimeout(()=>done(new Error("O vídeo demorou demais para carregar. Confira se o arquivo não está corrompido e tente novamente.")),20000);
+      video.addEventListener("loadeddata",ready);
+      video.addEventListener("canplay",ready);
+      video.addEventListener("error",failed);
+      ready();
+    });
+  }
   $("jfTvStartLocal").onclick=async()=>{
     if(!isAdmin())return;
+    const startButton=$("jfTvStartLocal");
+    if(startButton.disabled)return;
     const file=$("jfTvFile").files?.[0];
-    if(!file||!file.type.startsWith("video/"))return status("Selecione um arquivo de vídeo.");
-    if(!HTMLMediaElement.prototype.captureStream && !HTMLMediaElement.prototype.mozCaptureStream)
-      return status("Este navegador não permite capturar vídeo local; tente Chrome ou Firefox no computador.");
+    const knownVideoType=String(file?.type||"").toLowerCase().startsWith("video/");
+    const knownVideoExtension=/\.(mp4|m4v|webm|mov|mkv|avi|ogv|mpeg|mpg)$/i.test(file?.name||"");
+    if(!file||(!knownVideoType&&!knownVideoExtension)||file.size===0)
+      return status("Selecione um arquivo de vídeo válido (MP4, WebM, MOV, MKV ou AVI).");
     stopLocal();
-    localUrl=URL.createObjectURL(file);
+    startButton.disabled=true;
+    status("Abrindo "+file.name+" no seu navegador…");
     const video=document.createElement("video");
-    localVideo=video;video.playsInline=true;video.muted=false;video.preload="auto";
-    video.src=localUrl;video.onended=()=>{if(localVideo===video)localState();};
+    localVideo=video;
+    video.playsInline=true;
+    video.autoplay=true;
+    video.controls=false;
+    video.muted=false;
+    video.volume=1;
+    video.preload="auto";
+    video.setAttribute("aria-hidden","true");
+    // Manter o elemento conectado ao DOM evita diferenças de decodificação
+    // em navegadores que suspendem mídias de elementos completamente destacados.
+    Object.assign(video.style,{
+      position:"fixed",left:"-10000px",top:"0",width:"1px",height:"1px",
+      opacity:"0",pointerEvents:"none"
+    });
+    overlay.appendChild(video);
+    video.onended=()=>{if(localVideo===video)localState();};
     video.addEventListener("timeupdate",renderLocal);
     video.addEventListener("loadedmetadata",renderLocal);
     video.addEventListener("pause",()=>{if(localVideo===video)localState();});
     video.addEventListener("playing",()=>{if(localVideo===video)localState();});
+
     try{
-      // Publicação e monitoração têm caminhos separados. O volume do ADM não
-      // altera o áudio da sala; captureStream fornece apenas a faixa de vídeo.
+      localUrl=URL.createObjectURL(file);
+      video.src=localUrl;
+      video.load();
+
+      // Preferir Web Audio para enviar o som em uma faixa independente e
+      // permitir que o ADM ajuste sua monitoração sem silenciar os ouvintes.
       let audioStream=null;
-      const AudioEngine=window.AudioContext||window.webkitAudioContext;
       let audioReady=Promise.resolve();
+      let audioMode="captura nativa";
+      const AudioEngine=window.AudioContext||window.webkitAudioContext;
       if(AudioEngine){
-        localAudioContext=new AudioEngine();
-        const sourceNode=localAudioContext.createMediaElementSource(video);
-        const destination=localAudioContext.createMediaStreamDestination();
-        sourceNode.connect(destination);
-        localMonitor=localAudioContext.createGain();
-        sourceNode.connect(localMonitor);localMonitor.connect(localAudioContext.destination);
-        streamAudioUi();
-        audioStream=destination.stream;
-        audioReady=localAudioContext.resume();
-      }else video.muted=true;
-      // play() e resume() começam enquanto o gesto do clique ainda está ativo.
-      await Promise.all([audioReady,video.play()]);
+        try{
+          localAudioContext=new AudioEngine();
+          const sourceNode=localAudioContext.createMediaElementSource(video);
+          const destination=localAudioContext.createMediaStreamDestination();
+          sourceNode.connect(destination);
+          localMonitor=localAudioContext.createGain();
+          sourceNode.connect(localMonitor);
+          localMonitor.connect(localAudioContext.destination);
+          audioStream=destination.stream;
+          audioReady=localAudioContext.resume();
+          audioMode="Web Audio";
+        }catch(audioError){
+          console.warn("[Junto.TV] Web Audio indisponível; tentando áudio nativo do arquivo.",audioError);
+          localAudioContext?.close?.().catch?.(()=>{});
+          localAudioContext=null;
+          localMonitor=null;
+          audioStream=null;
+          video.muted=false;
+        }
+      }
+
+      // Iniciar play/resume no mesmo gesto do botão e esperar o primeiro frame
+      // decodificado; assim não publicamos um MediaStream ainda vazio.
+      const playPromise=video.play();
+      await Promise.all([audioReady,playPromise,waitForLocalVideo(video,file)]);
       if(localVideo!==video||!opened||!isAdmin())return;
-      const direct=(video.captureStream||video.mozCaptureStream).call(video);
-      const captured=new MediaStream([
-        ...direct.getVideoTracks(),
-        ...(audioStream?audioStream.getAudioTracks():direct.getAudioTracks())
-      ]);
-      if(!captured.getVideoTracks().length)throw new Error("Vídeo não disponível para captura.");
+
+      const capture=video.captureStream||video.mozCaptureStream;
+      if(typeof capture!=="function")
+        throw new Error("Seu navegador não oferece captura de vídeo local. Use Chrome ou Firefox atualizado.");
+      if(typeof MediaStream!=="function")
+        throw new Error("Este navegador não oferece MediaStream para transmitir o arquivo.");
+
+      const direct=capture.call(video);
+      const videoTracks=direct.getVideoTracks().filter(track=>track.readyState!=="ended");
+      const webAudioTracks=audioStream?.getAudioTracks?.().filter(track=>track.readyState!=="ended")||[];
+      const nativeAudioTracks=direct.getAudioTracks().filter(track=>track.readyState!=="ended");
+      // Alguns navegadores/contextos podem criar a saída Web Audio sem uma
+      // faixa pronta; nesse caso usar o áudio capturado nativamente pelo vídeo.
+      const audioTracks=webAudioTracks.length?webAudioTracks:nativeAudioTracks;
+      const captured=new MediaStream([...videoTracks,...audioTracks]);
+      if(!videoTracks.length)throw new Error("O navegador abriu o arquivo, mas não entregou uma faixa de vídeo para transmissão.");
       if(!await publishStream(captured,"local"))return;
       if(localVideo!==video||!sourceStream)return;
       localState();
       stage.muted=true;
-      status("Arquivo local pelo LiveKit, com áudio quando o formato permitir. Nenhum arquivo foi enviado ao servidor.");
-    }catch(e){
-      status("Falha no arquivo local: "+e.message);
+      status(audioTracks.length
+        ?"🟢 Arquivo transmitido pelo LiveKit com áudio ("+audioMode+"). O arquivo continua no seu PC."
+        :"🟡 Vídeo transmitido pelo LiveKit, mas o navegador não forneceu áudio. Tente outro formato/container.");
+    }catch(error){
+      const message=error?.name==="NotAllowedError"
+        ?"O navegador bloqueou a reprodução. Clique em transmitir novamente e permita a reprodução de mídia."
+        :error?.name==="NotSupportedError"
+          ?localMediaError(video,file).message
+          :(error?.message||"erro desconhecido ao iniciar o arquivo");
+      console.error("[Junto.TV] Falha ao iniciar arquivo local:",error);
+      status("Falha no vídeo local: "+message);
       if(localVideo===video)stopLocal();
+    }finally{
+      startButton.disabled=false;
     }
   };
   $("jfTvStop").onclick=()=>{

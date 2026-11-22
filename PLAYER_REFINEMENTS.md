@@ -5,7 +5,7 @@ Revisão de 15/11/2026. Este documento descreve a implementação atual; os trec
 ## Reprodução
 
 - **Link direto HTTPS (MP4/WebM/HLS):** cada participante recebe a mídia da origem. O ADM controla play, pause, seek e velocidade. Quem abre a TV depois recebe o estado atual. URLs de páginas não são extraídas; a fonte precisa permitir acesso pelos navegadores dos participantes. DRM, codecs, CORS e expiração continuam dependendo da origem.
-- **Arquivo local:** o ADM transmite as faixas por LiveKit e controla pausa, retomada e posição com barra e botões de dez segundos. O som do ADM passa por um ganho de monitoração separado: silenciar ou baixar seu volume não silencia a sala. O navegador do ADM precisa suportar `captureStream` e os codecs do arquivo.
+- **Arquivo local:** o ADM transmite as faixas por LiveKit e controla pausa, retomada e posição com barra e botões de dez segundos. O player oculto permanece conectado ao DOM, espera a primeira imagem decodificada antes de publicar e tenta áudio via Web Audio com fallback para `captureStream()` nativo. MP4 H.264/AAC é o formato de teste recomendado; MKV/AVI/MOV dependem dos codecs disponíveis no navegador. O backend registra no startup apenas se as três variáveis LiveKit estão configuradas, sem expor seus valores.
 - **Tela/aba:** os participantes clicam em Assistir. O navegador do ADM determina quais superfícies fornecem áudio. A janela precisa permanecer aberta; fechá-la encerra a captura, inclusive se o seletor de tela ainda estiver pendente.
 - Não existe mais o limite artificial de quatro espectadores na aplicação. LiveKit continua sujeito à capacidade, franquia e limites do projeto contratado. Isso não significa capacidade ilimitada nem teste de carga em produção.
 
