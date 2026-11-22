@@ -53,6 +53,16 @@
     "#jfTvOverlay .jf-tv-actions input[type=range]{flex:1 1 120px;min-width:90px;max-width:350px}",
     "#jfTvOverlay .jf-tv-note{font-size:11px;line-height:1.55;color:#bdc8e8;margin:0}",
     "#jfTvOverlay .jf-tv-status{padding:9px 10px;background:color-mix(in srgb,var(--jf-primary,#0b1735) 25%,#090d1b);border:1px solid var(--jf-secondary,#445c9a);border-radius:8px;color:#cfdef9;font-size:12px;line-height:1.5}",
+    "#jfTvOverlay .jf-tv-people{display:grid;gap:9px;padding:10px 12px;border:1px solid color-mix(in srgb,var(--jf-secondary,#7c8bbf) 75%,#fff);border-radius:9px;background:linear-gradient(145deg,#121b38dd,#202b50aa);box-shadow:inset 0 1px #ffffff18}",
+    "#jfTvOverlay .jf-tv-people-head{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#fff;font-size:12px;font-weight:800;letter-spacing:.3px}",
+    "#jfTvOverlay .jf-tv-people-count{padding:3px 8px;border-radius:20px;background:#344b78;color:#dff7ff;font-size:11px}",
+    "#jfTvOverlay .jf-tv-people-list{display:flex;flex-wrap:wrap;gap:7px}",
+    "#jfTvOverlay .jf-tv-person{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%;padding:5px 9px 5px 6px;border:1px solid #6579a9;border-radius:20px;background:linear-gradient(180deg,#304a78,#1b2b50);color:#f3f7ff;font-size:11px;box-shadow:0 2px 0 #0a1227}",
+    "#jfTvOverlay .jf-tv-person-avatar{display:grid;place-items:center;flex:0 0 23px;width:23px;height:23px;border-radius:50%;background:linear-gradient(145deg,#f7d36c,#df8eae);color:#30233f;font-weight:900;font-size:11px}",
+    "#jfTvOverlay .jf-tv-person-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    "#jfTvOverlay .jf-tv-person-you{border-color:#f4d16e;box-shadow:0 0 0 1px #f4d16e55,0 2px 0 #0a1227}",
+    "#jfTvOverlay .jf-tv-people-empty{margin:0;color:#bdc8e8;font-size:11px}",
+
     "#jfTvOverlay #jfChatLauncher{z-index:25!important;visibility:visible!important;pointer-events:auto!important}",
     "#jfTvOverlay #jfChatWindow{z-index:24!important;visibility:visible!important;pointer-events:auto!important}",
     "#jfTvOverlay .jf-tv-live-badge[hidden]{display:none!important}",
@@ -85,6 +95,7 @@
           '<div id="jfTvLinkStage" hidden></div>',
           '<video id="jfTvStreamVideo" autoplay playsinline hidden></video>',
         '</div>',
+        '<section class="jf-tv-people" aria-label="Participantes da sala"><div class="jf-tv-people-head"><span>👥 QUEM ESTÁ ASSISTINDO</span><span id="jfTvPeopleCount" class="jf-tv-people-count">0 pessoas</span></div><div id="jfTvPeopleList" class="jf-tv-people-list" aria-live="polite"><p class="jf-tv-people-empty">Entre em uma sala para ver quem está aqui.</p></div></section>',
         '<div id="jfTvLinkControls" hidden></div>',
         '<div id="jfTvStreamControls" class="jf-tv-actions" hidden><span id="jfTvStreamAudio" class="jf-tv-actions"><button type="button" id="jfTvStreamMute" aria-label="Silenciar meu áudio" aria-pressed="false">🔊</button><label for="jfTvStreamVolume">Meu volume</label><input id="jfTvStreamVolume" type="range" min="0" max="1" step="0.01" value="1"></span><button type="button" id="jfTvStreamFullscreen">⛶ Tela cheia</button><span id="jfTvLocalState" role="status"></span></div>',
         '<div class="jf-tv-tools" id="jfTvAdminTools" hidden>',
@@ -164,6 +175,42 @@
   });
   function isAdmin(){return joined && socket.id===ownerId;}
   function status(message){$("jfTvStatus").textContent=message;}
+  function renderTvPeople(){
+    const list=$("jfTvPeopleList"),count=$("jfTvPeopleCount");
+    if(!list||!count)return;
+    list.replaceChildren();
+    if(!joined){
+      count.textContent="0 pessoas";
+      const empty=document.createElement("p");empty.className="jf-tv-people-empty";empty.textContent="Entre em uma sala para ver quem está aqui.";list.appendChild(empty);return;
+    }
+    const bridge=window.jfDanceBridge;
+    const people=[];
+    const seen=new Set();
+    const peerIds=bridge?.getPeerIds?.()||[];
+    for(const id of peerIds){
+      const profile=bridge?.getPeerProfile?.(id)||{};
+      const clientId=bridge?.getPeerClientId?.(id);
+      const key=clientId?"client:"+clientId:"socket:"+id;
+      if(seen.has(key))continue;
+      seen.add(key);
+      people.push({id,name:String(profile.name||"Ouvinte").slice(0,24),you:false});
+    }
+    const own=bridge?.getProfile?.()||{};
+    people.push({id:socket.id,name:String(own.name||"Você").slice(0,24),you:true});
+    count.textContent=people.length+" "+(people.length===1?"pessoa":"pessoas");
+    if(!people.length){
+      const empty=document.createElement("p");empty.className="jf-tv-people-empty";empty.textContent="Ninguém na sala ainda.";list.appendChild(empty);return;
+    }
+    for(const person of people){
+      const chip=document.createElement("div");
+      chip.className="jf-tv-person"+(person.you?" jf-tv-person-you":"");
+      const avatar=document.createElement("span");avatar.className="jf-tv-person-avatar";
+      avatar.textContent=(person.name.trim()[0]||"?").toLocaleUpperCase("pt-BR");
+      const name=document.createElement("span");name.className="jf-tv-person-name";
+      name.textContent=person.name+(person.you?" (você)":"")+(person.id===ownerId?" 👑":"");
+      chip.append(avatar,name);list.appendChild(chip);
+    }
+  }
   function fmt(t){t=Math.max(0,Math.floor(t||0));return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
   function streamAudioUi(){
     const volume=streamMuted?0:streamVolume;
@@ -270,7 +317,7 @@
   overlay.addEventListener("click",event=>{if(event.target===overlay)closeTv();});
   launch.onclick=()=>{
     if(!joined)return;
-    opened=true;overlay.hidden=false;placeChatInTv();mobileLayout?.open();updateUi();
+    opened=true;overlay.hidden=false;placeChatInTv();mobileLayout?.open();renderTvPeople();updateUi();
     socket.emit("tv:request-state");
     if(state?.mode==="youtube")void ensureYoutube();
     if(state?.mode==="link")linkPlayer?.apply(state);
@@ -937,11 +984,15 @@
   });
   socket.on("tv:error",data=>{status(data?.message||"Falha na TV.");});
   socket.on("joined-room",data=>{joined=true;room=data.room;ownerId=data.ownerId||null;state=null;viewerRequested=false;youtubeQueue=[];updateUi();});
+  socket.on("peer-joined",renderTvPeople);
+  socket.on("peer-left",renderTvPeople);
+  socket.on("profile-update",renderTvPeople);
+  window.addEventListener("jf-room-people-update",renderTvPeople);
   socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;updateUi();});
   function reset(){
     mobileLayout?.close();
     linkPlayer?.destroySource();
-    joined=false;room="";ownerId=null;state=null;viewerRequested=false;
+    joined=false;room="";ownerId=null;state=null;viewerRequested=false;renderTvPeople();
     viewerAudioEnabled=true;viewerAudioBlocked=false;
     if(sourceStream||localVideo)stopLocal();else releasePeers();
     restoreChatFromTv();overlay.hidden=true;opened=false;updateUi();
