@@ -6,42 +6,90 @@ if(!canvas)throw new Error("Camada 3D dos quartos não encontrada.");
 let renderer,scene,camera,lastSize={width:0,height:0};
 const avatars=new Map();
 let animationFrame=0,lastFrame=0;
-function bonePose(record,pose,time){
- const bones=record.legs||[];
- for(const b of bones){
-  const side=b.name.toLowerCase().includes("left")?-1:1;
-  let x=0;
-  if(pose==="walking")x=Math.sin(time*.012+(side<0?0:Math.PI))*.42;
-  else if(pose==="sitting")x=b.name.toLowerCase().includes("leg")&&!b.name.toLowerCase().includes("upper")?1.05:-.95;
-  else if(pose==="lying")x=b.name.toLowerCase().includes("leg")?-.15:0;
-  b.rotation.x=b.userData.jfRoomBaseX+x;
- }
-}
+const DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
+function boneName(value){return String(value||"").toLowerCase().replace(/mixamorig[:_]?/g,"").replace(/[^a-z0-9]/g,"");}
 function animate(now){
  animationFrame=0;
- const dt=Math.min(48,now-(lastFrame||now));lastFrame=now;
- let moving=false;
+ const dt=Math.min(.065,Math.max(0,(now-(lastFrame||now))/1000));lastFrame=now;
+ let keepAnimating=false;
  for(const record of avatars.values()){
-  if(!record.root||!record.target)continue;
+  if(!record.root||!record.target||!record.rig)continue;
   const p=record.root.position,t=record.target;
-  const dx=t.x-p.x,dy=t.y-p.y,d=Math.hypot(dx,dy);
-  if(d>.7){
-   const step=Math.min(1,dt*.009);
-   p.x+=dx*step;p.y+=dy*step;record.walking=true;moving=true;
-   if(Math.abs(dx)>Math.abs(dy))record.root.rotation.y=dx<0?-.12:.12;
+  const dx=t.x-p.x,dy=t.y-p.y,distance=Math.hypot(dx,dy);
+  const walking=distance>1.25;
+  const style=walking?"idle":(DANCES.has(record.dance)?record.dance:"idle");
+  if(walking){
+   // Mesma cadência da balada: deslocamento contínuo, sem saltar de célula.
+   const speed=Math.max(36,48*(record.scale||1))*1.35;
+   const step=Math.min(distance,speed*dt);
+   p.x+=dx/distance*step;p.y+=dy/distance*step;
+   const heading=Math.atan2(dx,-dy);
+   const diff=Math.atan2(Math.sin(heading-record.root.rotation.z),Math.cos(heading-record.root.rotation.z));
+   record.root.rotation.z+=Math.max(-dt*4,Math.min(dt*4,diff));
+   record.walkTime=(record.walkTime||0)+dt*7.8;
+   keepAnimating=true;
   }else{
    p.x=t.x;p.y=t.y;
-   if(record.walking){record.walking=false;bonePose(record,record.pose||"standing",now);}
   }
-  const pose=record.walking?"walking":(record.pose||"standing");
-  record.root.rotation.z=pose==="lying"?-1.25:0;
-  if(pose!==record.lastPose||pose==="walking")bonePose(record,pose,now);
-  record.lastPose=pose;
-  if(record.walking){p.z=2+Math.abs(Math.sin(now*.018))*2;moving=true;}
-  else p.z=2;
+  const phase=now/1000*({shake:12,macarena:4.8,party:7.2,capoeira:5.6,groove:5.1}[style]||2);
+  const pulse=Math.sin(phase),stride=Math.sin(record.walkTime||0);
+  record.root.position.z=walking?Math.abs(stride)*2.2:style==="idle"?.7*Math.sin(now/1000*2):Math.abs(pulse)*(style==="capoeira"?1.2:2.2);
+  if(!walking){
+   const targetYaw=record.baseYaw||0;
+   record.root.rotation.z+=Math.atan2(Math.sin(targetYaw-record.root.rotation.z),Math.cos(targetYaw-record.root.rotation.z))*Math.min(1,dt*1.6);
+  }
+  record.root.rotation.x=walking?0:style==="capoeira"?.14*pulse:style==="groove"?.12*pulse:style==="shake"?.07*pulse:0;
+  for(const bone of record.animationBones){
+   const base=record.rest.get(bone.uuid);if(!base)continue;
+   const n=boneName(bone.name);
+   const left=/left|^l(?:arm|hand|thigh|calf|leg)/.test(n),side=left?1:-1;
+   const upperLeg=/(upleg|upperleg|thigh)/.test(n);
+   const lowerLeg=/(calf|shin|lowerleg|leg$)/.test(n)&&!upperLeg;
+   const forearm=/(forearm|lowerarm)/.test(n);
+   const upperArm=/(upperarm|arm$|shoulder)/.test(n)&&!forearm;
+   const torso=/spine/.test(n);
+   let x=base.x,y=base.y,z=base.z;
+   if(walking){
+    if(upperLeg)x+=side*.36*stride;
+    if(lowerLeg)x+=.15*Math.max(0,-side*stride);
+    if(upperArm)x-=side*.26*stride;
+    if(forearm)x-=side*.10*stride;
+    if(torso)z+=.022*stride;
+   }else if(style==="shake"){
+    if(upperArm){x+=side*.26*Math.sin(phase);z+=side*.22*Math.cos(phase);}
+    if(forearm)x+=side*.22*Math.sin(phase+1);
+    if(upperLeg)x+=side*.08*Math.sin(phase);
+    if(torso){y+=.09*Math.sin(phase);z+=.055*Math.cos(phase);}
+   }else if(style==="macarena"){
+    const beat=Math.floor(phase/Math.PI*2)%8,reach=beat<2?1:beat<4?.55:beat<6?-.35:-.1;
+    if(upperArm){x+=reach*.65;z+=side*(beat>=2&&beat<4?.8:beat>=4&&beat<6?.35:.08);}
+    if(forearm)x+=(beat>=4&&beat<6?-.65:beat>=6?.65:.12);
+    if(upperLeg)x+=side*.075*Math.sin(phase/2);
+    if(torso)y+=.15*Math.sin(phase/2);
+   }else if(style==="party"){
+    if(upperArm){x+=side*.55*Math.sin(phase);z+=side*(.4+.25*Math.cos(phase));}
+    if(forearm)x+=.30+.22*Math.sin(phase+side);
+    if(upperLeg)x+=side*.17*Math.sin(phase);
+    if(torso){y+=.12*Math.sin(phase);z+=.05*Math.cos(phase);}
+   }else if(style==="capoeira"){
+    if(upperLeg)x+=side*.24*Math.sin(phase);
+    if(lowerLeg)x+=.12*Math.max(0,side*Math.sin(phase));
+    if(upperArm){x+=-side*.28*Math.sin(phase);z+=side*.28;}
+    if(forearm)x-=.32;
+    if(torso){y+=.14*Math.sin(phase);z+=.11*Math.sin(phase);}
+   }else if(style==="groove"){
+    if(upperArm){x+=.25*Math.sin(phase+side);z+=side*(.28+.2*Math.sin(phase));}
+    if(forearm)x+=side*.18*Math.cos(phase);
+    if(upperLeg)x+=side*.13*Math.cos(phase);
+    if(torso){y+=.18*Math.sin(phase);z+=.08*Math.sin(phase/2);}
+   }
+   bone.rotation.set(x,y,z);
+  }
+  record.walking=walking;record.lastPose=walking?"walking":record.pose;
+  if(walking||style!=="idle")keepAnimating=true;
  }
  render();
- if(moving)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
+ if(keepAnimating)animationFrame=requestAnimationFrame(animate);else lastFrame=0;
 }
 function scheduleAnimation(){if(!animationFrame)animationFrame=requestAnimationFrame(animate);}
 function init(){
@@ -75,14 +123,13 @@ async function createAvatar(person,scale,record){
   const height=Math.max(44,Math.min(92,68*scale));
   avatar.group.scale.setScalar(height/1.8);
   avatar.group.traverse(o=>{if(o.isMesh){o.frustumCulled=false;o.castShadow=false;o.receiveShadow=false;}});
-  record.root=avatar.group;record.dispose=avatar.dispose;
-  record.legs=[];
-  avatar.rig?.traverse?.(bone=>{
+  record.root=avatar.group;record.dispose=avatar.dispose;record.rig=avatar.rig;
+  record.rest=new Map();record.animationBones=[];
+  record.rig?.updateMatrixWorld(true);
+  record.rig?.traverse?.(bone=>{
    if(!bone.isBone)return;
-   const name=bone.name.toLowerCase();
-   if(/(left|right).*(upleg|thigh|leg)$/.test(name)||/(upleg|thigh|leg).*(left|right)/.test(name)){
-    bone.userData.jfRoomBaseX=bone.rotation.x;record.legs.push(bone);
-   }
+   record.animationBones.push(bone);
+   record.rest.set(bone.uuid,{x:bone.rotation.x,y:bone.rotation.y,z:bone.rotation.z});
   });
   if(record.target)record.root.position.copy(record.target);
   scene.add(record.root);scheduleAnimation();
@@ -98,11 +145,11 @@ function update(payload){
   let record=old;
   if(!record||record.signature!==key){
    if(record)removeAvatar(p.id,record);
-   record={signature:key,root:null,dispose:null,target:null,pose:"standing",walking:false,legs:[]};avatars.set(p.id,record);
+   record={signature:key,root:null,rig:null,dispose:null,target:null,pose:"standing",dance:p.dance||"idle",walking:false,rest:new Map(),animationBones:[],walkTime:0,baseYaw:0,scale:payload.scale||1};avatars.set(p.id,record);
    void createAvatar(p,payload.scale||1,record);
   }
   record.target=new THREE.Vector3(p.x-payload.width/2,payload.height/2-p.y,2);
-  record.pose=p.pose||"standing";
+  record.pose=p.pose||"standing";record.dance=p.dance||"idle";record.scale=payload.scale||1;
   if(record.root){
    const height=Math.max(44,Math.min(92,68*(payload.scale||1)));
    record.root.scale.setScalar(height/1.8);
