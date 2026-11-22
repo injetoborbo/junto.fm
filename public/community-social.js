@@ -9,6 +9,37 @@
   document.body.append(dock,panel);
   const $=id=>document.getElementById(id);
   let account=null,contacts=[],active=null,history=[];
+  function renderPublicProfilePage(){
+    const match=location.pathname.match(/^\\/u\\/([^/]+)\\/?$/);
+    if(!match)return;
+    document.body.classList.add("jf-public-profile-page");
+    let username="";try{username=decodeURIComponent(match[1]);}catch(_){username=match[1];}
+    const main=document.querySelector("main");if(!main)return;
+    const section=document.createElement("section");section.id="jfPublicProfile";section.className="jf-public-profile";
+    const heading=document.createElement("div");heading.className="jf-public-profile-head";
+    const avatar=document.createElement("div");avatar.className="jf-public-profile-avatar";avatar.textContent="🐒";
+    const identity=document.createElement("div");const name=document.createElement("h2");name.textContent="Carregando perfil...";
+    const handle=document.createElement("div");handle.className="jf-public-handle";handle.textContent="@"+username;
+    const motto=document.createElement("p");motto.className="jf-public-motto";identity.append(name,handle,motto);heading.append(avatar,identity);
+    const meta=document.createElement("div");meta.className="jf-public-profile-meta";
+    const badgesTitle=document.createElement("h3");badgesTitle.textContent="🏅 Medalhas conquistadas";badgesTitle.style.cssText="font:900 13px Tahoma;color:#315f8b;margin:14px 0 8px";
+    const badges=document.createElement("div");badges.className="jf-public-badges";badges.textContent="Carregando coleção...";
+    const actions=document.createElement("div");actions.className="jf-public-profile-actions";
+    const back=document.createElement("a");back.className="jf-home-action";back.href="/";back.textContent="← Voltar ao Junto.fm";actions.append(back);
+    section.append(heading,meta,badgesTitle,badges,actions);main.append(section);
+    const labels={welcome:"Bem-vindo a bordo",listen1:"Só mais uma música",listen10:"Uno mas...",listen50:"Tô fritando",listen100:"AYYY!",firstdj:"Solta o som",dj10:"Respeita o DJ",firstroom:"Cada macaco no seu galho",planet:"Planeta Macaco",nomad:"Nômade",friend1:"Macaco amigo",friend10:"Bando formado",firstchat:"Sinais de evolução",days7:"Emocionado",streak7:"Ponto marcado",banana1:"Agindo como tal",banana_mvp:"MVP",banana100:"Fornecedor da feira",tomato1:"Na cara não",tomato50:"Desperdício...",dance1:"Dança gatinhe...",dance_hour:"Não tá puro",dance_all:"Molejo",outfit1:"Feio arrumado",outfit_all:"Exagerado"};
+    fetch("/api/community/profile/"+encodeURIComponent(username),{credentials:"same-origin",cache:"no-store"}).then(async response=>{const data=await response.json();if(!response.ok)throw Error(data.error||"Perfil indisponível.");return data;}).then(data=>{
+      const profile=data.profile||{};name.textContent=profile.name||"Macaco";handle.textContent="@"+(profile.username||username);
+      motto.textContent=profile.motto||"Esse macaco ainda não deixou uma frase por aqui.";
+      avatar.replaceChildren();if(profile.avatar&&/^data:image\\/(png|jpeg|webp);base64,/i.test(profile.avatar)){const img=document.createElement("img");img.src=profile.avatar;img.alt="";avatar.append(img);}else avatar.textContent=(profile.name||"M").slice(0,1).toUpperCase();
+      const created=profile.createdAt?new Date(profile.createdAt):null;
+      meta.textContent="🐒 Na comunidade desde "+(created&&!Number.isNaN(created.getTime())?created.toLocaleDateString("pt-BR"):"recentemente")+" · 🏅 "+(data.achievements?.length||0)+" medalhas";
+      badges.replaceChildren();const unlocked=Array.isArray(data.achievements)?data.achievements:[];
+      if(!unlocked.length){badges.textContent="Ainda não conquistou medalhas. A aventura está só começando!";}
+      else for(const badge of unlocked){const chip=document.createElement("span");chip.className="jf-public-badge";chip.textContent="🏅 "+(labels[badge.achievement_id]||badge.achievement_id);badges.append(chip);}
+      if(data.isSelf){const edit=document.createElement("button");edit.className="jf-home-action";edit.type="button";edit.textContent="✎ Editar meu perfil";edit.addEventListener("click",()=>document.getElementById("jfOpenProfile")?.click());actions.append(edit);}
+    }).catch(error=>{name.textContent="Perfil não encontrado";motto.textContent=error.message;meta.textContent="";badges.textContent="Confira o endereço e tente novamente.";});
+  }
   const unread=new Map();
   function setStatus(message){$("jfMsnStatus").textContent=message||"";}
   function setOpen(open){panel.hidden=!open;$("jfMsnOpen").setAttribute("aria-expanded",String(open));if(open){$("jfFriendsDrawer")?.setAttribute("hidden","");socket.emit("dm-list");}}
@@ -44,7 +75,8 @@
   }
   function openConversation(person){
     active=person;history=[];unread.delete(person.id);updateUnread();renderContacts();
-    $("jfMsnChatHead").textContent="🐒 "+(person.name||"Macaco")+(person.username?" · @"+person.username:"");
+    const head=$("jfMsnChatHead");head.replaceChildren();head.append(document.createTextNode("🐒 "+(person.name||"Macaco")+" "));
+    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}
     $("jfMsnInput").disabled=false;$("jfMsnForm").querySelector("button").disabled=false;
     $("jfMsnMessages").replaceChildren();setStatus("Carregando conversa...");
     socket.emit("dm-open",{accountId:person.id});
@@ -86,10 +118,12 @@
   socket.on("dm-error",payload=>setStatus(payload?.message||"Mensagens indisponíveis."));
   fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(response=>response.json()).then(data=>{
     account=data.loggedIn?data.profile:null;
+    const ownProfile=document.getElementById("jfHomeMyProfile");if(ownProfile&&account?.username){ownProfile.href="/u/"+encodeURIComponent(account.username);ownProfile.hidden=false;}
     if(account)socket.emit("dm-list");
     else setStatus("Entre na sua conta para usar o Junto Messenger.");
     renderContacts();
   }).catch(()=>{account=null;renderContacts();setStatus("Não foi possível verificar sua conta.");});
+  renderPublicProfilePage();
   socket.on("friends-state",()=>{if(!panel.hidden)socket.emit("dm-list");});
   socket.on("connect",()=>{if(account)socket.emit("dm-list");});
 })();
