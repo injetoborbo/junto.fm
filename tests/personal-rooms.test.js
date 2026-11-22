@@ -62,6 +62,7 @@ test('the furniture editor separates catalog groups and rotates from controls on
  assert.match(html,/id="rotateRight"/);
  assert.doesNotMatch(html,/id="rotate"/);
  assert.match(editor,/updateObjectControls\(l\.items\)/);
+ assert.match(editor,/anchorType\?\.placement==='surface'&&!anchor\.legacyFloor\?24:58/);
  assert.match(editor,/rotateSelected\(-1\)/);
  assert.match(editor,/rotateSelected\(1\)/);
 });
