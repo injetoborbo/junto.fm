@@ -163,9 +163,12 @@
           // Explicit play/pause/seek commands are authoritative.
           try{video.currentTime=bounded;}catch(_){}
         }else if(!isAdmin()&&s.playing&&!buffering&&!video.seeking&&video.readyState>=2){
-          if(distance>5&&bufferedAt(bounded)){
-            // Hard-correct only when the destination is already buffered.
-            try{video.currentTime=bounded;}catch(_){}
+          if(distance>5){
+            // For a large gap, wait until the destination is already buffered.
+            // Speeding up here could consume data faster than a slow source delivers it.
+            if(bufferedAt(bounded)){
+              try{video.currentTime=bounded;}catch(_){}
+            }
           }else{
             // Small drift is corrected gradually; seeking on every heartbeat
             // can repeatedly interrupt progressive MP4 playback.
