@@ -15,10 +15,10 @@ async function enter(id){if(!socket.connected){socket.connect();await new Promis
 function heading(){$('roomTitle').textContent=current.name;$('ownerLabel').textContent='QUARTO DE '+current.owner_name;$('count').textContent=people.length+' / 12 no quarto';}
 function lobby(){if(editing&&!confirm('Sair sem salvar a decoração?'))return;socket.emit('leave');current=null;editing=false;people=[];$('room').hidden=true;$('lobby').hidden=false;history.replaceState(null,'','/quartos');return load();}
 $('lobbyBtn').onclick=run(lobby);$('refresh').onclick=run(load);$('create').onclick=run(async()=>{const r=await api('/api/quartos','POST',{});await enter(r.owner_id);});
-$('editBtn').onclick=()=>{if(editing)return;draft=structuredClone(current.layout);editing=true;selected=null;$('editor').hidden=false;$('guests').hidden=true;$('name').value=current.name;$('wall').value=draft.wall;$('floor').value=draft.floor;$('tip').textContent='Selecione um objeto • Posicione no quarto ou sobre uma mesa • Gire pelo controle no próprio objeto';selection();draw();};
+$('editBtn').onclick=()=>{if(editing)return;draft=R.validate(structuredClone(current.layout),current.layout);editing=true;selected=null;$('editor').hidden=false;$('guests').hidden=true;$('name').value=current.name;$('wall').value=draft.wall;$('floor').value=draft.floor;$('tip').textContent='Selecione um objeto • Posicione no quarto ou sobre uma mesa • Gire pelo controle no próprio objeto';selection();draw();};
 function stopEdit(){editing=false;draft=null;selected=null;$('editor').hidden=true;$('tip').textContent='Clique no chão para andar • Converse com seus amigos';draw();}
 $('cancel').onclick=()=>{if(saving)return;stopEdit();status('Alterações descartadas.');};
-$('save').onclick=run(async()=>{if(saving)return;saving=true;$('save').disabled=true;try{R.validate(draft);const r=await api('/api/quartos','PUT',{layout:draft,name:$('name').value,revision:current.revision});current={...current,...r};stopEdit();heading();status('Decoração salva!');}finally{saving=false;$('save').disabled=false;}});
+$('save').onclick=run(async()=>{if(saving)return;saving=true;$('save').disabled=true;try{draft=R.validate(draft,current?.layout);const r=await api('/api/quartos','PUT',{layout:draft,name:$('name').value,revision:current.revision});current={...current,...r};stopEdit();heading();status('Decoração salva!');}finally{saving=false;$('save').disabled=false;}});
 for(const key of ['wall','floor'])$(key).oninput=()=>{if(editing){draft[key]=$(key).value;draw();}};
 function selection(){
  const t=selected&&R.itemType(selected.type);
@@ -34,7 +34,7 @@ function previewItem(items){
  if(!editing||!selected||!hover)return null;
  const type=R.itemType(selected.type);if(!type)return null;
  const item={...selected,...hover};
- if(type.placement==='surface'){
+ if(type.placement==='surface'&&!selected.legacyFloor){
   const host=R.surfaceHostAt(items,hover);
   if(!host||!R.surfaceCellFree(items,host,hover,selected.id))return null;
   item.parentId=host.id;
@@ -55,7 +55,7 @@ function rotateSelected(step){
    }
    return item;
   });
-  const candidate={...draft,items:candidateItems};R.validate(candidate);draft=candidate;
+  const candidate={...draft,items:candidateItems};draft=R.validate(candidate,current?.layout);
  }
  selected=rotated;selection();draw();
 }
@@ -130,7 +130,7 @@ function surfaceTargetAt(e,items){
 }
 function placementPoint(e){
  const type=selected&&R.itemType(selected.type);
- if(editing&&type?.placement==='surface')return surfaceTargetAt(e,draft.items)?.point||null;
+ if(editing&&type?.placement==='surface'&&!selected.legacyFloor)return surfaceTargetAt(e,draft.items)?.point||null;
  return tile(e);
 }
 function furnitureAt(e){
@@ -150,7 +150,7 @@ function furnitureAt(e){
 }
 canvas.onpointermove=e=>{if(editing){hover=placementPoint(e);draw();}};
 canvas.onclick=run(async e=>{if(!current||saving)return;
- const surfacePlacement=editing&&selected&&R.itemType(selected.type)?.placement==='surface';
+ const surfacePlacement=editing&&selected&&R.itemType(selected.type)?.placement==='surface'&&!selected.legacyFloor;
  const surfaceHit=surfacePlacement?surfaceTargetAt(e,draft.items):null;
  if(surfacePlacement&&!surfaceHit){status('Clique sobre uma mesa ou mesinha para colocar esse objeto.');return;}
  const p=surfacePlacement?surfaceHit.point:tile(e);
@@ -158,7 +158,7 @@ canvas.onclick=run(async e=>{if(!current||saving)return;
  if(!editing){const target=furnitureAt(e)||[...current.layout.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));if(target&&R.itemType(target.type)?.interactive){const result=await emit('interact',{itemId:target.id});status(result.pose==='lying'?'Indo descansar na cama…':'Indo sentar no móvel…');}else await emit('walk',p);return;}
  if(selected){
   const type=R.itemType(selected.type),item={...selected,...p};
-  if(type.placement==='surface'){
+  if(type.placement==='surface'&&!selected.legacyFloor){
    const host=R.surfaceHostAt(draft.items,p);
    if(!host)throw Error('Esse objeto precisa ser colocado sobre uma mesa, mesinha ou criado-mudo.');
    if(!R.surfaceCellFree(draft.items,host,p,selected.id))throw Error('Já existe um objeto nesse espaço da mesa.');
@@ -175,7 +175,7 @@ canvas.onclick=run(async e=>{if(!current||saving)return;
    return entry;
   });
   if(!previous)candidateItems.push(item);
-  const candidate={...draft,items:candidateItems};R.validate(candidate);draft=candidate;selected=item;selection();
+  const candidate={...draft,items:candidateItems};draft=R.validate(candidate,current?.layout);selected=draft.items.find(entry=>entry.id===item.id);selection();
   status(type.placement==='surface'?'Objeto colocado sobre a mesa. Salve para todos verem.':'Móvel colocado. Salve para todos verem.');
  }else{
   const item=[...draft.items].reverse().find(i=>R.cells(i).some(([x,y])=>x===p.x&&y===p.y));
