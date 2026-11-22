@@ -93,7 +93,7 @@ test("new community and standalone pages inherit the selected site theme",()=>{
   const bridge=read("public/theme-bridge.js");
   assert.match(bridge,/localStorage\.getItem\(key\)/);
   assert.match(bridge,/\"junto_theme\"/);
-  assert.match(bridge,/dataset\\.jfTheme\\s*=\\s*name/);
+  assert.ok(bridge.includes("root.dataset.jfTheme = name"),"the stored theme is applied to the document");
   assert.match(bridge,/--jf-ui-panel/);
   assert.match(read("public/index.html"),/theme-bridge\.js/);
   assert.match(read("public/quartos.html"),/theme-bridge\.js/);
