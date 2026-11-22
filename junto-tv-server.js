@@ -5,10 +5,20 @@ const crypto = require("crypto");
 const { AccessToken } = require("livekit-server-sdk");
 const { archiveRequest, resolveArchiveVideo } = require("./archive-video");
 module.exports = function createJuntoTv(io, isRoomOwner, isRateLimited) {
-  const livekitUrl = process.env.LIVEKIT_URL || "";
-  const livekitKey = process.env.LIVEKIT_API_KEY || "";
-  const livekitSecret = process.env.LIVEKIT_API_SECRET || "";
-  const livekitReady = /^wss:\/\//.test(livekitUrl) && !!livekitKey && !!livekitSecret;
+  const livekitUrl = String(process.env.LIVEKIT_URL || "").trim();
+  const livekitKey = String(process.env.LIVEKIT_API_KEY || "").trim();
+  const livekitSecret = String(process.env.LIVEKIT_API_SECRET || "").trim();
+  const livekitReady = (() => {
+    try {
+      const endpoint = new URL(livekitUrl);
+      return endpoint.protocol === "wss:" && Boolean(endpoint.hostname) &&
+        Boolean(livekitKey) && Boolean(livekitSecret);
+    } catch (_) { return false; }
+  })();
+  // Never print credentials; this single startup line makes missing Render
+  // configuration visible in logs without exposing API keys or secrets.
+  if (livekitReady) console.info("[Junto.TV] LiveKit configurado e endpoint WSS válido.");
+  else console.warn("[Junto.TV] LiveKit indisponível: configure LIVEKIT_URL (wss://), LIVEKIT_API_KEY e LIVEKIT_API_SECRET na Render.");
   const lkRoomName = room => "jf-tv-" + crypto.createHash("sha256").update(room).digest("hex").slice(0, 32);
 
   const directModes = new Set(["youtube", "link"]);
