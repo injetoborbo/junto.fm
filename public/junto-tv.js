@@ -988,7 +988,7 @@
   socket.on("peer-left",renderTvPeople);
   socket.on("profile-update",renderTvPeople);
   window.addEventListener?.("jf-room-people-update",renderTvPeople);
-  socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;updateUi();});
+  socket.on("room-owner-update",data=>{ownerId=data?.ownerId||null;renderTvPeople();updateUi();});
   function reset(){
     mobileLayout?.close();
     linkPlayer?.destroySource();
