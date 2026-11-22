@@ -1,6 +1,6 @@
 "use strict";
 const path=require("node:path");
-const USERNAME=/^[a-z0-9_]{3,20}$/i;
+const USERNAME=/^[a-z0-9_]{3,24}$/i;
 
 module.exports=function setupCommunityProfiles(app,accounts){
   const pool=accounts.pool;
