@@ -2,6 +2,7 @@
 const path=require('node:path');
 const rules=require('./public/room-rules');
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ROOM_DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"]);
 const initial=()=>({wall:'#8caaa5',floor:'#c9ad85',items:[{id:'welcome-sofa',type:'sofa',x:1,y:7,rotation:0},{id:'welcome-plant',type:'plant',x:8,y:1,rotation:0},{id:'welcome-rug',type:'rug',x:3,y:3,rotation:0}]});
 function setupRooms(app,io,accounts){
  const pool=accounts.pool,ns=io.of('/quartos'),presence=new Map();
@@ -56,7 +57,7 @@ function setupRooms(app,io,accounts){
    const r=await room(id);if(!r)throw err('Quarto não encontrado.',404);
    if((presence.get(id)?.size||0)>=12&&s.data.owner!==id)throw err('Quarto cheio (12 visitantes).');
    leave(s);if(!s.connected)return;await s.join(id);s.data.owner=id;
-   if(!presence.has(id))presence.set(id,new Map());presence.get(id).set(s.id,{id:s.id,accountId:a.id,name:String(a.nickname||'Macaco').slice(0,24),wardrobe:a.wardrobe||{},x:0,y:0,path:[]});
+   if(!presence.has(id))presence.set(id,new Map());presence.get(id).set(s.id,{id:s.id,accountId:a.id,name:String(a.nickname||'Macaco').slice(0,24),wardrobe:a.wardrobe||{},x:0,y:0,path:[],pose:"standing",dance:"idle"});
    reply({room:r,own:id===a.id});broadcast(id);
   });
   on('walk',150,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const r=await room(id),person=presence.get(id)?.get(s.id);if(!person)return;const route=rules.route(r.layout,person,p);if(!route)throw err('Não dá para chegar aí.');person.path=route;person.pose='walking';person.pendingPose=null;if(!route.length)person.pose='standing';broadcast(id);reply({ok:true});});
@@ -76,6 +77,12 @@ function setupRooms(app,io,accounts){
    if(!target)throw err('Não há espaço livre ao redor desse móvel.');
    person.path=path;person.pendingPose=path.length?pose:null;person.pose=path.length?'walking':pose;
    broadcast(id);reply({ok:true,pose});
+  });
+  on('dance-style',250,async(p,a,reply)=>{
+   const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');
+   const person=presence.get(id)?.get(s.id);if(!person)return;
+   const dance=String(p?.dance||'idle');if(!ROOM_DANCES.has(dance))throw err('Dança inválida.');
+   person.dance=dance;broadcast(id);reply({ok:true,dance});
   });
   on('chat',700,async(p,a,reply)=>{const id=s.data.owner;if(!id||!await allowed(id,a.id))throw err('Entre no quarto.');const text=typeof p?.text==='string'?p.text.trim().slice(0,240):'';if(!text)return;ns.to(id).emit('chat',{id:s.id,name:String(a.nickname||'Macaco').slice(0,24),text});reply({ok:true});});
   s.on('leave',()=>leave(s));s.on('disconnect',()=>leave(s));
