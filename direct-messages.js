@@ -50,7 +50,7 @@ module.exports=function setupDirectMessages(io,accounts){
       ), latest AS (
         SELECT DISTINCT ON (peer_id) peer_id,body,created_at,sender_id
         FROM (
-          SELECT CASE WHEN sender_id=$1 THEN recipient_id ELSE sender_id END AS peer_id,
+          SELECT id,CASE WHEN sender_id=$1 THEN recipient_id ELSE sender_id END AS peer_id,
                  body,created_at,sender_id
           FROM junto_dm_messages
           WHERE sender_id=$1 OR recipient_id=$1
