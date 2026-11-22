@@ -124,6 +124,13 @@
     else setStatus("Entre na sua conta para usar o Junto Messenger.");
     renderContacts();
   }).catch(()=>{account=null;renderContacts();setStatus("Não foi possível verificar sua conta.");});
+  window.addEventListener("jf-account-username-updated",event=>{
+    const username=String(event.detail?.username||"");if(!username)return;
+    if(account)account.username=username;
+    const ownProfile=document.getElementById("jfHomeMyProfile");
+    if(ownProfile){ownProfile.href="/u/"+encodeURIComponent(username);ownProfile.hidden=false;}
+    if(account)socket.emit("dm-list");
+  });
   renderPublicProfilePage();
   socket.on("friends-state",()=>{if(!panel.hidden)socket.emit("dm-list");});
   socket.on("connect",()=>{if(account)socket.emit("dm-list");});
