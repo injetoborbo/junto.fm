@@ -50,9 +50,18 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   await new Promise(r=>setTimeout(r,400));
   const bedPresence=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'interact',{itemId:'test-bed'})).pose,'lying','beds trigger a synchronized lying interaction');
   const atBed=await bedPresence,walker=atBed.find(p=>p.accountId===b);const step=[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>({x:walker.x+dx,y:walker.y+dy})).find(tile=>rules.route(layout,walker,tile)?.length===1);assert.ok(step,'a free adjacent walking tile exists');
-  const movingUpdate=new Promise(r=>visitor.once('people',r));assert.equal((await emit(visitor,'walk',step)).ok,true,'walking interrupts a furniture pose');
+  const waitForPose=pose=>new Promise((resolve,reject)=>{
+   const timeout=setTimeout(()=>{visitor.off('people',onPeople);reject(new Error('Timed out waiting for avatar pose: '+pose));},5000);
+   function onPeople(people){
+    if(people.find(p=>p.accountId===b)?.pose!==pose)return;
+    clearTimeout(timeout);visitor.off('people',onPeople);resolve(people);
+   }
+   visitor.on('people',onPeople);
+  });
+  const movingUpdate=waitForPose('walking'),standingUpdate=waitForPose('standing');
+  assert.equal((await emit(visitor,'walk',step)).ok,true,'walking interrupts a furniture pose');
   assert.equal((await movingUpdate).find(p=>p.accountId===b)?.pose,'walking');
-  const standingUpdate=new Promise(r=>visitor.once('people',r));const settled=await standingUpdate;assert.equal(settled.find(p=>p.accountId===b)?.pose,'standing','walking returns the avatar to standing');
+  const settled=await standingUpdate;assert.equal(settled.find(p=>p.accountId===b)?.pose,'standing','walking returns the avatar to standing');
   await new Promise(r=>setTimeout(r,180));
   assert.match((await emit(visitor,'walk',{x:1,y:7})).error,/chegar/);
   const owner=await connect(a);assert.equal((await emit(owner,'enter',{owner:a})).own,true);
