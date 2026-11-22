@@ -25,6 +25,9 @@ jobs:
           node --check tests/personal-rooms.test.js
           node --check public/chat-resize.js
           node --check public/junto-tv.js
+          node --check direct-messages.js
+          node --check public/community-social.js
+          node --check tests/community-social.test.js
           node --check tests/junto-tv-presence.test.js
           node --input-type=module --check < public/quartos-3d.js
           node --input-type=module --check < public/wardrobe.js
@@ -35,3 +38,5 @@ jobs:
           SOCKET_CLIENT_TEST_MODULE: ${{ github.workspace }}/node_modules/socket.io-client
       - name: Run Junto.TV and Archive playback regression tests
         run: npm run test:tv
+      - name: Run community and direct-message regression tests
+        run: npm run test:community
