@@ -1,36 +1,46 @@
 (() => {
   "use strict";
   const $ = id => document.getElementById(id);
-  const entry = $("jfRoomEntryPanel");
-  if (!entry || $("jfEntryPaperHead")) return;
+  const panel = $("jfRoomEntryPanel");
+  if (!panel) return;
 
-  const masthead = document.createElement("header");
-  masthead.id = "jfEntryPaperHead";
-  masthead.className = "jf-entry-paper-head";
-  masthead.innerHTML = '<div class="jf-entry-paper-copy"><span class="jf-entry-paper-kicker">ESTAÇÃO DE ENCONTRO · JUNTO.FM</span><h2>Todo mundo no mesmo lugar.</h2><p>Crie uma sala, entre na de alguém ou monte seu cantinho com a galera.</p></div><div class="jf-entry-paper-stamp"><strong>TRANSMISSÃO</strong><span>♫</span><small>NO AR JUNTOS</small></div>';
-  entry.insertBefore(masthead, entry.firstChild);
-
+  // Mantém os mesmos elementos e IDs: os handlers existentes continuam válidos.
+  const newspaper = $("jfHomeCommunity");
+  const roomActions = $("jfRoomEntryActions");
   const account = $("jfEntryAccount");
+  if (newspaper && roomActions && account && !$("jfHomeEntry")) {
+    const access = document.createElement("div");
+    access.className = "jf-home-entry";
+    access.id = "jfHomeEntry";
+    access.setAttribute("aria-label", "Entrar, criar sala e acessar sua conta");
+    const lead = newspaper.querySelector(".jf-home-lead");
+    newspaper.insertBefore(access, lead || null);
+    access.append(roomActions, account);
+  }
+
   const hint = $("jfEntryAccountHint");
-  const actions = document.createElement("div");
-  actions.className = "jf-entry-account-actions";
+  const accountActions = document.createElement("div");
+  accountActions.className = "jf-entry-account-actions";
+
   const loginButton = document.createElement("button");
   loginButton.type = "button";
   loginButton.className = "btn";
   loginButton.textContent = "Entrar na conta";
   loginButton.addEventListener("click", () => openAccount("login"));
+
   const registerButton = document.createElement("button");
   registerButton.type = "button";
   registerButton.className = "btn secondary";
   registerButton.textContent = "Criar conta";
   registerButton.addEventListener("click", () => openAccount("register"));
-  actions.append(loginButton, registerButton);
+
+  accountActions.append(loginButton, registerButton);
   const googleLink = $("jfGoogleLogin");
   if (googleLink) {
     googleLink.textContent = "Continuar com Google";
-    actions.appendChild(googleLink);
+    accountActions.appendChild(googleLink);
   }
-  if (account) account.insertBefore(actions, hint || account.firstChild);
+  if (account) account.insertBefore(accountActions, hint || account.firstChild);
 
   const backdrop = document.createElement("div");
   backdrop.className = "jf-modal-backdrop";
@@ -122,12 +132,15 @@
       const loggedIn = Boolean(data.loggedIn);
       loginButton.hidden = !configured || loggedIn;
       registerButton.hidden = !configured || loggedIn;
-      if (hint && configured && !loggedIn) hint.textContent = "Guarde seu perfil, trajes e amizades na conta.";
+      if (googleLink) googleLink.hidden = !data.googleConfigured || loggedIn;
+      if (hint && configured && !loggedIn) hint.textContent = "Entre ou crie sua conta para salvar perfil, trajes e amizades.";
+      if (hint && loggedIn) hint.textContent = "Você já está conectado. Suas informações e amizades ficam salvas.";
       if (hint && !configured) hint.textContent = "Contas temporariamente indisponíveis. Você ainda pode criar e entrar em salas sem cadastro.";
     })
     .catch(() => {
       loginButton.hidden = true;
       registerButton.hidden = true;
+      if (googleLink) googleLink.hidden = true;
       if (hint) hint.textContent = "Não foi possível verificar as contas agora. Você ainda pode entrar em salas sem cadastro.";
     });
 })();
