@@ -1,5 +1,5 @@
 /* Acesso da página inicial integrado ao Jornal do Junto. */
-body:not(.jf-in-room) #jfRoomEntryPanel{
+body:not(.jf-in-room) main #jfRoomEntryPanel{
   width:min(100%,940px);
   margin:0 auto 8px;
   padding:4px 10px 8px;
@@ -8,7 +8,7 @@ body:not(.jf-in-room) #jfRoomEntryPanel{
   background:transparent;
   box-shadow:none;
 }
-body:not(.jf-in-room) #jfRoomEntryPanel>.status{
+body:not(.jf-in-room) main #jfRoomEntryPanel>.status{
   justify-content:center;
   margin:5px 0 0;
   padding:6px 10px;
@@ -17,9 +17,9 @@ body:not(.jf-in-room) #jfRoomEntryPanel>.status{
   color:var(--jf-ui-muted,var(--muted));
   font-size:10px;
 }
-body:not(.jf-in-room) #jfRoomEntryPanel #jfLeaveRoom{display:none!important}
-body:not(.jf-in-room) #jfRoomEntryPanel #roomCount,
-body:not(.jf-in-room) #jfRoomEntryPanel #help{display:none!important}
+body:not(.jf-in-room) main #jfRoomEntryPanel #jfLeaveRoom{display:none!important}
+body:not(.jf-in-room) main #jfRoomEntryPanel #roomCount,
+body:not(.jf-in-room) main #jfRoomEntryPanel #help{display:none!important}
 
 /* Acesso rápido: primeiro entrar/criar sala; depois os demais caminhos. */
 .jf-home-entry{
@@ -64,7 +64,7 @@ body:not(.jf-in-room) #jfRoomEntryPanel #help{display:none!important}
 }
 .jf-home-entry .jf-room-entry-actions .btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
 
-.jf-home-entry .jf-entry-account{
+body:not(.jf-in-room) #jfHomeCommunity .jf-entry-account{
   display:flex;
   flex-direction:column;
   align-items:stretch;
@@ -75,7 +75,7 @@ body:not(.jf-in-room) #jfRoomEntryPanel #help{display:none!important}
   border-top:1px solid color-mix(in srgb,var(--jf-ui-border,var(--jf-secondary)) 55%,transparent);
   text-align:left;
 }
-.jf-home-entry .jf-entry-account>.small{
+body:not(.jf-in-room) #jfHomeCommunity .jf-entry-account>.small{
   max-width:none;
   color:var(--jf-ui-muted,var(--muted));
   font-size:10px;
@@ -263,7 +263,7 @@ body:not(.jf-in-room) #jfRoomEntryPanel #help{display:none!important}
   font-size:11px;line-height:1.45;
 }
 @media(max-width:620px){
-  body:not(.jf-in-room) #jfRoomEntryPanel{padding:2px 6px 7px}
+  body:not(.jf-in-room) main #jfRoomEntryPanel{padding:2px 6px 7px}
   .jf-home-entry{padding:11px 2px 12px}
   .jf-home-entry .jf-room-entry-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .jf-home-entry .jf-room-entry-actions .btn{min-height:42px;padding:8px 6px;font-size:10px}
