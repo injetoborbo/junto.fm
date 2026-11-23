@@ -139,3 +139,7 @@ body:not(.jf-in-room) #jfRoomEntryPanel #jfLeaveRoom{margin-top:12px}
   #jfCreateRoomModal .jf-room-modal,#jfJoinRoomModal .jf-room-modal,#jfEntryAccountModal .jf-room-modal{padding:19px 16px 16px}
   #jfEntryAccountModal .jf-room-modal-actions{flex-direction:column}
 }
+
+/* A tela inicial não precisa expor instruções de inicialização do projeto. */
+body:not(.jf-in-room) #help,body:not(.jf-in-room) #roomCount{display:none!important}
+body:not(.jf-in-room) #jfRoomEntryPanel .status{justify-content:center;margin-top:9px}
