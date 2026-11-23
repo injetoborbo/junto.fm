@@ -256,7 +256,9 @@
     try{
       if(localVideo.paused)await Promise.all([localAudioContext?.resume(),localVideo.play()]);
       else localVideo.pause();
-      // Os eventos "playing" e "pause" enviam o estado após a mídia mudar.
+      // Garante envio também em navegadores que não disparam os eventos simulados;
+      // se "playing"/"pause" já enviaram, a assinatura impede a duplicação.
+      localState();
     }catch(_){status("Não foi possível retomar o arquivo. Tente novamente.");}
   };
   function seekLocal(seconds){
