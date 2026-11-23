@@ -161,7 +161,7 @@
   // Só usar o botão manual quando o próprio navegador bloquear autoplay com som.
   let youtubeHardStopped=false, viewerAudioEnabled=true, viewerAudioBlocked=false, pauseRetryCount=0;
   let sourceStream=null, localVideo=null, localUrl="", localAudioContext=null, localMonitor=null, viewerRequested=false;
-  let streamVolume=1, streamMuted=false, localScrubbing=false;
+  let streamVolume=1, streamMuted=false, localScrubbing=false, lastLocalStateSignature="";
   let captureRequest=0;
   let lkRoom=null, lkLoadPromise=null, lkGeneration=0;
   const livekitAudio=new Set();
@@ -242,17 +242,40 @@
   }
   function localState(){
     renderLocal();
-    if(isAdmin()&&state?.mode==="local"&&sourceStream&&localVideo&&Number.isFinite(localVideo.duration))
-      socket.emit("tv:local-state",{playing:!localVideo.paused&&!localVideo.ended,seconds:localVideo.currentTime,duration:localVideo.duration});
+    if(!isAdmin()||state?.mode!=="local"||!sourceStream||!localVideo||!Number.isFinite(localVideo.duration))return;
+    const payload={playing:!localVideo.paused&&!localVideo.ended,seconds:localVideo.currentTime,duration:localVideo.duration};
+    // Pause/playing podem disparar junto com o clique. Enviar só uma fotografia
+    // de estado por alteração evita duplicatas e preserva o limite do servidor.
+    const signature=[payload.playing,Math.round(payload.seconds*10),Math.round(payload.duration*10)].join(":");
+    if(signature===lastLocalStateSignature)return;
+    lastLocalStateSignature=signature;
+    socket.emit("tv:local-state",payload);
   }
   $("jfTvLocalPlay").onclick=async()=>{
     if(!isAdmin()||state?.mode!=="local"||!localVideo)return;
-    try{if(localVideo.paused){await Promise.all([localAudioContext?.resume(),localVideo.play()]);}else localVideo.pause();localState();}
-    catch(_){status("Não foi possível retomar o arquivo. Tente novamente.");}
+    try{
+      if(localVideo.paused)await Promise.all([localAudioContext?.resume(),localVideo.play()]);
+      else localVideo.pause();
+      // Garante envio também em navegadores que não disparam os eventos simulados;
+      // se "playing"/"pause" já enviaram, a assinatura impede a duplicação.
+      localState();
+    }catch(_){status("Não foi possível retomar o arquivo. Tente novamente.");}
   };
   function seekLocal(seconds){
     if(!isAdmin()||state?.mode!=="local"||!localVideo||!Number.isFinite(localVideo.duration))return;
-    localVideo.currentTime=Math.max(0,Math.min(localVideo.duration,seconds));localState();
+    const video=localVideo;
+    const target=Math.max(0,Math.min(video.duration,seconds));
+    if(Math.abs(video.currentTime-target)<0.05){localState();return;}
+    const finishSeek=()=>{
+      video.removeEventListener("seeked",finishSeek);
+      if(localVideo===video){localScrubbing=false;localState();}
+    };
+    video.addEventListener("seeked",finishSeek);
+    try{video.currentTime=target;}
+    catch(error){
+      video.removeEventListener("seeked",finishSeek);
+      status("Não foi possível alterar a posição deste arquivo.");
+    }
   }
   $("jfTvLocalBack").onclick=()=>seekLocal((localVideo?.currentTime||0)-10);
   $("jfTvLocalForward").onclick=()=>seekLocal((localVideo?.currentTime||0)+10);
@@ -296,7 +319,7 @@
     }
     if(localUrl){URL.revokeObjectURL(localUrl);localUrl="";}
     if(localAudioContext){localAudioContext.close().catch(()=>{});localAudioContext=null;}
-    localMonitor=null;localScrubbing=false;renderLocal();
+    localMonitor=null;localScrubbing=false;lastLocalStateSignature="";renderLocal();
     releasePeers();
   }
   function stopBroadcast(){
