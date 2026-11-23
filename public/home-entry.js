@@ -122,6 +122,7 @@
       const loggedIn = Boolean(data.loggedIn);
       loginButton.hidden = !configured || loggedIn;
       registerButton.hidden = !configured || loggedIn;
+      if (hint && configured && !loggedIn) hint.textContent = "Guarde seu perfil, trajes e amizades na conta.";
       if (hint && !configured) hint.textContent = "Contas temporariamente indisponíveis. Você ainda pode criar e entrar em salas sem cadastro.";
     })
     .catch(() => {
