@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const $=id=>document.getElementById(id);
-  let active=false,checking=false,finished=false,category="outfit";
+  let active=false,checking=false,finished=false,category="outfit",originals=null;
   const keys=["hat","glasses","headphones","outfit"];
   const defaults={hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
   const meta={
@@ -105,12 +105,16 @@
     document.body.classList.add("jf-avatar-setup-active");
     const oldHead=dialog.querySelector(".jf-modal-head");
     const oldDescription=dialog.querySelector(":scope > p.small");
-    if(oldHead)oldHead.hidden=true;
-    if(close)close.hidden=true;
-    if(oldDescription)oldDescription.hidden=true;
     const layout=dialog.querySelector(".jf-wardrobe-layout");
     const stage=layout?.querySelector("#jfWardrobePreview")?.parentElement;
     const preview=$("jfWardrobePreview");
+    const fields=layout?.querySelector(".jf-wardrobe-fields");
+    const status=$("jfWardrobeAssetStatus");
+    const originalSaveRow=save.closest(".row");
+    originals={oldHead,oldDescription,stage,preview,fields,fieldChildren:fields?[...fields.childNodes]:[],status,originalSaveRow,footer:null,heading:null};
+    if(oldHead)oldHead.hidden=true;
+    if(close)close.hidden=true;
+    if(oldDescription)oldDescription.hidden=true;
     if(stage&&preview){
       stage.classList.add("jf-avatar-studio-stage");
       preview.dataset.avatarStudio="true";
@@ -121,35 +125,52 @@
       top.innerHTML='<span>JUNTO.FM <i>／</i> ESTÚDIO DE PERSONAGENS</span><span>REGISTRO 001</span>';
       const bottom=document.createElement("div");bottom.className="jf-avatar-stage-bottomline";
       bottom.innerHTML='<span>SEU AVATAR · SUA IDENTIDADE</span><span>↔ GIRE PARA CONFERIR</span>';
-      stage.append(top,bottom);
-      const status=$("jfWardrobeAssetStatus");if(status)status.classList.add("jf-avatar-stage-status");
+      stage.append(top,bottom);originals.stageTop=top;originals.stageBottom=bottom;
+      status?.classList.add("jf-avatar-stage-status");
     }
     const heading=document.createElement("header");heading.className="jf-avatar-studio-header";
     const brand=document.createElement("div");brand.className="jf-avatar-studio-brand";
     brand.innerHTML='<span class="jf-avatar-studio-mark">♫</span><span><small>JUNTO.FM / AVATAR LAB</small><strong>Crie seu personagem</strong></span>';
     const step=document.createElement("div");step.className="jf-avatar-studio-step";
     step.innerHTML='<span>01</span><span>DEFINIÇÃO DE IDENTIDADE</span>';
-    heading.append(brand,step);
-    dialog.prepend(heading);
-    const fields=layout?.querySelector(".jf-wardrobe-fields");
+    heading.append(brand,step);dialog.prepend(heading);originals.heading=heading;
     if(fields)buildAppearancePanel(fields);
-    const footer=document.createElement("footer");footer.className="jf-avatar-studio-footer";
+    const footer=document.createElement("footer");footer.className="jf-avatar-studio-footer";originals.footer=footer;
     const footnote=document.createElement("div");footnote.className="jf-avatar-studio-footnote";
     footnote.innerHTML='<strong>Pronto para entrar?</strong><span>Seu macaco será salvo como seu avatar oficial.</span>';
     const actions=document.createElement("div");actions.className="jf-avatar-studio-actions";
-    save.textContent="CONFIRMAR PERSONAGEM";
-    save.classList.add("jf-avatar-setup-confirm");
-    const row=save.closest(".row");if(row)row.remove();
+    save.textContent="CONFIRMAR PERSONAGEM";save.classList.add("jf-avatar-setup-confirm");
+    if(originalSaveRow)originalSaveRow.remove();
     actions.append(save);footer.append(footnote,actions);
     statusNode.textContent="As mudanças são aplicadas no modelo 3D em tempo real.";
     footer.append(statusNode);dialog.append(footer);
-    modal.addEventListener("click",event=>{if(event.target===modal){event.preventDefault();event.stopImmediatePropagation();}},true);
+    modal.addEventListener("click",event=>{if(active&&event.target===modal){event.preventDefault();event.stopImmediatePropagation();}},true);
     document.addEventListener("keydown",event=>{
       if(active&&event.key==="Escape"){event.preventDefault();event.stopImmediatePropagation();}
     },true);
     save.addEventListener("click",complete,true);
     open?.click();
-    const first=fields?.querySelector(".jf-avatar-category-tab");first?.focus({preventScroll:true});
+    fields?.querySelector(".jf-avatar-category-tab")?.focus({preventScroll:true});
+  }
+  function restoreWardrobeDialog(){
+    if(!originals)return;
+    const {oldHead,oldDescription,stage,preview,fields,fieldChildren,status,originalSaveRow,footer,heading}=originals;
+    if(fields)fields.replaceChildren(...fieldChildren);
+    stage?.classList.remove("jf-avatar-studio-stage");
+    stage?.querySelector(".jf-avatar-stage-topline")?.remove();
+    stage?.querySelector(".jf-avatar-stage-bottomline")?.remove();
+    if(preview){delete preview.dataset.avatarStudio;delete preview.dataset.avatarPlateName;delete preview.dataset.avatarPlateHandle;}
+    status?.classList.remove("jf-avatar-stage-status");
+    if(oldHead)oldHead.hidden=false;
+    if(oldDescription)oldDescription.hidden=false;
+    if(close)close.hidden=false;
+    heading?.remove();footer?.remove();statusNode.remove();
+    if(originalSaveRow){
+      save.textContent="Salvar traje";save.classList.remove("jf-avatar-setup-confirm");save.disabled=false;
+      originalSaveRow.append(save);dialog.append(originalSaveRow);
+    }
+    modal.classList.remove("jf-avatar-setup");document.body.classList.remove("jf-avatar-setup-active");
+    originals=null;
   }
   async function complete(event){
     if(!active||finished)return;
@@ -168,7 +189,7 @@
       try{const local=JSON.parse(localStorage.getItem("junto_profile")||"{}");local.wardrobe=wardrobe;localStorage.setItem("junto_profile",JSON.stringify(local));}catch(_){}
       window.dispatchEvent(new CustomEvent("jf-wardrobe-save",{detail:{wardrobe}}));
       window.dispatchEvent(new CustomEvent("jf-avatar-created",{detail:{profile:data.profile}}));
-      modal.classList.remove("jf-avatar-setup");document.body.classList.remove("jf-avatar-setup-active");
+      restoreWardrobeDialog();
       close?.click();
     }catch(error){
       statusNode.textContent=error.message||"Falha ao salvar. Tente novamente.";save.disabled=false;
