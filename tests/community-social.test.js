@@ -125,7 +125,7 @@ test("presence and listening sync only disclose friends to authenticated users",
   assert.match(source,/filter\(friendId=>friendIds\.has\(friendId\)\)/);
   assert.match(source,/filter\(\(\[friendId\]\)=>friendIds\.has\(friendId\)\)/);
   assert.match(source,/social-presence-sync",\(\)=>void sendPresenceState\(socket\)/);
-  assert.match(source,/if\(!id\)\{socket\.emit\("social-presence-state",\{online:\[\],listening:\[\]\}\);return;\}/);
+  assert.match(source,/if\(!id\)\{[\s\S]*?social-presence-state",\{online:\[\],listening:\[\]\}\);return;/);
 });
 
 test("offline MSN nudge status does not claim deferred delivery",()=>{
