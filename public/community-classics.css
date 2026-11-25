@@ -10,3 +10,5 @@
 .jf-classic-profile form button,.jf-classic-entry button{justify-self:start;padding:8px 12px;border:1px solid #fff;border-radius:4px;color:#17143e;font:900 11px Tahoma;background:linear-gradient(#fff,#b8c3ff 45%,#6b65d8);cursor:pointer}
 .jf-classic-profile form p{margin:0;color:#aefaff;font-size:11px}.jf-classic-profile h4{margin:14px 0 8px;font-size:12px;color:#ffb9e9}
 .jf-classic-profile [hidden]{display:none!important}
+
+.community-discuss{margin-top:8px;width:100%}.community-discussion{margin-top:10px;padding-top:10px;border-top:1px solid #55599c}.community-posts{display:grid;gap:8px;color:#c5c9f2;font-size:12px}.community-post{padding:9px;border:1px solid #55599c;border-radius:5px;background:#10142b}.community-post b{color:#aefaff}.community-post small{float:right;font-size:9px}.community-post p{margin:7px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.community-post-form{display:grid;gap:8px;margin-top:10px}.community-post-form textarea{width:100%;padding:9px;border:1px solid #7376ce;border-radius:5px;background:#080d2b;color:#fff;font:13px "Trebuchet MS",Verdana,sans-serif;resize:vertical}.community-post-form button{justify-self:start}
