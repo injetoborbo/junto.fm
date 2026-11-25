@@ -16,3 +16,10 @@
 body:not(.jf-in-room) .jf-msn-dock{top:68px;right:18px}
 @media(max-width:760px){body:not(.jf-in-room) .jf-msn-dock{top:58px;right:10px}.jf-msn-window{z-index:15000}}
 .jf-msn-profile-link{margin-left:8px;color:var(--jf-secondary);font-size:10px;font-weight:900;text-decoration:underline;white-space:nowrap}
+
+.jf-msn-nudge{margin-left:8px;padding:5px 8px;border:1px solid var(--jf-ui-button-border);border-radius:4px;color:var(--jf-ui-button-text);background:var(--jf-ui-button);font:900 10px var(--jf-font-family,Tahoma);cursor:pointer;white-space:nowrap}
+.jf-msn-nudge-toast{position:fixed;z-index:25000;left:50%;top:16px;transform:translateX(-50%);padding:12px 18px;border:2px solid #fff;border-radius:7px;background:linear-gradient(#b9fbff,#6b9dff 55%,#9b63dd);color:#17143e;font:900 13px Tahoma;box-shadow:0 5px 0 #080a26,0 0 25px #70f4ff77}
+.jf-msn-nudge-toast[hidden]{display:none}
+@keyframes jf-msn-nudge-shake{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-5px)}30%,60%,90%{transform:translateX(5px)}}
+body.jf-msn-nudged{animation:jf-msn-nudge-shake .55s ease-in-out 2}
+@media(prefers-reduced-motion:reduce){body.jf-msn-nudged{animation:none}}
