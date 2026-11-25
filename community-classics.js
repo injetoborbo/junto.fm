@@ -109,6 +109,26 @@ function setupCommunityClassics(app,io,accounts){
     await pool.query("DELETE FROM junto_community_members WHERE community_id=$1 AND account_id=$2 AND NOT EXISTS(SELECT 1 FROM junto_communities WHERE id=$1 AND owner_id=$2)",[req.params.id,viewer.id]);res.json({ok:true});
   }));
   app.get("/comunidades",(_req,res)=>res.set("Cache-Control","no-cache").sendFile(path.join(__dirname,"public","communities.html")));
+  const winkTimes=new Map();
+  io.on("connection",socket=>{
+    socket.on("social-wink",async payload=>{
+      const sender=await accounts.accountFromRequest(socket.request).catch(()=>null);
+      const peerId=String(payload?.accountId||"");
+      if(!sender||!UUID.test(peerId)||peerId===sender.id)return socket.emit("social-wink-error",{message:"Entre na conta e escolha um amigo."});
+      const now=Date.now(),last=winkTimes.get(socket.id)||0;
+      if(now-last<15000)return socket.emit("social-wink-error",{message:"Aguarde um pouco antes de chamar atenção novamente."});
+      try{
+        const [a,b]=[sender.id,peerId].sort();
+        const friend=await pool.query("SELECT 1 FROM junto_friendships WHERE user_a=$1 AND user_b=$2",[a,b]);
+        if(!friend.rowCount)return socket.emit("social-wink-error",{message:"Só é possível chamar atenção de amigos."});
+        winkTimes.set(socket.id,now);
+        let delivered=false;
+        for(const peer of io.sockets.sockets.values())if(peer.data.account?.id===peerId){peer.emit("social-wink-received",{from:sender.nickname||"Um amigo"});delivered=true;}
+        socket.emit("social-wink-sent",{delivered});
+      }catch(e){socket.emit("social-wink-error",{message:"Não foi possível chamar atenção agora."});}
+    });
+    socket.on("disconnect",()=>winkTimes.delete(socket.id));
+  });
   return {ready};
 }
 module.exports=setupCommunityClassics;
