@@ -1062,6 +1062,40 @@ body:not(.jf-in-room) main>.jf-hero-description{margin:0 auto 17px;max-width:560
 </style>
 <link rel="stylesheet" href="/home-entry.css?v=jornal-entry-2">
 <script defer src="/home-entry.js?v=jornal-entry-2"></script>
+<style id="jf-home-clean-design">
+/* Junto hall: one welcoming action, not a dashboard of cards. */
+body:not(.jf-in-room) main{min-height:calc(100vh - 76px)!important;max-width:1180px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:0!important;padding:12px 22px 36px!important}
+body:not(.jf-in-room) .jf-topbar{min-height:58px;margin:0 auto 12px!important;width:100%;justify-content:center!important}
+body:not(.jf-in-room) .jf-topbar .brand{margin:auto}
+body:not(.jf-in-room) .jf-top-actions{position:fixed!important;top:16px!important;right:18px!important;z-index:40!important;margin:0!important}
+body:not(.jf-in-room) .jf-top-actions>.jf-site-menu-toggle{width:auto!important;min-width:88px!important;height:40px!important;min-height:40px!important;border-radius:9px!important}
+body:not(.jf-in-room) .jf-community-top-dock{display:none!important}
+body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:none!important}
+body:not(.jf-in-room) #jfRoomEntryPanel{width:min(100%,650px)!important;margin:0 auto!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+body:not(.jf-in-room) #jfRoomEntryPanel>.status{margin:0 auto 12px!important;padding:0!important;text-align:center;font-size:11px!important;line-height:1.4;color:var(--jf-ui-muted,var(--muted))}
+body:not(.jf-in-room) #jfRoomEntryPanel #roomCount,body:not(.jf-in-room) #jfRoomEntryPanel #help{display:none!important}
+body:not(.jf-in-room) #jfHomeCommunity.jf-home-minimal{order:3!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;width:min(100%,650px)!important;margin:0 auto!important;padding:clamp(22px,4vw,36px)!important;border:1px solid color-mix(in srgb,var(--jf-ui-border,var(--jf-secondary)) 65%,#fff)!important;border-radius:18px!important;background:linear-gradient(145deg,rgba(32,13,15,.94),rgba(24,10,12,.92))!important;box-shadow:0 18px 55px #0005,inset 0 1px #ffffff18!important;color:var(--jf-ui-text,var(--ink))!important}
+.jf-home-minimal .jf-home-minimal-head{text-align:center;margin:0 0 23px!important}
+.jf-home-minimal .jf-home-minimal-kicker{display:block;font-size:9px;font-weight:900;letter-spacing:1.4px;color:var(--jf-secondary,var(--jf-primary))}
+.jf-home-minimal .jf-home-minimal-head h2{margin:10px 0 8px!important;font:900 clamp(28px,4vw,39px)/1.08 Georgia,serif!important;letter-spacing:-.6px;color:var(--jf-ui-text,var(--ink))!important}
+.jf-home-minimal .jf-home-minimal-head p{margin:0!important;font-size:12px;line-height:1.5;color:var(--jf-ui-muted,var(--muted))}
+.jf-home-minimal .jf-home-join-wrap{width:min(100%,470px);margin:0 auto!important}
+.jf-home-minimal #jfRoomEntryActions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;width:100%!important;margin:0!important}
+.jf-home-minimal #jfRoomEntryActions .btn{display:flex!important;align-items:center;justify-content:center;gap:12px;min-width:0!important;min-height:58px!important;padding:13px 16px!important;border-radius:10px!important;font:900 13px var(--jf-font-family,Tahoma),Tahoma,sans-serif!important;box-shadow:inset 0 1px #ffffff65,0 3px 0 #0004!important}
+.jf-home-minimal #jfRoomEntryActions #join{color:var(--jf-ui-button-text,#23152d)!important;background:var(--jf-ui-button,linear-gradient(#ff8dcb,#7be5f4))!important}
+.jf-home-minimal #jfRoomEntryActions #createRoom{color:var(--jf-ui-text,var(--ink))!important;background:var(--jf-ui-surface,var(--jf-ui-soft,#292545))!important;border:1px solid var(--jf-ui-border,var(--jf-secondary))!important}
+.jf-home-minimal #jfRoomEntryActions .btn span{font-size:19px}
+body:not(.jf-in-room) #jfHomeCommunity.jf-home-minimal #jfEntryAccount{display:flex!important;flex-direction:column;align-items:center;gap:7px;margin:15px 0 0!important;padding:0!important;border:0!important;text-align:center}
+.jf-home-minimal #jfEntryAccountHint,.jf-home-minimal #jfEntryAccountLoggedIn{max-width:100%!important;font-size:10px!important;line-height:1.45;color:var(--jf-ui-muted,var(--muted))!important}
+.jf-home-minimal #jfGoogleLogin{min-height:36px!important;padding:8px 14px!important;font-size:11px!important}
+.jf-home-minimal .jf-home-minimal-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px 20px;margin:24px 0 0!important;padding:16px 0 0!important;border-top:1px solid color-mix(in srgb,var(--jf-ui-border,var(--jf-secondary)) 40%,transparent);font:11px var(--jf-font-family,Tahoma),Tahoma,sans-serif}
+.jf-home-minimal .jf-home-minimal-links a,.jf-home-minimal .jf-home-minimal-links button{display:inline-flex;align-items:center;min-height:26px;padding:0!important;border:0!important;background:transparent!important;color:var(--jf-ui-muted,var(--muted))!important;font:700 11px var(--jf-font-family,Tahoma),Tahoma,sans-serif!important;text-decoration:none;cursor:pointer}
+.jf-home-minimal .jf-home-minimal-links a:hover,.jf-home-minimal .jf-home-minimal-links button:hover{color:var(--jf-ui-text,var(--ink))!important;text-decoration:underline}
+.jf-home-minimal .jf-home-minimal-profile{display:block;margin:12px auto 0;font-size:11px;color:var(--jf-secondary)}
+.jf-home-minimal [hidden]{display:none!important}
+body:not(.jf-in-room) #jfChatLauncher,body:not(.jf-in-room) #jfFriendsLauncher{display:none!important}
+@media(max-width:700px){body:not(.jf-in-room) main{padding:10px 14px 26px!important;min-height:calc(100vh - 60px)!important}body:not(.jf-in-room) .jf-topbar{min-height:48px;margin-bottom:8px!important}body:not(.jf-in-room) .jf-topbar .brand{font-size:20px}body:not(.jf-in-room) .jf-top-actions{top:10px!important;right:10px!important}body:not(.jf-in-room) #jfRoomEntryPanel{width:100%!important}body:not(.jf-in-room) #jfHomeCommunity.jf-home-minimal{padding:22px 18px!important;border-radius:15px!important}.jf-home-minimal .jf-home-minimal-head{margin-bottom:19px!important}.jf-home-minimal .jf-home-minimal-head h2{font-size:clamp(26px,7.5vw,34px)!important}.jf-home-minimal #jfRoomEntryActions{grid-template-columns:1fr!important;gap:8px!important}.jf-home-minimal #jfRoomEntryActions .btn{min-height:52px!important}.jf-home-minimal .jf-home-minimal-links{gap:8px 15px;margin-top:20px!important;padding-top:13px!important}}
+</style>
 </head>
 <body>
 <div id="jfAeroBackground" aria-hidden="true"></div>
@@ -1092,46 +1126,32 @@ body:not(.jf-in-room) main>.jf-hero-description{margin:0 auto 17px;max-width:560
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><div id="jfShareRoom" style="margin-top:10px" hidden><button type="button" class="btn secondary" id="jfCopyRoomLink">🔗 Copiar link da sala</button><span id="jfRoomLinkInfo" class="small"></span></div><p class="small" id="help">Se a conexão não acontecer, tente recarregar a página.</p>
   </section>
 
-  <section class="jf-home-community jf-home-welcome jf-home-social-hub" id="jfHomeCommunity" aria-label="Explore o Junto.fm">
-    <header class="jf-home-welcome-head">
-      <span class="jf-home-kicker">✦ UM LUGAR PRA FICAR JUNTO</span>
-      <h2>Sua galera tá por aqui.</h2>
-      <p>Entra numa sala, conhece a comunidade e chama seus amigos.</p>
+  <section class="jf-home-community jf-home-welcome jf-home-social-hub jf-home-minimal" id="jfHomeCommunity" aria-label="Comece no Junto.fm">
+    <header class="jf-home-minimal-head">
+      <span class="jf-home-minimal-kicker">✦ UM CANTINHO PRA FICAR JUNTO</span>
+      <h2>A música fica melhor junto.</h2>
+      <p>Chega mais. Entra numa sala ou cria a sua.</p>
     </header>
     <div class="jf-home-join-wrap">
-    <div class="jf-room-entry-actions jf-room-entry-primary" id="jfRoomEntryActions">
-      <button class="btn jf-home-primary-action" id="join" type="button">Entrar numa sala <span aria-hidden="true">↗</span></button>
-      <button class="btn secondary jf-home-create-action" id="createRoom" type="button">Criar sala <span aria-hidden="true">＋</span></button>
-    </div>
+      <div class="jf-room-entry-actions jf-room-entry-primary" id="jfRoomEntryActions">
+        <button class="btn jf-home-primary-action" id="join" type="button">Entrar numa sala <span aria-hidden="true">↗</span></button>
+        <button class="btn secondary jf-home-create-action" id="createRoom" type="button">Criar sala <span aria-hidden="true">＋</span></button>
+      </div>
     </div>
     <div class="jf-entry-account" id="jfEntryAccount">
       <span class="small" id="jfEntryAccountHint">Pode entrar sem cadastro. Crie uma conta para guardar seu perfil e amizades.</span>
       <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Criar com Google</a>
-      <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
+      <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Sua conta está conectada.</span>
     </div>
-    <div class="jf-home-welcome-grid">
-      <a class="jf-home-welcome-card" href="/comunidades">
-        <span class="jf-home-welcome-icon" aria-hidden="true">♧</span>
-        <div><h3>Comunidades</h3><p>Encontre gente que curte o mesmo que você.</p><span class="jf-home-welcome-link">Conhecer comunidades ↗</span></div>
-      </a>
-      <article class="jf-home-welcome-card jf-home-welcome-social">
-        <span class="jf-home-welcome-icon" aria-hidden="true">♡</span>
-        <div><h3>Amigos</h3><p>Converse e acompanhe sua galera.</p>
-          <button type="button" class="jf-home-welcome-link" id="jfHomeMessenger">Ver mensagens</button>
-          <a class="jf-home-welcome-profile" id="jfHomeMyProfile" href="#" hidden>Meu perfil</a>
-        </div>
-      </article>
-      <a class="jf-home-welcome-card" href="/quartos">
-        <span class="jf-home-welcome-icon" aria-hidden="true">⌂</span>
-        <div><h3>Seu quarto</h3><p>Monte seu espaço e convide amigos.</p><span class="jf-home-welcome-link">Visitar quartos ↗</span></div>
-      </a>
-    </div>
-    <nav class="jf-home-explore-links" aria-label="Mais para explorar">
-      <span>Também tem:</span>
+    <nav class="jf-home-minimal-links" aria-label="Explore o Junto.fm">
+      <a href="/comunidades">Comunidades</a>
+      <button type="button" id="jfHomeMessenger">Mensagens e amigos</button>
+      <a href="/quartos">Quartos</a>
       <a id="jfEntryMural" href="/mural">Mural</a>
       <button type="button" id="jfHomeArcade">Fliperama</button>
       <button type="button" id="jfHomeAchievements">Conquistas</button>
     </nav>
+    <a class="jf-home-minimal-profile" id="jfHomeMyProfile" href="#" hidden>Ver meu perfil</a>
   </section>
 
 
