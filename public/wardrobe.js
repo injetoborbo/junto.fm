@@ -837,8 +837,29 @@ function createAvatarLineup(scene,normalized,target){
   const faceMat=new THREE.MeshBasicMaterial({map:plateTexture});
   const face=new THREE.Mesh(new THREE.PlaneGeometry(.83,.31),faceMat);
   face.position.z=.029;plaque.add(face);
-  // A placa fica apoiada diretamente nas mãos; sem hastes/tubos artificiais.
-  return {dispose:()=>{
+  // A placa acompanha as mãos do rig: as pontas ficam alinhadas aos pulsos,
+  // sem tubos nem hastes artificiais.
+  const leftHand=getAnimatedBone(normalized,"LeftHand");
+  const rightHand=getAnimatedBone(normalized,"RightHand");
+  const leftWorld=new THREE.Vector3(),rightWorld=new THREE.Vector3();
+  const leftLocal=new THREE.Vector3(),rightLocal=new THREE.Vector3(),midLocal=new THREE.Vector3();
+  const update=()=>{
+    if(!leftHand||!rightHand)return;
+    normalized.updateWorldMatrix(true,true);
+    leftHand.getWorldPosition(leftWorld);rightHand.getWorldPosition(rightWorld);
+    normalized.worldToLocal(leftLocal.copy(leftWorld));
+    normalized.worldToLocal(rightLocal.copy(rightWorld));
+    midLocal.copy(leftLocal).add(rightLocal).multiplyScalar(.5);
+    plaque.position.copy(midLocal);
+    plaque.position.y-=.035;
+    plaque.position.z+=.075;
+    plaque.rotation.set(-.035,0,Math.atan2(rightLocal.y-leftLocal.y,rightLocal.x-leftLocal.x));
+    const span=leftLocal.distanceTo(rightLocal);
+    const width=THREE.MathUtils.clamp(span*1.12,.76,1.12);
+    plaque.scale.set(width/.86,.92,1);
+  };
+  update();
+  return {update,dispose:()=>{
     group.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
     plaque.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
     normalized.remove(plaque);
@@ -848,65 +869,98 @@ function createAvatarLineup(scene,normalized,target){
   }};
 }
 function createBoothIdleAnimation(monkey){
-  let mixer=null,action=null,disposed=false;
-  const parts=[
-    ["Head",.025,.035,.012],
-    ["Neck",.012,.012,.008],
-    ["Spine2",.008,.006,.005],
-    ["Spine",.006,.004,.003]
+  let disposed=false,ready=false,duration=0;
+  const tracks=[];
+  const fallbackParts=[
+    ["Head",.025,.035,.012],["Neck",.012,.012,.008],
+    ["Spine2",.008,.006,.005],["Spine",.006,.004,.003]
   ];
-  const targets=[];
-  for(const [name,rx,ry,rz] of parts){
+  const fallbackTargets=fallbackParts.map(([name,rx,ry,rz],index)=>{
     const bone=getAnimatedBone(monkey,name)||getBone(monkey,name);
-    if(bone)targets.push({bone,base:bone.quaternion.clone(),rx,ry,rz,phase:targets.length*.9});
-  }
+    return bone?{bone,base:bone.quaternion.clone(),rx,ry,rz,phase:index*.9}:null;
+  }).filter(Boolean);
   const fallback=(time)=>{
-    for(const item of targets){
-      const {bone,base,rx,ry,rz,phase}=item;
-      const t=time*.001+phase;
-      const sway=new THREE.Quaternion().setFromEuler(new THREE.Euler(
-        Math.sin(t*.83)*rx,Math.sin(t*.57)*ry,Math.cos(t*.71)*rz,"XYZ"));
-      bone.quaternion.copy(base).multiply(sway);
+    for(const item of fallbackTargets){
+      const {bone,base,rx,ry,rz,phase}=item,t=time*.001+phase;
+      item.sway||(item.sway=new THREE.Quaternion());
+      item.euler||(item.euler=new THREE.Euler());
+      item.euler.set(Math.sin(t*.83)*rx,Math.sin(t*.57)*ry,Math.cos(t*.71)*rz,"XYZ");
+      item.sway.setFromEuler(item.euler);
+      bone.quaternion.copy(base).multiply(item.sway).normalize();
     }
+  };
+  const restPose={
+    Spine:[.05175,-.012019,-.039175,.997819],
+    Spine1:[.039043,-.007133,.001282,.999211],
+    Spine2:[.009496,-.007915,.001775,.999922],
+    Neck:[-.046185,.012836,.029471,.998416],
+    Head:[.028326,-.012257,-.011577,.999457],
+    RightShoulder:[.097319,-.017769,-.063543,.993064],
+    RightArm:[.589033,-.031344,.017123,.807319],
+    RightForeArm:[0,0,-.113762,.993508],
+    RightHand:[-.154885,.029712,-.056991,.98584],
+    LeftShoulder:[.029982,.013276,.029013,.999041],
+    LeftArm:[.630068,-.04179,.142477,.762213],
+    LeftForeArm:[0,0,.164436,.986388],
+    LeftHand:[.005244,-.208364,-.044264,.977035]
   };
   const load=async()=>{
     try{
-      if(typeof DecompressionStream!=="function"||typeof atob!=="function")return;
+      if(typeof DecompressionStream!=="function"||typeof atob!=="function"||typeof Blob!=="function")
+        throw new Error("Este navegador não oferece descompressão de animação.");
       const response=await fetch("/poses/standing-w-briefcase-idle.json.gz.b64",{cache:"force-cache"});
-      if(!response.ok)throw new Error("Pose parada indisponível");
+      if(!response.ok)throw new Error("Animação de espera indisponível ("+response.status+").");
       const encoded=(await response.text()).trim();
       const bytes=Uint8Array.from(atob(encoded),char=>char.charCodeAt(0));
       const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
       const data=JSON.parse(await new Response(stream).text());
-      const serialized=data.clip||data.animation||data.animations?.[0]||data;
-      if(!serialized||!Array.isArray(serialized.tracks)||!serialized.tracks.length)throw new Error("Formato de pose inválido");
-      const clip=THREE.AnimationClip.parse(serialized);
-      const validTargets=clip.tracks.filter(track=>{
-        try{
-          const parsed=THREE.PropertyBinding.parseTrackName(track.name);
-          return Boolean(monkey.getObjectByName(parsed.nodeName));
-        }catch(_){return false;}
-      }).length;
-      if(validTargets<3)throw new Error("A pose não corresponde ao esqueleto deste macaco");
+      if(!Array.isArray(data.times)||!Array.isArray(data.tracks)||data.times.length<2||!Number.isFinite(data.duration))
+        throw new Error("Estrutura da animação inválida.");
+      for(const source of data.tracks){
+        const bone=getAnimatedBone(monkey,source.bone);
+        const rest=restPose[source.bone];
+        if(!bone||!Array.isArray(rest)||!Array.isArray(source.q)||source.q.length!==data.times.length*4)continue;
+        tracks.push({
+          bone,base:bone.quaternion.clone(),
+          rest:new THREE.Quaternion(rest[0],rest[1],rest[2],rest[3]).normalize(),
+          values:source.q,
+          qa:new THREE.Quaternion(),qb:new THREE.Quaternion(),delta:new THREE.Quaternion(),result:new THREE.Quaternion()
+        });
+      }
+      if(tracks.length<10)throw new Error("Rig incompatível: apenas "+tracks.length+" ossos foram encontrados.");
       if(disposed)return;
-      mixer=new THREE.AnimationMixer(monkey);
-      action=mixer.clipAction(clip);action.setLoop(THREE.LoopRepeat,Infinity);action.play();
+      duration=data.duration;ready=true;
+      console.info("Avatar Lab: animação Mixamo aplicada a",tracks.length,"ossos.");
     }catch(error){
-      if(!disposed)console.warn("Avatar Lab: usando animação suave de espera.",error);
+      if(!disposed)console.warn("Avatar Lab: falha ao carregar a pose de maleta; usando idle leve.",error);
     }
   };
   void load();
   return {
-    update(time,delta){
+    update(time){
       if(disposed)return;
-      if(mixer)mixer.update(Math.min(delta,.08));
-      else fallback(time);
+      if(!ready){fallback(time);return;}
+      const t=((time*.001)%duration+duration)%duration;
+      const n=tracks.length;
+      // A timeline tem 141 amostras; localizar o intervalo e interpolar
+      // slerp evita saltos entre as chaves da animação Mixamo.
+      const sampleCount=141;
+      const scaled=t/duration*(sampleCount-1);
+      const index=Math.min(sampleCount-2,Math.max(0,Math.floor(scaled)));
+      const alpha=THREE.MathUtils.clamp(scaled-index,0,1);
+      for(let i=0;i<n;i++){
+        const track=tracks[i],offset=index*4,next=offset+4;
+        track.qa.set(track.values[offset],track.values[offset+1],track.values[offset+2],track.values[offset+3]);
+        track.qb.set(track.values[next],track.values[next+1],track.values[next+2],track.values[next+3]);
+        track.delta.copy(track.qa).slerp(track.qb,alpha);
+        track.result.copy(track.rest).multiply(track.delta);
+        track.bone.quaternion.copy(track.base).multiply(track.result).normalize();
+      }
     },
     dispose(){
       disposed=true;
-      action?.stop();mixer?.stopAllAction();
-      if(mixer)mixer.uncacheRoot(monkey);
-      for(const item of targets)item.bone.quaternion.copy(item.base);
+      for(const track of tracks)track.bone.quaternion.copy(track.base);
+      for(const item of fallbackTargets)item.bone.quaternion.copy(item.base);
     }
   };
 }
@@ -1067,7 +1121,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   }
   if(photoBooth){
     const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const animateBooth=now=>{boothFrame=requestAnimationFrame(animateBooth);if(!active||document.hidden||now-lastBoothFrame<40)return;const delta=lastBoothFrame?Math.min((now-lastBoothFrame)/1000,.08):.04;lastBoothFrame=now;if(!reduced){normalized.rotation.y=previewYaw+Math.sin(now*.00042)*.025;normalized.position.y=Math.sin(now*.0007)*.005;boothIdle?.update(now,delta);}renderer.render(scene,camera);};
+    const animateBooth=now=>{boothFrame=requestAnimationFrame(animateBooth);if(!active||document.hidden||now-lastBoothFrame<40)return;const delta=lastBoothFrame?Math.min((now-lastBoothFrame)/1000,.08):.04;lastBoothFrame=now;if(!reduced){normalized.rotation.y=previewYaw+Math.sin(now*.00042)*.025;normalized.position.y=Math.sin(now*.0007)*.005;}boothIdle?.update(reduced?0:now);lineup?.update();renderer.render(scene,camera);};
     boothFrame=requestAnimationFrame(animateBooth);
   }
   if(preview){
@@ -1082,6 +1136,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     active=false;
     if(boothFrame)cancelAnimationFrame(boothFrame);
     resizeObserver?.disconnect();
+    boothIdle?.dispose();
     lineup?.dispose();
     if(preview){
       target.removeEventListener("pointerdown",down);
