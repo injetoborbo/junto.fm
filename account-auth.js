@@ -51,6 +51,22 @@ module.exports=function setupAccounts(app){
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_hash TEXT;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_expires TIMESTAMPTZ;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS avatar_setup_completed_at TIMESTAMPTZ;
+    CREATE TABLE IF NOT EXISTS junto_schema_migrations (
+      name TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    DO $avatar_setup_legacy_backfill$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM junto_schema_migrations WHERE name='avatar_setup_legacy_backfill') THEN
+        UPDATE junto_accounts
+          SET avatar_setup_completed_at=COALESCE(created_at,NOW())
+          WHERE avatar_setup_completed_at IS NULL
+            AND created_at < TIMESTAMPTZ '2026-11-25 10:43:17+00';
+        INSERT INTO junto_schema_migrations(name) VALUES('avatar_setup_legacy_backfill')
+          ON CONFLICT(name) DO NOTHING;
+      END IF;
+    END
+    $avatar_setup_legacy_backfill$;
     UPDATE junto_accounts SET username='macaco_' || left(replace(id::text,'-',''),12) WHERE username IS NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_username_unique ON junto_accounts (lower(username)) WHERE username IS NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_email_unique ON junto_accounts (lower(email)) WHERE email IS NOT NULL;
