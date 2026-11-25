@@ -837,13 +837,7 @@ function createAvatarLineup(scene,normalized,target){
   const faceMat=new THREE.MeshBasicMaterial({map:plateTexture});
   const face=new THREE.Mesh(new THREE.PlaneGeometry(.83,.31),faceMat);
   face.position.z=.029;plaque.add(face);
-  const handleMat=new THREE.MeshStandardMaterial({color:0x9eacb9,metalness:.82,roughness:.23});
-  const addRod=(from,to,radius=.018)=>{
-    const a=new THREE.Vector3(...from),b=new THREE.Vector3(...to),delta=new THREE.Vector3().subVectors(b,a);
-    const rod=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,delta.length(),10),handleMat);
-    rod.position.copy(a).add(b).multiplyScalar(.5);rod.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());plaque.add(rod);
-  };
-  addRod([-.34,.18,-.012],[-.43,.38,-.025]);addRod([.34,.18,-.012],[.43,.38,-.025]);
+  // A placa fica apoiada diretamente nas mãos; sem hastes/tubos artificiais.
   return {dispose:()=>{
     group.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
     plaque.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
@@ -852,6 +846,69 @@ function createAvatarLineup(scene,normalized,target){
     wall.material.dispose();floorMat.dispose();trimMat.dispose();darkMetal.dispose();handleMat.dispose();
     softLight.target.removeFromParent();scene.remove(softLight,rim,fill);group.removeFromParent();
   }};
+}
+function createBoothIdleAnimation(monkey){
+  let mixer=null,action=null,disposed=false;
+  const parts=[
+    ["Head",.025,.035,.012],
+    ["Neck",.012,.012,.008],
+    ["Spine2",.008,.006,.005],
+    ["Spine",.006,.004,.003]
+  ];
+  const targets=[];
+  for(const [name,rx,ry,rz] of parts){
+    const bone=getAnimatedBone(monkey,name)||getBone(monkey,name);
+    if(bone)targets.push({bone,base:bone.quaternion.clone(),rx,ry,rz,phase:targets.length*.9});
+  }
+  const fallback=(time)=>{
+    for(const item of targets){
+      const {bone,base,rx,ry,rz,phase}=item;
+      const t=time*.001+phase;
+      const sway=new THREE.Quaternion().setFromEuler(new THREE.Euler(
+        Math.sin(t*.83)*rx,Math.sin(t*.57)*ry,Math.cos(t*.71)*rz,"XYZ"));
+      bone.quaternion.copy(base).multiply(sway);
+    }
+  };
+  const load=async()=>{
+    try{
+      if(typeof DecompressionStream!=="function"||typeof atob!=="function")return;
+      const response=await fetch("/poses/standing-w-briefcase-idle.json.gz.b64",{cache:"force-cache"});
+      if(!response.ok)throw new Error("Pose parada indisponível");
+      const encoded=(await response.text()).trim();
+      const bytes=Uint8Array.from(atob(encoded),char=>char.charCodeAt(0));
+      const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+      const data=JSON.parse(await new Response(stream).text());
+      const serialized=data.clip||data.animation||data.animations?.[0]||data;
+      if(!serialized||!Array.isArray(serialized.tracks)||!serialized.tracks.length)throw new Error("Formato de pose inválido");
+      const clip=THREE.AnimationClip.parse(serialized);
+      const validTargets=clip.tracks.filter(track=>{
+        try{
+          const parsed=THREE.PropertyBinding.parseTrackName(track.name);
+          return Boolean(monkey.getObjectByName(parsed.nodeName));
+        }catch(_){return false;}
+      }).length;
+      if(validTargets<3)throw new Error("A pose não corresponde ao esqueleto deste macaco");
+      if(disposed)return;
+      mixer=new THREE.AnimationMixer(monkey);
+      action=mixer.clipAction(clip);action.setLoop(THREE.LoopRepeat,Infinity);action.play();
+    }catch(error){
+      if(!disposed)console.warn("Avatar Lab: usando animação suave de espera.",error);
+    }
+  };
+  void load();
+  return {
+    update(time,delta){
+      if(disposed)return;
+      if(mixer)mixer.update(Math.min(delta,.08));
+      else fallback(time);
+    },
+    dispose(){
+      disposed=true;
+      action?.stop();mixer?.stopAllAction();
+      if(mixer)mixer.uncacheRoot(monkey);
+      for(const item of targets)item.bone.quaternion.copy(item.base);
+    }
+  };
 }
 function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false,photoBooth=false}={}){
   if(!base)return null;
@@ -1009,7 +1066,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   }
   if(photoBooth){
     const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const animateBooth=now=>{boothFrame=requestAnimationFrame(animateBooth);if(!active||document.hidden||now-lastBoothFrame<40)return;lastBoothFrame=now;if(!reduced){normalized.rotation.y=previewYaw+Math.sin(now*.00042)*.025;normalized.position.y=Math.sin(now*.0007)*.005;}renderer.render(scene,camera);};
+    const animateBooth=now=>{boothFrame=requestAnimationFrame(animateBooth);if(!active||document.hidden||now-lastBoothFrame<40)return;const delta=lastBoothFrame?Math.min((now-lastBoothFrame)/1000,.08):.04;lastBoothFrame=now;if(!reduced){normalized.rotation.y=previewYaw+Math.sin(now*.00042)*.025;normalized.position.y=Math.sin(now*.0007)*.005;boothIdle?.update(now,delta);}renderer.render(scene,camera);};
     boothFrame=requestAnimationFrame(animateBooth);
   }
   if(preview){
