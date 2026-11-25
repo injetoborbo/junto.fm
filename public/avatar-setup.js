@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const $=id=>document.getElementById(id);
-  let active=false,checking=false,finished=false,category="outfit",originals=null,currentProfile=null;
+  let active=false,checking=false,finished=false,devkitPreviewMode=false,category="outfit",originals=null,currentProfile=null;
   const keys=["hat","glasses","headphones","outfit"];
   const defaults={hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
   const meta={
@@ -108,6 +108,61 @@
     tools.append(random,rotate);fields.replaceChildren(header,tabs,panels,tools,nativeControls);
     activateCategory("outfit");
   }
+  async function openAvatarLabFromDevkit(){
+    if(active)return;
+    let profile=null;
+    try{
+      const response=await fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"});
+      if(response.ok){
+        const data=await response.json();
+        if(data.loggedIn&&data.profile)profile=data.profile;
+      }
+    }catch(_){}
+    if(!profile){
+      profile={name:"DevKit Preview",username:"github-admin",devkitPreview:true};
+      devkitPreviewMode=true;
+    }else devkitPreviewMode=false;
+    currentProfile=profile;finished=false;
+    prepare(profile,true);
+  }
+  window.addEventListener("jf-admin-open-avatar-lab",()=>void openAvatarLabFromDevkit());
+  async function mountGlobalDevkit(){
+    if(document.querySelector(".jf-global-devkit-launch"))return;
+    try{
+      const response=await fetch("/api/admin/status",{credentials:"same-origin",cache:"no-store"});
+      const access=response.ok?await response.json():{};
+      if(access.admin!==true)return;
+    }catch(_){return;}
+    const launch=document.createElement("button");
+    launch.type="button";launch.className="jf-global-devkit-launch";
+    launch.textContent="⚙ DevKit";launch.setAttribute("aria-expanded","false");
+    launch.setAttribute("aria-label","Abrir ferramentas de desenvolvimento");
+    const panel=document.createElement("section");panel.className="jf-global-devkit-panel";panel.hidden=true;
+    const title=document.createElement("strong");title.textContent="DEVKIT · JUNTO.FM";
+    const note=document.createElement("p");note.textContent="GitHub admin conectado. Abra o Avatar Lab para testar a nova aba e inspecionar o rig.";
+    const here=document.createElement("button");here.type="button";here.textContent="Abrir Avatar Lab aqui";
+    const newTab=document.createElement("button");newTab.type="button";newTab.textContent="Abrir Avatar Lab em nova aba";
+    const status=document.createElement("span");status.className="jf-global-devkit-status";status.setAttribute("role","status");
+    status.textContent="Ferramentas administrativas ativas.";
+    panel.append(title,note,here,newTab,status);document.body.append(launch,panel);
+    launch.addEventListener("click",()=>{
+      panel.hidden=!panel.hidden;launch.setAttribute("aria-expanded",String(!panel.hidden));
+      launch.textContent=panel.hidden?"⚙ DevKit":"⚙ Fechar DevKit";
+    });
+    here.addEventListener("click",()=>{
+      panel.hidden=true;launch.setAttribute("aria-expanded","false");launch.textContent="⚙ DevKit";
+      window.dispatchEvent(new CustomEvent("jf-admin-open-avatar-lab"));
+    });
+    newTab.addEventListener("click",()=>{
+      const url=new URL(location.href);url.search="";url.hash="";url.searchParams.set("jfDevkitAvatar","1");
+      const opened=window.open(url.href,"_blank","noopener");
+      status.textContent=opened?"Avatar Lab aberto em outra aba.":"O navegador bloqueou a nova aba; permita pop-ups para este site.";
+    });
+    if(new URLSearchParams(location.search).get("jfDevkitAvatar")==="1"){
+      status.textContent="Preparando prévia do Avatar Lab...";
+      window.dispatchEvent(new CustomEvent("jf-admin-open-avatar-lab"));
+    }
+  }
   async function mountDevkit(stage){
     if(!stage||stage.querySelector(".jf-avatar-devkit-launch"))return;
     try{
@@ -210,9 +265,15 @@
     const footnote=document.createElement("div");footnote.className="jf-avatar-studio-footnote";
     footnote.innerHTML='<strong>Pronto para entrar?</strong><span>Seu macaco será salvo como seu avatar oficial.</span>';
     const actions=document.createElement("div");actions.className="jf-avatar-studio-actions";
-    save.textContent="CONFIRMAR PERSONAGEM";save.classList.add("jf-avatar-setup-confirm");
+    save.textContent="CONFIRMAR PERSONAGEM";save.classList.add("jf-avatar-setup-confirm");save.hidden=Boolean(profile?.devkitPreview);
     if(originalSaveRow)originalSaveRow.remove();
-    actions.append(save);footer.append(footnote,actions);
+    if(profile?.devkitPreview){
+      footnote.innerHTML='<strong>Prévia do DevKit</strong><span>Modo de teste: nada será salvo na conta.</span>';
+      const closePreview=document.createElement("button");closePreview.type="button";closePreview.className="btn jf-avatar-setup-confirm";closePreview.textContent="FECHAR PRÉVIA";
+      closePreview.addEventListener("click",()=>{restoreWardrobeDialog();close?.click();});
+      actions.append(closePreview);originals.previewClose=closePreview;
+    }else actions.append(save);
+    footer.append(footnote,actions);
     statusNode.textContent="As mudanças são aplicadas no modelo 3D em tempo real.";
     footer.append(statusNode);dialog.append(footer);
     modal.addEventListener("click",event=>{if(active&&event.target===modal){event.preventDefault();event.stopImmediatePropagation();}},true);
@@ -232,7 +293,7 @@
     stage?.querySelector(".jf-avatar-stage-bottomline")?.remove();
     if(preview){delete preview.dataset.avatarStudio;delete preview.dataset.avatarPlateName;delete preview.dataset.avatarPlateHandle;}
     status?.classList.remove("jf-avatar-stage-status");
-    devkitLaunch?.remove();devkitPanel?.remove();
+    devkitLaunch?.remove();devkitPanel?.remove();originals?.previewClose?.remove();save.hidden=false;devkitPreviewMode=false;
     if(oldHead)oldHead.hidden=false;
     if(oldDescription)oldDescription.hidden=false;
     if(close)close.hidden=false;
@@ -283,6 +344,6 @@
   }
   window.addEventListener("jf-local-profile-updated",()=>{if(!active&&!finished)void check();});
   window.addEventListener("jf-avatar-created",()=>{finished=true;});
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>void check(),{once:true});
-  else void check();
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{void check();void mountGlobalDevkit();},{once:true});
+  else {void check();void mountGlobalDevkit();}
 })();
