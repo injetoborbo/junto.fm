@@ -101,6 +101,7 @@
   socket.on("social-presence-update",payload=>{
     if(!payload?.accountId)return;if(payload.online)onlineIds.add(payload.accountId);else onlineIds.delete(payload.accountId);renderContacts();
   });
+  socket.emit("social-presence-sync");
   socket.on("dm-conversations",payload=>{
     contacts=Array.isArray(payload?.conversations)?payload.conversations:[];
     for(const person of contacts){if(person.unread)unread.set(person.id,person.unread);else unread.delete(person.id);}
@@ -148,5 +149,5 @@
   });
   renderPublicProfilePage();
   socket.on("friends-state",()=>{if(!panel.hidden)socket.emit("dm-list");});
-  socket.on("connect",()=>{if(account)socket.emit("dm-list");});
+  socket.on("connect",()=>{socket.emit("social-presence-sync");if(account)socket.emit("dm-list");});
 })();
