@@ -165,7 +165,7 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
     });
     socket.on("disconnect",()=>{
       winkTimes.delete(socket.id);
-      if(accountId){const sockets=onlineAccounts.get(accountId);sockets?.delete(socket.id);if(sockets&&!sockets.size){onlineAccounts.delete(accountId);void publishPresence(accountId,false);}}
+      if(accountId){const sockets=onlineAccounts.get(accountId);sockets?.delete(socket.id);if(sockets&&!sockets.size){onlineAccounts.delete(accountId);if(listeningTracks.delete(accountId))void publishListening(accountId,null);void publishPresence(accountId,false);}}
     });
   });
   return {ready};
