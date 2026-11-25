@@ -144,6 +144,7 @@ app.use(express.json({ limit: "320kb" }));
 const adminAuth = require("./admin-auth")(app);
 const accountAuth = require("./account-auth")(app);
 require("./community-profiles")(app,accountAuth);
+require("./community-classics")(app,io,accountAuth);
 require("./direct-messages")(io,accountAuth);
 require("./mural").setupMural(app,io,accountAuth,adminAuth);
 require("./personal-rooms").setupRooms(app,io,accountAuth);
