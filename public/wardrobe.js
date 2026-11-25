@@ -832,11 +832,13 @@ function createAvatarLineup(scene,normalized,target){
   pctx.fillStyle="#ffffff";pctx.font="bold 55px Arial";pctx.fillText(name,384,151);
   pctx.fillStyle="#c5d4df";pctx.font="bold 25px Arial";pctx.fillText(handle,384,207);
   const plateTexture=new THREE.CanvasTexture(plateCanvas);plateTexture.colorSpace=THREE.SRGBColorSpace;
-  const plaque=new THREE.Group();plaque.position.set(0,-.30,.34);plaque.rotation.x=-.035;plaque.scale.setScalar(.92);normalized.add(plaque);
-  const board=new THREE.Mesh(new THREE.BoxGeometry(.86,.34,.055),darkMetal);plaque.add(board);
+  const plaqueBaseWidth=.62;
+  const plaque=new THREE.Group();plaque.position.set(0,-.30,.34);plaque.rotation.x=-.035;normalized.add(plaque);
+  // Plaquinha de identificação menor, leve e sem hastes.
+  const board=new THREE.Mesh(new THREE.BoxGeometry(.62,.24,.035),darkMetal);plaque.add(board);
   const faceMat=new THREE.MeshBasicMaterial({map:plateTexture});
-  const face=new THREE.Mesh(new THREE.PlaneGeometry(.83,.31),faceMat);
-  face.position.z=.029;plaque.add(face);
+  const face=new THREE.Mesh(new THREE.PlaneGeometry(.60,.22),faceMat);
+  face.position.z=.019;plaque.add(face);
   // A placa acompanha as mãos do rig: as pontas ficam alinhadas aos pulsos,
   // sem tubos nem hastes artificiais.
   const leftHand=getAnimatedBone(normalized,"LeftHand");
@@ -851,12 +853,16 @@ function createAvatarLineup(scene,normalized,target){
     normalized.worldToLocal(rightLocal.copy(rightWorld));
     midLocal.copy(leftLocal).add(rightLocal).multiplyScalar(.5);
     plaque.position.copy(midLocal);
-    plaque.position.y-=.035;
-    plaque.position.z+=.075;
-    plaque.rotation.set(-.035,0,Math.atan2(rightLocal.y-leftLocal.y,rightLocal.x-leftLocal.x));
+    plaque.position.y+=.035;
+    plaque.position.z+=.10;
+    // O rig às vezes troca a ordem espacial das mãos; evitar virar o texto
+    // de cabeça para baixo quando a linha entre os pulsos aponta para trás.
+    let handAngle=Math.atan2(rightLocal.y-leftLocal.y,rightLocal.x-leftLocal.x);
+    if(Math.abs(handAngle)>Math.PI/2)handAngle+=handAngle>0?-Math.PI:Math.PI;
+    plaque.rotation.set(-.035,0,handAngle);
     const span=leftLocal.distanceTo(rightLocal);
-    const width=THREE.MathUtils.clamp(span*1.12,.76,1.12);
-    plaque.scale.set(width/.86,.92,1);
+    const width=THREE.MathUtils.clamp(span*.90,.60,.78);
+    plaque.scale.setScalar(width/plaqueBaseWidth);
   };
   update();
   return {update,dispose:()=>{
@@ -979,10 +985,14 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   const monkey=cloneSkeleton(base.scene);
   const bounds=new THREE.Box3().setFromObject(monkey);
   const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-  const scale=1.8/(Math.max(size.x,size.y,size.z)||1);
+  // No Avatar Lab, a altura é definida em metros (1 unidade Three.js = 1 m).
+  // As outras prévias mantêm a escala visual histórica.
+  const scale=photoBooth?1.50/Math.max(size.y,.0001):1.8/(Math.max(size.x,size.y,size.z)||1);
   // Grupo normalizado: todos os acessórios usam o mesmo espaço visual.
   const normalized=new THREE.Group();
   monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
+  // Pés apoiados no topo da plataforma do estúdio (y = -0.88).
+  if(photoBooth)normalized.position.y=-.88+1.50*.5;
   normalized.add(monkey);
   scene.add(normalized);
   let active=true;
@@ -1072,7 +1082,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     });
   }
   const camera=new THREE.PerspectiveCamera(photoBooth?36:33,width/height,.01,100);
-  camera.position.set(0,photoBooth ? .02 : .04,playerSitting?3.25:photoBooth?5.15:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.02 : .035,0);
+  camera.position.set(0,photoBooth ? .02 : .04,playerSitting?3.25:photoBooth?5.15:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.13 : .035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
   const lineup=photoBooth?createAvatarLineup(scene,normalized,target):null;
   const boothIdle=photoBooth?createBoothIdleAnimation(monkey):null;
