@@ -126,7 +126,7 @@
     socket.emit("dm-list");
   });
   socket.on("dm-error",payload=>setStatus(payload?.message||"Mensagens indisponíveis."));
-  socket.on("social-wink-sent",payload=>setStatus(payload?.delivered?"Chamada enviada!":"Seu amigo está offline; ele verá quando entrar."));
+  socket.on("social-wink-sent",payload=>setStatus(payload?.delivered?"Chamada enviada!":"Seu amigo está offline; chamada não entregue."));
   socket.on("social-emote-sent",payload=>setStatus(payload?.delivered?"Wink enviado!":"Seu amigo está offline."));
   socket.on("social-emote-error",payload=>setStatus(payload?.message||"Não foi possível enviar o wink."));
   socket.on("social-emote-received",payload=>{
