@@ -76,7 +76,7 @@
   function openConversation(person){
     active=person;history=[];unread.delete(person.id);updateUnread();renderContacts();
     const head=$("jfMsnChatHead");head.replaceChildren();head.append(document.createTextNode("🐒 "+(person.name||"Macaco")+" "));
-    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}
+    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}const wink=document.createElement("button");wink.type="button";wink.className="jf-msn-nudge";wink.textContent="⚡ Chamar atenção";wink.addEventListener("click",()=>{if(active)socket.emit("social-wink",{accountId:active.id});});head.append(wink);
     $("jfMsnInput").disabled=false;$("jfMsnForm").querySelector("button").disabled=false;
     $("jfMsnMessages").replaceChildren();setStatus("Carregando conversa...");
     socket.emit("dm-open",{accountId:person.id});
@@ -117,6 +117,14 @@
     socket.emit("dm-list");
   });
   socket.on("dm-error",payload=>setStatus(payload?.message||"Mensagens indisponíveis."));
+  socket.on("social-wink-sent",payload=>setStatus(payload?.delivered?"Chamada enviada!":"Seu amigo está offline; ele verá quando entrar."));
+  socket.on("social-wink-error",payload=>setStatus(payload?.message||"Não foi possível chamar atenção."));
+  socket.on("social-wink-received",payload=>{
+    document.body.classList.remove("jf-msn-nudged");void document.body.offsetWidth;document.body.classList.add("jf-msn-nudged");
+    let toast=document.getElementById("jfMsnNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfMsnNudgeToast";toast.className="jf-msn-nudge-toast";document.body.append(toast);}
+    toast.textContent="⚡ "+(payload?.from||"Um amigo")+" chamou sua atenção!";toast.hidden=false;
+    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;document.body.classList.remove("jf-msn-nudged");},2600);
+  });
   fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(response=>response.json()).then(data=>{
     account=data.loggedIn?data.profile:null;
     const ownProfile=document.getElementById("jfHomeMyProfile");if(ownProfile&&account?.username){ownProfile.href="/u/"+encodeURIComponent(account.username);ownProfile.hidden=false;}
