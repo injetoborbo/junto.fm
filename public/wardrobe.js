@@ -1136,7 +1136,46 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   // attached clothing/accessories and camera transforms in meter units.
   let devkitApi=null;
   if(photoBooth){
+    const devkitOriginals=new Map();
+    const devkitNodes=()=>{
+      const nodes=[],seen=new Set();
+      const add=(node,label,group)=>{
+        if(!node||seen.has(node.uuid))return;seen.add(node.uuid);
+        nodes.push({id:node.uuid,label:label||node.name||node.type,group,node});
+      };
+      add(normalized,"Avatar inteiro / escala","Avatar");
+      add(monkey,"Macaco / modelo 3D","Avatar");
+      monkey.traverse(node=>{
+        if(node.isBone)add(node,"Osso · "+(node.name||"Bone"),"Esqueleto");
+        if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)))
+          add(node,node.name,"Roupas e acessórios");
+      });
+      const lab=normalized.userData.jfAvatarLabParts||{};
+      add(lab.plate,"Placa de identificação","Placa e mãos");
+      add(lab.leftHand,"Mão esquerda (IK/rig)","Placa e mãos");
+      add(lab.rightHand,"Mão direita (IK/rig)","Placa e mãos");
+      return nodes;
+    };
     devkitApi={
+      getTargets(){return devkitNodes().map(({id,label,group})=>({id,label,group}));},
+      getTransform(id){
+        const entry=devkitNodes().find(item=>item.id===id);if(!entry)return null;
+        const node=entry.node;
+        if(!devkitOriginals.has(id))devkitOriginals.set(id,{position:node.position.toArray(),rotation:node.rotation.toArray().slice(0,3),scale:node.scale.toArray()});
+        return {position:node.position.toArray(),rotation:node.rotation.toArray().slice(0,3),scale:node.scale.toArray()};
+      },
+      setTransform(id,transform){
+        const entry=devkitNodes().find(item=>item.id===id);if(!entry)return false;
+        const node=entry.node;
+        const apply=(key,value)=>{if(Array.isArray(value)&&value.length===3&&value.every(Number.isFinite))node[key].set(value[0],value[1],value[2]);};
+        apply("position",transform.position);apply("rotation",transform.rotation);apply("scale",transform.scale);
+        node.updateMatrix();node.updateMatrixWorld(true);normalized.updateMatrixWorld(true);
+        renderOutfit();return true;
+      },
+      resetTransform(id){
+        const original=devkitOriginals.get(id);if(!original)return false;
+        return this.setTransform(id,original);
+      },
       getSnapshot(){
         normalized.updateMatrixWorld(true);monkey.updateMatrixWorld(true);
         const vec=node=>{
