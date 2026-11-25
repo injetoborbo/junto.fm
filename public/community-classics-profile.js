@@ -1,5 +1,6 @@
 (()=>{
  const match=location.pathname.match(/^\/u\/([^/]+)\/?$/);if(!match)return;
+ const style=document.createElement("link");style.rel="stylesheet";style.href="/community-classics-profile.css?v=1";document.head.append(style);
  let username;try{username=decodeURIComponent(match[1]);}catch(_){username=match[1];}
  const main=document.querySelector("#jfPublicProfile")||document.querySelector("main");if(!main)return;
  const section=document.createElement("section");section.className="jf-classic-profile";section.innerHTML='<div class="jf-classic-head"><h3>📒 Scrapbook</h3><span id="jfcVisits">Visitas recentes</span></div><div id="jfcScraps" class="jf-classic-list">Carregando recados...</div><form id="jfcScrapForm"><textarea id="jfcScrapText" maxlength="500" rows="3" placeholder="Deixe um recado no mural..." required></textarea><button type="submit">Deixar recado</button><p id="jfcScrapStatus" role="status"></p></form><div class="jf-classic-head"><h3>💌 Depoimentos</h3></div><div id="jfcTestimonials" class="jf-classic-list">Carregando depoimentos...</div><div id="jfcPending"></div><form id="jfcTestimonialForm"><textarea id="jfcTestimonialText" maxlength="500" rows="3" placeholder="Escreva um depoimento (fica pendente de aprovação)..." required></textarea><button type="submit">Enviar depoimento</button><p id="jfcTestimonialStatus" role="status"></p></form>';
