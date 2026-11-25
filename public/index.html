@@ -1095,6 +1095,68 @@ body:not(.jf-in-room) #jfHomeCommunity.jf-home-minimal #jfEntryAccount{display:f
 .jf-home-minimal [hidden]{display:none!important}
 body:not(.jf-in-room) #jfChatLauncher,body:not(.jf-in-room) #jfFriendsLauncher{display:none!important}
 @media(max-width:700px){body:not(.jf-in-room) main{padding:10px 14px 26px!important;min-height:calc(100vh - 60px)!important}body:not(.jf-in-room) .jf-topbar{min-height:48px;margin-bottom:8px!important}body:not(.jf-in-room) .jf-topbar .brand{font-size:20px}body:not(.jf-in-room) .jf-top-actions{top:10px!important;right:10px!important}body:not(.jf-in-room) #jfRoomEntryPanel{width:100%!important}body:not(.jf-in-room) #jfHomeCommunity.jf-home-minimal{padding:22px 18px!important;border-radius:15px!important}.jf-home-minimal .jf-home-minimal-head{margin-bottom:19px!important}.jf-home-minimal .jf-home-minimal-head h2{font-size:clamp(26px,7.5vw,34px)!important}.jf-home-minimal #jfRoomEntryActions{grid-template-columns:1fr!important;gap:8px!important}.jf-home-minimal #jfRoomEntryActions .btn{min-height:52px!important}.jf-home-minimal .jf-home-minimal-links{gap:8px 15px;margin-top:20px!important;padding-top:13px!important}}
+
+/* Theme-safe home: never mix a dark card with a theme's dark-text palette. */
+html[data-jf-theme="classic"] body:not(.jf-in-room) #jfHomeCommunity.jf-home-minimal{
+  background:linear-gradient(145deg,rgba(255,255,255,.97),rgba(231,245,255,.94))!important;
+  border-color:#78aee0!important;color:#18345b!important;
+  box-shadow:0 20px 52px #164b7b35,inset 0 1px #fff!important;
+}
+html[data-jf-theme="classic"] .jf-home-minimal .jf-home-minimal-head h2,
+html[data-jf-theme="classic"] .jf-home-minimal .jf-home-minimal-head p,
+html[data-jf-theme="classic"] .jf-home-minimal #jfEntryAccountHint,
+html[data-jf-theme="classic"] .jf-home-minimal #jfEntryAccountLoggedIn,
+html[data-jf-theme="classic"] .jf-home-minimal .jf-home-minimal-links a,
+html[data-jf-theme="classic"] .jf-home-minimal .jf-home-minimal-links button{
+  color:#183e68!important;
+}
+html[data-jf-theme="classic"] .jf-home-minimal .jf-home-minimal-kicker{color:#176ea8!important}
+html[data-jf-theme="classic"] .jf-home-minimal .jf-home-minimal-links{border-color:#b7d8f0!important}
+html[data-jf-theme="classic"] .jf-home-minimal #jfRoomEntryActions #createRoom{
+  color:#18345b!important;background:linear-gradient(#fff,#e8f4ff)!important;border-color:#7fafe0!important;
+}
+html[data-jf-theme="aero"] body:not(.jf-in-room) #jfHomeCommunity.jf-home-minimal{
+  position:relative;overflow:hidden;
+  background:linear-gradient(145deg,rgba(11,91,137,.78),rgba(4,49,87,.72))!important;
+  border:1px solid rgba(203,249,255,.82)!important;
+  box-shadow:0 22px 60px #00385b66,inset 0 1px #ffffffa8,inset 0 -18px 35px #13c5e933!important;
+  backdrop-filter:blur(18px) saturate(1.35);-webkit-backdrop-filter:blur(18px) saturate(1.35);
+}
+html[data-jf-theme="aero"] #jfHomeCommunity.jf-home-minimal:before{
+  content:"";position:absolute;inset:0 0 auto;height:42%;
+  background:linear-gradient(180deg,#d5fbff35,transparent);
+  pointer-events:none;
+}
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-head h2{color:#f4ffff!important;text-shadow:0 2px 12px #003a6b!important}
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-head p,
+html[data-jf-theme="aero"] .jf-home-minimal #jfEntryAccountHint,
+html[data-jf-theme="aero"] .jf-home-minimal #jfEntryAccountLoggedIn,
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-links a,
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-links button{color:#e4fbff!important}
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-kicker{color:#aafff4!important}
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-links{border-color:#9cecff6b!important}
+html[data-jf-theme="aero"] .jf-home-minimal #jfRoomEntryActions #join{
+  background:linear-gradient(180deg,#c7fbff 0%,#61d9f2 28%,#1b9bd2 72%,#0871b3 100%)!important;
+  color:#063b62!important;border:1px solid #e2ffff!important;
+  box-shadow:inset 0 2px #ffffffc9,inset 0 -3px #005f9b55,0 4px 0 #003c7555!important;
+}
+html[data-jf-theme="aero"] .jf-home-minimal #jfRoomEntryActions #createRoom{
+  background:linear-gradient(180deg,#ffffffed,#c5f3ffdd)!important;color:#075078!important;
+  border:1px solid #c8f8ff!important;box-shadow:inset 0 2px #fff,0 4px 0 #003c7555!important;
+}
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-links a:hover,
+html[data-jf-theme="aero"] .jf-home-minimal .jf-home-minimal-links button:hover{color:#fff!important}
+html[data-jf-theme="aero"] body:not(.jf-in-room) main{filter:drop-shadow(0 8px 22px #004c7b25)}
+/* Subtle Aero atmosphere, using CSS shapes rather than extra image downloads. */
+html[data-jf-theme="aero"] body:before{
+  opacity:.42;background-image:
+    radial-gradient(circle at 8% 22%,#ffffff75 0 2px,transparent 3px),
+    radial-gradient(circle at 86% 19%,#d8ffff70 0 3px,transparent 4px),
+    radial-gradient(circle at 91% 68%,#ffffff55 0 2px,transparent 3px),
+    radial-gradient(ellipse at 50% 0%,#d6ffff28,transparent 55%);
+  background-size:auto;mask-image:linear-gradient(to bottom,#000,transparent 90%);
+}
+html[data-jf-theme="aero"] #jfAeroBackground{filter:blur(var(--jf-aero-blur,0px)) saturate(1.12)!important}
 </style>
 </head>
 <body>
