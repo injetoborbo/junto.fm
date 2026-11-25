@@ -2,10 +2,10 @@
   const socket=window.jfSocialSocket;
   if(!socket)return;
   const style=document.createElement("link");style.rel="stylesheet";style.href="/community-social.css?v=2";document.head.appendChild(style);
-  const dock=document.createElement("div");dock.className="jf-msn-dock";
-  dock.innerHTML='<button type="button" class="jf-msn-launcher" id="jfMsnOpen" aria-expanded="false"><span>✉</span><b>Mensagens</b><i id="jfMsnUnread" hidden>0</i></button>';
-  const panel=document.createElement("section");panel.className="jf-msn-window";panel.id="jfMsnWindow";panel.hidden=true;
-  panel.innerHTML='<header class="jf-msn-titlebar"><span>🟢 Junto Messenger <small>online</small></span><button type="button" id="jfMsnClose" aria-label="Fechar">×</button></header><div class="jf-msn-body"><aside class="jf-msn-sidebar"><div class="jf-msn-section-title">MEUS CONTATOS</div><div id="jfMsnContacts" class="jf-msn-contacts"><p>Carregando...</p></div></aside><section class="jf-msn-chat"><div class="jf-msn-chat-head" id="jfMsnChatHead">Selecione um amigo para conversar</div><div class="jf-msn-messages" id="jfMsnMessages"><div class="jf-msn-empty">💬<br>Escolha alguém da sua lista de amigos.</div></div><form id="jfMsnForm" class="jf-msn-compose"><input id="jfMsnInput" maxlength="2000" autocomplete="off" placeholder="Escreva uma mensagem..." disabled><button type="submit" disabled>Enviar ➤</button></form><p class="jf-msn-status" id="jfMsnStatus" aria-live="polite">Mensagens privadas entre amigos.</p></section></div>';
+  const dock=document.createElement("div");dock.className="jf-social-chat-dock";
+  dock.innerHTML='<button type="button" class="jf-social-chat-launcher" id="jfSocialChatOpen" aria-expanded="false"><span>✉</span><b>Mensagens</b><i id="jfSocialChatUnread" hidden>0</i></button>';
+  const panel=document.createElement("section");panel.className="jf-social-chat-window";panel.id="jfSocialChatWindow";panel.hidden=true;
+  panel.innerHTML='<header class="jf-social-chat-titlebar"><span>🟢 Junto Chat <small>online</small></span><button type="button" id="jfSocialChatClose" aria-label="Fechar">×</button></header><div class="jf-social-chat-body"><aside class="jf-social-chat-sidebar"><div class="jf-social-chat-section-title">MEUS CONTATOS</div><div id="jfSocialChatContacts" class="jf-social-chat-contacts"><p>Carregando...</p></div></aside><section class="jf-social-chat-chat"><div class="jf-social-chat-chat-head" id="jfSocialChatChatHead">Selecione um amigo para conversar</div><div class="jf-social-chat-messages" id="jfSocialChatMessages"><div class="jf-social-chat-empty">💬<br>Escolha alguém da sua lista de amigos.</div></div><form id="jfSocialChatForm" class="jf-social-chat-compose"><input id="jfSocialChatInput" maxlength="2000" autocomplete="off" placeholder="Escreva uma mensagem..." disabled><button type="submit" disabled>Enviar ➤</button></form><p class="jf-social-chat-status" id="jfSocialChatStatus" aria-live="polite">Mensagens privadas entre amigos.</p></section></div>';
   document.body.append(dock,panel);
   const $=id=>document.getElementById(id);
   let account=null,contacts=[],active=null,history=[];
@@ -42,33 +42,33 @@
   }
   const unread=new Map();
   const onlineIds=new Set(),listeningTracks=new Map();
-  function setStatus(message){$("jfMsnStatus").textContent=message||"";}
-  function setOpen(open){panel.hidden=!open;$("jfMsnOpen").setAttribute("aria-expanded",String(open));if(open){$("jfFriendsDrawer")?.setAttribute("hidden","");socket.emit("dm-list");}}
+  function setStatus(message){$("jfSocialChatStatus").textContent=message||"";}
+  function setOpen(open){panel.hidden=!open;$("jfSocialChatOpen").setAttribute("aria-expanded",String(open));if(open){$("jfFriendsDrawer")?.setAttribute("hidden","");socket.emit("dm-list");}}
   function time(value){const date=new Date(value);return Number.isNaN(date.getTime())?"":date.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
-  function updateUnread(){const total=[...unread.values()].reduce((a,b)=>a+b,0),badge=$("jfMsnUnread");badge.hidden=!total;badge.textContent=total>99?"99+":String(total);}
+  function updateUnread(){const total=[...unread.values()].reduce((a,b)=>a+b,0),badge=$("jfSocialChatUnread");badge.hidden=!total;badge.textContent=total>99?"99+":String(total);}
   function renderContacts(){
-    const list=$("jfMsnContacts");list.replaceChildren();
-    if(!account){const p=document.createElement("p");p.className="jf-msn-empty-contact";p.textContent="Entre na sua conta para conversar com seus amigos.";list.append(p);return;}
-    if(!contacts.length){const p=document.createElement("p");p.className="jf-msn-empty-contact";p.textContent="Sua lista está vazia. Adicione amigos pelo botão Amigos.";list.append(p);return;}
+    const list=$("jfSocialChatContacts");list.replaceChildren();
+    if(!account){const p=document.createElement("p");p.className="jf-social-chat-empty-contact";p.textContent="Entre na sua conta para conversar com seus amigos.";list.append(p);return;}
+    if(!contacts.length){const p=document.createElement("p");p.className="jf-social-chat-empty-contact";p.textContent="Sua lista está vazia. Adicione amigos pelo botão Amigos.";list.append(p);return;}
     for(const person of contacts){
-      const button=document.createElement("button");button.type="button";button.className="jf-msn-contact"+(active?.id===person.id?" active":"");
-      const avatar=document.createElement("span");avatar.className="jf-msn-avatar";
+      const button=document.createElement("button");button.type="button";button.className="jf-social-chat-contact"+(active?.id===person.id?" active":"");
+      const avatar=document.createElement("span");avatar.className="jf-social-chat-avatar";
       if(person.avatar&&/^data:image\/(png|jpeg|webp);base64,/i.test(person.avatar)){const img=document.createElement("img");img.src=person.avatar;img.alt="";avatar.append(img);}else avatar.textContent=(person.name||"?").slice(0,1).toUpperCase();
-      const details=document.createElement("span");details.className="jf-msn-contact-details";
+      const details=document.createElement("span");details.className="jf-social-chat-contact-details";
       const name=document.createElement("b");name.textContent=person.name||"Macaco";
       const last=document.createElement("small");const track=listeningTracks.get(person.id);last.textContent=(onlineIds.has(person.id)?"● online":"○ offline")+(track?" · ♫ "+track.name+" — "+track.artists:person.motto?" · "+person.motto:person.last_message?" · "+person.last_message:"");
       details.append(name,last);button.append(avatar,details);
-      const count=unread.has(person.id)?unread.get(person.id):(person.unread||0);if(count){const badge=document.createElement("i");badge.className="jf-msn-contact-unread";badge.textContent=count>9?"9+":String(count);button.append(badge);}
+      const count=unread.has(person.id)?unread.get(person.id):(person.unread||0);if(count){const badge=document.createElement("i");badge.className="jf-social-chat-contact-unread";badge.textContent=count>9?"9+":String(count);button.append(badge);}
       button.addEventListener("click",()=>openConversation(person));list.append(button);
     }
   }
   function renderMessages(){
-    const list=$("jfMsnMessages");list.replaceChildren();
-    if(!history.length){const empty=document.createElement("div");empty.className="jf-msn-empty";empty.textContent="Ainda não há mensagens. Mande um oi! 👋";list.append(empty);return;}
+    const list=$("jfSocialChatMessages");list.replaceChildren();
+    if(!history.length){const empty=document.createElement("div");empty.className="jf-social-chat-empty";empty.textContent="Ainda não há mensagens. Mande um oi! 👋";list.append(empty);return;}
     for(const message of history){
       const own=message.sender_id===account.id;
-      const row=document.createElement("div");row.className="jf-msn-message "+(own?"own":"theirs");
-      const bubble=document.createElement("div");bubble.className="jf-msn-bubble";bubble.textContent=message.body;
+      const row=document.createElement("div");row.className="jf-social-chat-message "+(own?"own":"theirs");
+      const bubble=document.createElement("div");bubble.className="jf-social-chat-bubble";bubble.textContent=message.body;
       const stamp=document.createElement("time");stamp.textContent=time(message.created_at);
       row.append(bubble,stamp);list.append(row);
     }
@@ -76,22 +76,22 @@
   }
   function openConversation(person){
     active=person;history=[];unread.delete(person.id);updateUnread();renderContacts();
-    const head=$("jfMsnChatHead");head.replaceChildren();head.append(document.createTextNode("🐒 "+(person.name||"Macaco")+" "));
-    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}const wink=document.createElement("button");wink.type="button";wink.className="jf-msn-nudge";wink.textContent="⚡ Chamar atenção";wink.addEventListener("click",()=>{if(active)socket.emit("social-wink",{accountId:active.id});});head.append(wink);for(const [label,kind] of [["✨ Wink","dance"],["🍌","banana"]]){const emote=document.createElement("button");emote.type="button";emote.className="jf-msn-nudge";emote.textContent=label;emote.addEventListener("click",()=>{if(active)socket.emit("social-emote",{accountId:active.id,kind});});head.append(emote);}
-    $("jfMsnInput").disabled=false;$("jfMsnForm").querySelector("button").disabled=false;
-    $("jfMsnMessages").replaceChildren();setStatus("Carregando conversa...");
+    const head=$("jfSocialChatChatHead");head.replaceChildren();head.append(document.createTextNode("🐒 "+(person.name||"Macaco")+" "));
+    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-social-chat-profile-link";head.append(profileLink);}const wink=document.createElement("button");wink.type="button";wink.className="jf-social-chat-nudge";wink.textContent="⚡ Chamar atenção";wink.addEventListener("click",()=>{if(active)socket.emit("social-wink",{accountId:active.id});});head.append(wink);for(const [label,kind] of [["✨ Wink","dance"],["🍌","banana"]]){const emote=document.createElement("button");emote.type="button";emote.className="jf-social-chat-nudge";emote.textContent=label;emote.addEventListener("click",()=>{if(active)socket.emit("social-emote",{accountId:active.id,kind});});head.append(emote);}
+    $("jfSocialChatInput").disabled=false;$("jfSocialChatForm").querySelector("button").disabled=false;
+    $("jfSocialChatMessages").replaceChildren();setStatus("Carregando conversa...");
     socket.emit("dm-open",{accountId:person.id});
   }
-  $("jfMsnOpen").addEventListener("click",()=>{
+  $("jfSocialChatOpen").addEventListener("click",()=>{
     const open=panel.hidden;setOpen(open);
     if(open&&!account){setStatus("Faça login para desbloquear mensagens privadas.");}
   });
-  $("jfMsnClose").addEventListener("click",()=>setOpen(false));
+  $("jfSocialChatClose").addEventListener("click",()=>setOpen(false));
   document.getElementById("jfHomeMessenger")?.addEventListener("click",()=>setOpen(true));
   document.getElementById("jfHomeArcade")?.addEventListener("click",()=>document.getElementById("jfOpenArena")?.click());
   document.getElementById("jfHomeAchievements")?.addEventListener("click",()=>document.getElementById("jfAchievementsOpen")?.click());
-  $("jfMsnForm").addEventListener("submit",event=>{
-    event.preventDefault();const input=$("jfMsnInput"),text=input.value.trim();
+  $("jfSocialChatForm").addEventListener("submit",event=>{
+    event.preventDefault();const input=$("jfSocialChatInput"),text=input.value.trim();
     if(!text||!active)return;
     socket.emit("dm-send",{accountId:active.id,text});input.value="";input.focus();
   });
@@ -130,22 +130,22 @@
   socket.on("social-emote-sent",payload=>setStatus(payload?.delivered?"Wink enviado!":"Seu amigo está offline."));
   socket.on("social-emote-error",payload=>setStatus(payload?.message||"Não foi possível enviar o wink."));
   socket.on("social-emote-received",payload=>{
-    let toast=document.getElementById("jfMsnNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfMsnNudgeToast";toast.className="jf-msn-nudge-toast";document.body.append(toast);}
-    toast.classList.add("jf-msn-emote-toast");toast.textContent=(payload?.emote||"🐒")+"  "+(payload?.from||"Um amigo")+" te mandou um wink!";toast.hidden=false;
-    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;toast.classList.remove("jf-msn-emote-toast");},2600);
+    let toast=document.getElementById("jfSocialChatNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfSocialChatNudgeToast";toast.className="jf-social-chat-nudge-toast";document.body.append(toast);}
+    toast.classList.add("jf-social-chat-emote-toast");toast.textContent=(payload?.emote||"🐒")+"  "+(payload?.from||"Um amigo")+" te mandou um wink!";toast.hidden=false;
+    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;toast.classList.remove("jf-social-chat-emote-toast");},2600);
   });
   socket.on("social-wink-error",payload=>setStatus(payload?.message||"Não foi possível chamar atenção."));
   socket.on("social-wink-received",payload=>{
-    document.body.classList.remove("jf-msn-nudged");void document.body.offsetWidth;document.body.classList.add("jf-msn-nudged");
-    let toast=document.getElementById("jfMsnNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfMsnNudgeToast";toast.className="jf-msn-nudge-toast";document.body.append(toast);}
+    document.body.classList.remove("jf-social-chat-nudged");void document.body.offsetWidth;document.body.classList.add("jf-social-chat-nudged");
+    let toast=document.getElementById("jfSocialChatNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfSocialChatNudgeToast";toast.className="jf-social-chat-nudge-toast";document.body.append(toast);}
     toast.textContent="⚡ "+(payload?.from||"Um amigo")+" chamou sua atenção!";toast.hidden=false;
-    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;document.body.classList.remove("jf-msn-nudged");},2600);
+    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;document.body.classList.remove("jf-social-chat-nudged");},2600);
   });
   fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(response=>response.json()).then(data=>{
     account=data.loggedIn?data.profile:null;
     const ownProfile=document.getElementById("jfHomeMyProfile");if(ownProfile&&account?.username){ownProfile.href="/u/"+encodeURIComponent(account.username);ownProfile.hidden=false;}
     if(account)socket.emit("dm-list");
-    else setStatus("Entre na sua conta para usar o Junto Messenger.");
+    else setStatus("Entre na sua conta para usar o Junto Chat.");
     renderContacts();
   }).catch(()=>{account=null;renderContacts();setStatus("Não foi possível verificar sua conta.");});
   window.addEventListener("jf-account-username-updated",event=>{
