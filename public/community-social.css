@@ -23,3 +23,5 @@ body:not(.jf-in-room) .jf-msn-dock{top:68px;right:18px}
 @keyframes jf-msn-nudge-shake{0%,100%{transform:translateX(0)}15%,45%,75%{transform:translateX(-5px)}30%,60%,90%{transform:translateX(5px)}}
 body.jf-msn-nudged{animation:jf-msn-nudge-shake .55s ease-in-out 2}
 @media(prefers-reduced-motion:reduce){body.jf-msn-nudged{animation:none}}
+
+.jf-msn-emote-toast{font-size:clamp(18px,4vw,30px);text-align:center;min-width:230px}
