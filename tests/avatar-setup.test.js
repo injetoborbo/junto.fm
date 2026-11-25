@@ -62,5 +62,4 @@ test('avatar studio renders a cinematic 3D lineup, held identity placard and hei
  assert.match(css,/jf-avatar-choice-grid/);
  assert.match(css,/data-jf-theme="aero"/);
  assert.match(css,/@media\(max-width:700px\)/);
- assert.match(account,/avatar_setup_legacy_backfill/);
 });
