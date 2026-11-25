@@ -58,9 +58,9 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
       pool.query(`SELECT t.id,t.body,t.created_at,a.username,a.nickname AS name,a.avatar FROM junto_testimonials t JOIN junto_accounts a ON a.id=t.author_id WHERE t.profile_id=$1 AND t.accepted=TRUE ORDER BY t.created_at DESC LIMIT 30`,[target.id]),
       pool.query("SELECT count(*)::int AS count FROM junto_profile_visits WHERE profile_id=$1 AND last_seen>NOW()-INTERVAL '30 days'",[target.id])
     ]);
-    let pending=[];
-    if(viewer?.id===target.id){const p=await pool.query(`SELECT t.id,t.body,t.created_at,a.username,a.nickname AS name FROM junto_testimonials t JOIN junto_accounts a ON a.id=t.author_id WHERE t.profile_id=$1 AND t.accepted=FALSE ORDER BY t.created_at DESC LIMIT 30`,[target.id]);pending=p.rows;}
-    res.json({scrapbook:scraps.rows,testimonials:testimonials.rows,pending,visits:visits.rows[0].count,isSelf:viewer?.id===target.id});
+    let pending=[],visitors=[];
+    if(viewer?.id===target.id){const p=await pool.query(`SELECT t.id,t.body,t.created_at,a.username,a.nickname AS name FROM junto_testimonials t JOIN junto_accounts a ON a.id=t.author_id WHERE t.profile_id=$1 AND t.accepted=FALSE ORDER BY t.created_at DESC LIMIT 30`,[target.id]);pending=p.rows;const v=await pool.query(`SELECT a.username,a.nickname AS name,a.avatar,v.last_seen FROM junto_profile_visits v JOIN junto_accounts a ON a.id=v.visitor_id WHERE v.profile_id=$1 ORDER BY v.last_seen DESC LIMIT 20`,[target.id]);visitors=v.rows;}
+    res.json({scrapbook:scraps.rows,testimonials:testimonials.rows,pending,visitors,visits:visits.rows[0].count,isSelf:viewer?.id===target.id});
   }));
   app.post("/api/social-classics/visit/:username",wrap(async(req,res)=>{
     if(!safe(req,res))return;
