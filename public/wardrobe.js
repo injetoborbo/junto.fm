@@ -767,6 +767,7 @@ function createAvatarLineup(scene,normalized,target){
   const accent=palette.getPropertyValue("--jf-secondary").trim()||"#70d7ef";
   const glow=palette.getPropertyValue("--jf-glow").trim()||"#315f83";
   const wallColor=theme==="aero"?"#12374c":theme==="classic"?"#22364c":theme==="tsimiomi"?"#321b1b":theme==="kodoku"?"#242629":"#1a2636";
+  scene.background=new THREE.Color(wallColor);
   const group=new THREE.Group();scene.add(group);
   const wallCanvas=document.createElement("canvas");wallCanvas.width=1200;wallCanvas.height=900;
   const ctx=wallCanvas.getContext("2d");
@@ -833,7 +834,8 @@ function createAvatarLineup(scene,normalized,target){
   const plateTexture=new THREE.CanvasTexture(plateCanvas);plateTexture.colorSpace=THREE.SRGBColorSpace;
   const plaque=new THREE.Group();plaque.position.set(0,-.48,.34);plaque.rotation.x=-.035;normalized.add(plaque);
   const board=new THREE.Mesh(new THREE.BoxGeometry(.86,.34,.055),darkMetal);plaque.add(board);
-  const face=new THREE.Mesh(new THREE.PlaneGeometry(.83,.31),new THREE.MeshBasicMaterial({map:plateTexture}));
+  const faceMat=new THREE.MeshBasicMaterial({map:plateTexture});
+  const face=new THREE.Mesh(new THREE.PlaneGeometry(.83,.31),faceMat);
   face.position.z=.029;plaque.add(face);
   const handleMat=new THREE.MeshStandardMaterial({color:0x9eacb9,metalness:.82,roughness:.23});
   const addRod=(from,to,radius=.018)=>{
@@ -843,14 +845,13 @@ function createAvatarLineup(scene,normalized,target){
   };
   addRod([-.34,.18,-.012],[-.43,.38,-.025]);addRod([.34,.18,-.012],[.43,.38,-.025]);
   return {dispose:()=>{
-    wallTexture.dispose();plateTexture.dispose();
+    wallTexture.dispose();plateTexture.dispose();faceMat.dispose();
     wall.material.dispose();floorMat.dispose();trimMat.dispose();darkMetal.dispose();handleMat.dispose();
     softLight.target.removeFromParent();scene.remove(softLight,rim,fill);group.removeFromParent();
   }};
 }
-function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false}={}){
+function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false,photoBooth=false}={}){
   if(!base)return null;
-  const photoBooth=Boolean(arguments[1]?.photoBooth);
   const width=Math.max(1,target.clientWidth||(preview?448:64)),height=Math.max(1,target.clientHeight||(preview?520:68));
   const renderer=new THREE.WebGLRenderer({alpha:!photoBooth,antialias:true,powerPreference:"low-power"});
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
@@ -957,7 +958,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     });
   }
   const camera=new THREE.PerspectiveCamera(photoBooth?29:33,width/height,.01,100);
-  camera.position.set(0,photoBooth?.035:.04,playerSitting?3.25:photoBooth?3.72:preview?4.25:4.0);camera.lookAt(0,photoBooth?-.035:.035,0);
+  camera.position.set(0,photoBooth ? .035 : .04,playerSitting?3.25:photoBooth?3.72:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.035 : .035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
   const lineup=photoBooth?createAvatarLineup(scene,normalized,target):null;
   renderer.render(scene,camera);
