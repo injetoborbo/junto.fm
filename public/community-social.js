@@ -41,6 +41,7 @@
     }).catch(error=>{name.textContent="Perfil não encontrado";motto.textContent=error.message;meta.textContent="";badges.textContent="Confira o endereço e tente novamente.";});
   }
   const unread=new Map();
+  const onlineIds=new Set(),listeningTracks=new Map();
   function setStatus(message){$("jfMsnStatus").textContent=message||"";}
   function setOpen(open){panel.hidden=!open;$("jfMsnOpen").setAttribute("aria-expanded",String(open));if(open){$("jfFriendsDrawer")?.setAttribute("hidden","");socket.emit("dm-list");}}
   function time(value){const date=new Date(value);return Number.isNaN(date.getTime())?"":date.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
@@ -55,7 +56,7 @@
       if(person.avatar&&/^data:image\/(png|jpeg|webp);base64,/i.test(person.avatar)){const img=document.createElement("img");img.src=person.avatar;img.alt="";avatar.append(img);}else avatar.textContent=(person.name||"?").slice(0,1).toUpperCase();
       const details=document.createElement("span");details.className="jf-msn-contact-details";
       const name=document.createElement("b");name.textContent=person.name||"Macaco";
-      const last=document.createElement("small");last.textContent=person.last_message||"Clique para iniciar uma conversa";
+      const last=document.createElement("small");const track=listeningTracks.get(person.id);last.textContent=(onlineIds.has(person.id)?"● online":"○ offline")+(track?" · ♫ "+track.name+" — "+track.artists:person.motto?" · "+person.motto:person.last_message?" · "+person.last_message:"");
       details.append(name,last);button.append(avatar,details);
       const count=unread.has(person.id)?unread.get(person.id):(person.unread||0);if(count){const badge=document.createElement("i");badge.className="jf-msn-contact-unread";badge.textContent=count>9?"9+":String(count);button.append(badge);}
       button.addEventListener("click",()=>openConversation(person));list.append(button);
@@ -76,7 +77,7 @@
   function openConversation(person){
     active=person;history=[];unread.delete(person.id);updateUnread();renderContacts();
     const head=$("jfMsnChatHead");head.replaceChildren();head.append(document.createTextNode("🐒 "+(person.name||"Macaco")+" "));
-    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}
+    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}const wink=document.createElement("button");wink.type="button";wink.className="jf-msn-nudge";wink.textContent="⚡ Chamar atenção";wink.addEventListener("click",()=>{if(active)socket.emit("social-wink",{accountId:active.id});});head.append(wink);for(const [label,kind] of [["✨ Wink","dance"],["🍌","banana"]]){const emote=document.createElement("button");emote.type="button";emote.className="jf-msn-nudge";emote.textContent=label;emote.addEventListener("click",()=>{if(active)socket.emit("social-emote",{accountId:active.id,kind});});head.append(emote);}
     $("jfMsnInput").disabled=false;$("jfMsnForm").querySelector("button").disabled=false;
     $("jfMsnMessages").replaceChildren();setStatus("Carregando conversa...");
     socket.emit("dm-open",{accountId:person.id});
@@ -94,6 +95,14 @@
     if(!text||!active)return;
     socket.emit("dm-send",{accountId:active.id,text});input.value="";input.focus();
   });
+  socket.on("social-presence-state",payload=>{
+    onlineIds.clear();for(const id of Array.isArray(payload?.online)?payload.online:[])onlineIds.add(id);listeningTracks.clear();for(const item of Array.isArray(payload?.listening)?payload.listening:[])if(item?.accountId&&item.track)listeningTracks.set(item.accountId,item.track);renderContacts();
+  });
+  socket.on("social-presence-update",payload=>{
+    if(!payload?.accountId)return;if(payload.online)onlineIds.add(payload.accountId);else{onlineIds.delete(payload.accountId);listeningTracks.delete(payload.accountId);}if(payload.track)listeningTracks.set(payload.accountId,payload.track);else if(!payload.online)listeningTracks.delete(payload.accountId);renderContacts();
+  });
+  socket.on("social-listening-update",payload=>{if(!payload?.accountId)return;if(payload.track)listeningTracks.set(payload.accountId,payload.track);else listeningTracks.delete(payload.accountId);renderContacts();});
+  socket.emit("social-presence-sync");
   socket.on("dm-conversations",payload=>{
     contacts=Array.isArray(payload?.conversations)?payload.conversations:[];
     for(const person of contacts){if(person.unread)unread.set(person.id,person.unread);else unread.delete(person.id);}
@@ -117,6 +126,21 @@
     socket.emit("dm-list");
   });
   socket.on("dm-error",payload=>setStatus(payload?.message||"Mensagens indisponíveis."));
+  socket.on("social-wink-sent",payload=>setStatus(payload?.delivered?"Chamada enviada!":"Seu amigo está offline; chamada não entregue."));
+  socket.on("social-emote-sent",payload=>setStatus(payload?.delivered?"Wink enviado!":"Seu amigo está offline."));
+  socket.on("social-emote-error",payload=>setStatus(payload?.message||"Não foi possível enviar o wink."));
+  socket.on("social-emote-received",payload=>{
+    let toast=document.getElementById("jfMsnNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfMsnNudgeToast";toast.className="jf-msn-nudge-toast";document.body.append(toast);}
+    toast.classList.add("jf-msn-emote-toast");toast.textContent=(payload?.emote||"🐒")+"  "+(payload?.from||"Um amigo")+" te mandou um wink!";toast.hidden=false;
+    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;toast.classList.remove("jf-msn-emote-toast");},2600);
+  });
+  socket.on("social-wink-error",payload=>setStatus(payload?.message||"Não foi possível chamar atenção."));
+  socket.on("social-wink-received",payload=>{
+    document.body.classList.remove("jf-msn-nudged");void document.body.offsetWidth;document.body.classList.add("jf-msn-nudged");
+    let toast=document.getElementById("jfMsnNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfMsnNudgeToast";toast.className="jf-msn-nudge-toast";document.body.append(toast);}
+    toast.textContent="⚡ "+(payload?.from||"Um amigo")+" chamou sua atenção!";toast.hidden=false;
+    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;document.body.classList.remove("jf-msn-nudged");},2600);
+  });
   fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"}).then(response=>response.json()).then(data=>{
     account=data.loggedIn?data.profile:null;
     const ownProfile=document.getElementById("jfHomeMyProfile");if(ownProfile&&account?.username){ownProfile.href="/u/"+encodeURIComponent(account.username);ownProfile.hidden=false;}
@@ -133,5 +157,5 @@
   });
   renderPublicProfilePage();
   socket.on("friends-state",()=>{if(!panel.hidden)socket.emit("dm-list");});
-  socket.on("connect",()=>{if(account)socket.emit("dm-list");});
+  socket.on("connect",()=>{socket.emit("social-presence-sync");if(account)socket.emit("dm-list");});
 })();

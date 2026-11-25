@@ -116,3 +116,41 @@ test("new community and standalone pages inherit the selected site theme",()=>{
   assert.match(read("public/quartos.css"),/herda a aparência escolhida/);
   assert.match(read("public/mural.css"),/mesma paleta selecionada/);
 });
+
+
+test("presence and listening sync only disclose friends to authenticated users",()=>{
+  const source=read("community-classics.js");
+  assert.match(source,/async function sendPresenceState\(socket\)/);
+  assert.match(source,/const friends=await accounts\.friends\(id\),friendIds=new Set\(friends\.map\(friend=>friend\.id\)\)/);
+  assert.match(source,/filter\(friendId=>friendIds\.has\(friendId\)\)/);
+  assert.match(source,/filter\(\(\[friendId\]\)=>friendIds\.has\(friendId\)\)/);
+  assert.match(source,/social-presence-sync",\(\)=>void sendPresenceState\(socket\)/);
+  assert.match(source,/if\(!id\)\{[\s\S]*?social-presence-state",\{online:\[\],listening:\[\]\}\);return;/);
+});
+
+test("offline MSN nudge status does not claim deferred delivery",()=>{
+  const source=read("public/community-social.js");
+  assert.match(source,/Seu amigo está offline; chamada não entregue/);
+  assert.doesNotMatch(source,/offline; ele verá quando entrar/);
+});
+
+test("community and scrapbook styling use theme variables with a retro UI treatment",()=>{
+  const css=read("public/community-classics.css");
+  const profile=read("public/community-classics-profile.css");
+  assert.match(css,/var\(--jf-ui-panel/);
+  assert.match(css,/var\(--jf-ui-button/);
+  assert.match(profile,/var\(--jf-ui-panel/);
+  assert.match(css,/border:2px ridge/);
+  assert.match(read("public/communities.html"),/theme-bridge\.js/);
+});
+
+
+test("social socket events revalidate the account session after logout",()=>{
+  const source=read("community-classics.js");
+  assert.match(source,/async function currentSocialAccount\(socket\)/);
+  assert.match(source,/accounts\.accountFromRequest\(socket\.request\)/);
+  assert.match(source,/const sender=await currentSocialAccount\(socket\)/);
+  assert.match(source,/const account=await currentSocialAccount\(socket\),id=account\?\.id/);
+  assert.match(source,/const recipient=await currentSocialAccount\(peer\)/);
+  assert.match(source,/const sender=await currentSocialAccount\(socket\)/);
+});

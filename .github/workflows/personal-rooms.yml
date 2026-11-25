@@ -27,6 +27,9 @@ jobs:
           node --check public/junto-tv.js
           node --check direct-messages.js
           node --check community-profiles.js
+          node --check community-classics.js
+          node --check public/community-classics.js
+          node --check public/community-classics-profile.js
           node --check account-auth.js
           node --check username-rules.js
           node --check tests/account-username.test.js
