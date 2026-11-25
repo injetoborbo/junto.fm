@@ -6,7 +6,8 @@ const ROOM_DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"
 const initial=()=>({wall:'#8caaa5',floor:'#c9ad85',items:[{id:'welcome-table',type:'coffeeTable',x:2,y:7,rotation:0},{id:'welcome-plant',type:'plant',x:8,y:1,rotation:0},{id:'welcome-rug',type:'rug',x:3,y:3,rotation:0},{id:'welcome-chair',type:'diningChair',x:1,y:7,rotation:0}]});
 function setupRooms(app,io,accounts){
  const pool=accounts.pool,ns=io.of('/quartos'),presence=new Map();
- const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query(`CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1,visibility VARCHAR(8) NOT NULL DEFAULT 'private',category VARCHAR(24) NOT NULL DEFAULT 'conversa',description VARCHAR(160) NOT NULL DEFAULT '');
+ const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query(`CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1,visibility VARCHAR(8) NOT NULL DEFAULT 'private',category VARCHAR(24) NOT NULL DEFAULT 'conversa',description VARCHAR(160) NOT NULL DEFAULT '',updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+ ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
  ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS visibility VARCHAR(8) NOT NULL DEFAULT 'private';
  ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS category VARCHAR(24) NOT NULL DEFAULT 'conversa';
  ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS description VARCHAR(160) NOT NULL DEFAULT '';
