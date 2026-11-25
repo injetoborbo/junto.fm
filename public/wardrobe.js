@@ -761,10 +761,102 @@ function applyPlayerSittingPose(monkey,source){
   console.info("Pose sentada Mixamo: ossos aplicados",applied,"de",clip.tracks.length,"canais");
   return applied>=5;
 }
-function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false}={}){
+function createAvatarLineup(scene,normalized,target){
+  const theme=document.documentElement.dataset.jfTheme||"y2k";
+  const palette=getComputedStyle(document.documentElement);
+  const accent=palette.getPropertyValue("--jf-secondary").trim()||"#70d7ef";
+  const glow=palette.getPropertyValue("--jf-glow").trim()||"#315f83";
+  const wallColor=theme==="aero"?"#12374c":theme==="classic"?"#22364c":theme==="tsimiomi"?"#321b1b":theme==="kodoku"?"#242629":"#1a2636";
+  scene.background=new THREE.Color(wallColor);
+  const group=new THREE.Group();scene.add(group);
+  const wallCanvas=document.createElement("canvas");wallCanvas.width=1200;wallCanvas.height=900;
+  const ctx=wallCanvas.getContext("2d");
+  const wallGradient=ctx.createLinearGradient(0,0,0,900);
+  wallGradient.addColorStop(0,wallColor);wallGradient.addColorStop(.66,"#243447");wallGradient.addColorStop(1,"#101b29");
+  ctx.fillStyle=wallGradient;ctx.fillRect(0,0,1200,900);
+  const bloom=ctx.createRadialGradient(610,360,30,610,360,650);
+  bloom.addColorStop(0,"rgba(255,255,255,.10)");bloom.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.fillStyle=bloom;ctx.fillRect(0,0,1200,900);
+  const chartX=185,top=120,bottom=805;
+  ctx.strokeStyle=accent;ctx.globalAlpha=.83;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(chartX,top);ctx.lineTo(chartX,bottom);ctx.stroke();
+  ctx.globalAlpha=.6;ctx.font="bold 22px Arial";ctx.fillStyle="#effaff";ctx.textAlign="right";
+  for(let cm=100;cm<=200;cm+=5){
+    const y=bottom-(cm-100)/100*(bottom-top),major=cm%10===0;
+    ctx.globalAlpha=major?.9:.42;ctx.lineWidth=major?3:1.5;
+    ctx.beginPath();ctx.moveTo(chartX-(major?52:24),y);ctx.lineTo(chartX,y);ctx.stroke();
+    if(major)ctx.fillText(String(cm),chartX-62,y+7);
+  }
+  ctx.globalAlpha=.9;ctx.textAlign="left";ctx.font="bold 18px Arial";ctx.fillStyle=accent;
+  ctx.fillText("JUNTO / PERSONNEL",250,72);
+  ctx.globalAlpha=.55;ctx.font="13px Arial";ctx.fillStyle="#eef8ff";
+  ctx.fillText("IDENTIFICATION STUDIO  ·  01",250,101);
+  ctx.globalAlpha=.24;ctx.strokeStyle="#ffffff";ctx.lineWidth=1;
+  for(let x=250;x<1140;x+=72){ctx.beginPath();ctx.moveTo(x,140);ctx.lineTo(x,820);ctx.stroke();}
+  ctx.globalAlpha=1;
+  const wallTexture=new THREE.CanvasTexture(wallCanvas);wallTexture.colorSpace=THREE.SRGBColorSpace;
+  const wall=new THREE.Mesh(new THREE.PlaneGeometry(5.4,4.05),new THREE.MeshBasicMaterial({map:wallTexture}));
+  wall.position.set(0,.52,-1.22);group.add(wall);
+  const trimMat=new THREE.MeshStandardMaterial({color:new THREE.Color(accent),metalness:.72,roughness:.3,emissive:new THREE.Color(glow),emissiveIntensity:.14});
+  const darkMetal=new THREE.MeshStandardMaterial({color:0x293b4d,metalness:.82,roughness:.28});
+  for(const x of [-2.32,2.32]){
+    const post=new THREE.Mesh(new THREE.BoxGeometry(.075,3.75,.11),darkMetal);
+    post.position.set(x,.48,-1.13);group.add(post);
+    const edge=new THREE.Mesh(new THREE.BoxGeometry(.012,3.7,.012),trimMat);
+    edge.position.set(x+(x<0?.045:-.045),.48,-1.065);group.add(edge);
+  }
+  const floorMat=new THREE.MeshStandardMaterial({color:theme==="aero"?0x426a7b:0x24313e,metalness:.28,roughness:.56});
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(16,16),floorMat);
+  floor.rotation.x=-Math.PI/2;floor.position.set(0,-.965,0);group.add(floor);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(.88,.94,.075,64),darkMetal);
+  base.position.set(0,-.917,0);group.add(base);
+  const topRing=new THREE.Mesh(new THREE.TorusGeometry(.78,.012,8,80),trimMat);
+  topRing.rotation.x=Math.PI/2;topRing.position.set(0,-.875,0);group.add(topRing);
+  const softLight=new THREE.SpotLight(0xffffff,4.2,8,Math.PI/5,.7,1.2);
+  softLight.position.set(0,2.8,2.3);softLight.target.position.set(0,-.05,0);
+  scene.add(softLight,softLight.target);
+  const rim=new THREE.PointLight(new THREE.Color(accent),1.35,5);
+  rim.position.set(-1.8,.8,-.25);scene.add(rim);
+  const fill=new THREE.PointLight(0xe7f5ff,.9,4);fill.position.set(1.8,.5,1.8);scene.add(fill);
+  const plateCanvas=document.createElement("canvas");plateCanvas.width=768;plateCanvas.height=288;
+  const pctx=plateCanvas.getContext("2d");
+  const plateGradient=pctx.createLinearGradient(0,0,0,288);
+  plateGradient.addColorStop(0,"#34495b");plateGradient.addColorStop(1,"#101c2b");
+  pctx.fillStyle=plateGradient;pctx.fillRect(0,0,768,288);
+  pctx.strokeStyle=accent;pctx.lineWidth=9;pctx.strokeRect(8,8,752,272);
+  pctx.strokeStyle="rgba(255,255,255,.22)";pctx.lineWidth=2;pctx.strokeRect(22,22,724,244);
+  pctx.fillStyle=accent;pctx.textAlign="center";pctx.font="bold 23px Arial";
+  pctx.fillText("JUNTO.FM  /  REGISTRO DE PERSONAGEM",384,63);
+  const name=String(target.dataset.avatarPlateName||"MACACO").toLocaleUpperCase().slice(0,24);
+  const handle=String(target.dataset.avatarPlateHandle||"VISITANTE").toLocaleUpperCase().slice(0,30);
+  pctx.fillStyle="#ffffff";pctx.font="bold 55px Arial";pctx.fillText(name,384,151);
+  pctx.fillStyle="#c5d4df";pctx.font="bold 25px Arial";pctx.fillText(handle,384,207);
+  const plateTexture=new THREE.CanvasTexture(plateCanvas);plateTexture.colorSpace=THREE.SRGBColorSpace;
+  const plaque=new THREE.Group();plaque.position.set(0,-.48,.34);plaque.rotation.x=-.035;normalized.add(plaque);
+  const board=new THREE.Mesh(new THREE.BoxGeometry(.86,.34,.055),darkMetal);plaque.add(board);
+  const faceMat=new THREE.MeshBasicMaterial({map:plateTexture});
+  const face=new THREE.Mesh(new THREE.PlaneGeometry(.83,.31),faceMat);
+  face.position.z=.029;plaque.add(face);
+  const handleMat=new THREE.MeshStandardMaterial({color:0x9eacb9,metalness:.82,roughness:.23});
+  const addRod=(from,to,radius=.018)=>{
+    const a=new THREE.Vector3(...from),b=new THREE.Vector3(...to),delta=new THREE.Vector3().subVectors(b,a);
+    const rod=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,delta.length(),10),handleMat);
+    rod.position.copy(a).add(b).multiplyScalar(.5);rod.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());plaque.add(rod);
+  };
+  addRod([-.34,.18,-.012],[-.43,.38,-.025]);addRod([.34,.18,-.012],[.43,.38,-.025]);
+  return {dispose:()=>{
+    group.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
+    plaque.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
+    normalized.remove(plaque);
+    wallTexture.dispose();plateTexture.dispose();faceMat.dispose();
+    wall.material.dispose();floorMat.dispose();trimMat.dispose();darkMetal.dispose();handleMat.dispose();
+    softLight.target.removeFromParent();scene.remove(softLight,rim,fill);group.removeFromParent();
+  }};
+}
+function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=false,previewSeated=false,photoBooth=false}={}){
   if(!base)return null;
-  const width=preview?248:64,height=preview?248:68;
-  const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
+  const width=Math.max(1,target.clientWidth||(preview?448:64)),height=Math.max(1,target.clientHeight||(preview?520:68));
+  const renderer=new THREE.WebGLRenderer({alpha:!photoBooth,antialias:true,powerPreference:"low-power"});
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
   renderer.setSize(width,height,false);
   renderer.domElement.style.cssText="width:100%;height:100%;display:block";
@@ -868,9 +960,10 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
       });
     });
   }
-  const camera=new THREE.PerspectiveCamera(33,width/height,.01,100);
-  camera.position.set(0,.04,playerSitting?3.25:preview?4.25:4.0);camera.lookAt(0,.035,0);
+  const camera=new THREE.PerspectiveCamera(photoBooth?29:33,width/height,.01,100);
+  camera.position.set(0,photoBooth ? .035 : .04,playerSitting?3.25:photoBooth?3.72:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.035 : .035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
+  const lineup=photoBooth?createAvatarLineup(scene,normalized,target):null;
   renderer.render(scene,camera);
   // A câmera precisa existir antes que dress() possa solicitar um render.
   if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey,{
@@ -909,6 +1002,16 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     renderer.render(scene,camera);
   };
   const up=()=>{dragStart=null;};
+  let resizeObserver=null,boothFrame=0,lastBoothFrame=0;
+  if(preview&&typeof ResizeObserver!=="undefined"){
+    resizeObserver=new ResizeObserver(()=>{const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.render(scene,camera);});
+    resizeObserver.observe(target);
+  }
+  if(photoBooth){
+    const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const animateBooth=now=>{boothFrame=requestAnimationFrame(animateBooth);if(!active||document.hidden||now-lastBoothFrame<40)return;lastBoothFrame=now;if(!reduced){normalized.rotation.y=previewYaw+Math.sin(now*.00042)*.025;normalized.position.y=Math.sin(now*.0007)*.005;}renderer.render(scene,camera);};
+    boothFrame=requestAnimationFrame(animateBooth);
+  }
   if(preview){
     target.style.touchAction="pan-y";
     target.style.cursor="grab";
@@ -919,6 +1022,9 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   }
   return {dispose:()=>{
     active=false;
+    if(boothFrame)cancelAnimationFrame(boothFrame);
+    resizeObserver?.disconnect();
+    lineup?.dispose();
     if(preview){
       target.removeEventListener("pointerdown",down);
       target.removeEventListener("pointermove",move);
@@ -991,7 +1097,7 @@ function showPreview(){
     if(preview)preview.textContent="Carregando macaco 3D…";
     return;
   }
-  previewRenderer=makeScene(preview,editing,{preview:true,previewSeated:fitAccess&&fitPose==="seated"&&editing.outfit==="rosa_novo"});
+  previewRenderer=makeScene(preview,editing,{preview:true,photoBooth:preview.dataset.avatarStudio==="true",previewSeated:fitAccess&&fitPose==="seated"&&editing.outfit==="rosa_novo"});
 }
 
 const fitPanel=$("jfWardrobeFitEditor"),fitItem=$("jfFitItem"),fitStatus=$("jfFitStatus");
