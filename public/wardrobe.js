@@ -518,6 +518,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
         worldHead.z-measure.center.z*finalScale+.05*fitScale+(tune?.offset[2]||0)*fitScale);
       hat.name="jfWardrobeHat_"+type;
       state.add(hat);
+      notifyDevkitTarget(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
       if(animated){
         attachAtBind(hat,headBone,rootBindWorld,{y:-.00020,z:-.00004},{y:-.0010,z:.0001});
@@ -961,7 +962,7 @@ function createBoothIdleAnimation(monkey){
     try{
       if(typeof DecompressionStream!=="function"||typeof atob!=="function"||typeof Blob!=="function")
         throw new Error("Este navegador não oferece descompressão de animação.");
-      const response=await fetch("/poses/standing-w-briefcase-idle.json.gz.b64",{cache:"force-cache"});
+      const response=await fetch("/poses/standing-w-briefcase-idle.json.gz.b64?v=briefcase-idle-20261125-1",{cache:"no-cache"});
       if(!response.ok)throw new Error("Animação de espera indisponível ("+response.status+").");
       const encoded=(await response.text()).trim();
       const bytes=Uint8Array.from(atob(encoded),char=>char.charCodeAt(0));
@@ -1133,7 +1134,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
     });
   }
   const camera=new THREE.PerspectiveCamera(photoBooth?36:33,width/height,.01,100);
-  camera.position.set(0,photoBooth ? .02 : .04,playerSitting?3.25:photoBooth?5.15:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.13 : .035,0);
+  camera.position.set(0,photoBooth ? .02 : .04,playerSitting?3.25:photoBooth?6.25:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.13 : .035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
   const lineup=photoBooth?createAvatarLineup(scene,normalized,target):null;
   const boothIdle=photoBooth?createBoothIdleAnimation(monkey):null;
@@ -1155,8 +1156,11 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
       // então percorrer somente monkey fazia roupas desaparecerem do seletor.
       normalized.traverse(node=>{
         if(node.isBone)add(node,"Osso · "+(node.name||"Bone"),"Esqueleto");
-        if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)||/^jfMiniHat_/.test(node.name)))
-          add(node,node.name.replace(/^jfWardrobe_|^jfMiniHat_|^jfMini_/,""),"Roupas e acessórios");
+        const wardrobeName=String(node.name||"");
+        if(wardrobeName&&(/^jfWardrobe(?:_|Hat_)/.test(wardrobeName)||/^jfMini(?:_|Hat_)/.test(wardrobeName))){
+          const label=wardrobeName.replace(/^jfWardrobe(?:_|Hat_)|^jfMiniHat_|^jfMini_/,"");
+          add(node,label||wardrobeName,"Roupas e acessórios");
+        }
       });
       const lab=normalized.userData.jfAvatarLabParts||{};
       add(lab.plate,"Placa de identificação","Placa e mãos");
@@ -1202,7 +1206,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
         monkey.traverse(node=>{if(node.isBone)bones.push(vec(node));});
         const parts=[];
         monkey.traverse(node=>{
-          if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)))parts.push(vec(node));
+          if(node.name&&(/^jfWardrobe(?:_|Hat_)/.test(node.name)||/^jfMini(?:_|Hat_)/.test(node.name)))parts.push(vec(node));
         });
         const lab=normalized.userData.jfAvatarLabParts||{};
         return {
