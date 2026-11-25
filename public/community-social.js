@@ -77,7 +77,7 @@
   function openConversation(person){
     active=person;history=[];unread.delete(person.id);updateUnread();renderContacts();
     const head=$("jfMsnChatHead");head.replaceChildren();head.append(document.createTextNode("🐒 "+(person.name||"Macaco")+" "));
-    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}const wink=document.createElement("button");wink.type="button";wink.className="jf-msn-nudge";wink.textContent="⚡ Chamar atenção";wink.addEventListener("click",()=>{if(active)socket.emit("social-wink",{accountId:active.id});});head.append(wink);
+    if(person.username){const profileLink=document.createElement("a");profileLink.href="/u/"+encodeURIComponent(person.username);profileLink.textContent="Ver perfil ↗";profileLink.className="jf-msn-profile-link";head.append(profileLink);}const wink=document.createElement("button");wink.type="button";wink.className="jf-msn-nudge";wink.textContent="⚡ Chamar atenção";wink.addEventListener("click",()=>{if(active)socket.emit("social-wink",{accountId:active.id});});head.append(wink);for(const [label,kind] of [["✨ Wink","dance"],["🍌","banana"]]){const emote=document.createElement("button");emote.type="button";emote.className="jf-msn-nudge";emote.textContent=label;emote.addEventListener("click",()=>{if(active)socket.emit("social-emote",{accountId:active.id,kind});});head.append(emote);}
     $("jfMsnInput").disabled=false;$("jfMsnForm").querySelector("button").disabled=false;
     $("jfMsnMessages").replaceChildren();setStatus("Carregando conversa...");
     socket.emit("dm-open",{accountId:person.id});
@@ -127,6 +127,13 @@
   });
   socket.on("dm-error",payload=>setStatus(payload?.message||"Mensagens indisponíveis."));
   socket.on("social-wink-sent",payload=>setStatus(payload?.delivered?"Chamada enviada!":"Seu amigo está offline; ele verá quando entrar."));
+  socket.on("social-emote-sent",payload=>setStatus(payload?.delivered?"Wink enviado!":"Seu amigo está offline."));
+  socket.on("social-emote-error",payload=>setStatus(payload?.message||"Não foi possível enviar o wink."));
+  socket.on("social-emote-received",payload=>{
+    let toast=document.getElementById("jfMsnNudgeToast");if(!toast){toast=document.createElement("div");toast.id="jfMsnNudgeToast";toast.className="jf-msn-nudge-toast";document.body.append(toast);}
+    toast.classList.add("jf-msn-emote-toast");toast.textContent=(payload?.emote||"🐒")+"  "+(payload?.from||"Um amigo")+" te mandou um wink!";toast.hidden=false;
+    window.clearTimeout(toast._hideTimer);toast._hideTimer=window.setTimeout(()=>{toast.hidden=true;toast.classList.remove("jf-msn-emote-toast");},2600);
+  });
   socket.on("social-wink-error",payload=>setStatus(payload?.message||"Não foi possível chamar atenção."));
   socket.on("social-wink-received",payload=>{
     document.body.classList.remove("jf-msn-nudged");void document.body.offsetWidth;document.body.classList.add("jf-msn-nudged");
