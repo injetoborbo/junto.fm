@@ -177,15 +177,70 @@
     panel.setAttribute("aria-label","DevKit de coordenadas do Avatar Lab");
     const title=document.createElement("strong");title.textContent="DEVKIT · POSIÇÕES 3D";
     const note=document.createElement("p");note.textContent="Snapshot do rig em tempo real. Coordenadas em metros; copie e envie aqui para eu ajustar com precisão.";
+    const editTitle=document.createElement("strong");editTitle.textContent="EDITOR DE TRANSFORM";
+    const targetSelect=document.createElement("select");targetSelect.className="jf-avatar-devkit-target";
+    targetSelect.setAttribute("aria-label","Selecionar parte do avatar para editar");
+    const transformGrid=document.createElement("div");transformGrid.className="jf-avatar-devkit-transform-grid";
+    const inputs={position:[],rotation:[],scale:[]};
+    const axisNames=["X","Y","Z"];
+    const makeGroup=(key,label,unit,defaults)=>{
+      const group=document.createElement("fieldset");group.className="jf-avatar-devkit-fieldset";
+      const legend=document.createElement("legend");legend.textContent=label;group.append(legend);
+      axisNames.forEach((axis,index)=>{
+        const labelEl=document.createElement("label");labelEl.textContent=axis;
+        const input=document.createElement("input");input.type="number";input.step=key==="rotation"?"1":"0.01";input.value=String(defaults[index]);input.dataset.transform=key;input.dataset.axis=String(index);input.setAttribute("aria-label",label+" "+axis+" ("+unit+")");
+        inputs[key].push(input);labelEl.append(input);group.append(labelEl);
+      });
+      return group;
+    };
+    transformGrid.append(makeGroup("position","Posição","m",[0,0,0]),makeGroup("rotation","Rotação","graus",[0,0,0]),makeGroup("scale","Escala","x",[1,1,1]));
+    const editActions=document.createElement("div");editActions.className="jf-avatar-devkit-actions";
+    const applyTransform=document.createElement("button");applyTransform.type="button";applyTransform.textContent="Aplicar ao vivo";
+    const resetTransform=document.createElement("button");resetTransform.type="button";resetTransform.textContent="Restaurar original";
+    editActions.append(applyTransform,resetTransform);
     const actions=document.createElement("div");actions.className="jf-avatar-devkit-actions";
-    const refresh=document.createElement("button");refresh.type="button";refresh.textContent="Atualizar";
+    const refresh=document.createElement("button");refresh.type="button";refresh.textContent="Atualizar JSON";
     const copy=document.createElement("button");copy.type="button";copy.textContent="Copiar posições";
     const copyPlate=document.createElement("button");copyPlate.type="button";copyPlate.textContent="Copiar placa + mãos";
-    const output=document.createElement("textarea");output.readOnly=true;output.rows=7;output.spellcheck=false;
+    const output=document.createElement("textarea");output.readOnly=true;output.rows=6;output.spellcheck=false;
     output.setAttribute("aria-label","JSON de coordenadas atual");
     const status=document.createElement("span");status.className="jf-avatar-devkit-status";status.setAttribute("role","status");
-    status.textContent="Abra o snapshot ou copie os dados.";
-    actions.append(refresh,copy,copyPlate);panel.append(title,note,actions,output,status);
+    status.textContent="Selecione uma parte, altere X/Y/Z e aplique para ver no modelo.";
+    actions.append(refresh,copy,copyPlate);panel.append(title,note,editTitle,targetSelect,transformGrid,editActions,actions,output,status);
+    const fillTransform=()=>{
+      const api=window.jfAvatarLabDevkit,id=targetSelect.value;
+      const value=api?.getTransform?.(id);if(!value)return;
+      ["position","rotation","scale"].forEach(key=>value[key].forEach((number,index)=>{
+        inputs[key][index].value=String(Number((key==="rotation"?number*180/Math.PI:number).toFixed(4)));
+      }));
+    };
+    const refreshTargets=()=>{
+      const api=window.jfAvatarLabDevkit;
+      if(!api?.getTargets){status.textContent="3D carregando… atualize em alguns segundos.";return false;}
+      const previous=targetSelect.value,targets=api.getTargets();
+      targetSelect.replaceChildren();
+      targets.forEach(target=>{
+        const option=document.createElement("option");option.value=target.id;option.textContent=target.group+" · "+target.label;targetSelect.append(option);
+      });
+      if(targets.some(target=>target.id===previous))targetSelect.value=previous;
+      fillTransform();return targets.length>0;
+    };
+    targetSelect.addEventListener("change",fillTransform);
+    applyTransform.addEventListener("click",()=>{
+      const api=window.jfAvatarLabDevkit,id=targetSelect.value;
+      if(!api?.setTransform){status.textContent="Rig indisponível. Atualize quando o 3D terminar de carregar.";return;}
+      const read=key=>inputs[key].map(input=>Number(input.value));
+      const transform={position:read("position"),rotation:read("rotation").map(value=>value*Math.PI/180),scale:read("scale")};
+      if(Object.values(transform).flat().every(Number.isFinite)&&api.setTransform(id,transform)){
+        status.textContent="Transform aplicado ao vivo. Ainda não está salvo permanentemente.";
+        snapshot();
+      }else status.textContent="Valores inválidos ou parte não encontrada.";
+    });
+    resetTransform.addEventListener("click",()=>{
+      const api=window.jfAvatarLabDevkit;
+      if(api?.resetTransform?.(targetSelect.value)){fillTransform();status.textContent="Transform original restaurado.";snapshot();}
+      else status.textContent="Original ainda não capturado; selecione novamente e tente.";
+    });
     stage.append(launch,panel);
     const snapshot=()=>{
       const api=window.jfAvatarLabDevkit;
@@ -212,9 +267,9 @@
     launch.addEventListener("click",()=>{
       panel.hidden=!panel.hidden;launch.setAttribute("aria-expanded",String(!panel.hidden));
       launch.textContent=panel.hidden?"⚙ DevKit":"⚙ Fechar DevKit";
-      if(!panel.hidden)snapshot();
+      if(!panel.hidden){refreshTargets();snapshot();}
     });
-    refresh.addEventListener("click",snapshot);
+    refresh.addEventListener("click",()=>{refreshTargets();snapshot();});
     copy.addEventListener("click",()=>{const data=snapshot();if(data)void copyText(JSON.stringify(data,null,2));});
     copyPlate.addEventListener("click",()=>{
       const data=snapshot();if(!data)return;
