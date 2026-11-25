@@ -51,6 +51,9 @@ module.exports=function setupAccounts(app){
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_hash TEXT;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_expires TIMESTAMPTZ;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS avatar_setup_completed_at TIMESTAMPTZ;
+    UPDATE junto_accounts SET username='macaco_' || left(replace(id::text,'-',''),12) WHERE username IS NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_username_unique ON junto_accounts (lower(username)) WHERE username IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_email_unique ON junto_accounts (lower(email)) WHERE email IS NOT NULL;
     `).then(()=>true).catch(error=>{console.error("Contas: banco indisponível:",error.message);return false;}):Promise.resolve(false);
   const hash=s=>crypto.createHash("sha256").update(s).digest("hex");
   // Envio transacional via Resend. Sem chave configurada, o cadastro por e-mail fica fechado.
