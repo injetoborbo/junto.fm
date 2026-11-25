@@ -138,3 +138,77 @@ nav a,nav button{color:var(--jf-ui-text)}.nav-sticker{color:var(--jf-primary)}
 .seat-devkit-actions button{flex:1;padding:7px 5px;font-size:10px}
 .seat-devkit textarea{resize:vertical;min-height:92px;padding:7px;border:1px solid var(--jf-ui-border);background:var(--jf-ui-soft);color:var(--jf-ui-text);font:10px/1.4 Consolas,monospace}
 @media(max-width:600px){.seat-devkit{top:54px;right:8px;width:min(300px,calc(100% - 16px));max-height:58%;padding:10px}.room-dances{max-width:calc(100% - 72px)}}
+
+/* Catálogo de quartos públicos: descoberta sem mais blocos espalhados na home. */
+.public-directory{margin:36px 0 22px;padding:28px;border:1px solid #514a8a;border-radius:12px;background:linear-gradient(145deg,#201d4b,#171637);box-shadow:0 12px 34px #05051b65}
+.directory-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.directory-heading h2{font-size:clamp(25px,4vw,38px);margin:8px 0;letter-spacing:-1px}
+.directory-heading p{margin:0;color:#b9b5db;font-size:13px;line-height:1.6}
+.directory-count{white-space:nowrap;font-size:11px;color:#72f4ff;border:1px solid #6c70b9;border-radius:30px;padding:8px 12px;background:#111333}
+.public-room-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.public-room-card{display:flex;gap:12px;align-items:flex-start;min-width:0;padding:16px;border-radius:10px;border:1px solid #5b5794;background:linear-gradient(145deg,#2d2a60,#211f4a);box-shadow:inset 0 1px #ffffff18;transition:transform .18s,box-shadow .18s}
+.public-room-card:hover{transform:translateY(-3px);box-shadow:0 8px 18px #05051d55,inset 0 1px #ffffff28}
+.public-room-icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:9px;background:#38356f;border:1px solid #7775b9;color:#9ff7ff;font-size:19px}
+.public-room-copy{min-width:0;flex:1}
+.public-room-copy h3{margin:0 0 4px;font-size:16px;overflow-wrap:anywhere}
+.public-room-copy small{display:block;color:#aaa8d2;font-size:10px}
+.public-room-copy p{margin:9px 0 13px;color:#c8c5e5;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.public-room-visit{font-size:11px;padding:8px 11px}
+.directory-empty,.directory-loading{grid-column:1/-1;margin:0;padding:22px;text-align:center;color:#bdb9dc;font-size:13px;line-height:1.6}
+.directory-refresh{margin-top:16px;font-size:11px}
+.public-room-card[data-theme="music"] .public-room-icon{background:#382b67;color:#ff9cde}
+.public-room-card[data-theme="anime"] .public-room-icon{background:#592b65;color:#ffc4ec}
+.public-room-card[data-theme="gaming"] .public-room-icon{background:#1e4965;color:#a4efff}
+.public-room-card[data-theme="chill"] .public-room-icon{background:#28536b;color:#b8ffff}
+.public-room-card[data-theme="retro"] .public-room-icon{background:#68512a;color:#ffe88e}
+.publication-panel{margin-top:18px;padding:0 18px 18px;border:1px solid #4b6557;border-radius:8px;background:#1b302a}
+.publication-panel .window-bar{margin:0 -18px 15px}
+#publicationForm{display:grid;gap:9px}
+#publicationForm label{margin-top:4px}
+#publicationForm select,#publicationForm textarea{width:100%;padding:10px;border:1px solid #566b5f;border-radius:5px;background:#142722;color:var(--ink)}
+#publicationForm textarea{resize:vertical}
+#publicationForm .publish-toggle{display:flex;gap:10px;align-items:flex-start;margin:0 0 5px}
+#publicationForm .publish-toggle input{margin:3px 0 0}
+#publicationForm .publish-toggle strong,#publicationForm .publish-toggle small{display:block}
+#publicationForm .publish-toggle small{margin-top:4px;color:#9fb1a5;line-height:1.5}
+#publicationForm button{margin-top:5px}
+.publish-status{margin:3px 0 0;color:var(--yellow);font-size:11px;line-height:1.5}
+html[data-jf-theme="aero"] .public-directory{background:linear-gradient(140deg,#eaffffb8,#bcefff85 52%,#ffffff75);border:1px solid #ffffffd9;border-radius:20px;box-shadow:inset 0 2px #ffffff,0 18px 48px #005a8b3b;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);color:#073c60}
+html[data-jf-theme="aero"] .directory-heading p{color:#155777}
+html[data-jf-theme="aero"] .directory-count{color:#064b74;background:linear-gradient(#ffffffc9,#a9edffbd);border-color:#ffffff}
+html[data-jf-theme="aero"] .public-room-card{background:linear-gradient(145deg,#ffffffb8,#d6f6ff99 55%,#a8eaff75);border-color:#ffffffd9;box-shadow:inset 0 1px #fff,0 5px 12px #00679a1d;color:#073c60}
+html[data-jf-theme="aero"] .public-room-copy small,html[data-jf-theme="aero"] .public-room-copy p{color:#155777}
+html[data-jf-theme="aero"] .public-room-icon{background:linear-gradient(#ffffff,#b8f3ff 50%,#5ac6e7);border-color:#ffffff;color:#07517c;box-shadow:inset 0 2px #fff,0 2px 0 #6bbbd7}
+html[data-jf-theme="aero"] .public-room-visit{color:#06466e;background:linear-gradient(#ffffff,#a8efff 50%,#38a9d8);border:1px solid #ffffff;box-shadow:inset 0 2px #fff,0 2px 0 #4b9fc3}
+html[data-jf-theme="aero"] .directory-empty,html[data-jf-theme="aero"] .directory-loading{color:#155777}
+html[data-jf-theme="aero"] .publication-panel{background:linear-gradient(140deg,#eaffffb8,#bcefff85);border-color:#ffffff;color:#073c60}
+html[data-jf-theme="aero"] #publicationForm select,html[data-jf-theme="aero"] #publicationForm textarea{background:#f3ffffd9;color:#06466e;border-color:#ffffff}
+html[data-jf-theme="aero"] #publicationForm .publish-toggle small{color:#155777}
+@media(max-width:950px){.public-room-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.public-directory{padding:18px;margin-top:25px}.directory-heading{align-items:flex-start}.public-room-grid{grid-template-columns:1fr}.public-room-card{padding:13px}.directory-heading h2{font-size:27px}}
+
+/* Every room screen follows the active saved palette, not its old green defaults. */
+html[data-jf-theme] body{background:var(--jf-ui-page)!important;color:var(--jf-ui-text)!important}
+html[data-jf-theme] header,html[data-jf-theme] .invitation,html[data-jf-theme] aside,html[data-jf-theme] .scene-column,html[data-jf-theme] .publication-panel{background:var(--jf-ui-panel)!important;border-color:var(--jf-ui-border)!important;color:var(--jf-ui-text)!important}
+html[data-jf-theme] header{box-shadow:0 4px 18px color-mix(in srgb,var(--jf-glow) 18%,transparent)}
+html[data-jf-theme] .intro p,html[data-jf-theme] .invitation p,html[data-jf-theme] .hint,html[data-jf-theme] .directory-heading p,html[data-jf-theme] .public-room-copy p{color:var(--jf-ui-muted)!important}
+html[data-jf-theme] button{background:var(--jf-ui-surface)!important;color:var(--jf-ui-text)!important;border-color:var(--jf-ui-border)!important;box-shadow:0 3px 0 color-mix(in srgb,var(--jf-ui-page) 80%,#000)!important}
+html[data-jf-theme] button.primary,html[data-jf-theme] .primary,html[data-jf-theme] .public-room-visit{background:var(--jf-ui-button)!important;color:var(--jf-ui-button-text)!important;border-color:var(--jf-ui-button-border)!important}
+html[data-jf-theme] input,html[data-jf-theme] select,html[data-jf-theme] textarea{background:var(--jf-ui-soft)!important;color:var(--jf-ui-text)!important;border-color:var(--jf-ui-border)!important}
+html[data-jf-theme] .brand small,html[data-jf-theme] .eyebrow,html[data-jf-theme] .pixel-kicker{color:var(--jf-primary)!important}
+html[data-jf-theme] .room-heading,html[data-jf-theme] .directory-heading{color:var(--jf-ui-text)!important}
+html[data-jf-theme] .public-room-card{background:linear-gradient(145deg,var(--jf-ui-surface),var(--jf-ui-soft))!important;border-color:var(--jf-ui-border)!important;color:var(--jf-ui-text)!important}
+html[data-jf-theme] .public-room-copy small,html[data-jf-theme] .public-room-copy p{color:var(--jf-ui-muted)!important}
+html[data-jf-theme] .public-room-icon{background:var(--jf-ui-soft)!important;border-color:var(--jf-ui-border)!important;color:var(--jf-secondary)!important}
+html[data-jf-theme] .directory-count{background:var(--jf-ui-soft)!important;border-color:var(--jf-ui-border)!important;color:var(--jf-ui-text)!important}
+html[data-jf-theme] .directory-empty,html[data-jf-theme] .directory-loading{color:var(--jf-ui-muted)!important}
+html[data-jf-theme] .publication-panel .window-bar{background:var(--jf-ui-surface)!important;color:var(--jf-ui-text)!important;border-color:var(--jf-ui-border)!important}
+html[data-jf-theme] #publicationForm .publish-toggle small{color:var(--jf-ui-muted)!important}
+html[data-jf-theme] #publicDirectory{border-color:var(--jf-ui-border)!important}
+html[data-jf-theme] .scene{background:var(--jf-ui-scene)!important}
+html[data-jf-theme] footer{color:var(--jf-ui-muted)!important;border-color:var(--jf-ui-border)!important}
+
+.public-room-theme{display:inline-block;margin-top:7px;padding:4px 7px;border-radius:20px;border:1px solid #6864a5;background:#343064;color:#d7d5ff;font-size:9px;font-weight:bold;letter-spacing:.2px}
+html[data-jf-theme="aero"] .public-directory{background:linear-gradient(140deg,#eaffffb8,#bcefff85 52%,#ffffff75)!important;border:1px solid #ffffffd9!important;box-shadow:inset 0 2px #ffffff,0 18px 48px #005a8b3b!important;backdrop-filter:blur(20px) saturate(1.5)!important;-webkit-backdrop-filter:blur(20px) saturate(1.5)!important;color:#073c60!important}
+html[data-jf-theme="aero"] .public-room-card{background:linear-gradient(145deg,#ffffffb8,#d6f6ff99 55%,#a8eaff75)!important;border-color:#ffffffd9!important;color:#073c60!important;box-shadow:inset 0 1px #fff,0 5px 12px #00679a1d!important}
+html[data-jf-theme="aero"] .public-room-theme{background:linear-gradient(#ffffffb8,#b9efff9c);border-color:#ffffff;color:#07517c}

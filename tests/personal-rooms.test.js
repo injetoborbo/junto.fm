@@ -88,6 +88,23 @@ test('the furniture editor separates catalog groups and rotates from controls on
  assert.match(editor,/rotateSelected\(-1\)/);
  assert.match(editor,/rotateSelected\(1\)/);
 });
+test('public room catalog and Aero homepage use readable themed presentation',()=>{
+ const home=fs.readFileSync(require.resolve('../public/index.html'),'utf8');
+ const page=fs.readFileSync(require.resolve('../public/quartos.html'),'utf8');
+ const styles=fs.readFileSync(require.resolve('../public/quartos.css'),'utf8');
+ const script=fs.readFileSync(require.resolve('../public/quartos.js'),'utf8');
+ const backend=fs.readFileSync(require.resolve('../personal-rooms.js'),'utf8');
+ assert.match(home,/jf-home-aero-contrast/);
+ assert.match(home,/data-jf-theme="aero".*jf-home-minimal/s);
+ assert.match(home,/Quartos da galera/);
+ assert.match(page,/id="publicDirectory"/);
+ assert.match(page,/id="publicationForm"/);
+ assert.match(script,/\/api\/quartos\/public/);
+ assert.match(script,/\/api\/quartos\/publication/);
+ assert.match(backend,/WHERE r\.is_public=true/);
+ assert.match(backend,/async function allowed\(owner,guest\).*is_public/s);
+ assert.match(styles,/data-jf-theme="aero".*public-directory/s);
+});
 test('persisted rooms, owner-only changes, invitations, optimistic locking and realtime access',{skip:!process.env.PGLITE_TEST_MODULE||!process.env.SOCKET_CLIENT_TEST_MODULE},async()=>{
  const {PGlite}=require(process.env.PGLITE_TEST_MODULE),{io:client}=require(process.env.SOCKET_CLIENT_TEST_MODULE);
  const db=new PGlite(),pool={query:async(s,a)=>{if(s.includes('CREATE TABLE'))return db.exec(s);const r=await db.query(s,a);return {...r,rowCount:r.rows.length||r.affectedRows||0};}};
@@ -116,8 +133,15 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   assert.equal((await request('PUT','/api/quartos',{name:'Minha casa',layout,revision:1})).status,200);
   assert.equal((await request('PUT','/api/quartos',{name:'Velho',layout,revision:1})).status,409);
   const saved=await(await request('GET','/api/quartos')).json();assert.equal(saved.own.layout.wall,'#112233');assert.equal(saved.own.name,'Minha casa');
+  assert.equal((await(await request('GET','/api/quartos/public',null)).json()).rooms.length,0);
+  assert.equal((await request('PUT','/api/quartos/publication',{isPublic:true,theme:'gaming',description:'Jogos e resenha.'})).status,200);
+  const publicCatalog=await(await request('GET','/api/quartos/public',null)).json();assert.equal(publicCatalog.rooms[0].public_theme,'gaming');assert.equal(publicCatalog.rooms[0].public_description,'Jogos e resenha.');
+  assert.equal((await request('PUT','/api/quartos/publication',{isPublic:true,theme:'not-a-theme',description:''})).status,400);
   assert.equal((await request('POST','/api/quartos/invites',{guestId:c})).status,403);
-  const visitor=await connect(b);assert.match((await emit(visitor,'enter',{owner:a})).error,/convidados/);
+  const visitor=await connect(b);assert.equal((await emit(visitor,'enter',{owner:a})).own,false,'published rooms allow any logged-in visitor');
+  visitor.emit('leave');await new Promise(r=>setTimeout(r,550));
+  assert.equal((await request('PUT','/api/quartos/publication',{isPublic:false,theme:'gaming',description:'Jogos e resenha.'})).status,200);
+  assert.match((await emit(visitor,'enter',{owner:a})).error,/convidados/,'private rooms still require an invitation');
   assert.equal((await request('POST','/api/quartos/invites',{guestId:b})).status,200);
   const inbox=await(await request('GET','/api/quartos',null,b)).json();assert.equal(inbox.invites[0].owner_id,a);
   // The socket throttles join requests for 500ms.

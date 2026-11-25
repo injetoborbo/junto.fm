@@ -6,8 +6,7 @@ const ROOM_DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"
 const initial=()=>({wall:'#8caaa5',floor:'#c9ad85',items:[{id:'welcome-table',type:'coffeeTable',x:2,y:7,rotation:0},{id:'welcome-plant',type:'plant',x:8,y:1,rotation:0},{id:'welcome-rug',type:'rug',x:3,y:3,rotation:0},{id:'welcome-chair',type:'diningChair',x:1,y:7,rotation:0}]});
 function setupRooms(app,io,accounts){
  const pool=accounts.pool,ns=io.of('/quartos'),presence=new Map();
- const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query(`CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1);
- CREATE TABLE IF NOT EXISTS junto_room_invites(owner_id UUID NOT NULL REFERENCES junto_personal_rooms(owner_id),guest_id UUID NOT NULL REFERENCES junto_accounts(id),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(owner_id,guest_id));`);return true;}).catch(e=>{console.error('Quartos:',e.message);return false;});
+ const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query("CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1,is_public BOOLEAN NOT NULL DEFAULT false,public_theme VARCHAR(24) NOT NULL DEFAULT 'cozy',public_description VARCHAR(140) NOT NULL DEFAULT ''); ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT false; ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS public_theme VARCHAR(24) NOT NULL DEFAULT 'cozy'; ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS public_description VARCHAR(140) NOT NULL DEFAULT ''; CREATE TABLE IF NOT EXISTS junto_room_invites(owner_id UUID NOT NULL REFERENCES junto_personal_rooms(owner_id),guest_id UUID NOT NULL REFERENCES junto_accounts(id),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(owner_id,guest_id));");return true;}).catch(e=>{console.error('Quartos:',e.message);return false;});
  const err=(message,status=400)=>Object.assign(Error(message),{status});
  const room=async id=>{
   const result=await pool.query('SELECT r.*,a.nickname AS owner_name FROM junto_personal_rooms r JOIN junto_accounts a ON a.id=r.owner_id WHERE owner_id=$1',[id]);
@@ -15,7 +14,7 @@ function setupRooms(app,io,accounts){
   if(record?.layout)record.layout=rules.validate(record.layout,record.layout);
   return record;
  };
- async function allowed(owner,guest){return owner===guest||!!(await pool.query('SELECT 1 FROM junto_room_invites WHERE owner_id=$1 AND guest_id=$2',[owner,guest])).rowCount;}
+ async function allowed(owner,guest){if(owner===guest)return true;const r=await pool.query('SELECT is_public FROM junto_personal_rooms WHERE owner_id=$1',[owner]);return Boolean(r.rows[0]?.is_public)||(await pool.query('SELECT 1 FROM junto_room_invites WHERE owner_id=$1 AND guest_id=$2',[owner,guest])).rowCount>0;}
  const wrap=fn=>async(req,res)=>{res.set('Cache-Control','no-store');try{
   if(!await ready)throw err('Quartos indisponíveis. Tente novamente em instantes.',503);
   if(req.method!=='GET'&&(req.get('sec-fetch-site')==='cross-site'||req.get('origin')&&!['http://'+req.get('host'),'https://'+req.get('host')].includes(req.get('origin'))))throw err('Origem inválida.',403);
@@ -23,11 +22,13 @@ function setupRooms(app,io,accounts){
   await fn(req,res,account);
  }catch(e){if(!e.status)console.error('Quartos:',e.message);res.status(e.status||500).json({error:e.status?e.message:'Não foi possível concluir. Tente novamente.'});}};
  app.get('/quartos',(_,res)=>res.set('Cache-Control','no-cache').sendFile(path.join(__dirname,'public/quartos.html')));
+ app.get('/api/quartos/public',async(req,res)=>{res.set('Cache-Control','no-store');try{if(!await ready)return res.status(503).json({error:'Quartos indisponíveis.'});const result=await pool.query("SELECT r.owner_id,r.name,r.public_theme,r.public_description,r.is_public,r.layout->>'wall' AS wall,r.layout->>'floor' AS floor,a.nickname AS owner_name FROM junto_personal_rooms r JOIN junto_accounts a ON a.id=r.owner_id WHERE r.is_public=true ORDER BY r.name LIMIT 80");res.json({rooms:result.rows});}catch(e){console.error('Catálogo de quartos:',e.message);res.status(500).json({error:'Não foi possível carregar os quartos públicos.'});}});
  app.get('/api/quartos',wrap(async(req,res,a)=>{
   const own=await room(a.id),invites=await pool.query('SELECT r.owner_id,r.name,a.nickname AS owner_name FROM junto_room_invites i JOIN junto_personal_rooms r ON r.owner_id=i.owner_id JOIN junto_accounts a ON a.id=r.owner_id WHERE i.guest_id=$1 ORDER BY i.created_at DESC LIMIT 150',[a.id]);
   res.json({account:{id:a.id,name:a.nickname},own,invites:invites.rows,friends:(await accounts.friends(a.id)).map(f=>({id:f.id,name:f.name}))});
  }));
  app.post('/api/quartos',wrap(async(req,res,a)=>{await pool.query('INSERT INTO junto_personal_rooms(owner_id,name,layout) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',[a.id,'Quarto de '+String(a.nickname||'Macaco').slice(0,24),JSON.stringify(initial())]);res.json(await room(a.id));}));
+ app.put('/api/quartos/publication',wrap(async(req,res,a)=>{const isPublic=req.body?.isPublic===true;const theme=String(req.body?.theme||'cozy');const description=String(req.body?.description||'').trim();if(!['cozy','music','anime','gaming','chill','retro'].includes(theme))throw err('Escolha um tema válido.');if(description.length>140)throw err('A descrição deve ter até 140 caracteres.');const r=await pool.query('UPDATE junto_personal_rooms SET is_public=$2,public_theme=$3,public_description=$4 WHERE owner_id=$1 RETURNING *',[a.id,isPublic,theme,description]);if(!r.rowCount)throw err('Crie seu quarto antes de publicá-lo.');res.json(r.rows[0]);}));
  app.put('/api/quartos',wrap(async(req,res,a)=>{
   const previous=await room(a.id);
   let layout;try{layout=rules.validate(req.body?.layout,previous?.layout);}catch(e){throw err(e.message);}
