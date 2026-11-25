@@ -192,3 +192,7 @@ html[data-jf-theme="aero"] .jf-avatar-setup .jf-avatar-setup-confirm{background:
  .jf-avatar-setup .jf-avatar-category-tab{min-height:58px}
 }
 @media(prefers-reduced-motion:reduce){.jf-avatar-setup *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.jf-avatar-studio-reopen{width:100%;margin:0 0 14px;min-height:38px;font-size:11px;letter-spacing:.4px}
+.jf-avatar-setup #jfAvatarStudioReopen{display:none!important}
+html[data-jf-theme="aero"] #jfAvatarStudioReopen{background:linear-gradient(#ffffff,#bcefff)!important;color:#06486a!important;border-color:#fff!important}
