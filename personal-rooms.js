@@ -6,7 +6,11 @@ const ROOM_DANCES=new Set(["idle","shake","macarena","party","capoeira","groove"
 const initial=()=>({wall:'#8caaa5',floor:'#c9ad85',items:[{id:'welcome-table',type:'coffeeTable',x:2,y:7,rotation:0},{id:'welcome-plant',type:'plant',x:8,y:1,rotation:0},{id:'welcome-rug',type:'rug',x:3,y:3,rotation:0},{id:'welcome-chair',type:'diningChair',x:1,y:7,rotation:0}]});
 function setupRooms(app,io,accounts){
  const pool=accounts.pool,ns=io.of('/quartos'),presence=new Map();
- const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query(`CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1);
+ const ready=accounts.ready.then(async ok=>{if(!ok||!pool)return false;await pool.query(`CREATE TABLE IF NOT EXISTS junto_personal_rooms(owner_id UUID PRIMARY KEY REFERENCES junto_accounts(id),name VARCHAR(48) NOT NULL,layout JSONB NOT NULL,revision INTEGER NOT NULL DEFAULT 1,visibility VARCHAR(8) NOT NULL DEFAULT 'private',category VARCHAR(24) NOT NULL DEFAULT 'conversa',description VARCHAR(160) NOT NULL DEFAULT '');
+ ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS visibility VARCHAR(8) NOT NULL DEFAULT 'private';
+ ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS category VARCHAR(24) NOT NULL DEFAULT 'conversa';
+ ALTER TABLE junto_personal_rooms ADD COLUMN IF NOT EXISTS description VARCHAR(160) NOT NULL DEFAULT '';
+ CREATE INDEX IF NOT EXISTS junto_personal_rooms_public_updated ON junto_personal_rooms(updated_at) WHERE visibility='public';
  CREATE TABLE IF NOT EXISTS junto_room_invites(owner_id UUID NOT NULL REFERENCES junto_personal_rooms(owner_id),guest_id UUID NOT NULL REFERENCES junto_accounts(id),created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(owner_id,guest_id));`);return true;}).catch(e=>{console.error('Quartos:',e.message);return false;});
  const err=(message,status=400)=>Object.assign(Error(message),{status});
  const room=async id=>{
@@ -15,7 +19,8 @@ function setupRooms(app,io,accounts){
   if(record?.layout)record.layout=rules.validate(record.layout,record.layout);
   return record;
  };
- async function allowed(owner,guest){return owner===guest||!!(await pool.query('SELECT 1 FROM junto_room_invites WHERE owner_id=$1 AND guest_id=$2',[owner,guest])).rowCount;}
+ async function allowed(owner,guest){if(owner===guest)return true;return !!(await pool.query("SELECT 1 FROM junto_personal_rooms r LEFT JOIN junto_room_invites i ON i.owner_id=r.owner_id AND i.guest_id=$2 WHERE r.owner_id=$1 AND (r.visibility='public' OR i.guest_id IS NOT NULL)",[owner,guest])).rowCount;}
+ const publicCategories=new Set(['conversa','musica','jogos','anime','nostalgia','cafe','arte','chill']);
  const wrap=fn=>async(req,res)=>{res.set('Cache-Control','no-store');try{
   if(!await ready)throw err('Quartos indisponíveis. Tente novamente em instantes.',503);
   if(req.method!=='GET'&&(req.get('sec-fetch-site')==='cross-site'||req.get('origin')&&!['http://'+req.get('host'),'https://'+req.get('host')].includes(req.get('origin'))))throw err('Origem inválida.',403);
@@ -25,14 +30,15 @@ function setupRooms(app,io,accounts){
  app.get('/quartos',(_,res)=>res.set('Cache-Control','no-cache').sendFile(path.join(__dirname,'public/quartos.html')));
  app.get('/api/quartos',wrap(async(req,res,a)=>{
   const own=await room(a.id),invites=await pool.query('SELECT r.owner_id,r.name,a.nickname AS owner_name FROM junto_room_invites i JOIN junto_personal_rooms r ON r.owner_id=i.owner_id JOIN junto_accounts a ON a.id=r.owner_id WHERE i.guest_id=$1 ORDER BY i.created_at DESC LIMIT 150',[a.id]);
-  res.json({account:{id:a.id,name:a.nickname},own,invites:invites.rows,friends:(await accounts.friends(a.id)).map(f=>({id:f.id,name:f.name}))});
+  const publicRooms=await pool.query("SELECT r.owner_id,r.name,r.category,r.description,r.updated_at,a.nickname AS owner_name,(SELECT COUNT(*) FROM junto_room_invites i WHERE i.owner_id=r.owner_id) AS invite_count FROM junto_personal_rooms r JOIN junto_accounts a ON a.id=r.owner_id WHERE r.visibility='public' ORDER BY r.updated_at DESC NULLS LAST LIMIT 60");
+  res.json({account:{id:a.id,name:a.nickname},own,invites:invites.rows,publicRooms:publicRooms.rows,friends:(await accounts.friends(a.id)).map(f=>({id:f.id,name:f.name}))});
  }));
- app.post('/api/quartos',wrap(async(req,res,a)=>{await pool.query('INSERT INTO junto_personal_rooms(owner_id,name,layout) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',[a.id,'Quarto de '+String(a.nickname||'Macaco').slice(0,24),JSON.stringify(initial())]);res.json(await room(a.id));}));
+ app.post('/api/quartos',wrap(async(req,res,a)=>{await pool.query('INSERT INTO junto_personal_rooms(owner_id,name,layout,updated_at) VALUES($1,$2,$3,NOW()) ON CONFLICT DO NOTHING',[a.id,'Quarto de '+String(a.nickname||'Macaco').slice(0,24),JSON.stringify(initial())]);res.json(await room(a.id));}));
  app.put('/api/quartos',wrap(async(req,res,a)=>{
   const previous=await room(a.id);
   let layout;try{layout=rules.validate(req.body?.layout,previous?.layout);}catch(e){throw err(e.message);}
-  const name=String(req.body?.name||'').trim();if(!name||name.length>48||!Number.isInteger(req.body?.revision))throw err('Nome ou versão inválidos.');
-  const result=await pool.query('UPDATE junto_personal_rooms SET name=$2,layout=$3,revision=revision+1 WHERE owner_id=$1 AND revision=$4 RETURNING *',[a.id,name,JSON.stringify(layout),req.body.revision]);
+  const name=String(req.body?.name||'').trim(),visibility=req.body?.visibility==='public'?'public':'private',category=String(req.body?.category||'conversa'),description=String(req.body?.description||'').trim().slice(0,160);if(!name||name.length>48||!Number.isInteger(req.body?.revision))throw err('Nome ou versão inválidos.');if(!publicCategories.has(category))throw err('Escolha uma categoria válida.');
+  const result=await pool.query('UPDATE junto_personal_rooms SET name=$2,layout=$3,visibility=$5,category=$6,description=$7,revision=revision+1,updated_at=NOW() WHERE owner_id=$1 AND revision=$4 RETURNING *',[a.id,name,JSON.stringify(layout),req.body.revision,visibility,category,description]);
   if(!result.rowCount)throw err('O quarto mudou em outra aba. Reabra antes de editar.',409);
   for(const p of presence.get(a.id)?.values()||[]){p.x=0;p.y=0;p.path=[];p.pose='standing';p.pendingPose=null;p.poseTarget=null;}
   ns.to(a.id).emit('layout',result.rows[0]);broadcast(a.id);res.json(result.rows[0]);
