@@ -853,16 +853,18 @@ function createAvatarLineup(scene,normalized,target){
     normalized.worldToLocal(rightLocal.copy(rightWorld));
     midLocal.copy(leftLocal).add(rightLocal).multiplyScalar(.5);
     plaque.position.copy(midLocal);
-    plaque.position.y+=.035;
-    plaque.position.z+=.10;
-    // O rig às vezes troca a ordem espacial das mãos; evitar virar o texto
-    // de cabeça para baixo quando a linha entre os pulsos aponta para trás.
+    // Centro da placa exatamente entre as mãos. A face fica ligeiramente
+    // atrás dos pulsos (câmera em +Z), para as mãos aparecerem sobre as
+    // bordas e parecerem apoiar/segurar a identificação, não uma placa flutuante.
+    plaque.position.y+=.015;
+    plaque.position.z-=.035;
+    // O rig pode inverter a ordem espacial dos pulsos; manter o texto legível.
     let handAngle=Math.atan2(rightLocal.y-leftLocal.y,rightLocal.x-leftLocal.x);
     if(Math.abs(handAngle)>Math.PI/2)handAngle+=handAngle>0?-Math.PI:Math.PI;
     plaque.rotation.set(-.035,0,handAngle);
     const span=leftLocal.distanceTo(rightLocal);
-    const width=THREE.MathUtils.clamp(span*.90,.60,.78);
-    plaque.scale.setScalar(width/plaqueBaseWidth);
+    const width=THREE.MathUtils.clamp(span*.94,.48,.68);
+    plaque.scale.set(width/plaqueBaseWidth,.92,1);
   };
   update();
   return {update,dispose:()=>{
