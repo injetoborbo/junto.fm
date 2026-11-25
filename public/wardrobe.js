@@ -523,8 +523,34 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       updateAccessories();
       render();
     });
-  }else if(selection.hat==="bone"||selection.hat==="gorro"){
-    attachFitted(selection.hat,part=>{
+  }else if(selection.hat==="bone"){
+    // O boné azul era reaproveitado com o posicionamento antigo do GLB,
+    // por isso ficava suspenso depois da escala física de 1,50 m no Avatar Lab.
+    // Encaixar pelo HeadTop: calcular largura em metros e assentar a aba
+    // alguns centímetros sobre o crânio, mantendo o mesmo rig nas animações.
+    attachFitted("bone",(part,measure)=>{
+      monkey.updateWorldMatrix(true,true);
+      const monkeyWorldScale=monkey.getWorldScale(new THREE.Vector3());
+      const topWorld=topBone?topBone.getWorldPosition(new THREE.Vector3()):
+        worldHead.clone().add(new THREE.Vector3(0,.15,0));
+      const topLocal=monkey.worldToLocal(topWorld);
+      const capWidth=Math.max(measure.size.x,measure.size.z,1e-6);
+      const desiredWorldWidth=.45;
+      // attachFitted multiplica depois por fitScale; compensar aqui para
+      // que o boné tenha a mesma largura física no Avatar Lab e nas demais telas.
+      const localScale=desiredWorldWidth/
+        (capWidth*Math.max(monkeyWorldScale.x,.0001)*fitScale);
+      part.scale.setScalar(localScale);
+      const finalScale=localScale*fitScale;
+      const drop=.075/Math.max(monkeyWorldScale.y,.0001);
+      part.position.set(
+        topLocal.x-measure.center.x*finalScale,
+        topLocal.y-drop-measure.box.min.y*finalScale,
+        topLocal.z-measure.center.z*finalScale+.01/Math.max(monkeyWorldScale.z,.0001)
+      );
+    },true,headBone,null,{y:-.0004});
+  }else if(selection.hat==="gorro"){
+    attachFitted("gorro",part=>{
       part.position.x=rawX;
     },true,headBone,null,{y:-.0004});
   }
