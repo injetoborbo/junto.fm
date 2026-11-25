@@ -1,87 +1,175 @@
 (() => {
   "use strict";
   const $=id=>document.getElementById(id);
-  let active=false,checking=false,finished=false;
-  let accountProfile=null;
-  const wardrobeKeys=["hat","glasses","headphones","outfit"];
-  const wardrobeDefaults={hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
+  let active=false,checking=false,finished=false,category="outfit";
+  const keys=["hat","glasses","headphones","outfit"];
+  const defaults={hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
+  const meta={
+    hat:{title:"Cabeça",eyebrow:"CHAPÉUS E ESTILO",copy:"Escolha o que vai no topo do seu visual.",icon:"⌑",
+      icons:{nenhum:"—",bone:"🧢",apocaliptico:"☠",gorro:"◒",palha:"🌾",branco:"☀",caveira:"💀"}},
+    glasses:{title:"Rosto",eyebrow:"OLHOS E EXPRESSÃO",copy:"Um detalhe muda a personalidade toda.",icon:"◉",
+      icons:{nenhum:"—",escuros:"🕶",redondos:"👓",sem_aro:"◉",botao:"🧵"}},
+    headphones:{title:"Acessórios",eyebrow:"SOM E IDENTIDADE",copy:"O Junto também tem seu próprio som.",icon:"♫",
+      icons:{nenhum:"—",azul:"🎧",rosa:"🎧",preto:"🎧"}},
+    outfit:{title:"Roupas",eyebrow:"SEU JEITO DE CHEGAR",copy:"Escolha a roupa que vai representar você.",icon:"◇",
+      icons:{padrao:"◈",rosa:"🌸",rosa_novo:"👗",punk:"⚡"}}
+  };
   const modal=$("jfWardrobeModal"),dialog=modal?.querySelector(".jf-wardrobe-modal");
   const save=$("jfSaveWardrobe"),close=$("jfCloseWardrobe"),open=$("jfOpenWardrobe");
   const statusNode=document.createElement("p");
-  statusNode.className="jf-avatar-setup-status";
-  statusNode.setAttribute("role","status");statusNode.setAttribute("aria-live","polite");
-  statusNode.textContent="Escolha o visual e faça seu primeiro registro.";
-  function profileName(profile){
-    const name=String(profile?.name||"Macaco").trim().slice(0,24);
+  statusNode.className="jf-avatar-setup-status";statusNode.setAttribute("role","status");statusNode.setAttribute("aria-live","polite");
+  statusNode.textContent="Suas escolhas aparecem no personagem em tempo real.";
+  function nameplate(profile){
+    const name=String(profile?.name||"Macaco").trim().slice(0,24)||"Macaco";
     const handle=String(profile?.username||"").trim().slice(0,24);
-    return {name:name||"Macaco",handle:handle?"@"+handle:""};
+    return {name,handle:handle?"@"+handle:"JUNTO.FM"};
+  }
+  function makeChoiceCards(key,select){
+    const group=document.createElement("div");group.className="jf-avatar-choice-grid";
+    group.setAttribute("role","group");group.setAttribute("aria-label",meta[key].title);
+    [...select.options].forEach(option=>{
+      const card=document.createElement("button");card.type="button";card.className="jf-avatar-choice";
+      card.dataset.value=option.value;card.setAttribute("aria-pressed",String(option.value===select.value));
+      const icon=document.createElement("span");icon.className="jf-avatar-choice-icon";icon.textContent=meta[key].icons[option.value]||"✦";
+      const text=document.createElement("span");text.className="jf-avatar-choice-label";text.textContent=option.textContent.trim();
+      card.append(icon,text);card.addEventListener("click",()=>{
+        select.value=option.value;select.dispatchEvent(new Event("change",{bubbles:true}));
+        syncChoices(key,select.value);statusNode.textContent=text.textContent+" selecionado.";
+      });
+      group.append(card);
+    });
+    return group;
+  }
+  function syncChoices(key,value){
+    document.querySelectorAll(".jf-avatar-choice[data-slot='"+key+"']").forEach(card=>{
+      const selected=card.dataset.value===value;card.classList.toggle("selected",selected);
+      card.setAttribute("aria-pressed",String(selected));
+    });
+  }
+  function activateCategory(key){
+    category=key;
+    document.querySelectorAll(".jf-avatar-category-tab").forEach(tab=>{
+      const selected=tab.dataset.category===key;tab.classList.toggle("active",selected);tab.setAttribute("aria-selected",String(selected));
+    });
+    document.querySelectorAll(".jf-avatar-category-panel").forEach(panel=>{panel.hidden=panel.dataset.categoryPanel!==key;});
+  }
+  function buildAppearancePanel(fields){
+    const selects={};
+    for(const key of keys){
+      const select=$("jfWardrobe"+key[0].toUpperCase()+key.slice(1));
+      if(!select)continue;
+      selects[key]=select;
+      const label=select.closest("label");if(label)label.classList.add("jf-avatar-native-control");
+    }
+    fields.querySelector(".jf-pet-wardrobe-slot")?.setAttribute("hidden","");
+    const header=document.createElement("div");header.className="jf-avatar-controls-heading";
+    header.innerHTML='<span>PERSONALIZAÇÃO</span><h2>Seu personagem</h2><p>Escolha os detalhes. O macaco muda na hora.</p>';
+    const tabs=document.createElement("div");tabs.className="jf-avatar-category-tabs";tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","Categorias do personagem");
+    const panels=document.createElement("div");panels.className="jf-avatar-category-panels";
+    for(const key of keys){
+      const tab=document.createElement("button");tab.type="button";tab.className="jf-avatar-category-tab";tab.dataset.category=key;
+      tab.setAttribute("role","tab");tab.setAttribute("aria-selected","false");
+      const icon=document.createElement("span");icon.textContent=meta[key].icon;
+      const label=document.createElement("span");label.textContent=meta[key].title;
+      tab.append(icon,label);tab.addEventListener("click",()=>activateCategory(key));tabs.append(tab);
+      const panel=document.createElement("section");panel.className="jf-avatar-category-panel";panel.dataset.categoryPanel=key;
+      const intro=document.createElement("div");intro.className="jf-avatar-category-copy";
+      const eyebrow=document.createElement("span");eyebrow.textContent=meta[key].eyebrow;
+      const title=document.createElement("h3");title.textContent=meta[key].title;
+      const copy=document.createElement("p");copy.textContent=meta[key].copy;
+      intro.append(eyebrow,title,copy);panel.append(intro);
+      const grid=makeChoiceCards(key,selects[key]);grid.querySelectorAll(".jf-avatar-choice").forEach(card=>card.dataset.slot=key);
+      panel.append(grid);panels.append(panel);
+    }
+    const tools=document.createElement("div");tools.className="jf-avatar-studio-tools";
+    const random=document.createElement("button");random.type="button";random.className="jf-avatar-random";
+    random.innerHTML='<span aria-hidden="true">✧</span> Surpreenda-me';
+    random.addEventListener("click",()=>{
+      for(const key of keys){
+        const select=selects[key];if(!select)continue;
+        const options=[...select.options];select.value=options[Math.floor(Math.random()*options.length)].value;
+        select.dispatchEvent(new Event("change",{bubbles:true}));syncChoices(key,select.value);
+      }
+      statusNode.textContent="Novo visual sorteado. Gostou? Pode confirmar ou continuar editando.";
+    });
+    const rotate=document.createElement("span");rotate.className="jf-avatar-rotate-hint";rotate.textContent="↔ Arraste o macaco para girar";
+    tools.append(random,rotate);fields.replaceChildren(header,tabs,panels,tools);
+    activateCategory("outfit");
   }
   function prepare(profile){
     if(!modal||!dialog||!save||active||finished)return;
-    active=true;accountProfile=profile||{};
+    active=true;
     modal.classList.add("jf-avatar-setup");
     document.body.classList.add("jf-avatar-setup-active");
-    const title=$("jfWardrobeTitle");if(title)title.textContent="Vamos criar seu macaco";
-    const closeButton=close; if(closeButton)closeButton.hidden=true;
-    const head=dialog.querySelector(".jf-modal-head");
-    const intro=document.createElement("div");
-    intro.className="jf-avatar-setup-intro";
-    intro.innerHTML='<span class="jf-avatar-setup-kicker">SEU PRIMEIRO REGISTRO</span><h2>Esse macaco é a sua cara.</h2><p>Monte seu visual. Ele vai acompanhar você pelo Junto.</p>';
-    head?.after(intro);
+    const oldHead=dialog.querySelector(".jf-modal-head");
+    const oldDescription=dialog.querySelector(":scope > p.small");
+    if(oldHead)oldHead.hidden=true;
+    if(close)close.hidden=true;
+    if(oldDescription)oldDescription.hidden=true;
     const layout=dialog.querySelector(".jf-wardrobe-layout");
     const stage=layout?.querySelector("#jfWardrobePreview")?.parentElement;
-    if(stage){
+    const preview=$("jfWardrobePreview");
+    if(stage&&preview){
       stage.classList.add("jf-avatar-studio-stage");
-      const ruler=document.createElement("div");ruler.className="jf-avatar-ruler";ruler.setAttribute("aria-hidden","true");
-      ruler.innerHTML='<span>200</span><span>175</span><span>150</span><span>125</span><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span>';
-      stage.appendChild(ruler);
-      const plaque=document.createElement("div");plaque.className="jf-avatar-plaque";
-      plaque.innerHTML='<small>FICHA DO AVATAR</small><strong id="jfAvatarPlateName"></strong><span id="jfAvatarPlateHandle"></span>';
-      stage.appendChild(plaque);
-      const name=profileName(profile);$("jfAvatarPlateName").textContent=name.name;$("jfAvatarPlateHandle").textContent=name.handle||"JUNTO.FM";
+      preview.dataset.avatarStudio="true";
+      const identity=nameplate(profile);
+      preview.dataset.avatarPlateName=identity.name;
+      preview.dataset.avatarPlateHandle=identity.handle;
+      const top=document.createElement("div");top.className="jf-avatar-stage-topline";
+      top.innerHTML='<span>JUNTO.FM <i>／</i> ESTÚDIO DE PERSONAGENS</span><span>REGISTRO 001</span>';
+      const bottom=document.createElement("div");bottom.className="jf-avatar-stage-bottomline";
+      bottom.innerHTML='<span>SEU AVATAR · SUA IDENTIDADE</span><span>↔ GIRE PARA CONFERIR</span>';
+      stage.append(top,bottom);
+      const status=$("jfWardrobeAssetStatus");if(status)status.classList.add("jf-avatar-stage-status");
     }
-    dialog.querySelector(".jf-wardrobe-modal > p.small")?.classList.add("jf-avatar-setup-description");
-    dialog.querySelector(".jf-pet-wardrobe-slot")?.setAttribute("hidden","");
-    save.textContent="Esse é meu macaco  ✓";
+    const heading=document.createElement("header");heading.className="jf-avatar-studio-header";
+    const brand=document.createElement("div");brand.className="jf-avatar-studio-brand";
+    brand.innerHTML='<span class="jf-avatar-studio-mark">♫</span><span><small>JUNTO.FM / AVATAR LAB</small><strong>Crie seu personagem</strong></span>';
+    const step=document.createElement("div");step.className="jf-avatar-studio-step";
+    step.innerHTML='<span>01</span><span>DEFINIÇÃO DE IDENTIDADE</span>';
+    heading.append(brand,step);
+    dialog.prepend(heading);
+    const fields=layout?.querySelector(".jf-wardrobe-fields");
+    if(fields)buildAppearancePanel(fields);
+    const footer=document.createElement("footer");footer.className="jf-avatar-studio-footer";
+    const footnote=document.createElement("div");footnote.className="jf-avatar-studio-footnote";
+    footnote.innerHTML='<strong>Pronto para entrar?</strong><span>Seu macaco será salvo como seu avatar oficial.</span>';
+    const actions=document.createElement("div");actions.className="jf-avatar-studio-actions";
+    save.textContent="CONFIRMAR PERSONAGEM";
     save.classList.add("jf-avatar-setup-confirm");
-    save.after(statusNode);
-    // During the required first setup, don't allow dismissing the modal by accident.
+    const row=save.closest(".row");if(row)row.remove();
+    actions.append(save);footer.append(footnote,actions);
+    statusNode.textContent="As mudanças são aplicadas no modelo 3D em tempo real.";
+    footer.append(statusNode);dialog.append(footer);
     modal.addEventListener("click",event=>{if(event.target===modal){event.preventDefault();event.stopImmediatePropagation();}},true);
     document.addEventListener("keydown",event=>{
-      if(active&&(event.key==="Escape"||event.key==="Tab"&&event.shiftKey&&document.activeElement===save)){
-        if(event.key==="Escape"){event.preventDefault();event.stopImmediatePropagation();}
-      }
+      if(active&&event.key==="Escape"){event.preventDefault();event.stopImmediatePropagation();}
     },true);
     save.addEventListener("click",complete,true);
     open?.click();
-    // Make the first experience focused on the character, not the site's other controls.
-    const first=dialog.querySelector(".jf-wardrobe-fields select");first?.focus({preventScroll:true});
+    const first=fields?.querySelector(".jf-avatar-category-tab");first?.focus({preventScroll:true});
   }
   async function complete(event){
     if(!active||finished)return;
     event.preventDefault();event.stopImmediatePropagation();
-    save.disabled=true;statusNode.textContent="Salvando seu avatar...";
+    save.disabled=true;statusNode.textContent="Salvando seu personagem...";
     const wardrobe={};
-    for(const key of wardrobeKeys){
+    for(const key of keys){
       const select=$("jfWardrobe"+key[0].toUpperCase()+key.slice(1));
-      wardrobe[key]=select?.value||wardrobeDefaults[key];
+      wardrobe[key]=select?.value||defaults[key];
     }
     try{
       const response=await fetch("/api/avatar/setup",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({wardrobe})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw Error(data.error||"Não foi possível salvar agora.");
       finished=true;active=false;
-      try{
-        const local=JSON.parse(localStorage.getItem("junto_profile")||"{}");
-        local.wardrobe=wardrobe;localStorage.setItem("junto_profile",JSON.stringify(local));
-      }catch(_){}
+      try{const local=JSON.parse(localStorage.getItem("junto_profile")||"{}");local.wardrobe=wardrobe;localStorage.setItem("junto_profile",JSON.stringify(local));}catch(_){}
       window.dispatchEvent(new CustomEvent("jf-wardrobe-save",{detail:{wardrobe}}));
       window.dispatchEvent(new CustomEvent("jf-avatar-created",{detail:{profile:data.profile}}));
       modal.classList.remove("jf-avatar-setup");document.body.classList.remove("jf-avatar-setup-active");
       close?.click();
     }catch(error){
-      statusNode.textContent=error.message||"Falha ao salvar. Tente novamente.";
-      save.disabled=false;
+      statusNode.textContent=error.message||"Falha ao salvar. Tente novamente.";save.disabled=false;
     }
   }
   async function check(){
@@ -96,7 +184,6 @@
     }catch(_){}
     finally{checking=false;}
   }
-  // Account hydration fires this after login without a full page reload.
   window.addEventListener("jf-local-profile-updated",()=>{if(!active&&!finished)void check();});
   window.addEventListener("jf-avatar-created",()=>{finished=true;});
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>void check(),{once:true});
