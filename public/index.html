@@ -1054,6 +1054,11 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
 .jf-home-welcome-signoff span{font-size:17px}
 @media(max-width:560px){.jf-room-entry-primary{grid-template-columns:1fr}.jf-home-primary-action,.jf-home-create-action{min-height:52px;padding:14px 16px}.jf-home-welcome-grid{grid-template-columns:1fr}.jf-home-welcome-card{padding:14px}.jf-home-welcome-collection{grid-column:auto}}
 @media(prefers-reduced-motion:reduce){.jf-home-welcome-card{transition:none}.jf-home-welcome-card:hover{transform:none}}
+
+/* Keep the short invitation visible on the landing page. */
+body:not(.jf-in-room) main>h1,body:not(.jf-in-room) main>.jf-hero-description{display:block!important}
+body:not(.jf-in-room) main>h1{margin:24px 0 8px;font-size:clamp(30px,5.8vw,46px);line-height:1.04}
+body:not(.jf-in-room) main>.jf-hero-description{margin:0 auto 17px;max-width:560px;font-size:13px;line-height:1.55;color:var(--jf-ui-muted,var(--muted,#bbb))}
 </style>
 <link rel="stylesheet" href="/home-entry.css?v=jornal-entry-2">
 <script defer src="/home-entry.js?v=jornal-entry-2"></script>
@@ -1068,7 +1073,7 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
     <span class="jf-menu-group-title">Minha conta e visual</span>
     <a class="btn secondary" href="/quartos">⌂ Quartos</a><a class="btn secondary" id="jfHomeMural" href="/mural">✎ Mural</a><a class="btn secondary" href="/comunidades">✦ Comunidades</a><button class="btn secondary" id="jfHomeSocial" type="button" aria-label="Abrir Social">♧ Social</button><button class="btn secondary" id="jfOpenFriends" type="button">♧ Amigos</button><button class="btn secondary" id="jfGoogleLogout" type="button" hidden>Sair da conta</button><button class="btn secondary" id="jfOpenTheme" type="button">✧ Tema</button><button class="btn secondary" id="jfOpenWardrobe" type="button">🐒 Trajes</button><button class="btn secondary jf-profile-trigger" id="jfOpenProfile" type="button"><img id="jfTopAvatar" alt="" hidden><span id="jfTopAvatarPlaceholder" aria-hidden="true">☺</span><span>Perfil</span></button><button class="btn secondary" id="jfOpenOptions" type="button">⚙ Opções</button>
     <span class="jf-menu-group-title">Minigames</span>
-    <button class="btn secondary" type="button" id="jfOpenArena">🥊 Arena dos Macacos</button>
+    <button class="btn secondary" type="button" id="jfOpenArena">🥊 Arena dos Macacos</button><button class="btn secondary" type="button" id="jfOpenRank">🏆 Ranking de horas</button>
   </nav></div></div>
   <h1>Sua galera.<br>Sua música. ✦</h1>
   <p class="jf-hero-description">Entra numa sala, chama alguém e deixa a música rolar.</p>
@@ -1080,7 +1085,7 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
       <button class="btn secondary jf-home-create-action" id="createRoom" type="button">Criar sala <span aria-hidden="true">＋</span></button>
     </div>
     <div class="jf-entry-account" id="jfEntryAccount">
-      <span class="small" id="jfEntryAccountHint">Escolha como criar sua conta. Você também pode entrar nas salas sem cadastro.</span>
+      <span class="small" id="jfEntryAccountHint">Pode entrar sem cadastro. Crie uma conta para guardar seu perfil e amizades.</span>
       <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Criar com Google</a>
       <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
     </div>
@@ -1091,7 +1096,7 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
     </div>
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
-    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><button type="button" class="btn secondary" id="jfOpenRank" style="margin-top:8px">🏆 Ranking de horas</button><div id="jfShareRoom" style="margin-top:10px" hidden><button type="button" class="btn secondary" id="jfCopyRoomLink">🔗 Copiar link da sala</button><span id="jfRoomLinkInfo" class="small"></span></div><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+    <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><div id="jfShareRoom" style="margin-top:10px" hidden><button type="button" class="btn secondary" id="jfCopyRoomLink">🔗 Copiar link da sala</button><span id="jfRoomLinkInfo" class="small"></span></div><p class="small" id="help">Se a conexão não acontecer, tente recarregar a página.</p>
   </section>
 
   <section class="jf-home-community jf-home-welcome" id="jfHomeCommunity" aria-label="Explore a comunidade">
