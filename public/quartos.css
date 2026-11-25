@@ -138,3 +138,38 @@ nav a,nav button{color:var(--jf-ui-text)}.nav-sticker{color:var(--jf-primary)}
 .seat-devkit-actions button{flex:1;padding:7px 5px;font-size:10px}
 .seat-devkit textarea{resize:vertical;min-height:92px;padding:7px;border:1px solid var(--jf-ui-border);background:var(--jf-ui-soft);color:var(--jf-ui-text);font:10px/1.4 Consolas,monospace}
 @media(max-width:600px){.seat-devkit{top:54px;right:8px;width:min(300px,calc(100% - 16px));max-height:58%;padding:10px}.room-dances{max-width:calc(100% - 72px)}}
+
+/* Community room directory: room cards inherit the active Junto palette. */
+.public-room-directory{margin:42px 0 26px;padding:30px;border:1px solid var(--jf-ui-border,var(--edge));border-radius:14px;background:var(--jf-ui-panel,var(--panel));color:var(--jf-ui-text,var(--ink));box-shadow:0 14px 38px #0003}
+.public-room-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:22px}
+.public-room-heading h2{margin:8px 0;font-size:clamp(27px,4vw,42px);letter-spacing:-1px;color:var(--jf-ui-text,var(--ink))}
+.public-room-heading p{max-width:600px;margin:0;color:var(--jf-ui-muted,var(--muted));line-height:1.6;font-size:13px}
+.public-room-heading button{flex-shrink:0;background:var(--jf-ui-surface,var(--panel));color:var(--jf-ui-text,var(--ink));border-color:var(--jf-ui-border,var(--edge))}
+.public-room-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.public-room-card{min-width:0;padding:18px;border:1px solid var(--jf-ui-border,var(--edge));border-radius:10px;background:var(--jf-ui-surface,var(--panel));box-shadow:inset 0 1px #ffffff10;display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.public-room-card-top{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.public-room-category{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;background:var(--jf-ui-soft,var(--panel));color:var(--jf-ui-muted,var(--muted));font-size:10px;font-weight:bold}
+.public-room-open{font-size:10px;color:#42c88a;white-space:nowrap}
+.public-room-card h3{margin:7px 0 0;font-size:20px;line-height:1.2;color:var(--jf-ui-text,var(--ink));overflow-wrap:anywhere}
+.public-room-owner{margin:0;font-size:11px;color:var(--jf-ui-muted,var(--muted))}
+.public-room-description{min-height:44px;margin:7px 0 12px;font-size:12px;line-height:1.55;color:var(--jf-ui-muted,var(--muted));overflow-wrap:anywhere}
+.public-room-visit{margin-top:auto;width:100%;min-height:40px;background:var(--jf-ui-button,var(--yellow));color:var(--jf-ui-button-text,#201b46);border-color:var(--jf-ui-button-border,var(--yellow));font-size:12px;font-weight:bold}
+.public-room-empty{grid-column:1/-1;padding:18px;border:1px dashed var(--jf-ui-border,var(--edge));border-radius:8px;color:var(--jf-ui-muted,var(--muted));font-size:13px}
+.public-room-settings{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;padding:12px;border:1px solid var(--jf-ui-border,var(--edge));border-radius:8px;background:var(--jf-ui-soft,var(--panel))}
+.public-room-settings label{color:var(--jf-ui-text,var(--ink));font-size:11px;font-weight:bold}
+.public-room-settings select,.public-room-settings input{display:block;width:100%;min-width:0;margin-top:6px;padding:9px;border:1px solid var(--jf-ui-border,var(--edge));border-radius:5px;background:var(--jf-ui-panel,var(--panel));color:var(--jf-ui-text,var(--ink));font-size:12px}
+.public-room-settings .room-description-label{grid-column:1/-1}
+.public-room-settings .hint{grid-column:1/-1;margin:0;color:var(--jf-ui-muted,var(--muted));font-size:10px;line-height:1.5}
+html[data-jf-theme="classic"] .public-room-directory{background:linear-gradient(145deg,#ffffffed,#e6f4ffed);border-color:#7fafe0;color:#18345b}
+html[data-jf-theme="classic"] .public-room-card{background:linear-gradient(#fff,#f0f8ff);border-color:#9cc4e5}
+html[data-jf-theme="classic"] .public-room-heading h2,html[data-jf-theme="classic"] .public-room-card h3{color:#18345b}
+html[data-jf-theme="classic"] .public-room-heading p,html[data-jf-theme="classic"] .public-room-owner,html[data-jf-theme="classic"] .public-room-description{color:#45698e}
+html[data-jf-theme="aero"] .public-room-directory{background:linear-gradient(145deg,#0b6793bd,#03446dbd);border-color:#a2f6ff;box-shadow:0 20px 55px #004d7b55,inset 0 1px #ffffffa8;backdrop-filter:blur(16px) saturate(1.35)}
+html[data-jf-theme="aero"] .public-room-card{background:linear-gradient(145deg,#b4f6ff24,#00679a48);border-color:#a4f5ff88;box-shadow:inset 0 1px #ffffffa1,0 8px 22px #003c6840}
+html[data-jf-theme="aero"] .public-room-category{background:#d9ffff28;color:#e8ffff;border:1px solid #c8ffff5c}
+html[data-jf-theme="aero"] .public-room-open{color:#8dffd7}
+html[data-jf-theme="aero"] .public-room-visit{background:linear-gradient(#d5ffff,#73e3f7 45%,#1a9fd1 85%,#0873b5);color:#06446b;border:1px solid #e7ffff;box-shadow:inset 0 2px #fff,0 3px 0 #004a7755}
+html[data-jf-theme="aero"] .public-room-settings{background:#003f6a55;border-color:#b3f7ff7d}
+html[data-jf-theme="aero"] .public-room-settings select,html[data-jf-theme="aero"] .public-room-settings input{background:#003b65a8;color:#f2ffff;border-color:#8eeaff}
+@media(max-width:900px){.public-room-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.public-room-directory{padding:22px}}
+@media(max-width:560px){.public-room-grid{grid-template-columns:1fr}.public-room-heading{align-items:flex-start;flex-direction:column}.public-room-heading button{width:100%}.public-room-directory{margin:28px 0;padding:16px}.public-room-card{padding:15px}.public-room-settings{grid-template-columns:1fr}.public-room-settings .room-description-label,.public-room-settings .hint{grid-column:auto}}

@@ -116,8 +116,14 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   assert.equal((await request('PUT','/api/quartos',{name:'Minha casa',layout,revision:1})).status,200);
   assert.equal((await request('PUT','/api/quartos',{name:'Velho',layout,revision:1})).status,409);
   const saved=await(await request('GET','/api/quartos')).json();assert.equal(saved.own.layout.wall,'#112233');assert.equal(saved.own.name,'Minha casa');
+  const published=await request('PUT','/api/quartos',{name:'Minha casa',layout,revision:saved.own.revision,visibility:'public',category:'nostalgia',description:'Um lugar para lembrar e conversar.'});
+  assert.equal(published.status,200,'owner can publish the room');const publicRoom=await published.json();assert.equal(publicRoom.visibility,'public');assert.equal(publicRoom.category,'nostalgia');
+  const directory=await(await request('GET','/api/quartos')).json();assert.equal(directory.publicRooms[0].owner_id,a);assert.equal(directory.publicRooms[0].description,'Um lugar para lembrar e conversar.');
+  assert.equal((await request('PUT','/api/quartos',{name:'Minha casa',layout,revision:publicRoom.revision,visibility:'public',category:'__proto__'})).status,400,'categories are validated');
   assert.equal((await request('POST','/api/quartos/invites',{guestId:c})).status,403);
-  const visitor=await connect(b);assert.match((await emit(visitor,'enter',{owner:a})).error,/convidados/);
+  const visitor=await connect(b);assert.equal((await emit(visitor,'enter',{owner:a})).own,false,'any logged-in member can enter a public room');visitor.emit('leave');await new Promise(r=>setTimeout(r,100));
+  const madePrivate=await request('PUT','/api/quartos',{name:'Minha casa',layout,revision:publicRoom.revision,visibility:'private',category:'nostalgia',description:'Um lugar para lembrar e conversar.'});assert.equal(madePrivate.status,200);
+  await new Promise(r=>setTimeout(r,550));assert.match((await emit(visitor,'enter',{owner:a})).error,/convidados/,'private room returns to invite-only access');
   assert.equal((await request('POST','/api/quartos/invites',{guestId:b})).status,200);
   const inbox=await(await request('GET','/api/quartos',null,b)).json();assert.equal(inbox.invites[0].owner_id,a);
   // The socket throttles join requests for 500ms.
@@ -144,4 +150,13 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
   assert.equal((await(await request('GET','/api/quartos',null,b)).json()).invites.length,0);
   await new Promise(r=>setTimeout(r,550));assert.match((await emit(visitor,'enter',{owner:a})).error,/convidados/);
  }finally{for(const s of sockets)s.disconnect();rooms.close();await new Promise(r=>io.close(r));await db.close();}
+});
+
+test('public room directory controls and palette styles stay wired to existing room editing',()=>{
+ const html=fs.readFileSync(require.resolve('../public/quartos.html'),'utf8');
+ const js=fs.readFileSync(require.resolve('../public/quartos.js'),'utf8');
+ const css=fs.readFileSync(require.resolve('../public/quartos.css'),'utf8');
+ assert.match(html,/id="publicRooms"/);assert.match(html,/id="publicRoomList"/);assert.match(html,/id="roomVisibility"/);assert.match(html,/value="public">Quarto público/);assert.match(html,/id="roomCategory"/);assert.match(html,/id="roomDescription"/);
+ assert.match(js,/renderPublicRooms\(data\.publicRooms\|\|\[\]\)/);assert.match(js,/visibility:\$\('roomVisibility'\)\.value/);assert.match(js,/category:\$\('roomCategory'\)\.value/);assert.match(js,/description:\$\('roomDescription'\)\.value/);assert.match(js,/public-room-visit/);
+ assert.match(css,/public-room-grid/);assert.match(css,/data-jf-theme="aero"/);assert.match(css,/data-jf-theme="classic"/);
 });
