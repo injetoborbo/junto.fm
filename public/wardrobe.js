@@ -1134,8 +1134,9 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   const boothIdle=photoBooth?createBoothIdleAnimation(monkey):null;
   // Admin-only Avatar Lab DevKit: exports the live rig, plate, hands,
   // attached clothing/accessories and camera transforms in meter units.
+  let devkitApi=null;
   if(photoBooth){
-    const devkitApi={
+    devkitApi={
       getSnapshot(){
         normalized.updateMatrixWorld(true);monkey.updateMatrixWorld(true);
         const vec=node=>{
