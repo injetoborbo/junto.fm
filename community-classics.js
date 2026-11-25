@@ -2,7 +2,7 @@
 const path=require("node:path");
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const USER=/^[a-z0-9_]{3,24}$/i;
-function setupCommunityClassics(app,io,accounts){
+function setupCommunityClassics(app,io,accounts,roomTransmitters){
   const pool=accounts.pool;
   const ready=Promise.resolve(accounts.ready).then(async ok=>{
     if(!ok||!pool)return false;
@@ -109,13 +109,16 @@ function setupCommunityClassics(app,io,accounts){
     await pool.query("DELETE FROM junto_community_members WHERE community_id=$1 AND account_id=$2 AND NOT EXISTS(SELECT 1 FROM junto_communities WHERE id=$1 AND owner_id=$2)",[req.params.id,viewer.id]);res.json({ok:true});
   }));
   app.get("/comunidades",(_req,res)=>res.set("Cache-Control","no-cache").sendFile(path.join(__dirname,"public","communities.html")));
-  const onlineAccounts=new Map();
+  const onlineAccounts=new Map(),listeningTracks=new Map();
+  async function publishListening(accountId,track){
+    try{const friends=await accounts.friends(accountId),ids=new Set(friends.map(f=>f.id));for(const peer of io.sockets.sockets.values())if(peer.data.account?.id&&ids.has(peer.data.account.id))peer.emit("social-listening-update",{accountId,track});}catch(_){}
+  }
   async function publishPresence(accountId,online){
     try{
       const friends=await accounts.friends(accountId),friendIds=new Set(friends.map(f=>f.id));
       const account=online?[...io.sockets.sockets.values()].find(s=>s.data.account?.id===accountId)?.data.account:null;
       for(const peer of io.sockets.sockets.values())if(peer.data.account?.id&&friendIds.has(peer.data.account.id))
-        peer.emit("social-presence-update",{accountId,online,status:account?.motto||""});
+        peer.emit("social-presence-update",{accountId,online,status:account?.motto||"",track:listeningTracks.get(accountId)||null});
     }catch(_){}
   }
   const winkTimes=new Map();
@@ -127,7 +130,23 @@ function setupCommunityClassics(app,io,accounts){
       socket.emit("social-presence-state",{online:[...onlineAccounts.keys()]});
       if(first)void publishPresence(accountId,true);
     }
-    socket.on("social-presence-sync",()=>socket.emit("social-presence-state",{online:[...onlineAccounts.keys()]}));
+    socket.on("social-presence-sync",()=>socket.emit("social-presence-state",{online:[...onlineAccounts.keys()],listening:[...listeningTracks.entries()].map(([accountId,track])=>({accountId,track}))}));
+    socket.on("track-update",payload=>{
+      const id=socket.data.account?.id,room=socket.data.room,track=payload?.track;
+      if(!id||!room||payload?.room!==room||!track||typeof track.name!=="string"||typeof track.artists!=="string")return;
+      if(roomTransmitters&&roomTransmitters.get(room)?.id!==socket.id)return;
+      const next={name:track.name.slice(0,200),artists:track.artists.slice(0,300),id:String(track.id||"").slice(0,22)};
+      const previous=listeningTracks.get(id);
+      if(previous?.id===next.id&&previous?.name===next.name)return;
+      listeningTracks.set(id,next);
+      void publishListening(id,next);
+    });
+    socket.on("track-clear",()=>{
+      const id=socket.data.account?.id,room=socket.data.room;
+      if(!id||!room||(roomTransmitters&&roomTransmitters.get(room)?.id!==socket.id))return;
+      if(!listeningTracks.delete(id))return;
+      void publishListening(id,null);
+    });
     socket.on("social-wink",async payload=>{
       const sender=await accounts.accountFromRequest(socket.request).catch(()=>null);
       const peerId=String(payload?.accountId||"");
