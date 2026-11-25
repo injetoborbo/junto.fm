@@ -176,7 +176,7 @@
     const panel=document.createElement("section");panel.className="jf-avatar-devkit-panel";panel.hidden=true;
     panel.setAttribute("aria-label","DevKit de coordenadas do Avatar Lab");
     const title=document.createElement("strong");title.textContent="DEVKIT · POSIÇÕES 3D";
-    const note=document.createElement("p");note.textContent="Snapshot do rig em tempo real. Coordenadas em metros; copie e envie aqui para eu ajustar com precisão.";
+    const note=document.createElement("p");note.textContent="Agora dá para editar: escolha avatar, roupa, acessório ou osso; ajuste posição, rotação e escala e aplique ao vivo. As mudanças são de prévia, não salvam no servidor.";
     const editTitle=document.createElement("strong");editTitle.textContent="EDITOR DE TRANSFORM";
     const targetSelect=document.createElement("select");targetSelect.className="jf-avatar-devkit-target";
     targetSelect.setAttribute("aria-label","Selecionar parte do avatar para editar");
@@ -232,8 +232,7 @@
       const read=key=>inputs[key].map(input=>Number(input.value));
       const transform={position:read("position"),rotation:read("rotation").map(value=>value*Math.PI/180),scale:read("scale")};
       if(Object.values(transform).flat().every(Number.isFinite)&&api.setTransform(id,transform)){
-        status.textContent="Transform aplicado ao vivo. Ainda não está salvo permanentemente.";
-        snapshot();
+        snapshot();status.textContent="Transform aplicado ao vivo. É uma prévia: ainda não foi salvo permanentemente.";
       }else status.textContent="Valores inválidos ou parte não encontrada.";
     });
     resetTransform.addEventListener("click",()=>{
