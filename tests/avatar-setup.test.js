@@ -1,5 +1,6 @@
 'use strict';
 const {test}=require('node:test');
+const zlib=require('node:zlib');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
@@ -7,6 +8,8 @@ const path=require('node:path');
 const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
 const account=read('account-auth.js'),client=read('public/avatar-setup.js'),css=read('public/avatar-setup.css'),html=read('public/index.html'),wardrobe=read('public/wardrobe.js');
 const cleanProfile=vm.runInNewContext(account.slice(account.indexOf('  function cleanProfile'),account.indexOf('  app.post("/api/account/profile"'))+';cleanProfile');
+const poseBase64=read('public/poses/standing-w-briefcase-idle.json.gz.b64').trim();
+const poseData=JSON.parse(zlib.gunzipSync(Buffer.from(poseBase64,'base64')).toString('utf8'));
 test('avatar setup endpoint is authenticated, same-origin and saves the official wardrobe once',async()=>{
  let handler,query,stored;
  const context={
@@ -49,6 +52,15 @@ test('creator appears only for signed-in accounts without a completed avatar and
  assert.match(html,/avatar-setup\.css\?v=cinematic-avatar-studio-1/);
  assert.match(account,/avatar_setup_completed_at TIMESTAMPTZ/);
  assert.match(account,/avatarSetupCompleted:Boolean\(a\.avatar_setup_completed_at\)/);
+});
+test('Mixamo briefcase idle asset is valid gzip JSON with the expected hand rig channels',()=>{
+ assert.match(poseBase64,/^H4sIA/);
+ assert.equal(poseData.name,'Standing W Briefcase Idle');
+ assert.equal(poseData.tracks.length,13);
+ assert.equal(poseData.times.length,141);
+ for(const bone of ['LeftArm','LeftForeArm','LeftHand','RightArm','RightForeArm','RightHand'])
+  assert.ok(poseData.tracks.some(track=>track.bone===bone),bone+' channel missing');
+ assert.ok(poseData.duration>13.8&&poseData.duration<14.1);
 });
 test('avatar studio renders a cinematic 3D lineup, held identity placard and height chart',()=>{
  assert.match(wardrobe,/function createAvatarLineup\(/);
