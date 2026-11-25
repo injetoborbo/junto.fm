@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const path=require('node:path');
 const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
-const account=read('account-auth.js'),client=read('public/avatar-setup.js'),css=read('public/avatar-setup.css'),html=read('public/index.html');
+const account=read('account-auth.js'),client=read('public/avatar-setup.js'),css=read('public/avatar-setup.css'),html=read('public/index.html'),wardrobe=read('public/wardrobe.js');
 const cleanProfile=vm.runInNewContext(account.slice(account.indexOf('  function cleanProfile'),account.indexOf('  app.post("/api/account/profile"'))+';cleanProfile');
 test('avatar setup endpoint is authenticated, same-origin and saves the official wardrobe once',async()=>{
  let handler,query,stored;
@@ -47,10 +47,20 @@ test('creator appears only for signed-in accounts without a completed avatar and
  assert.match(account,/avatar_setup_completed_at TIMESTAMPTZ/);
  assert.match(account,/avatarSetupCompleted:Boolean\(a\.avatar_setup_completed_at\)/);
 });
-test('avatar studio follows the active theme and provides the ruler and nameplate composition',()=>{
- assert.match(css,/var\(--jf-ui-panel/);
+test('avatar studio renders a cinematic 3D lineup, held identity placard and height chart',()=>{
+ assert.match(wardrobe,/function createAvatarLineup\(/);
+ assert.match(wardrobe,/new THREE\.CanvasTexture\(wallCanvas\)/);
+ assert.match(wardrobe,/JUNTO \/ PERSONNEL/);
+ assert.match(wardrobe,/REGISTRO DE PERSONAGEM/);
+ assert.match(wardrobe,/new THREE\.SpotLight/);
+ assert.match(wardrobe,/new THREE\.CylinderGeometry\(\.88/);
+ assert.match(wardrobe,/photoBooth:preview\.dataset\.avatarStudio==="true"/);
+ assert.match(client,/jf-avatar-choice-grid/);
+ assert.match(client,/nativeControls\.append\(label\)/);
+ assert.match(css,/jf-avatar-studio-header/);
+ assert.match(css,/jf-avatar-stage-topline/);
+ assert.match(css,/jf-avatar-choice-grid/);
  assert.match(css,/data-jf-theme="aero"/);
- assert.match(css,/jf-avatar-ruler/);
- assert.match(css,/jf-avatar-plaque/);
- assert.match(css,/@media\(max-width:760px\)/);
+ assert.match(css,/@media\(max-width:700px\)/);
+ assert.match(account,/avatar_setup_legacy_backfill/);
 });
