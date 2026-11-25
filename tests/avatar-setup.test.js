@@ -42,6 +42,9 @@ test('creator appears only for signed-in accounts without a completed avatar and
  assert.match(client,/jf-wardrobe-save/);
  assert.match(client,/jfOpenWardrobe/);
  assert.match(client,/jfSaveWardrobe/);
+ assert.match(client,/jfAvatarStudioReopen/);
+ assert.match(client,/prepare\(currentProfile,true\)/);
+ assert.match(css,/jf-avatar-studio-reopen/);
  assert.match(html,/avatar-setup\.js\?v=cinematic-avatar-studio-1/);
  assert.match(html,/avatar-setup\.css\?v=cinematic-avatar-studio-1/);
  assert.match(account,/avatar_setup_completed_at TIMESTAMPTZ/);
