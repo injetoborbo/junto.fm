@@ -8,3 +8,4 @@
 .jf-classic-profile form button,.jf-classic-entry button{justify-self:start;padding:8px 12px;border:1px solid #fff;border-radius:4px;color:#17143e;font:900 11px Tahoma;background:linear-gradient(#fff,#b8c3ff 45%,#6b65d8);cursor:pointer}
 .jf-classic-profile form p{margin:0;color:#aefaff;font-size:11px}.jf-classic-profile h4{margin:14px 0 8px;font-size:12px;color:#ffb9e9}
 .jf-classic-profile [hidden]{display:none!important}
+#jfcVisitors{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}#jfcVisitors h4{flex-basis:100%}#jfcVisitors a{padding:5px 8px;border:1px solid #55599c;border-radius:4px;color:#aefaff;font-size:11px;text-decoration:none;background:#10142b}
