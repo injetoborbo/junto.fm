@@ -3,7 +3,7 @@ const path=require("node:path");
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const USER=/^[a-z0-9_]{3,24}$/i;
 function setupCommunityClassics(app,io,accounts,roomTransmitters){
-  const pool=accounts.pool;
+  const pool=accounts.pool,postTimes=new Map();
   const ready=Promise.resolve(accounts.ready).then(async ok=>{
     if(!ok||!pool)return false;
     await pool.query(`
@@ -36,6 +36,12 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
         joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(community_id,account_id)
       );
       CREATE INDEX IF NOT EXISTS junto_community_members_count ON junto_community_members(community_id);
+      CREATE TABLE IF NOT EXISTS junto_community_posts(
+        id BIGSERIAL PRIMARY KEY, community_id UUID NOT NULL REFERENCES junto_communities(id) ON DELETE CASCADE,
+        author_id UUID NOT NULL REFERENCES junto_accounts(id) ON DELETE CASCADE,
+        body VARCHAR(500) NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS junto_community_posts_recent ON junto_community_posts(community_id,created_at DESC);
     `);
     return true;
   }).catch(e=>{console.error("Social clássico:",e.message);return false;});
@@ -107,6 +113,19 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
   app.post("/api/social-classics/communities/:id/leave",wrap(async(req,res)=>{
     if(!safe(req,res))return;const viewer=await account(req);if(!viewer)return res.status(401).json({error:"Entre na conta."});if(!UUID.test(req.params.id))return res.status(400).json({error:"Comunidade inválida."});
     await pool.query("DELETE FROM junto_community_members WHERE community_id=$1 AND account_id=$2 AND NOT EXISTS(SELECT 1 FROM junto_communities WHERE id=$1 AND owner_id=$2)",[req.params.id,viewer.id]);res.json({ok:true});
+  }));
+  app.get("/api/social-classics/communities/:id/posts",wrap(async(req,res)=>{
+    if(!UUID.test(req.params.id))return res.status(400).json({error:"Comunidade inválida."});
+    const result=await pool.query(`SELECT p.id,p.body,p.created_at,a.username,a.nickname AS name FROM junto_community_posts p JOIN junto_accounts a ON a.id=p.author_id WHERE p.community_id=$1 ORDER BY p.created_at DESC LIMIT 40`,[req.params.id]);
+    res.json({posts:result.rows});
+  }));
+  app.post("/api/social-classics/communities/:id/posts",wrap(async(req,res)=>{
+    if(!safe(req,res))return;const viewer=await account(req);if(!viewer)return res.status(401).json({error:"Entre na conta para publicar."});
+    if(!UUID.test(req.params.id))return res.status(400).json({error:"Comunidade inválida."});
+    const body=typeof req.body?.body==="string"?req.body.body.trim():"";if(!body||body.length>500)return res.status(400).json({error:"Escreva uma publicação de até 500 caracteres."});
+    const member=await pool.query("SELECT 1 FROM junto_community_members WHERE community_id=$1 AND account_id=$2",[req.params.id,viewer.id]);if(!member.rowCount)return res.status(403).json({error:"Participe da comunidade antes de publicar."});
+    const now=Date.now(),last=postTimes.get(viewer.id)||0;if(now-last<10000)return res.status(429).json({error:"Espere alguns segundos antes de publicar novamente."});postTimes.set(viewer.id,now);
+    await pool.query("INSERT INTO junto_community_posts(community_id,author_id,body) VALUES($1,$2,$3)",[req.params.id,viewer.id,body]);res.status(201).json({ok:true});
   }));
   app.get("/comunidades",(_req,res)=>res.set("Cache-Control","no-cache").sendFile(path.join(__dirname,"public","communities.html")));
   const onlineAccounts=new Map(),listeningTracks=new Map();
