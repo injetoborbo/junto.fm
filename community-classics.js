@@ -141,15 +141,25 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
     }catch(_){}
   }
   const winkTimes=new Map(),emoteTimes=new Map();
+  async function sendPresenceState(socket){
+    const id=socket.data.account?.id;
+    if(!id){socket.emit("social-presence-state",{online:[],listening:[]});return;}
+    try{
+      const friends=await accounts.friends(id),friendIds=new Set(friends.map(friend=>friend.id));
+      const online=[...onlineAccounts.keys()].filter(friendId=>friendIds.has(friendId));
+      const listening=[...listeningTracks.entries()].filter(([friendId])=>friendIds.has(friendId)).map(([accountId,track])=>({accountId,track}));
+      socket.emit("social-presence-state",{online,listening});
+    }catch(_){socket.emit("social-presence-state",{online:[],listening:[]});}
+  }
   io.on("connection",socket=>{
     const accountId=socket.data.account?.id;
     if(accountId){
       if(!onlineAccounts.has(accountId))onlineAccounts.set(accountId,new Set());
       const sockets=onlineAccounts.get(accountId),first=sockets.size===0;sockets.add(socket.id);
-      socket.emit("social-presence-state",{online:[...onlineAccounts.keys()]});
+      void sendPresenceState(socket);
       if(first)void publishPresence(accountId,true);
     }
-    socket.on("social-presence-sync",()=>socket.emit("social-presence-state",{online:[...onlineAccounts.keys()],listening:[...listeningTracks.entries()].map(([accountId,track])=>({accountId,track}))}));
+    socket.on("social-presence-sync",()=>void sendPresenceState(socket));
     socket.on("track-update",payload=>{
       const id=socket.data.account?.id,room=socket.data.room,track=payload?.track;
       if(!id||!room||payload?.room!==room||!track||typeof track.name!=="string"||typeof track.artists!=="string")return;
