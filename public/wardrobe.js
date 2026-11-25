@@ -845,6 +845,9 @@ function createAvatarLineup(scene,normalized,target){
   };
   addRod([-.34,.18,-.012],[-.43,.38,-.025]);addRod([.34,.18,-.012],[.43,.38,-.025]);
   return {dispose:()=>{
+    group.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
+    plaque.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
+    normalized.remove(plaque);
     wallTexture.dispose();plateTexture.dispose();faceMat.dispose();
     wall.material.dispose();floorMat.dispose();trimMat.dispose();darkMetal.dispose();handleMat.dispose();
     softLight.target.removeFromParent();scene.remove(softLight,rim,fill);group.removeFromParent();
