@@ -130,14 +130,13 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
   app.get("/comunidades",(_req,res)=>res.set("Cache-Control","no-cache").sendFile(path.join(__dirname,"public","communities.html")));
   const onlineAccounts=new Map(),listeningTracks=new Map();
   async function publishListening(accountId,track){
-    try{const friends=await accounts.friends(accountId),ids=new Set(friends.map(f=>f.id));for(const peer of io.sockets.sockets.values())if(peer.data.account?.id&&ids.has(peer.data.account.id))peer.emit("social-listening-update",{accountId,track});}catch(_){}
+    try{const friends=await accounts.friends(accountId),ids=new Set(friends.map(f=>f.id));for(const peer of io.sockets.sockets.values()){const recipient=await currentSocialAccount(peer);if(recipient?.id&&ids.has(recipient.id))peer.emit("social-listening-update",{accountId,track});}}catch(_){}
   }
   async function publishPresence(accountId,online){
     try{
       const friends=await accounts.friends(accountId),friendIds=new Set(friends.map(f=>f.id));
       const account=online?[...io.sockets.sockets.values()].find(s=>s.data.account?.id===accountId)?.data.account:null;
-      for(const peer of io.sockets.sockets.values())if(peer.data.account?.id&&friendIds.has(peer.data.account.id))
-        peer.emit("social-presence-update",{accountId,online,status:account?.motto||"",track:listeningTracks.get(accountId)||null});
+      for(const peer of io.sockets.sockets.values()){const recipient=await currentSocialAccount(peer);if(recipient?.id&&friendIds.has(recipient.id))peer.emit("social-presence-update",{accountId,online,status:account?.motto||"",track:listeningTracks.get(accountId)||null});}
     }catch(_){}
   }
   const winkTimes=new Map(),emoteTimes=new Map();
@@ -194,12 +193,12 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
         const [a,b]=[sender.id,peerId].sort(),friend=await pool.query("SELECT 1 FROM junto_friendships WHERE user_a=$1 AND user_b=$2",[a,b]);
         if(!friend.rowCount)return socket.emit("social-emote-error",{message:"Winks só podem ser enviados entre amigos."});
         emoteTimes.set(socket.id,now);let delivered=false;
-        for(const peer of io.sockets.sockets.values())if(peer.data.account?.id===peerId){peer.emit("social-emote-received",{from:sender.nickname||"Um amigo",emote:emotes[kind]});delivered=true;}
+        for(const peer of io.sockets.sockets.values()){const recipient=await currentSocialAccount(peer);if(recipient?.id===peerId){peer.emit("social-emote-received",{from:sender.nickname||"Um amigo",emote:emotes[kind]});delivered=true;}}
         socket.emit("social-emote-sent",{delivered});
       }catch(_){socket.emit("social-emote-error",{message:"Não foi possível enviar o wink."});}
     });
     socket.on("social-wink",async payload=>{
-      const sender=await accounts.accountFromRequest(socket.request).catch(()=>null);
+      const sender=await currentSocialAccount(socket);
       const peerId=String(payload?.accountId||"");
       if(!sender||!UUID.test(peerId)||peerId===sender.id)return socket.emit("social-wink-error",{message:"Entre na conta e escolha um amigo."});
       const now=Date.now(),last=winkTimes.get(socket.id)||0;
@@ -210,7 +209,7 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
         if(!friend.rowCount)return socket.emit("social-wink-error",{message:"Só é possível chamar atenção de amigos."});
         winkTimes.set(socket.id,now);
         let delivered=false;
-        for(const peer of io.sockets.sockets.values())if(peer.data.account?.id===peerId){peer.emit("social-wink-received",{from:sender.nickname||"Um amigo"});delivered=true;}
+        for(const peer of io.sockets.sockets.values()){const recipient=await currentSocialAccount(peer);if(recipient?.id===peerId){peer.emit("social-wink-received",{from:sender.nickname||"Um amigo"});delivered=true;}}
         socket.emit("social-wink-sent",{delivered});
       }catch(e){socket.emit("social-wink-error",{message:"Não foi possível chamar atenção agora."});}
     });
