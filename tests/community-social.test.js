@@ -151,4 +151,6 @@ test("social socket events revalidate the account session after logout",()=>{
   assert.match(source,/accounts\.accountFromRequest\(socket\.request\)/);
   assert.match(source,/const sender=await currentSocialAccount\(socket\)/);
   assert.match(source,/const account=await currentSocialAccount\(socket\),id=account\?\.id/);
+  assert.match(source,/const recipient=await currentSocialAccount\(peer\)/);
+  assert.match(source,/const sender=await currentSocialAccount\(socket\)/);
 });
