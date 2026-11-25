@@ -1023,6 +1023,37 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
 .jf-public-badges{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 16px}.jf-public-badge{padding:7px 9px;border:1px solid var(--jf-ui-border,var(--jf-secondary));border-radius:5px;color:var(--jf-ui-button-text,#20172d);background:var(--jf-ui-button);font-size:10px;font-weight:900;box-shadow:inset 0 1px #ffffff80}
 .jf-public-profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.jf-public-profile-actions a,.jf-public-profile-actions button{font:900 11px var(--jf-font-family,Tahoma),Tahoma,sans-serif}
 @media(max-width:520px){.jf-public-profile{margin:14px auto;padding:14px}.jf-public-profile-avatar{width:72px;height:72px;flex-basis:72px}.jf-public-profile h2{font-size:21px}}
+
+/* Home social refresh: less dashboard, more welcoming space. Theme tokens keep user themes intact. */
+.jf-home-room-panel{margin-top:22px;padding:clamp(16px,3vw,25px);border-radius:18px;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-ui-panel,#242448) 92%,var(--jf-primary,#ff78d2)),var(--jf-ui-panel,#17172f));border-color:var(--jf-ui-border,var(--jf-secondary,#777));box-shadow:inset 0 1px 0 #ffffff22,0 10px 26px #0003}
+.jf-room-entry-primary{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}
+.jf-home-primary-action,.jf-home-create-action{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-radius:11px;font-size:15px;letter-spacing:0}
+.jf-home-primary-action{color:var(--jf-ui-button-text,#20172d);background:var(--jf-ui-button,var(--jf-primary,#ff78d2));border-color:var(--jf-ui-button-border,var(--jf-secondary,#777));box-shadow:inset 0 1px #ffffff80,0 4px 0 #0003}
+.jf-home-create-action{background:var(--jf-ui-surface,var(--jf-ui-panel,#252545));color:var(--jf-ui-text,var(--ink,#fff));border-color:var(--jf-ui-border,var(--jf-secondary,#777))}
+.jf-home-primary-action span,.jf-home-create-action span{font-size:22px;opacity:.85}
+.jf-home-room-panel .jf-entry-account{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:15px;padding-top:13px;border-top:1px solid color-mix(in srgb,var(--jf-ui-border,var(--jf-secondary,#777)) 65%,transparent)}
+.jf-home-room-panel .jf-entry-account-hint,.jf-home-room-panel #jfEntryAccountHint{font-size:12px;line-height:1.5}
+.jf-home-room-panel .status{margin-top:13px;font-size:12px}
+.jf-home-room-panel #roomCount{margin:8px 0 0;font-size:11px}
+.jf-home-room-panel #jfOpenRank{margin-top:12px!important;font-size:11px;padding:8px 12px}
+.jf-home-welcome{margin-top:26px;padding:clamp(17px,3vw,26px);border-radius:18px;background:color-mix(in srgb,var(--jf-ui-panel,#17172f) 86%,transparent);border:1px solid color-mix(in srgb,var(--jf-ui-border,var(--jf-secondary,#777)) 75%,transparent);box-shadow:inset 0 1px #ffffff12}
+.jf-home-welcome-head{margin-bottom:18px}
+.jf-home-welcome .jf-home-kicker{display:inline-block;color:var(--jf-secondary,var(--jf-primary,#ff78d2));font-size:10px;font-weight:900;letter-spacing:1.2px}
+.jf-home-welcome-head h2{margin:8px 0 6px;font:900 clamp(23px,4vw,32px)/1.1 Georgia,serif;color:var(--jf-ui-text,var(--ink,#fff));letter-spacing:-.5px}
+.jf-home-welcome-head p{margin:0;color:var(--jf-ui-muted,var(--muted,#bbb));font-size:13px;line-height:1.5}
+.jf-home-welcome-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.jf-home-welcome-card{min-width:0;display:flex;align-items:flex-start;gap:13px;padding:16px;border:1px solid var(--jf-ui-border,var(--jf-secondary,#777));border-radius:12px;background:var(--jf-ui-surface,var(--jf-ui-panel,#252545));color:var(--jf-ui-text,var(--ink,#fff));text-decoration:none;transition:transform .16s,border-color .16s,background .16s}
+.jf-home-welcome-card:hover{transform:translateY(-2px);border-color:var(--jf-primary,var(--jf-secondary,#777));background:color-mix(in srgb,var(--jf-ui-surface,#252545) 88%,var(--jf-primary,#ff78d2))}
+.jf-home-welcome-icon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:11px;background:color-mix(in srgb,var(--jf-primary,#ff78d2) 16%,var(--jf-ui-soft,#17172f));border:1px solid color-mix(in srgb,var(--jf-ui-border,var(--jf-secondary,#777)) 75%,transparent);color:var(--jf-ui-text,var(--ink,#fff));font-size:23px}
+.jf-home-welcome-card h3{margin:1px 0 5px;font-size:14px;line-height:1.2;color:var(--jf-ui-text,var(--ink,#fff))}
+.jf-home-welcome-card p{margin:0 0 10px;font-size:11px;line-height:1.45;color:var(--jf-ui-muted,var(--muted,#bbb))}
+.jf-home-welcome-link{display:inline-block;padding:0;border:0;background:none;color:var(--jf-secondary,var(--jf-primary,#ff78d2));font:900 11px var(--jf-font-family,Tahoma),sans-serif;text-decoration:none;cursor:pointer}
+.jf-home-welcome-link:hover{text-decoration:underline}
+.jf-home-welcome-profile{display:inline-block;margin-left:10px;color:var(--jf-ui-muted,var(--muted,#bbb));font-size:10px}
+.jf-home-welcome-signoff{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:17px 2px 0;color:var(--jf-ui-muted,var(--muted,#bbb));font-size:10px}
+.jf-home-welcome-signoff span{font-size:17px}
+@media(max-width:560px){.jf-room-entry-primary{grid-template-columns:1fr}.jf-home-primary-action,.jf-home-create-action{min-height:52px;padding:14px 16px}.jf-home-welcome-grid{grid-template-columns:1fr}.jf-home-welcome-card{padding:14px}.jf-home-welcome-collection{grid-column:auto}}
+@media(prefers-reduced-motion:reduce){.jf-home-welcome-card{transition:none}.jf-home-welcome-card:hover{transform:none}}
 </style>
 <link rel="stylesheet" href="/home-entry.css?v=jornal-entry-2">
 <script defer src="/home-entry.js?v=jornal-entry-2"></script>
@@ -1039,34 +1070,14 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
     <span class="jf-menu-group-title">Minigames</span>
     <button class="btn secondary" type="button" id="jfOpenArena">🥊 Arena dos Macacos</button>
   </nav></div></div>
-  <h1>Música boa é<br>melhor junto. ✦</h1>
-  <p class="jf-hero-description">Crie uma sala privada e escute o áudio do navegador com outra pessoa, mesmo à distância.</p>
+  <h1>Sua galera.<br>Sua música. ✦</h1>
+  <p class="jf-hero-description">Entra numa sala, chama alguém e deixa a música rolar.</p>
 
-  <section class="jf-home-community" id="jfHomeCommunity" aria-label="Jornal e comunidade">
-    <div class="jf-home-paper-head">
-      <div><span class="jf-home-kicker">✦ NOTÍCIAS DA COMUNIDADE ✦</span><h2>Jornal do Junto</h2><p>O que está rolando no nosso cantinho da internet.</p></div>
-      <div class="jf-home-edition"><strong>EDIÇÃO Nº 001</strong><small>JUNTO.FM · 2026</small><span>🐒</span></div>
-    </div>
-    <article class="jf-home-lead">
-      <div class="jf-home-lead-copy"><span class="jf-home-label">BOLETIM DA COMUNIDADE</span><h3>A internet fica melhor quando a gente se encontra.</h3><p>O Junto.fm está crescendo para virar um ponto de encontro: faça amizades, converse no privado, visite espaços, jogue e compartilhe suas criações.</p><button class="jf-home-action" type="button" id="jfHomeMessenger">✉ Abrir Junto Chat</button> <a class="jf-home-action" id="jfHomeMyProfile" href="#" hidden>☺ Meu perfil público</a></div>
-      <div class="jf-home-lead-art" aria-hidden="true"><span>♫</span><b>JUNTO<br>ONLINE!</b><small>✦ EST. 2026 ✦</small></div>
-    </article>
-    <div class="jf-home-community-grid">
-      <article class="jf-home-story"><span class="jf-home-story-icon">🥊</span><div><small>FLIPERAMA</small><h3>Arena dos Macacos</h3><p>Desafie alguém para um duelo e mostre quem manda no ringue.</p><button type="button" class="jf-home-link" id="jfHomeArcade">Entrar no fliperama ↗</button></div></article>
-      <article class="jf-home-story"><span class="jf-home-story-icon">✎</span><div><small>MURAL COMUNITÁRIO</small><h3>Mural dos Símios</h3><p>Deixe um desenho, recado ou rabisco para todo mundo ver.</p><a class="jf-home-link" href="/mural">Visitar o mural ↗</a></div></article>
-      <article class="jf-home-story"><span class="jf-home-story-icon">⌂</span><div><small>SEU CANTINHO</small><h3>Quartos pessoais</h3><p>Monte seu espaço, decore e convide seus amigos para visitar.</p><a class="jf-home-link" href="/quartos">Explorar os quartos ↗</a></div></article>
-      <article class="jf-home-story"><span class="jf-home-story-icon">🏅</span><div><small>COLECIONÁVEIS</small><h3>Conquistas e medalhas</h3><p>Desbloqueie lembranças das suas aventuras pela comunidade.</p><button type="button" class="jf-home-link" id="jfHomeAchievements">Ver coleção ↗</button></div></article>
-    </div>
-    <div class="jf-home-paper-foot"><span>📡 CONECTE-SE COM A GALERA</span><span>feito com bananas e carinho · Junto.fm</span></div>
-  </section>
-
-  <section class="panel jf-room-entry-panel" id="jfRoomEntryPanel">
+  <section class="panel jf-room-entry-panel jf-home-room-panel" id="jfRoomEntryPanel">
     <input id="room" type="hidden" value="" autocomplete="off">
-    <div class="row jf-room-entry-actions" id="jfRoomEntryActions">
-      <button class="btn" id="join" type="button">↗ Entrar na sala</button>
-      <button class="btn secondary" id="createRoom" type="button">＋ Criar sala</button>
-      <a class="btn secondary" href="/quartos">⌂ Meu quarto e convites</a>
-      <a class="btn secondary" id="jfEntryMural" href="/mural">✎ Mural dos Símios</a>
+    <div class="jf-room-entry-actions jf-room-entry-primary" id="jfRoomEntryActions">
+      <button class="btn jf-home-primary-action" id="join" type="button">Entrar numa sala <span aria-hidden="true">↗</span></button>
+      <button class="btn secondary jf-home-create-action" id="createRoom" type="button">Criar sala <span aria-hidden="true">＋</span></button>
     </div>
     <div class="jf-entry-account" id="jfEntryAccount">
       <span class="small" id="jfEntryAccountHint">Escolha como criar sua conta. Você também pode entrar nas salas sem cadastro.</span>
@@ -1081,6 +1092,40 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
     <div class="row" style="justify-content:center;margin-top:10px"><button class="btn secondary" id="jfLeaveRoom" type="button" hidden>← Sair da sala</button></div>
     <div class="status"><span class="dot" id="dot"></span><span id="status">Conectando ao servidor…</span></div>
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><button type="button" class="btn secondary" id="jfOpenRank" style="margin-top:8px">🏆 Ranking de horas</button><div id="jfShareRoom" style="margin-top:10px" hidden><button type="button" class="btn secondary" id="jfCopyRoomLink">🔗 Copiar link da sala</button><span id="jfRoomLinkInfo" class="small"></span></div><p class="small" id="help">Se este texto não mudar para “Conectado ao servidor”, inicie o projeto com <code>npm install</code> e <code>npm start</code> e abra <code>http://localhost:3000</code>. Não abra o arquivo HTML diretamente.</p>
+  </section>
+
+  <section class="jf-home-community jf-home-welcome" id="jfHomeCommunity" aria-label="Explore a comunidade">
+    <header class="jf-home-welcome-head">
+      <span class="jf-home-kicker">✦ UM CANTINHO PRA CHAMAR DE SEU</span>
+      <h2>Tem lugar pra você aqui.</h2>
+      <p>Conheça a galera, crie memórias e faça parte do Junto.</p>
+    </header>
+    <div class="jf-home-welcome-grid">
+      <article class="jf-home-welcome-card jf-home-welcome-social">
+        <span class="jf-home-welcome-icon" aria-hidden="true">♡</span>
+        <div><h3>Amigos &amp; mensagens</h3><p>Chama alguém pra conversar.</p>
+          <button type="button" class="jf-home-welcome-link" id="jfHomeMessenger">Abrir mensagens</button>
+          <a class="jf-home-welcome-profile" id="jfHomeMyProfile" href="#" hidden>Meu perfil</a>
+        </div>
+      </article>
+      <a class="jf-home-welcome-card" href="/quartos">
+        <span class="jf-home-welcome-icon" aria-hidden="true">⌂</span>
+        <div><h3>Seu quarto</h3><p>Decore e convide seus amigos.</p><span class="jf-home-welcome-link">Visitar quartos ↗</span></div>
+      </a>
+      <a class="jf-home-welcome-card" id="jfEntryMural" href="/mural">
+        <span class="jf-home-welcome-icon" aria-hidden="true">✎</span>
+        <div><h3>Mural da galera</h3><p>Deixe um desenho ou recado.</p><span class="jf-home-welcome-link">Ver mural ↗</span></div>
+      </a>
+      <article class="jf-home-welcome-card">
+        <span class="jf-home-welcome-icon" aria-hidden="true">♢</span>
+        <div><h3>Fliperama</h3><p>Desafie alguém na arena.</p><button type="button" class="jf-home-welcome-link" id="jfHomeArcade">Jogar agora</button></div>
+      </article>
+      <article class="jf-home-welcome-card jf-home-welcome-collection">
+        <span class="jf-home-welcome-icon" aria-hidden="true">✧</span>
+        <div><h3>Suas lembranças</h3><p>Conquistas da sua jornada.</p><button type="button" class="jf-home-welcome-link" id="jfHomeAchievements">Ver coleção</button></div>
+      </article>
+    </div>
+    <p class="jf-home-welcome-signoff">Feito com bananas e carinho. <span>🐒</span></p>
   </section>
 
 
@@ -1239,7 +1284,7 @@ body.jf-public-profile-page #jfPublicProfile{display:block!important}
   <div id="jfChatLog" class="jf-chat-log" role="log" aria-live="polite" aria-relevant="additions text"><p class="jf-chat-empty">Entre em uma sala para começar a conversar ✦</p></div>
   <div class="jf-chat-tools"><button type="button" id="jfChatEmojiToggle" class="btn secondary jf-chat-emoji-toggle" aria-expanded="false" aria-controls="jfChatEmojiTray">☺ Emojis</button></div>
   <div id="jfChatEmojiTray" class="jf-chat-emoji-tray" aria-label="Escolha um emoji" hidden>
-    <div class="jf-retro-emoji-title">✦ Emojis retrô · Emojis retrô · cultura digital dos anos 2000</div>
+    <div class="jf-retro-emoji-title">✦ Emojis retrô · cultura digital dos anos 2000</div>
     <div class="jf-retro-emoji-grid">
       <button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😎" title="Inserir 😎">😎</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😜" title="Inserir 😜">😜</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😛" title="Inserir 😛">😛</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😂" title="Inserir 😂">😂</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😭" title="Inserir 😭">😭</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🥺" title="Inserir 🥺">🥺</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😍" title="Inserir 😍">😍</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😘" title="Inserir 😘">😘</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😡" title="Inserir 😡">😡</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="😈" title="Inserir 😈">😈</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👻" title="Inserir 👻">👻</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👾" title="Inserir 👾">👾</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="👽" title="Inserir 👽">👽</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🤖" title="Inserir 🤖">🤖</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💾" title="Inserir 💾">💾</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💿" title="Inserir 💿">💿</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📼" title="Inserir 📼">📼</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📟" title="Inserir 📟">📟</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🕹️" title="Inserir 🕹️">🕹️</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎮" title="Inserir 🎮">🎮</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎧" title="Inserir 🎧">🎧</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="📺" title="Inserir 📺">📺</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="☎️" title="Inserir ☎️">☎️</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💌" title="Inserir 💌">💌</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💔" title="Inserir 💔">💔</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💖" title="Inserir 💖">💖</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💘" title="Inserir 💘">💘</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="✨" title="Inserir ✨">✨</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌟" title="Inserir 🌟">🌟</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🔥" title="Inserir 🔥">🔥</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="⚡" title="Inserir ⚡">⚡</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="💤" title="Inserir 💤">💤</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎵" title="Inserir 🎵">🎵</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🎶" title="Inserir 🎶">🎶</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌈" title="Inserir 🌈">🌈</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍒" title="Inserir 🍒">🍒</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍕" title="Inserir 🍕">🍕</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🍦" title="Inserir 🍦">🍦</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="☕" title="Inserir ☕">☕</button><button type="button" class="jf-chat-emoji jf-retro-emoji" data-emoji="🌻" title="Inserir 🌻">🌻</button>
     </div>
