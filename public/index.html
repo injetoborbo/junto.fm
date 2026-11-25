@@ -1075,20 +1075,13 @@ body:not(.jf-in-room) main>.jf-hero-description{margin:0 auto 17px;max-width:560
     <span class="jf-menu-group-title">Minigames</span>
     <button class="btn secondary" type="button" id="jfOpenArena">🥊 Arena dos Macacos</button><button class="btn secondary" type="button" id="jfOpenRank">🏆 Ranking de horas</button>
   </nav></div></div>
-  <h1>Sua galera.<br>Sua música. ✦</h1>
-  <p class="jf-hero-description">Entra numa sala, chama alguém e deixa a música rolar.</p>
+  <h1>Sua música.<br>Sua galera. ✦</h1>
+  <p class="jf-hero-description">O melhor é quando a gente ouve junto.</p>
 
   <section class="panel jf-room-entry-panel jf-home-room-panel" id="jfRoomEntryPanel">
     <input id="room" type="hidden" value="" autocomplete="off">
-    <div class="jf-room-entry-actions jf-room-entry-primary" id="jfRoomEntryActions">
-      <button class="btn jf-home-primary-action" id="join" type="button">Entrar numa sala <span aria-hidden="true">↗</span></button>
-      <button class="btn secondary jf-home-create-action" id="createRoom" type="button">Criar sala <span aria-hidden="true">＋</span></button>
-    </div>
-    <div class="jf-entry-account" id="jfEntryAccount">
-      <span class="small" id="jfEntryAccountHint">Pode entrar sem cadastro. Crie uma conta para guardar seu perfil e amizades.</span>
-      <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Criar com Google</a>
-      <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
-    </div>
+
+
     <div id="jfAdminEntry" class="jf-admin-entry-access" hidden>
       <button id="jfAdminLogin" class="jf-admin-github-login" type="button" hidden aria-label="Entrar como administrador pelo GitHub" title="Entrar como administrador pelo GitHub">
         <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .8A11.2 11.2 0 0 0 8.46 22.63c.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.33-3.79-1.33-.51-1.29-1.25-1.63-1.25-1.63-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 .71 2.62.51 3.25.39.1-.72.39-1.22.71-1.5-2.5-.28-5.14-1.25-5.14-5.55 0-1.23.44-2.24 1.16-3.03-.12-.28-.5-1.43.11-2.99 0 0 .95-.3 3.08 1.15a10.7 10.7 0 0 1 5.61 0c2.14-1.45 3.09-1.15 3.09-1.15.61 1.56.23 2.71.11 2.99a4.36 4.36 0 0 1 1.16 3.03c0 4.31-2.65 5.27-5.17 5.54.4.35.76 1.03.76 2.07v3.08c0 .3.2.65.77.54A11.2 11.2 0 0 0 12 .8Z"/></svg>
@@ -1099,38 +1092,46 @@ body:not(.jf-in-room) main>.jf-hero-description{margin:0 auto 17px;max-width:560
     <p class="small" id="roomCount">Ainda não entrou em uma sala.</p><div id="jfShareRoom" style="margin-top:10px" hidden><button type="button" class="btn secondary" id="jfCopyRoomLink">🔗 Copiar link da sala</button><span id="jfRoomLinkInfo" class="small"></span></div><p class="small" id="help">Se a conexão não acontecer, tente recarregar a página.</p>
   </section>
 
-  <section class="jf-home-community jf-home-welcome" id="jfHomeCommunity" aria-label="Explore a comunidade">
+  <section class="jf-home-community jf-home-welcome jf-home-social-hub" id="jfHomeCommunity" aria-label="Explore o Junto.fm">
     <header class="jf-home-welcome-head">
-      <span class="jf-home-kicker">✦ UM CANTINHO PRA CHAMAR DE SEU</span>
-      <h2>Tem lugar pra você aqui.</h2>
-      <p>Conheça a galera, crie memórias e faça parte do Junto.</p>
+      <span class="jf-home-kicker">✦ UM LUGAR PRA FICAR JUNTO</span>
+      <h2>Sua galera tá por aqui.</h2>
+      <p>Entra numa sala, conhece a comunidade e chama seus amigos.</p>
     </header>
+    <div class="jf-home-join-wrap">
+    <div class="jf-room-entry-actions jf-room-entry-primary" id="jfRoomEntryActions">
+      <button class="btn jf-home-primary-action" id="join" type="button">Entrar numa sala <span aria-hidden="true">↗</span></button>
+      <button class="btn secondary jf-home-create-action" id="createRoom" type="button">Criar sala <span aria-hidden="true">＋</span></button>
+    </div>
+    </div>
+    <div class="jf-entry-account" id="jfEntryAccount">
+      <span class="small" id="jfEntryAccountHint">Pode entrar sem cadastro. Crie uma conta para guardar seu perfil e amizades.</span>
+      <a class="btn secondary" id="jfGoogleLogin" href="/auth/google" hidden>Criar com Google</a>
+      <span class="small" id="jfEntryAccountLoggedIn" hidden>✓ Conta conectada — seu perfil e suas amizades ficam salvos.</span>
+    </div>
     <div class="jf-home-welcome-grid">
+      <a class="jf-home-welcome-card" href="/comunidades">
+        <span class="jf-home-welcome-icon" aria-hidden="true">♧</span>
+        <div><h3>Comunidades</h3><p>Encontre gente que curte o mesmo que você.</p><span class="jf-home-welcome-link">Conhecer comunidades ↗</span></div>
+      </a>
       <article class="jf-home-welcome-card jf-home-welcome-social">
         <span class="jf-home-welcome-icon" aria-hidden="true">♡</span>
-        <div><h3>Amigos &amp; mensagens</h3><p>Chama alguém pra conversar.</p>
-          <button type="button" class="jf-home-welcome-link" id="jfHomeMessenger">Abrir mensagens</button>
+        <div><h3>Amigos</h3><p>Converse e acompanhe sua galera.</p>
+          <button type="button" class="jf-home-welcome-link" id="jfHomeMessenger">Ver mensagens</button>
           <a class="jf-home-welcome-profile" id="jfHomeMyProfile" href="#" hidden>Meu perfil</a>
         </div>
       </article>
       <a class="jf-home-welcome-card" href="/quartos">
         <span class="jf-home-welcome-icon" aria-hidden="true">⌂</span>
-        <div><h3>Seu quarto</h3><p>Decore e convide seus amigos.</p><span class="jf-home-welcome-link">Visitar quartos ↗</span></div>
+        <div><h3>Seu quarto</h3><p>Monte seu espaço e convide amigos.</p><span class="jf-home-welcome-link">Visitar quartos ↗</span></div>
       </a>
-      <a class="jf-home-welcome-card" id="jfEntryMural" href="/mural">
-        <span class="jf-home-welcome-icon" aria-hidden="true">✎</span>
-        <div><h3>Mural da galera</h3><p>Deixe um desenho ou recado.</p><span class="jf-home-welcome-link">Ver mural ↗</span></div>
-      </a>
-      <article class="jf-home-welcome-card">
-        <span class="jf-home-welcome-icon" aria-hidden="true">♢</span>
-        <div><h3>Fliperama</h3><p>Desafie alguém na arena.</p><button type="button" class="jf-home-welcome-link" id="jfHomeArcade">Jogar agora</button></div>
-      </article>
-      <article class="jf-home-welcome-card jf-home-welcome-collection">
-        <span class="jf-home-welcome-icon" aria-hidden="true">✧</span>
-        <div><h3>Suas lembranças</h3><p>Conquistas da sua jornada.</p><button type="button" class="jf-home-welcome-link" id="jfHomeAchievements">Ver coleção</button></div>
-      </article>
     </div>
-    <p class="jf-home-welcome-signoff">Feito com bananas e carinho. <span>🐒</span></p>
+    <nav class="jf-home-explore-links" aria-label="Mais para explorar">
+      <span>Também tem:</span>
+      <a id="jfEntryMural" href="/mural">Mural</a>
+      <button type="button" id="jfHomeArcade">Fliperama</button>
+      <button type="button" id="jfHomeAchievements">Conquistas</button>
+    </nav>
   </section>
 
 

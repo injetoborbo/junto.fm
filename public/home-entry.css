@@ -274,3 +274,174 @@ body:not(.jf-in-room) #jfHomeCommunity .jf-entry-account>.small{
   #jfEntryAccountModal .jf-room-modal{padding:19px 16px 16px}
   #jfEntryAccountModal .jf-room-modal-actions{flex-direction:column}
 }
+
+
+/* Homepage v2: put the action first, then a small set of ways to belong. */
+body:not(.jf-in-room) main{
+  justify-content:flex-start!important;
+  gap:8px!important;
+  min-height:100vh;
+  padding:10px 18px 30px;
+  box-sizing:border-box;
+}
+body:not(.jf-in-room) main>.jf-topbar{margin-bottom:2px}
+body:not(.jf-in-room) main>h1{
+  margin:12px 0 0!important;
+  font:900 clamp(32px,5.2vw,48px)/1.02 Georgia,serif!important;
+  letter-spacing:-.7px;
+  text-align:center;
+}
+body:not(.jf-in-room) main>.jf-hero-description{
+  margin:0 auto 5px!important;
+  font-size:13px;
+  line-height:1.45;
+  text-align:center;
+  opacity:.86;
+}
+body:not(.jf-in-room) main #jfRoomEntryPanel{
+  width:min(100%,900px);
+  margin:0 auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+body:not(.jf-in-room) main #jfRoomEntryPanel>.status{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:17px;
+  margin:0 auto 5px!important;
+  padding:0!important;
+  color:var(--jf-ui-muted,var(--muted));
+  font-size:10px!important;
+  line-height:1.3;
+  text-align:center;
+}
+body:not(.jf-in-room) main #jfRoomEntryPanel>.status .dot{width:7px;height:7px;flex:0 0 7px}
+body:not(.jf-in-room) main #jfRoomEntryPanel #roomCount,
+body:not(.jf-in-room) main #jfRoomEntryPanel #help{display:none!important}
+body:not(.jf-in-room) #jfHomeCommunity.jf-home-social-hub{
+  width:min(100%,900px);
+  margin:0 auto!important;
+  padding:clamp(18px,3vw,28px)!important;
+  border:1px solid var(--jf-ui-border,var(--jf-secondary));
+  border-radius:16px;
+  background:var(--jf-ui-panel,#201d4b)!important;
+  box-shadow:0 12px 32px #0005,inset 0 1px #ffffff18!important;
+  color:var(--jf-ui-text,var(--ink));
+}
+.jf-home-social-hub .jf-home-welcome-head{margin:0 0 16px}
+.jf-home-social-hub .jf-home-kicker{font-size:9px;letter-spacing:1.1px}
+.jf-home-social-hub .jf-home-welcome-head h2{
+  margin:7px 0 5px;
+  font:900 clamp(26px,3.5vw,36px)/1.08 Georgia,serif;
+  letter-spacing:-.5px;
+}
+.jf-home-social-hub .jf-home-welcome-head p{font-size:12px;line-height:1.45}
+.jf-home-join-wrap{width:min(100%,560px);margin:0 auto 10px}
+.jf-home-join-wrap #jfRoomEntryActions{
+  display:grid!important;
+  grid-template-columns:1.15fr 1fr;
+  gap:9px;
+  width:100%;
+  margin:0;
+}
+.jf-home-join-wrap #jfRoomEntryActions .btn{
+  min-width:0;
+  min-height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:13px 17px;
+  border:1px solid var(--jf-ui-button-border,var(--jf-secondary));
+  border-radius:9px;
+  color:var(--jf-ui-button-text,#20172d);
+  background:var(--jf-ui-button,linear-gradient(var(--pink),var(--cyan)));
+  box-shadow:inset 0 1px #ffffff70,0 3px 0 #0003;
+  font:900 13px var(--jf-font-family,Tahoma),Tahoma,sans-serif;
+  text-align:left;
+}
+.jf-home-join-wrap #jfRoomEntryActions #createRoom{
+  color:var(--jf-ui-text,var(--ink));
+  border-color:var(--jf-ui-border,var(--jf-secondary));
+  background:var(--jf-ui-surface,var(--jf-ui-soft,#17172f));
+  box-shadow:inset 0 1px #ffffff20,0 3px 0 #0003;
+}
+.jf-home-join-wrap #jfRoomEntryActions .btn span{font-size:20px;opacity:.85}
+body:not(.jf-in-room) #jfHomeCommunity.jf-home-social-hub #jfEntryAccount{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  flex-wrap:wrap;
+  margin:0 auto 18px!important;
+  padding:0!important;
+  border:0!important;
+  text-align:center;
+}
+body:not(.jf-in-room) #jfHomeCommunity.jf-home-social-hub #jfEntryAccountHint,
+body:not(.jf-in-room) #jfHomeCommunity.jf-home-social-hub #jfEntryAccountLoggedIn{
+  max-width:none;
+  font-size:10px;
+  line-height:1.4;
+  color:var(--jf-ui-muted,var(--muted));
+}
+.jf-home-social-hub .jf-home-welcome-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+.jf-home-social-hub .jf-home-welcome-card{
+  min-height:108px;
+  padding:14px;
+  gap:10px;
+  border-radius:10px;
+  background:var(--jf-ui-surface,var(--jf-ui-soft,#17172f));
+  box-shadow:inset 0 1px #ffffff12;
+}
+.jf-home-social-hub .jf-home-welcome-card:hover{transform:translateY(-2px)}
+.jf-home-social-hub .jf-home-welcome-icon{
+  width:34px;height:34px;flex-basis:34px;
+  border-radius:9px;font-size:19px;
+}
+.jf-home-social-hub .jf-home-welcome-card h3{font-size:13px;margin:1px 0 4px}
+.jf-home-social-hub .jf-home-welcome-card p{font-size:10px;line-height:1.4;margin:0 0 8px}
+.jf-home-social-hub .jf-home-welcome-link{font-size:10px}
+.jf-home-explore-links{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:7px 14px;
+  margin:16px 0 0;
+  padding-top:13px;
+  border-top:1px solid color-mix(in srgb,var(--jf-ui-border,var(--jf-secondary)) 55%,transparent);
+  font:10px var(--jf-font-family,Tahoma),Tahoma,sans-serif;
+}
+.jf-home-explore-links>span{color:var(--jf-ui-muted,var(--muted))}
+.jf-home-explore-links a,.jf-home-explore-links button{
+  padding:0;
+  border:0;
+  background:none;
+  color:var(--jf-secondary,var(--jf-primary));
+  font:900 10px var(--jf-font-family,Tahoma),Tahoma,sans-serif;
+  text-decoration:none;
+  cursor:pointer;
+}
+.jf-home-explore-links a:hover,.jf-home-explore-links button:hover{text-decoration:underline}
+@media(max-width:700px){
+  body:not(.jf-in-room) main{padding:8px 12px 22px;gap:7px!important}
+  body:not(.jf-in-room) main>h1{font-size:clamp(29px,8vw,38px)!important;margin-top:8px!important}
+  body:not(.jf-in-room) main>.jf-hero-description{font-size:12px}
+  body:not(.jf-in-room) #jfHomeCommunity.jf-home-social-hub{padding:16px!important;border-radius:13px}
+  .jf-home-social-hub .jf-home-welcome-grid{grid-template-columns:1fr;gap:8px}
+  .jf-home-social-hub .jf-home-welcome-card{min-height:0;padding:12px}
+  .jf-home-join-wrap #jfRoomEntryActions{grid-template-columns:1fr}
+  .jf-home-join-wrap #jfRoomEntryActions .btn{min-height:49px}
+  body:not(.jf-in-room) #jfHomeCommunity.jf-home-social-hub #jfEntryAccount{margin-bottom:14px!important}
+}
+@media(prefers-reduced-motion:reduce){.jf-home-social-hub .jf-home-welcome-card{transition:none}}
