@@ -194,6 +194,9 @@ function getBounds(root){
   return {box,center:box.getCenter(new THREE.Vector3()),size:box.getSize(new THREE.Vector3())};
 }
 function dress(root,selection,render,monkey,{animated=false,privateFit=false,previewSeated=false,experimental=false,rigidFollowers=false}={}){
+  // Escala proporcional aplicada apenas ao Avatar Lab; as prévias antigas
+  // continuam usando seus encaixes históricos.
+  const fitScale=THREE.MathUtils.clamp(Number(root.userData.jfWardrobeScale)||1,.5,1.5);
   // Capturar o bind pose ANTES das animações. As promessas de GLB podem
   // resolver com o avatar andando/sentado; nesse caso attach() simples
   // preservaria uma posição antiga num esqueleto já animado.
@@ -341,6 +344,8 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       part.name="jfWardrobe_"+file;
       const measure=getBounds(part);
       configure(part,measure);
+      // A roupa rígida acompanha a nova escala física do personagem.
+      part.scale.multiplyScalar(fitScale);
       if(experimental){
         const region=file==="vestido"?"torso":"head";
         const tune=danceTestFit[region];
@@ -424,9 +429,11 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       const buildMatrix=(params,matrix)=>{
         const region=file==="regatapunk"||file==="vestido_novo"?"torso":"head";
         const tune=experimental?danceTestFit[region]:null;
-        const sc=params.width/Math.max(measure.size.x,1e-6)*(tune?.scale??1);
-        const target=restInRoot(bone).add(new THREE.Vector3(...params.offset));
-        if(tune)target.add(new THREE.Vector3(...tune.offset));
+        const fittedWidth=params.width*fitScale;
+        const fittedOffset=params.offset.map(value=>value*fitScale);
+        const sc=fittedWidth/Math.max(measure.size.x,1e-6)*(tune?.scale??1);
+        const target=restInRoot(bone).add(new THREE.Vector3(...fittedOffset));
+        if(tune)target.add(new THREE.Vector3(...tune.offset.map(value=>value*fitScale)));
         tmpRotation.setFromAxisAngle(new THREE.Vector3(1,0,0),
           THREE.MathUtils.degToRad(file==="vestido_novo"?(params.pitch||0):0));
         centerOffset.copy(measure.center).multiplyScalar(sc);
@@ -495,15 +502,15 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       const hat=asset.clone(true);
       const measure=getBounds(hat);
       // Meshy: aba = Y mínimo + cerca de 12% da altura. Apoio = topo - 17 cm visuais.
-      const width=type==="palha"?.94:type==="apocaliptico"?.79:.92;
+      const width=(type==="palha"?.94:type==="apocaliptico"?.79:.92)*fitScale;
       const scale=width/Math.max(measure.size.x,measure.size.z,1e-6);
       const brim=measure.box.min.y+measure.size.y*.12;
       const tune=experimental?danceTestFit.head:null;
       const finalScale=scale*(tune?.scale??1);
       hat.scale.setScalar(finalScale);
-      hat.position.set(worldHead.x-measure.center.x*finalScale+(tune?.offset[0]||0),
-        worldTop.y-.17-brim*finalScale+(tune?.offset[1]||0),
-        worldHead.z-measure.center.z*finalScale+.05+(tune?.offset[2]||0));
+      hat.position.set(worldHead.x-measure.center.x*finalScale+(tune?.offset[0]||0)*fitScale,
+        worldTop.y-.17*fitScale-brim*finalScale+(tune?.offset[1]||0)*fitScale,
+        worldHead.z-measure.center.z*finalScale+.05*fitScale+(tune?.offset[2]||0)*fitScale);
       hat.name="jfWardrobeHat_"+type;
       state.add(hat);
       // Reassocia ao osso da cabeça preservando a posição no espaço do macaco.
@@ -781,8 +788,11 @@ function createAvatarLineup(scene,normalized,target){
   ctx.strokeStyle=accent;ctx.globalAlpha=.83;ctx.lineWidth=3;
   ctx.beginPath();ctx.moveTo(chartX,top);ctx.lineTo(chartX,bottom);ctx.stroke();
   ctx.globalAlpha=.6;ctx.font="bold 22px Arial";ctx.fillStyle="#effaff";ctx.textAlign="right";
-  for(let cm=100;cm<=200;cm+=5){
-    const y=bottom-(cm-100)/100*(bottom-top),major=cm%10===0;
+  for(let cm=0;cm<=200;cm+=5){
+    // Escala real: 1 m no cenário equivale a 100 cm na régua.
+    // A marca 0 fica no piso da plataforma; a cabeça de 1,50 m
+    // coincide com a marca 150.
+    const y=760-cm*2.22,major=cm%10===0;
     ctx.globalAlpha=major?.9:.42;ctx.lineWidth=major?3:1.5;
     ctx.beginPath();ctx.moveTo(chartX-(major?52:24),y);ctx.lineTo(chartX,y);ctx.stroke();
     if(major)ctx.fillText(String(cm),chartX-62,y+7);
@@ -856,17 +866,17 @@ function createAvatarLineup(scene,normalized,target){
     // Centro da placa exatamente entre as mãos. A face fica ligeiramente
     // atrás dos pulsos (câmera em +Z), para as mãos aparecerem sobre as
     // bordas e parecerem apoiar/segurar a identificação, não uma placa flutuante.
-    plaque.position.y+=.06;
-    // O personagem olha para +Z: trazer a placa para a frente do peito.
-    // Antes o Z negativo deixava a placa atrás do tronco.
-    plaque.position.z+=.22;
+    plaque.position.y+=.01;
+    // A placa fica ligeiramente atrás dos pulsos, não à frente deles:
+    // assim as mãos podem aparecer por cima das bordas e segurá-la.
+    plaque.position.z-=.035;
     // O rig pode inverter a ordem espacial dos pulsos; manter o texto legível.
     let handAngle=Math.atan2(rightLocal.y-leftLocal.y,rightLocal.x-leftLocal.x);
     if(Math.abs(handAngle)>Math.PI/2)handAngle+=handAngle>0?-Math.PI:Math.PI;
     plaque.rotation.set(-.035,0,handAngle);
     const span=leftLocal.distanceTo(rightLocal);
     // A placa é menor que a original, mas chega às mãos para parecer segurada.
-    const width=THREE.MathUtils.clamp(span*.98,.62,.82);
+    const width=THREE.MathUtils.clamp(span*1.12,.50,.86);
     plaque.scale.set(width/plaqueBaseWidth,.92,1);
   };
   update();
@@ -992,12 +1002,16 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   const size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   // No Avatar Lab, a altura é definida em metros (1 unidade Three.js = 1 m).
   // As outras prévias mantêm a escala visual histórica.
-  const scale=photoBooth?1.50/Math.max(size.y,.0001):1.8/(Math.max(size.x,size.y,size.z)||1);
+  const legacyAvatarScale=1.8/(Math.max(size.x,size.y,size.z)||1);
+  const scale=photoBooth?1.50/Math.max(size.y,.0001):legacyAvatarScale;
+  // Mantém roupas e acessórios proporcionais à nova escala física.
+  const wardrobeScale=photoBooth?scale/legacyAvatarScale:1;
   // Grupo normalizado: todos os acessórios usam o mesmo espaço visual.
   const normalized=new THREE.Group();
   monkey.scale.setScalar(scale);monkey.position.copy(center).multiplyScalar(-scale);
   // Pés apoiados no topo da plataforma do estúdio (y = -0.88).
-  if(photoBooth)normalized.position.y=-.88+1.50*.5;
+  if(photoBooth)normalized.position.y=-.875+1.50*.5;
+  normalized.userData.jfWardrobeScale=wardrobeScale;
   normalized.add(monkey);
   scene.add(normalized);
   let active=true;
