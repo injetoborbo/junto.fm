@@ -128,7 +128,7 @@ test("presence and listening sync only disclose friends to authenticated users",
   assert.match(source,/if\(!id\)\{[\s\S]*?social-presence-state",\{online:\[\],listening:\[\]\}\);return;/);
 });
 
-test("offline MSN nudge status does not claim deferred delivery",()=>{
+test("offline attention nudge status does not claim deferred delivery",()=>{
   const source=read("public/community-social.js");
   assert.match(source,/Seu amigo está offline; chamada não entregue/);
   assert.doesNotMatch(source,/offline; ele verá quando entrar/);
