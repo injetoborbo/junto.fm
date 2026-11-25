@@ -143,3 +143,12 @@ test("community and scrapbook styling use theme variables with a retro UI treatm
   assert.match(css,/border:2px ridge/);
   assert.match(read("public/communities.html"),/theme-bridge\.js/);
 });
+
+
+test("social socket events revalidate the account session after logout",()=>{
+  const source=read("community-classics.js");
+  assert.match(source,/async function currentSocialAccount\(socket\)/);
+  assert.match(source,/accounts\.accountFromRequest\(socket\.request\)/);
+  assert.match(source,/const sender=await currentSocialAccount\(socket\)/);
+  assert.match(source,/const account=await currentSocialAccount\(socket\),id=account\?\.id/);
+});
