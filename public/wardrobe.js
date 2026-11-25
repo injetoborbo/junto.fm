@@ -1145,10 +1145,13 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
       };
       add(normalized,"Avatar inteiro / escala","Avatar");
       add(monkey,"Macaco / modelo 3D","Avatar");
-      monkey.traverse(node=>{
+      // As peças do guarda-roupa não ficam todas dentro de monkey:
+      // os GLBs novos são filhos de normalized/jfWardrobeParts (ou do osso),
+      // então percorrer somente monkey fazia roupas desaparecerem do seletor.
+      normalized.traverse(node=>{
         if(node.isBone)add(node,"Osso · "+(node.name||"Bone"),"Esqueleto");
-        if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)))
-          add(node,node.name,"Roupas e acessórios");
+        if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)||/^jfMiniHat_/.test(node.name)))
+          add(node,node.name.replace(/^jfWardrobe_|^jfMiniHat_|^jfMini_/,""),"Roupas e acessórios");
       });
       const lab=normalized.userData.jfAvatarLabParts||{};
       add(lab.plate,"Placa de identificação","Placa e mãos");
