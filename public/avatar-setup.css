@@ -1,0 +1,57 @@
+/* First-time character setup — palette-aware, responsive studio. */
+.jf-avatar-setup[hidden]{display:none!important}
+.jf-avatar-setup{position:fixed!important;inset:0!important;z-index:30000!important;display:grid!important;place-items:center!important;padding:clamp(8px,2vw,24px)!important;background:color-mix(in srgb,var(--jf-ui-page,#07182c) 86%,#000 14%)!important;backdrop-filter:blur(18px) saturate(1.15)!important}
+.jf-avatar-setup .jf-wardrobe-modal{width:min(1120px,100%)!important;max-width:none!important;max-height:min(94dvh,900px)!important;overflow:auto!important;margin:0!important;padding:clamp(15px,2.2vw,28px)!important;border:1px solid var(--jf-ui-border,var(--jf-secondary))!important;border-radius:22px!important;background:linear-gradient(145deg,color-mix(in srgb,var(--jf-ui-panel) 96%,transparent),color-mix(in srgb,var(--jf-ui-page) 96%,transparent))!important;color:var(--jf-ui-text)!important;box-shadow:0 28px 90px #0008,inset 0 1px #ffffff26!important}
+.jf-avatar-setup .jf-modal-head{border:0!important;margin:0!important;padding:0!important}
+.jf-avatar-setup .jf-modal-head h2{font-size:clamp(20px,3vw,30px)!important;color:var(--jf-ui-text)!important}
+.jf-avatar-setup .jf-avatar-setup-intro{margin:8px 0 18px}
+.jf-avatar-setup .jf-avatar-setup-kicker{display:block;font-size:10px;font-weight:900;letter-spacing:1.6px;color:var(--jf-primary);margin-bottom:8px}
+.jf-avatar-setup .jf-avatar-setup-intro h2{font-size:clamp(27px,4vw,43px);line-height:1.05;letter-spacing:-.8px;margin:0 0 8px;color:var(--jf-ui-text)}
+.jf-avatar-setup .jf-avatar-setup-intro p{font-size:14px;line-height:1.5;color:var(--jf-ui-muted);margin:0}
+.jf-avatar-setup .jf-avatar-setup-description{margin:0 0 16px!important;color:var(--jf-ui-muted)!important}
+.jf-avatar-setup .jf-wardrobe-layout{display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(240px,.75fr)!important;gap:clamp(14px,2vw,26px)!important;align-items:stretch!important}
+.jf-avatar-setup .jf-avatar-studio-stage{position:relative!important;min-width:0!important;min-height:440px!important;overflow:hidden!important;border:1px solid var(--jf-ui-border)!important;border-radius:16px!important;background:linear-gradient(180deg,color-mix(in srgb,var(--jf-ui-surface) 92%,#fff 8%),var(--jf-ui-page))!important;box-shadow:inset 0 1px #ffffff25,inset 0 -30px 60px #0002!important}
+.jf-avatar-setup .jf-avatar-studio-stage:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent 0 14%,color-mix(in srgb,var(--jf-ui-border) 30%,transparent) 14.2%,transparent 14.5% 85.5%,color-mix(in srgb,var(--jf-ui-border) 30%,transparent) 85.8%,transparent 86%),repeating-linear-gradient(0deg,transparent 0 38px,color-mix(in srgb,var(--jf-ui-border) 24%,transparent) 39px,transparent 40px);opacity:.55}
+.jf-avatar-setup .jf-avatar-studio-stage:after{content:"";position:absolute;left:15%;right:8%;bottom:13%;height:1px;background:linear-gradient(90deg,transparent,var(--jf-ui-border),transparent);box-shadow:0 0 18px var(--jf-glow);pointer-events:none}
+.jf-avatar-setup #jfWardrobePreview{position:relative!important;z-index:1!important;width:100%!important;height:440px!important;min-height:440px!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:hidden!important}
+.jf-avatar-setup #jfWardrobePreview canvas{display:block;width:100%!important;height:100%!important}
+.jf-avatar-setup .jf-avatar-ruler{position:absolute;z-index:2;left:0;top:20px;bottom:85px;width:54px;display:flex;flex-direction:column;justify-content:space-between;padding:0 0 0 7px;pointer-events:none;color:var(--jf-ui-muted);font:9px/1 system-ui;opacity:.82}
+.jf-avatar-setup .jf-avatar-ruler:before{content:"";position:absolute;top:0;bottom:0;right:6px;width:18px;background:repeating-linear-gradient(to bottom,var(--jf-ui-border) 0 1px,transparent 1px 12px);mask-image:linear-gradient(to right,transparent 0 35%,#000 36%);opacity:.8}
+.jf-avatar-setup .jf-avatar-ruler span{position:relative;z-index:1}
+.jf-avatar-setup .jf-avatar-ruler span:first-child:after{content:" cm";font-size:8px}
+.jf-avatar-setup .jf-avatar-plaque{position:absolute;z-index:4;left:50%;bottom:24px;transform:translateX(-50%) rotate(-1deg);width:min(280px,72%);min-height:66px;display:grid;grid-template-columns:1fr;align-content:center;gap:3px;text-align:center;padding:10px 16px;border:2px solid color-mix(in srgb,var(--jf-ui-border) 80%,#fff 20%);border-radius:5px;background:linear-gradient(160deg,var(--jf-ui-surface),var(--jf-ui-panel));box-shadow:0 7px 0 #0003,inset 0 1px #ffffff45;color:var(--jf-ui-text)}
+.jf-avatar-setup .jf-avatar-plaque small{font-size:8px;font-weight:900;letter-spacing:1.5px;color:var(--jf-primary)}
+.jf-avatar-setup .jf-avatar-plaque strong{font-size:18px;line-height:1.15;overflow-wrap:anywhere}
+.jf-avatar-setup .jf-avatar-plaque span{font-size:9px;letter-spacing:1px;color:var(--jf-ui-muted)}
+.jf-avatar-setup .jf-wardrobe-fields{display:grid!important;align-content:start!important;gap:13px!important;min-width:0!important;padding:16px!important;border:1px solid var(--jf-ui-border)!important;border-radius:14px!important;background:color-mix(in srgb,var(--jf-ui-panel) 72%,transparent)!important}
+.jf-avatar-setup .jf-wardrobe-fields label{font-size:11px!important;color:var(--jf-ui-muted)!important}
+.jf-avatar-setup .jf-wardrobe-fields select{width:100%!important;min-height:43px!important;padding:9px 11px!important;border:1px solid var(--jf-ui-border)!important;border-radius:8px!important;background:var(--jf-ui-soft)!important;color:var(--jf-ui-text)!important;font:inherit!important}
+.jf-avatar-setup .jf-avatar-setup-confirm{min-height:50px!important;width:100%!important;margin-top:18px!important;border-radius:10px!important;background:var(--jf-ui-button)!important;color:var(--jf-ui-button-text)!important;border-color:var(--jf-ui-button-border)!important;box-shadow:inset 0 1px #ffffff65,0 5px 0 color-mix(in srgb,var(--jf-ui-page) 80%,#000)!important}
+.jf-avatar-setup .jf-avatar-setup-status{margin:10px 0 0;text-align:center;color:var(--jf-ui-muted);font-size:12px;line-height:1.5}
+.jf-avatar-setup .jf-avatar-setup-status:empty{display:none}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-wardrobe-modal{background:linear-gradient(145deg,#eaffffed,#bdefffde 55%,#f7ffffe8)!important;border-color:#ffffffd9!important;color:#073c60!important;box-shadow:inset 0 2px #fff,0 28px 80px #003b5c55!important;backdrop-filter:blur(24px) saturate(1.6)!important}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-avatar-setup-intro h2,html[data-jf-theme="aero"] .jf-avatar-setup .jf-modal-head h2{color:#06486c!important}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-avatar-setup-intro p,html[data-jf-theme="aero"] .jf-avatar-setup .jf-avatar-setup-description{color:#246b88!important}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-avatar-studio-stage{background:linear-gradient(180deg,#d9faff,#8bd9f1 55%,#4ba9d0)!important;border-color:#ffffffd9!important;box-shadow:inset 0 2px #fff,0 8px 24px #006a9822!important}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-wardrobe-fields{background:#eaffff9e!important;border-color:#ffffffd9!important}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-wardrobe-fields label{color:#145775!important}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-wardrobe-fields select{background:linear-gradient(#faffff,#bfefff)!important;color:#073c60!important;border-color:#65cfe8!important}
+html[data-jf-theme="aero"] .jf-avatar-setup .jf-avatar-plaque{background:linear-gradient(#ffffffde,#b5efffde)!important;border-color:#ffffff!important;color:#073c60!important;box-shadow:0 7px 0 #006b9533,inset 0 1px #fff!important}
+@media(max-width:760px){
+ .jf-avatar-setup{padding:5px!important}
+ .jf-avatar-setup .jf-wardrobe-modal{max-height:98dvh!important;padding:14px!important;border-radius:14px!important}
+ .jf-avatar-setup .jf-avatar-setup-intro{margin:7px 0 12px}
+ .jf-avatar-setup .jf-avatar-setup-intro h2{font-size:26px}
+ .jf-avatar-setup .jf-wardrobe-layout{grid-template-columns:1fr!important;gap:12px!important}
+ .jf-avatar-setup .jf-avatar-studio-stage{min-height:320px!important}
+ .jf-avatar-setup #jfWardrobePreview{height:320px!important;min-height:320px!important}
+ .jf-avatar-setup .jf-avatar-ruler{bottom:75px}
+ .jf-avatar-setup .jf-avatar-plaque{bottom:15px;min-height:55px;width:min(230px,72%)}
+ .jf-avatar-setup .jf-avatar-plaque strong{font-size:15px}
+ .jf-avatar-setup .jf-wardrobe-fields{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:12px!important}
+ .jf-avatar-setup .jf-wardrobe-fields label{min-width:0}
+ .jf-avatar-setup .jf-wardrobe-fields select{font-size:12px!important}
+ .jf-avatar-setup .jf-avatar-setup-confirm{margin-top:12px!important}
+}
+@media(max-width:420px){.jf-avatar-setup .jf-wardrobe-fields{grid-template-columns:1fr!important}}
+@media(prefers-reduced-motion:reduce){.jf-avatar-setup *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}

@@ -36,6 +36,8 @@ jobs:
           node --check public/theme-bridge.js
           node --check public/community-social.js
           node --check tests/community-social.test.js
+          node --check public/avatar-setup.js
+          node --check tests/avatar-setup.test.js
           node --check tests/junto-tv-presence.test.js
           node --input-type=module --check < public/quartos-3d.js
           node --input-type=module --check < public/wardrobe.js
@@ -48,3 +50,5 @@ jobs:
         run: npm run test:tv
       - name: Run community and direct-message regression tests
         run: npm run test:community
+      - name: Run first-time avatar setup tests
+        run: node --test tests/avatar-setup.test.js
