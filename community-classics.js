@@ -140,7 +140,7 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
         peer.emit("social-presence-update",{accountId,online,status:account?.motto||"",track:listeningTracks.get(accountId)||null});
     }catch(_){}
   }
-  const winkTimes=new Map();
+  const winkTimes=new Map(),emoteTimes=new Map();
   io.on("connection",socket=>{
     const accountId=socket.data.account?.id;
     if(accountId){
@@ -166,6 +166,19 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
       if(!listeningTracks.delete(id))return;
       void publishListening(id,null);
     });
+    socket.on("social-emote",async payload=>{
+      const sender=socket.data.account,peerId=String(payload?.accountId||""),kind=String(payload?.kind||"");
+      const emotes={dance:"💃🐒",banana:"🍌🐒",laugh:"😂🐒",heart:"💖🐒"};
+      if(!sender?.id||!UUID.test(peerId)||peerId===sender.id||!emotes[kind])return socket.emit("social-emote-error",{message:"Escolha um amigo e um wink válido."});
+      const now=Date.now(),last=emoteTimes.get(socket.id)||0;if(now-last<3000)return socket.emit("social-emote-error",{message:"Aguarde um instante antes de enviar outro wink."});
+      try{
+        const [a,b]=[sender.id,peerId].sort(),friend=await pool.query("SELECT 1 FROM junto_friendships WHERE user_a=$1 AND user_b=$2",[a,b]);
+        if(!friend.rowCount)return socket.emit("social-emote-error",{message:"Winks só podem ser enviados entre amigos."});
+        emoteTimes.set(socket.id,now);let delivered=false;
+        for(const peer of io.sockets.sockets.values())if(peer.data.account?.id===peerId){peer.emit("social-emote-received",{from:sender.nickname||"Um amigo",emote:emotes[kind]});delivered=true;}
+        socket.emit("social-emote-sent",{delivered});
+      }catch(_){socket.emit("social-emote-error",{message:"Não foi possível enviar o wink."});}
+    });
     socket.on("social-wink",async payload=>{
       const sender=await accounts.accountFromRequest(socket.request).catch(()=>null);
       const peerId=String(payload?.accountId||"");
@@ -183,7 +196,7 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
       }catch(e){socket.emit("social-wink-error",{message:"Não foi possível chamar atenção agora."});}
     });
     socket.on("disconnect",()=>{
-      winkTimes.delete(socket.id);
+      winkTimes.delete(socket.id);emoteTimes.delete(socket.id);
       if(accountId){const sockets=onlineAccounts.get(accountId);sockets?.delete(socket.id);if(sockets&&!sockets.size){onlineAccounts.delete(accountId);if(listeningTracks.delete(accountId))void publishListening(accountId,null);void publishPresence(accountId,false);}}
     });
   });
