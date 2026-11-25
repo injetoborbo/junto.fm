@@ -52,6 +52,15 @@ test('creator appears only for signed-in accounts without a completed avatar and
 });
 test('avatar studio renders a cinematic 3D lineup, held identity placard and height chart',()=>{
  assert.match(wardrobe,/function createAvatarLineup\(/);
+ assert.match(wardrobe,/function createBoothIdleAnimation\(monkey\)/);
+ assert.match(wardrobe,/standing-w-briefcase-idle\.json\.gz\.b64/);
+ assert.match(wardrobe,/restPose=/);
+ assert.match(wardrobe,/track\.rest\)\.multiply\(track\.delta\)/);
+ assert.match(wardrobe,/const leftHand=getAnimatedBone\(normalized,"LeftHand"\)/);
+ assert.match(wardrobe,/const rightHand=getAnimatedBone\(normalized,"RightHand"\)/);
+ assert.match(wardrobe,/plaque\.position\.copy\(midLocal\)/);
+ assert.match(wardrobe,/lineup\?\.update\(\)/);
+ assert.match(wardrobe,/boothIdle\?\.dispose\(\)/);
  assert.match(wardrobe,/new THREE\.CanvasTexture\(wallCanvas\)/);
  assert.match(wardrobe,/JUNTO \/ PERSONNEL/);
  assert.match(wardrobe,/REGISTRO DE PERSONAGEM/);
