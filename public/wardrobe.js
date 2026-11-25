@@ -205,6 +205,9 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   const monkeyBindWorld=monkey.matrixWorld.clone();
   const rootBindWorld=root.matrixWorld.clone();
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
+  const notifyDevkitTarget=part=>{
+    if(typeof window!=="undefined")window.dispatchEvent(new CustomEvent("jf-avatar-devkit-target-added",{detail:{name:part?.name||""}}));
+  };
   const findBone=(model,part)=>getAnimatedBone(model,part)||getBone(model,part);
   const headBone=findBone(monkey,"Head");
   const topBone=findBone(monkey,"HeadTop_End");
@@ -354,6 +357,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
         part.scale.multiplyScalar(tune.scale);
       }
       monkey.add(part);
+      notifyDevkitTarget(part);
       if(animated){
         if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{},seatedOffset||{});
         // Os óculos clássicos usam um encaixe próprio calibrado para a pose
@@ -418,6 +422,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       part.name="jfWardrobe_"+file;
       const measure=getBounds(part);
       state.add(part);
+      notifyDevkitTarget(part);
       // A peça fica no espaço do osso; ao editar, recalculamos o encaixe
       // sem recriar o renderer ou fazer um novo download do GLB.
       if(animated)attachAtBind(part,bone,rootBindWorld,{},seatedOffset);
