@@ -85,7 +85,7 @@
     }
   }
   async function check(){
-    if(checking||active||finished||document.body.classList.contains("jf-in-room")&&location.pathname!=="/")return;
+    if(checking||active||finished)return;
     checking=true;
     try{
       const response=await fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"});
