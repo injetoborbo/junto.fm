@@ -30,6 +30,7 @@
     [...select.options].forEach(option=>{
       const card=document.createElement("button");card.type="button";card.className="jf-avatar-choice";
       card.dataset.value=option.value;card.setAttribute("aria-pressed",String(option.value===select.value));
+      if(option.value===select.value)card.classList.add("selected");
       const icon=document.createElement("span");icon.className="jf-avatar-choice-icon";icon.textContent=meta[key].icons[option.value]||"✦";
       const text=document.createElement("span");text.className="jf-avatar-choice-label";text.textContent=option.textContent.trim();
       card.append(icon,text);card.addEventListener("click",()=>{
@@ -55,13 +56,14 @@
   }
   function buildAppearancePanel(fields){
     const selects={};
+    const nativeControls=document.createElement("div");nativeControls.className="jf-avatar-native-controls";
     for(const key of keys){
       const select=$("jfWardrobe"+key[0].toUpperCase()+key.slice(1));
       if(!select)continue;
       selects[key]=select;
-      const label=select.closest("label");if(label)label.classList.add("jf-avatar-native-control");
+      const label=select.closest("label");
+      if(label){label.classList.add("jf-avatar-native-control");nativeControls.append(label);}
     }
-    fields.querySelector(".jf-pet-wardrobe-slot")?.setAttribute("hidden","");
     const header=document.createElement("div");header.className="jf-avatar-controls-heading";
     header.innerHTML='<span>PERSONALIZAÇÃO</span><h2>Seu personagem</h2><p>Escolha os detalhes. O macaco muda na hora.</p>';
     const tabs=document.createElement("div");tabs.className="jf-avatar-category-tabs";tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","Categorias do personagem");
@@ -93,7 +95,7 @@
       statusNode.textContent="Novo visual sorteado. Gostou? Pode confirmar ou continuar editando.";
     });
     const rotate=document.createElement("span");rotate.className="jf-avatar-rotate-hint";rotate.textContent="↔ Arraste o macaco para girar";
-    tools.append(random,rotate);fields.replaceChildren(header,tabs,panels,tools);
+    tools.append(random,rotate);fields.replaceChildren(header,tabs,panels,tools,nativeControls);
     activateCategory("outfit");
   }
   function prepare(profile){
