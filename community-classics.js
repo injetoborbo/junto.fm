@@ -109,8 +109,24 @@ function setupCommunityClassics(app,io,accounts){
     await pool.query("DELETE FROM junto_community_members WHERE community_id=$1 AND account_id=$2 AND NOT EXISTS(SELECT 1 FROM junto_communities WHERE id=$1 AND owner_id=$2)",[req.params.id,viewer.id]);res.json({ok:true});
   }));
   app.get("/comunidades",(_req,res)=>res.set("Cache-Control","no-cache").sendFile(path.join(__dirname,"public","communities.html")));
+  const onlineAccounts=new Map();
+  async function publishPresence(accountId,online){
+    try{
+      const friends=await accounts.friends(accountId),friendIds=new Set(friends.map(f=>f.id));
+      const account=online?[...io.sockets.sockets.values()].find(s=>s.data.account?.id===accountId)?.data.account:null;
+      for(const peer of io.sockets.sockets.values())if(peer.data.account?.id&&friendIds.has(peer.data.account.id))
+        peer.emit("social-presence-update",{accountId,online,status:account?.motto||""});
+    }catch(_){}
+  }
   const winkTimes=new Map();
   io.on("connection",socket=>{
+    const accountId=socket.data.account?.id;
+    if(accountId){
+      if(!onlineAccounts.has(accountId))onlineAccounts.set(accountId,new Set());
+      const sockets=onlineAccounts.get(accountId),first=sockets.size===0;sockets.add(socket.id);
+      socket.emit("social-presence-state",{online:[...onlineAccounts.keys()]});
+      if(first)void publishPresence(accountId,true);
+    }
     socket.on("social-wink",async payload=>{
       const sender=await accounts.accountFromRequest(socket.request).catch(()=>null);
       const peerId=String(payload?.accountId||"");
@@ -127,7 +143,10 @@ function setupCommunityClassics(app,io,accounts){
         socket.emit("social-wink-sent",{delivered});
       }catch(e){socket.emit("social-wink-error",{message:"Não foi possível chamar atenção agora."});}
     });
-    socket.on("disconnect",()=>winkTimes.delete(socket.id));
+    socket.on("disconnect",()=>{
+      winkTimes.delete(socket.id);
+      if(accountId){const sockets=onlineAccounts.get(accountId);sockets?.delete(socket.id);if(sockets&&!sockets.size){onlineAccounts.delete(accountId);void publishPresence(accountId,false);}}
+    });
   });
   return {ready};
 }
