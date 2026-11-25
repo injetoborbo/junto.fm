@@ -1144,6 +1144,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
         nodes.push({id:node.uuid,label:label||node.name||node.type,group,node});
       };
       add(normalized,"Avatar inteiro / escala","Avatar");
+      add(monkey,"Macaco / modelo 3D","Avatar");
       monkey.traverse(node=>{
         if(node.isBone)add(node,"Osso · "+(node.name||"Bone"),"Esqueleto");
         if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)))
