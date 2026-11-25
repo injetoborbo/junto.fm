@@ -141,9 +141,18 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
     }catch(_){}
   }
   const winkTimes=new Map(),emoteTimes=new Map();
+  async function currentSocialAccount(socket){
+    const account=await accounts.accountFromRequest(socket.request).catch(()=>null);
+    return account?.id&&account.id===socket.data.account?.id?account:null;
+  }
   async function sendPresenceState(socket){
-    const id=socket.data.account?.id;
-    if(!id){socket.emit("social-presence-state",{online:[],listening:[]});return;}
+    const account=await currentSocialAccount(socket),id=account?.id;
+    if(!id){
+      const staleId=socket.data.account?.id,sockets=staleId&&onlineAccounts.get(staleId);
+      sockets?.delete(socket.id);
+      if(sockets&&!sockets.size){onlineAccounts.delete(staleId);if(listeningTracks.delete(staleId))void publishListening(staleId,null);void publishPresence(staleId,false);}
+      socket.emit("social-presence-state",{online:[],listening:[]});return;
+    }
     try{
       const friends=await accounts.friends(id),friendIds=new Set(friends.map(friend=>friend.id));
       const online=[...onlineAccounts.keys()].filter(friendId=>friendIds.has(friendId));
@@ -160,8 +169,8 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
       if(first)void publishPresence(accountId,true);
     }
     socket.on("social-presence-sync",()=>void sendPresenceState(socket));
-    socket.on("track-update",payload=>{
-      const id=socket.data.account?.id,room=socket.data.room,track=payload?.track;
+    socket.on("track-update",async payload=>{
+      const account=await currentSocialAccount(socket),id=account?.id,room=socket.data.room,track=payload?.track;
       if(!id||!room||payload?.room!==room||!track||typeof track.name!=="string"||typeof track.artists!=="string")return;
       if(roomTransmitters&&roomTransmitters.get(room)?.id!==socket.id)return;
       const next={name:track.name.slice(0,200),artists:track.artists.slice(0,300),id:String(track.id||"").slice(0,22)};
@@ -170,14 +179,14 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
       listeningTracks.set(id,next);
       void publishListening(id,next);
     });
-    socket.on("track-clear",()=>{
-      const id=socket.data.account?.id,room=socket.data.room;
+    socket.on("track-clear",async()=>{
+      const account=await currentSocialAccount(socket),id=account?.id,room=socket.data.room;
       if(!id||!room||(roomTransmitters&&roomTransmitters.get(room)?.id!==socket.id))return;
       if(!listeningTracks.delete(id))return;
       void publishListening(id,null);
     });
     socket.on("social-emote",async payload=>{
-      const sender=socket.data.account,peerId=String(payload?.accountId||""),kind=String(payload?.kind||"");
+      const sender=await currentSocialAccount(socket),peerId=String(payload?.accountId||""),kind=String(payload?.kind||"");
       const emotes={dance:"💃🐒",banana:"🍌🐒",laugh:"😂🐒",heart:"💖🐒"};
       if(!sender?.id||!UUID.test(peerId)||peerId===sender.id||!emotes[kind])return socket.emit("social-emote-error",{message:"Escolha um amigo e um wink válido."});
       const now=Date.now(),last=emoteTimes.get(socket.id)||0;if(now-last<3000)return socket.emit("social-emote-error",{message:"Aguarde um instante antes de enviar outro wink."});
