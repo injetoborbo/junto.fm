@@ -205,6 +205,9 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
   const monkeyBindWorld=monkey.matrixWorld.clone();
   const rootBindWorld=root.matrixWorld.clone();
   const state=new THREE.Group();state.name="jfWardrobeParts";state.userData.active=true;root.add(state);
+  const notifyDevkitTarget=part=>{
+    if(typeof window!=="undefined")window.dispatchEvent(new CustomEvent("jf-avatar-devkit-target-added",{detail:{name:part?.name||""}}));
+  };
   const findBone=(model,part)=>getAnimatedBone(model,part)||getBone(model,part);
   const headBone=findBone(monkey,"Head");
   const topBone=findBone(monkey,"HeadTop_End");
@@ -354,6 +357,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
         part.scale.multiplyScalar(tune.scale);
       }
       monkey.add(part);
+      notifyDevkitTarget(part);
       if(animated){
         if(animatedAnchor)attachAtBind(part,animatedAnchor,monkeyBindWorld,animatedOffset||{},seatedOffset||{});
         // Os óculos clássicos usam um encaixe próprio calibrado para a pose
@@ -418,6 +422,7 @@ function dress(root,selection,render,monkey,{animated=false,privateFit=false,pre
       part.name="jfWardrobe_"+file;
       const measure=getBounds(part);
       state.add(part);
+      notifyDevkitTarget(part);
       // A peça fica no espaço do osso; ao editar, recalculamos o encaixe
       // sem recriar o renderer ou fazer um novo download do GLB.
       if(animated)attachAtBind(part,bone,rootBindWorld,{},seatedOffset);
@@ -1145,10 +1150,13 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
       };
       add(normalized,"Avatar inteiro / escala","Avatar");
       add(monkey,"Macaco / modelo 3D","Avatar");
-      monkey.traverse(node=>{
+      // As peças do guarda-roupa não ficam todas dentro de monkey:
+      // os GLBs novos são filhos de normalized/jfWardrobeParts (ou do osso),
+      // então percorrer somente monkey fazia roupas desaparecerem do seletor.
+      normalized.traverse(node=>{
         if(node.isBone)add(node,"Osso · "+(node.name||"Bone"),"Esqueleto");
-        if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)))
-          add(node,node.name,"Roupas e acessórios");
+        if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)||/^jfMiniHat_/.test(node.name)))
+          add(node,node.name.replace(/^jfWardrobe_|^jfMiniHat_|^jfMini_/,""),"Roupas e acessórios");
       });
       const lab=normalized.userData.jfAvatarLabParts||{};
       add(lab.plate,"Placa de identificação","Placa e mãos");

@@ -199,7 +199,7 @@
     const resetTransform=document.createElement("button");resetTransform.type="button";resetTransform.textContent="Restaurar original";
     editActions.append(applyTransform,resetTransform);
     const actions=document.createElement("div");actions.className="jf-avatar-devkit-actions";
-    const refresh=document.createElement("button");refresh.type="button";refresh.textContent="Atualizar JSON";
+    const refresh=document.createElement("button");refresh.type="button";refresh.textContent="Atualizar peças / JSON";
     const copy=document.createElement("button");copy.type="button";copy.textContent="Copiar posições";
     const copyPlate=document.createElement("button");copyPlate.type="button";copyPlate.textContent="Copiar placa + mãos";
     const output=document.createElement("textarea");output.readOnly=true;output.rows=6;output.spellcheck=false;
@@ -216,8 +216,11 @@
     };
     const refreshTargets=()=>{
       const api=window.jfAvatarLabDevkit;
-      if(!api?.getTargets){status.textContent="3D carregando… atualize em alguns segundos.";return false;}
+      if(!api?.getTargets){status.textContent="3D carregando… aguarde os modelos e tente novamente.";return false;}
       const previous=targetSelect.value,targets=api.getTargets();
+      const existing=[...targetSelect.options].map(option=>option.value);
+      const incoming=targets.map(target=>target.id);
+      if(existing.length===incoming.length&&existing.every((id,index)=>id===incoming[index]))return targets.length>0;
       targetSelect.replaceChildren();
       targets.forEach(target=>{
         const option=document.createElement("option");option.value=target.id;option.textContent=target.group+" · "+target.label;targetSelect.append(option);
@@ -225,6 +228,10 @@
       if(targets.some(target=>target.id===previous))targetSelect.value=previous;
       fillTransform();return targets.length>0;
     };
+    const onDevkitTargetAdded=()=>{
+      if(!panel.hidden&&refreshTargets())status.textContent="Roupa/acessório carregado e disponível no seletor.";
+    };
+    window.addEventListener("jf-avatar-devkit-target-added",onDevkitTargetAdded);
     targetSelect.addEventListener("change",fillTransform);
     applyTransform.addEventListener("click",()=>{
       const api=window.jfAvatarLabDevkit,id=targetSelect.value;
@@ -275,7 +282,7 @@
       void copyText(JSON.stringify({captured_at:data.captured_at,units:data.units,
         plate:data.identification_plate,hands:data.hands},null,2));
     });
-    if(originals){originals.devkitLaunch=launch;originals.devkitPanel=panel;}
+    if(originals){originals.devkitLaunch=launch;originals.devkitPanel=panel;originals.devkitTargetListener=onDevkitTargetAdded;}
   }
   function prepare(profile,force=false){
     if(!modal||!dialog||!save||active||finished&&!force)return;
@@ -347,7 +354,7 @@
     stage?.querySelector(".jf-avatar-stage-bottomline")?.remove();
     if(preview){delete preview.dataset.avatarStudio;delete preview.dataset.avatarPlateName;delete preview.dataset.avatarPlateHandle;}
     status?.classList.remove("jf-avatar-stage-status");
-    devkitLaunch?.remove();devkitPanel?.remove();originals?.previewClose?.remove();save.hidden=false;devkitPreviewMode=false;
+    devkitLaunch?.remove();devkitPanel?.remove();if(originals?.devkitTargetListener)window.removeEventListener("jf-avatar-devkit-target-added",originals.devkitTargetListener);originals?.previewClose?.remove();save.hidden=false;devkitPreviewMode=false;
     if(oldHead)oldHead.hidden=false;
     if(oldDescription)oldDescription.hidden=false;
     if(close)close.hidden=false;
