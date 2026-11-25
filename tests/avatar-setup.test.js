@@ -57,6 +57,9 @@ test('avatar studio renders a cinematic 3D lineup, held identity placard and hei
  assert.match(wardrobe,/photoBooth:preview\.dataset\.avatarStudio==="true"/);
  assert.match(client,/jf-avatar-choice-grid/);
  assert.match(client,/nativeControls\.append\(label\)/);
+ assert.match(client,/function restoreWardrobeDialog\(/);
+ assert.match(client,/fields\.replaceChildren\(\.\.\.fieldChildren\)/);
+ assert.match(client,/originalSaveRow\.append\(save\)/);
  assert.match(css,/jf-avatar-studio-header/);
  assert.match(css,/jf-avatar-stage-topline/);
  assert.match(css,/jf-avatar-choice-grid/);
