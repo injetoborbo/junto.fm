@@ -856,14 +856,17 @@ function createAvatarLineup(scene,normalized,target){
     // Centro da placa exatamente entre as mãos. A face fica ligeiramente
     // atrás dos pulsos (câmera em +Z), para as mãos aparecerem sobre as
     // bordas e parecerem apoiar/segurar a identificação, não uma placa flutuante.
-    plaque.position.y+=.015;
-    plaque.position.z-=.035;
+    plaque.position.y+=.06;
+    // O personagem olha para +Z: trazer a placa para a frente do peito.
+    // Antes o Z negativo deixava a placa atrás do tronco.
+    plaque.position.z+=.22;
     // O rig pode inverter a ordem espacial dos pulsos; manter o texto legível.
     let handAngle=Math.atan2(rightLocal.y-leftLocal.y,rightLocal.x-leftLocal.x);
     if(Math.abs(handAngle)>Math.PI/2)handAngle+=handAngle>0?-Math.PI:Math.PI;
     plaque.rotation.set(-.035,0,handAngle);
     const span=leftLocal.distanceTo(rightLocal);
-    const width=THREE.MathUtils.clamp(span*.94,.48,.68);
+    // A placa é menor que a original, mas chega às mãos para parecer segurada.
+    const width=THREE.MathUtils.clamp(span*.98,.62,.82);
     plaque.scale.set(width/plaqueBaseWidth,.92,1);
   };
   update();
