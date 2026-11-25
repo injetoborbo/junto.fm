@@ -21,6 +21,7 @@ module.exports=function setupAccounts(app){
       avatar TEXT NOT NULL DEFAULT '',
       motto VARCHAR(90) NOT NULL DEFAULT '',
       wardrobe JSONB NOT NULL DEFAULT '{}'::jsonb,
+      avatar_setup_completed_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE TABLE IF NOT EXISTS junto_sessions (
@@ -49,6 +50,7 @@ module.exports=function setupAccounts(app){
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT TRUE;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_hash TEXT;
     ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS email_verify_expires TIMESTAMPTZ;
+    ALTER TABLE junto_accounts ADD COLUMN IF NOT EXISTS avatar_setup_completed_at TIMESTAMPTZ;
     UPDATE junto_accounts SET username='macaco_' || left(replace(id::text,'-',''),12) WHERE username IS NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_username_unique ON junto_accounts (lower(username)) WHERE username IS NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS junto_accounts_email_unique ON junto_accounts (lower(email)) WHERE email IS NOT NULL;
@@ -160,12 +162,12 @@ module.exports=function setupAccounts(app){
     if(!await ready)return null;
     const token=cookie(req,"junto_account");
     if(!/^[a-f0-9]{64}$/.test(token))return null;
-    const result=await pool.query(`SELECT a.id,a.nickname,a.username,a.avatar,a.motto,a.wardrobe
+    const result=await pool.query(`SELECT a.id,a.nickname,a.username,a.avatar,a.motto,a.wardrobe,a.avatar_setup_completed_at
       FROM junto_sessions s JOIN junto_accounts a ON a.id=s.account_id
       WHERE s.token_hash=$1 AND s.expires_at>NOW()`,[hash(token)]);
     return result.rows[0]||null;
   }
-  const safeAccount=a=>({id:a.id,name:a.nickname,username:a.username,avatar:a.avatar,motto:a.motto,wardrobe:a.wardrobe});
+  const safeAccount=a=>({id:a.id,name:a.nickname,username:a.username,avatar:a.avatar,motto:a.motto,wardrobe:a.wardrobe,avatarSetupCompleted:Boolean(a.avatar_setup_completed_at)});
   app.get("/api/account/status",async(req,res)=>{
     try{
       const account=await accountFromRequest(req);
@@ -236,6 +238,21 @@ module.exports=function setupAccounts(app){
         [input.name,input.avatar,input.motto,JSON.stringify(input.wardrobe),account.id]);
       res.json({ok:true,profile:safeAccount(r.rows[0])});
     }catch(error){res.status(503).json({error:"Não foi possível salvar seu perfil."});}
+  });
+  app.post("/api/avatar/setup",async(req,res)=>{
+    res.set("Cache-Control","no-store");
+    try{
+      if(!sameOrigin(req))return res.status(403).json({error:"Origem da requisição inválida."});
+      const account=await accountFromRequest(req);
+      if(!account)return res.status(401).json({error:"Entre na sua conta para criar seu macaco."});
+      const input=cleanProfile({wardrobe:req.body?.wardrobe});
+      const result=await pool.query("UPDATE junto_accounts SET wardrobe=$1,avatar_setup_completed_at=COALESCE(avatar_setup_completed_at,NOW()) WHERE id=$2 RETURNING *",[JSON.stringify(input.wardrobe),account.id]);
+      if(!result.rowCount)return res.status(404).json({error:"Conta não encontrada."});
+      return res.json({ok:true,profile:safeAccount(result.rows[0])});
+    }catch(error){
+      console.error("Criação do avatar:",error.message);
+      return res.status(503).json({error:"Não foi possível salvar seu macaco. Tente novamente."});
+    }
   });
   app.post("/api/account/username",async(req,res)=>{
     try{
