@@ -832,7 +832,7 @@ function createAvatarLineup(scene,normalized,target){
   pctx.fillStyle="#ffffff";pctx.font="bold 55px Arial";pctx.fillText(name,384,151);
   pctx.fillStyle="#c5d4df";pctx.font="bold 25px Arial";pctx.fillText(handle,384,207);
   const plateTexture=new THREE.CanvasTexture(plateCanvas);plateTexture.colorSpace=THREE.SRGBColorSpace;
-  const plaque=new THREE.Group();plaque.position.set(0,-.48,.34);plaque.rotation.x=-.035;normalized.add(plaque);
+  const plaque=new THREE.Group();plaque.position.set(0,-.30,.34);plaque.rotation.x=-.035;plaque.scale.setScalar(.92);normalized.add(plaque);
   const board=new THREE.Mesh(new THREE.BoxGeometry(.86,.34,.055),darkMetal);plaque.add(board);
   const faceMat=new THREE.MeshBasicMaterial({map:plateTexture});
   const face=new THREE.Mesh(new THREE.PlaneGeometry(.83,.31),faceMat);
@@ -843,7 +843,7 @@ function createAvatarLineup(scene,normalized,target){
     plaque.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
     normalized.remove(plaque);
     wallTexture.dispose();plateTexture.dispose();faceMat.dispose();
-    wall.material.dispose();floorMat.dispose();trimMat.dispose();darkMetal.dispose();handleMat.dispose();
+    wall.material.dispose();floorMat.dispose();trimMat.dispose();darkMetal.dispose();
     softLight.target.removeFromParent();scene.remove(softLight,rim,fill);group.removeFromParent();
   }};
 }
@@ -1017,10 +1017,11 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
       });
     });
   }
-  const camera=new THREE.PerspectiveCamera(photoBooth?29:33,width/height,.01,100);
-  camera.position.set(0,photoBooth ? .035 : .04,playerSitting?3.25:photoBooth?3.72:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.035 : .035,0);
+  const camera=new THREE.PerspectiveCamera(photoBooth?36:33,width/height,.01,100);
+  camera.position.set(0,photoBooth ? .02 : .04,playerSitting?3.25:photoBooth?5.15:preview?4.25:4.0);camera.lookAt(0,photoBooth ? -.02 : .035,0);
   normalized.rotation.y=preview?previewYaw:-.18;
   const lineup=photoBooth?createAvatarLineup(scene,normalized,target):null;
+  const boothIdle=photoBooth?createBoothIdleAnimation(monkey):null;
   renderer.render(scene,camera);
   // A câmera precisa existir antes que dress() possa solicitar um render.
   if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey,{
