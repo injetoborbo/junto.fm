@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const $=id=>document.getElementById(id);
-  let active=false,checking=false,finished=false,category="outfit",originals=null;
+  let active=false,checking=false,finished=false,category="outfit",originals=null,currentProfile=null;
   const keys=["hat","glasses","headphones","outfit"];
   const defaults={hat:"nenhum",glasses:"nenhum",headphones:"nenhum",outfit:"padrao"};
   const meta={
@@ -16,6 +16,16 @@
   };
   const modal=$("jfWardrobeModal"),dialog=modal?.querySelector(".jf-wardrobe-modal");
   const save=$("jfSaveWardrobe"),close=$("jfCloseWardrobe"),open=$("jfOpenWardrobe");
+  const reopenButton=document.createElement("button");
+  reopenButton.type="button";reopenButton.id="jfAvatarStudioReopen";reopenButton.className="btn secondary jf-avatar-studio-reopen";
+  reopenButton.textContent="✦ Abrir estúdio de personagem";reopenButton.hidden=true;
+  const wardrobeDescription=dialog?.querySelector(":scope > p.small");
+  wardrobeDescription?.after(reopenButton);
+  reopenButton.addEventListener("click",()=>{
+    if(!currentProfile||active)return;
+    finished=false;
+    prepare(currentProfile,true);
+  });
   const statusNode=document.createElement("p");
   statusNode.className="jf-avatar-setup-status";statusNode.setAttribute("role","status");statusNode.setAttribute("aria-live","polite");
   statusNode.textContent="Suas escolhas aparecem no personagem em tempo real.";
@@ -98,8 +108,8 @@
     tools.append(random,rotate);fields.replaceChildren(header,tabs,panels,tools,nativeControls);
     activateCategory("outfit");
   }
-  function prepare(profile){
-    if(!modal||!dialog||!save||active||finished)return;
+  function prepare(profile,force=false){
+    if(!modal||!dialog||!save||active||finished&&!force)return;
     active=true;
     modal.classList.add("jf-avatar-setup");
     document.body.classList.add("jf-avatar-setup-active");
@@ -202,6 +212,8 @@
       const response=await fetch("/api/account/status",{credentials:"same-origin",cache:"no-store"});
       if(!response.ok)return;
       const data=await response.json();
+      currentProfile=data.loggedIn?data.profile:null;
+      reopenButton.hidden=!currentProfile;
       if(data.loggedIn&&data.profile&&!data.profile.avatarSetupCompleted)prepare(data.profile);
       else if(data.profile?.avatarSetupCompleted)finished=true;
     }catch(_){}
