@@ -47,7 +47,7 @@ test("public profiles expose only social fields and existing achievement badges"
   assert.match(accounts,/a\.username,a\.motto,a\.avatar/);
 });
 
-test("messenger renders user content as text and refreshes its conversation state",()=>{
+test("chat renders user content as text and refreshes its conversation state",()=>{
   const source=read("public/community-social.js");
   assert.match(source,/bubble\.textContent=message\.body/);
   assert.match(source,/socket\.emit\("dm-send"/);
@@ -59,7 +59,7 @@ test("messenger renders user content as text and refreshes its conversation stat
   assert.match(source,/renderPublicProfilePage/);
 });
 
-test("messenger has a compact mobile layout",()=>{
+test("chat has a compact mobile layout",()=>{
   const css=read("public/community-social.css");
   assert.match(css,/@media\(max-width:620px\)/);
   assert.match(css,/grid-template-columns:112px/);
@@ -69,7 +69,7 @@ test("messenger has a compact mobile layout",()=>{
 test("users can update their own public @ and the UI exposes a separate editor",()=>{
   const accounts=read("account-auth.js");
   const html=read("public/index.html");
-  const messenger=read("public/community-social.js");
+  const chat=read("public/community-social.js");
   assert.ok(accounts.includes('app.post("/api/account/username"'));
   assert.ok(accounts.includes('UPDATE junto_accounts SET username=$1 WHERE id=$2 RETURNING *'));
   assert.ok(accounts.includes('error.code==="23505"'));
@@ -77,7 +77,7 @@ test("users can update their own public @ and the UI exposes a separate editor",
   assert.ok(html.includes('id="jfUsernameEditor"'));
   assert.ok(html.includes('id="jfSaveUsername"'));
   assert.ok(html.includes('fetch("/api/account/username"'));
-  assert.ok(messenger.includes('jf-account-username-updated'));
+  assert.ok(chat.includes('jf-account-username-updated'));
 });
 
 test("Google-created 23-character usernames can open public profile pages",async()=>{
