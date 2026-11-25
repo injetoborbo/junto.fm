@@ -8,17 +8,34 @@ async function api(url,method='GET',body){const r=await fetch(url,{method,creden
 function run(fn){return async(...args)=>{try{await fn(...args);}catch(e){status(e.message);}};}
 function button(text,fn){const b=document.createElement('button');b.textContent=text;b.onclick=run(fn);return b;}
 function card(name,subtitle,action){const el=document.createElement('div');el.className='invite-card';const text=document.createElement('div');text.textContent=name;const small=document.createElement('small');small.textContent=subtitle;text.append(small);el.append(text,action);return el;}
-async function load(){data=await api('/api/quartos');$('invitations').replaceChildren();for(const i of data.invites)$('invitations').append(card(i.name,'de '+i.owner_name,button('Entrar',()=>enter(i.owner_id))));if(!data.invites.length)$('invitations').textContent='Ainda sem convites. Peça a um amigo para te convidar!';$('create').textContent=data.own?'Entrar no meu quarto →':'Criar meu quarto →';status('');}
+const roomCategoryNames={conversa:'Conversa',musica:'Música',jogos:'Jogos',anime:'Animação e cultura pop',nostalgia:'Nostalgia',cafe:'Café',arte:'Arte e criação',chill:'Relaxar'};
+function renderPublicRooms(rooms=[]){
+ const list=$('publicRoomList');list.replaceChildren();
+ if(!rooms.length){const empty=document.createElement('p');empty.className='public-room-empty';empty.textContent='Ainda não há quartos públicos. Seja o primeiro a abrir o seu!';list.append(empty);return;}
+ for(const room of rooms){
+  const el=document.createElement('article');el.className='public-room-card';
+  const top=document.createElement('div');top.className='public-room-card-top';
+  const category=document.createElement('span');category.className='public-room-category';category.textContent=roomCategoryNames[room.category]||'Quarto da galera';
+  const open=document.createElement('span');open.className='public-room-open';open.textContent='● Aberto';
+  top.append(category,open);
+  const title=document.createElement('h3');title.textContent=room.name;
+  const owner=document.createElement('p');owner.className='public-room-owner';owner.textContent='de '+(room.owner_name||'um macaco');
+  const description=document.createElement('p');description.className='public-room-description';description.textContent=room.description||'Um cantinho aberto para receber a galera.';
+  const visit=button('Entrar no quarto ↗',()=>enter(room.owner_id));visit.className='public-room-visit';
+  el.append(top,title,owner,description,visit);list.append(el);
+ }
+}
+async function load(){data=await api('/api/quartos');renderPublicRooms(data.publicRooms||[]);$('invitations').replaceChildren();for(const i of data.invites)$('invitations').append(card(i.name,'de '+i.owner_name,button('Entrar',()=>enter(i.owner_id))));if(!data.invites.length)$('invitations').textContent='Ainda sem convites. Peça a um amigo para te convidar!';$('create').textContent=data.own?'Entrar no meu quarto →':'Criar meu quarto →';status('');}
 function emit(event,payload){return new Promise((resolve,reject)=>socket.timeout(10000).emit(event,payload,(e,r)=>e?reject(Error('Conexão interrompida. Tente novamente.')):r?.error?reject(Error(r.error)):resolve(r)));}
 async function enter(id){if(!socket.connected){socket.connect();await new Promise((resolve,reject)=>{const timer=setTimeout(()=>done(Error('Não foi possível conectar.')),10000);function done(e){clearTimeout(timer);socket.off('connect',ok);socket.off('connect_error',bad);e?reject(e):resolve();}const ok=()=>done(),bad=e=>done(e);socket.once('connect',ok);socket.once('connect_error',bad);});}
  const result=await emit('enter',{owner:id});current=result.room;own=result.own;editing=false;selected=null;draft=null;people=[];$('lobby').hidden=true;$('room').hidden=false;$('editor').hidden=true;$('guests').hidden=true;$('chatLog').replaceChildren();$('editBtn').hidden=!own;$('inviteBtn').hidden=!own;heading();history.replaceState(null,'','/quartos?room='+id);status('');draw();}
-function heading(){$('roomTitle').textContent=current.name;$('ownerLabel').textContent='QUARTO DE '+current.owner_name;$('count').textContent=people.length+' / 12 no quarto';}
+function heading(){$('roomTitle').textContent=current.name;$('ownerLabel').textContent=(current.visibility==='public'?'QUARTO PÚBLICO':'QUARTO DE '+current.owner_name)+' · '+(roomCategoryNames[current.category]||'QUARTO');$('count').textContent=people.length+' / 12 no quarto';}
 function lobby(){if(editing&&!confirm('Sair sem salvar a decoração?'))return;socket.emit('leave');current=null;editing=false;people=[];$('room').hidden=true;$('lobby').hidden=false;history.replaceState(null,'','/quartos');return load();}
-$('lobbyBtn').onclick=run(lobby);$('refresh').onclick=run(load);$('create').onclick=run(async()=>{const r=await api('/api/quartos','POST',{});await enter(r.owner_id);});
-$('editBtn').onclick=()=>{if(editing)return;draft=R.validate(structuredClone(current.layout),current.layout);editing=true;selected=null;$('editor').hidden=false;$('guests').hidden=true;$('name').value=current.name;$('wall').value=draft.wall;$('floor').value=draft.floor;$('tip').textContent='Selecione um objeto • Posicione no quarto ou sobre uma mesa • Gire pelo controle no próprio objeto';selection();draw();};
+$('lobbyBtn').onclick=run(lobby);$('refresh').onclick=run(load);$('refreshPublicRooms').onclick=run(load);$('create').onclick=run(async()=>{const r=await api('/api/quartos','POST',{});await enter(r.owner_id);});
+$('editBtn').onclick=()=>{if(editing)return;draft=R.validate(structuredClone(current.layout),current.layout);editing=true;selected=null;$('editor').hidden=false;$('guests').hidden=true;$('name').value=current.name;$('roomVisibility').value=current.visibility||'private';$('roomCategory').value=current.category||'conversa';$('roomDescription').value=current.description||'';$('wall').value=draft.wall;$('floor').value=draft.floor;$('tip').textContent='Selecione um objeto • Posicione no quarto ou sobre uma mesa • Gire pelo controle no próprio objeto';selection();draw();};
 function stopEdit(){editing=false;draft=null;selected=null;$('editor').hidden=true;$('tip').textContent='Clique no chão para andar • Converse com seus amigos';draw();}
 $('cancel').onclick=()=>{if(saving)return;stopEdit();status('Alterações descartadas.');};
-$('save').onclick=run(async()=>{if(saving)return;saving=true;$('save').disabled=true;try{draft=R.validate(draft,current?.layout);const r=await api('/api/quartos','PUT',{layout:draft,name:$('name').value,revision:current.revision});current={...current,...r};stopEdit();heading();status('Decoração salva!');}finally{saving=false;$('save').disabled=false;}});
+$('save').onclick=run(async()=>{if(saving)return;saving=true;$('save').disabled=true;try{draft=R.validate(draft,current?.layout);const r=await api('/api/quartos','PUT',{layout:draft,name:$('name').value,revision:current.revision,visibility:$('roomVisibility').value,category:$('roomCategory').value,description:$('roomDescription').value});current={...current,...r};stopEdit();heading();status('Decoração salva!');}finally{saving=false;$('save').disabled=false;}});
 for(const key of ['wall','floor'])$(key).oninput=()=>{if(editing){draft[key]=$(key).value;draw();}};
 function selection(){
  const t=selected&&R.itemType(selected.type);
