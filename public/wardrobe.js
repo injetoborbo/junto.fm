@@ -869,7 +869,7 @@ function createAvatarLineup(scene,normalized,target){
   pctx.fillStyle="#c5d4df";pctx.font="bold 25px Arial";pctx.fillText(handle,384,207);
   const plateTexture=new THREE.CanvasTexture(plateCanvas);plateTexture.colorSpace=THREE.SRGBColorSpace;
   const plaqueBaseWidth=.62;
-  const plaque=new THREE.Group();plaque.position.set(0,-.30,.34);plaque.rotation.x=-.035;normalized.add(plaque);
+  const plaque=new THREE.Group();plaque.name="jfAvatarIdentificationPlate";plaque.position.set(0,-.30,.34);plaque.rotation.x=-.035;normalized.add(plaque);
   // Plaquinha de identificação menor, leve e sem hastes.
   const board=new THREE.Mesh(new THREE.BoxGeometry(.62,.24,.035),darkMetal);plaque.add(board);
   const faceMat=new THREE.MeshBasicMaterial({map:plateTexture});
@@ -905,6 +905,7 @@ function createAvatarLineup(scene,normalized,target){
     const width=THREE.MathUtils.clamp(span*1.12,.50,.86);
     plaque.scale.set(width/plaqueBaseWidth,.92,1);
   };
+  normalized.userData.jfAvatarLabParts={plate:plaque,leftHand,rightHand};
   update();
   return {update,dispose:()=>{
     group.traverse(object=>{if(object.isMesh)object.geometry.dispose();});
@@ -1131,6 +1132,52 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   normalized.rotation.y=preview?previewYaw:-.18;
   const lineup=photoBooth?createAvatarLineup(scene,normalized,target):null;
   const boothIdle=photoBooth?createBoothIdleAnimation(monkey):null;
+  // Admin-only Avatar Lab DevKit: exports the live rig, plate, hands,
+  // attached clothing/accessories and camera transforms in meter units.
+  let devkitApi=null;
+  if(photoBooth){
+    devkitApi={
+      getSnapshot(){
+        normalized.updateMatrixWorld(true);monkey.updateMatrixWorld(true);
+        const vec=node=>{
+          if(!node)return null;
+          const world=node.getWorldPosition(new THREE.Vector3());
+          const euler=node.rotation;
+          return {
+            name:node.name||node.type,
+            local_position:node.position.toArray().map(v=>Number(v.toFixed(5))),
+            world_position:world.toArray().map(v=>Number(v.toFixed(5))),
+            local_rotation_rad:[euler.x,euler.y,euler.z].map(v=>Number(v.toFixed(5))),
+            local_scale:node.scale.toArray().map(v=>Number(v.toFixed(5)))
+          };
+        };
+        const bones=[];
+        monkey.traverse(node=>{if(node.isBone)bones.push(vec(node));});
+        const parts=[];
+        monkey.traverse(node=>{
+          if(node.name&&(/^jfWardrobe_/.test(node.name)||/^jfMini/.test(node.name)))parts.push(vec(node));
+        });
+        const lab=normalized.userData.jfAvatarLabParts||{};
+        return {
+          tool:"Junto.fm Avatar Lab DevKit",
+          version:1,
+          captured_at:new Date().toISOString(),
+          units:"meters (1 Three.js unit = 1 meter in Avatar Lab)",
+          avatar:{height_m:1.5,scale:scale,wardrobe_scale:wardrobeScale,selection:sanitize(wardrobe),
+            normalized_position:normalized.position.toArray().map(v=>Number(v.toFixed(5))),
+            normalized_rotation_y_rad:Number(normalized.rotation.y.toFixed(5))},
+          scene:{camera_position:camera.position.toArray().map(v=>Number(v.toFixed(5))),
+            camera_fov_deg:camera.fov,stage_floor_y:-.965,platform_top_y:-.875},
+          identification_plate:vec(lab.plate),
+          hands:{left:vec(lab.leftHand),right:vec(lab.rightHand),
+            distance_m:lab.leftHand&&lab.rightHand?Number(lab.leftHand.getWorldPosition(new THREE.Vector3()).distanceTo(lab.rightHand.getWorldPosition(new THREE.Vector3())).toFixed(5)):null},
+          accessories_and_clothing:parts,
+          bones
+        };
+      }
+    };
+    window.jfAvatarLabDevkit=devkitApi;
+  }
   renderer.render(scene,camera);
   // A câmera precisa existir antes que dress() possa solicitar um render.
   if(!playerSitting)disposeOutfit=dress(normalized,sanitize(wardrobe),renderOutfit,monkey,{
@@ -1189,6 +1236,7 @@ function makeScene(target,wardrobe,{preview=false,skin="default",playerSitting=f
   }
   return {dispose:()=>{
     active=false;
+    if(photoBooth&&window.jfAvatarLabDevkit===devkitApi)delete window.jfAvatarLabDevkit;
     if(boothFrame)cancelAnimationFrame(boothFrame);
     resizeObserver?.disconnect();
     boothIdle?.dispose();
