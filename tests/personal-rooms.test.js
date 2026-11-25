@@ -149,8 +149,8 @@ test('persisted rooms, owner-only changes, invitations, optimistic locking and r
 test('chair and dining chair share the calibrated default and legacy local presets migrate',()=>{
  const renderer=fs.readFileSync(require.resolve('../public/quartos-3d.js'),'utf8');
  const editor=fs.readFileSync(require.resolve('../public/quartos.js'),'utf8');
- assert.match(renderer,/chair:\\{file:"Kitchen\\/ap_dining_chair\\.glb",height:1\\.02,seatHeight:0\\.73\\}/);
- assert.match(editor,/chair:\\{seatHeight:\.73,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0\\}/);
- assert.match(editor,/SEAT_CALIBRATION_MIGRATION_KEY/);
- assert.match(editor,/Number\(values\[field\]\)===previousValue/);
+ assert.ok(renderer.includes('chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.73}'));
+ assert.ok(editor.includes('chair:{seatHeight:.73,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0}'));
+ assert.ok(editor.includes('SEAT_CALIBRATION_MIGRATION_KEY'));
+ assert.ok(editor.includes('Number(values[field])===previousValue'));
 });
