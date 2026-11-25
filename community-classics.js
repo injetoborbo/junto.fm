@@ -127,6 +127,7 @@ function setupCommunityClassics(app,io,accounts){
       socket.emit("social-presence-state",{online:[...onlineAccounts.keys()]});
       if(first)void publishPresence(accountId,true);
     }
+    socket.on("social-presence-sync",()=>socket.emit("social-presence-state",{online:[...onlineAccounts.keys()]}));
     socket.on("social-wink",async payload=>{
       const sender=await accounts.accountFromRequest(socket.request).catch(()=>null);
       const peerId=String(payload?.accountId||"");
