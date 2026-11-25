@@ -108,6 +108,66 @@
     tools.append(random,rotate);fields.replaceChildren(header,tabs,panels,tools,nativeControls);
     activateCategory("outfit");
   }
+  async function mountDevkit(stage){
+    if(!stage||stage.querySelector(".jf-avatar-devkit-launch"))return;
+    try{
+      const response=await fetch("/api/admin/status",{credentials:"same-origin",cache:"no-store"});
+      const access=response.ok?await response.json():{};
+      if(access.admin!==true||!active||!stage.isConnected)return;
+    }catch(_){return;}
+    const launch=document.createElement("button");
+    launch.type="button";launch.className="jf-avatar-devkit-launch";
+    launch.textContent="⚙ DevKit";launch.setAttribute("aria-expanded","false");
+    const panel=document.createElement("section");panel.className="jf-avatar-devkit-panel";panel.hidden=true;
+    panel.setAttribute("aria-label","DevKit de coordenadas do Avatar Lab");
+    const title=document.createElement("strong");title.textContent="DEVKIT · POSIÇÕES 3D";
+    const note=document.createElement("p");note.textContent="Snapshot do rig em tempo real. Coordenadas em metros; copie e envie aqui para eu ajustar com precisão.";
+    const actions=document.createElement("div");actions.className="jf-avatar-devkit-actions";
+    const refresh=document.createElement("button");refresh.type="button";refresh.textContent="Atualizar";
+    const copy=document.createElement("button");copy.type="button";copy.textContent="Copiar posições";
+    const copyPlate=document.createElement("button");copyPlate.type="button";copyPlate.textContent="Copiar placa + mãos";
+    const output=document.createElement("textarea");output.readOnly=true;output.rows=7;output.spellcheck=false;
+    output.setAttribute("aria-label","JSON de coordenadas atual");
+    const status=document.createElement("span");status.className="jf-avatar-devkit-status";status.setAttribute("role","status");
+    status.textContent="Abra o snapshot ou copie os dados.";
+    actions.append(refresh,copy,copyPlate);panel.append(title,note,actions,output,status);
+    stage.append(launch,panel);
+    const snapshot=()=>{
+      const api=window.jfAvatarLabDevkit;
+      if(!api?.getSnapshot){status.textContent="3D ainda carregando. Aguarde e atualize.";return null;}
+      try{
+        const data=api.getSnapshot();output.value=JSON.stringify(data,null,2);
+        status.textContent="Snapshot atualizado · "+new Date(data.captured_at).toLocaleTimeString();
+        return data;
+      }catch(error){status.textContent="Falha ao ler o rig: "+(error?.message||error);return null;}
+    };
+    const copyText=async(value)=>{
+      output.value=value;
+      output.focus();output.select();
+      try{
+        await navigator.clipboard.writeText(value);
+        status.textContent="Copiado! Cole o JSON aqui na conversa.";
+      }catch(_){
+        try{
+          const copied=document.execCommand("copy");
+          status.textContent=copied?"Copiado! Cole o JSON aqui na conversa.":"Texto selecionado — pressione Ctrl+C e envie aqui.";
+        }catch(__){status.textContent="Texto selecionado — pressione Ctrl+C e envie aqui.";}
+      }
+    };
+    launch.addEventListener("click",()=>{
+      panel.hidden=!panel.hidden;launch.setAttribute("aria-expanded",String(!panel.hidden));
+      launch.textContent=panel.hidden?"⚙ DevKit":"⚙ Fechar DevKit";
+      if(!panel.hidden)snapshot();
+    });
+    refresh.addEventListener("click",snapshot);
+    copy.addEventListener("click",()=>{const data=snapshot();if(data)void copyText(JSON.stringify(data,null,2));});
+    copyPlate.addEventListener("click",()=>{
+      const data=snapshot();if(!data)return;
+      void copyText(JSON.stringify({captured_at:data.captured_at,units:data.units,
+        plate:data.identification_plate,hands:data.hands},null,2));
+    });
+    if(originals){originals.devkitLaunch=launch;originals.devkitPanel=panel;}
+  }
   function prepare(profile,force=false){
     if(!modal||!dialog||!save||active||finished&&!force)return;
     active=true;
@@ -137,6 +197,7 @@
       bottom.innerHTML='<span>SEU AVATAR · SUA IDENTIDADE</span><span>↔ GIRE PARA CONFERIR</span>';
       stage.append(top,bottom);originals.stageTop=top;originals.stageBottom=bottom;
       status?.classList.add("jf-avatar-stage-status");
+      void mountDevkit(stage);
     }
     const heading=document.createElement("header");heading.className="jf-avatar-studio-header";
     const brand=document.createElement("div");brand.className="jf-avatar-studio-brand";
@@ -164,13 +225,14 @@
   }
   function restoreWardrobeDialog(){
     if(!originals)return;
-    const {oldHead,oldDescription,stage,preview,fields,fieldChildren,status,originalSaveRow,footer,heading}=originals;
+    const {oldHead,oldDescription,stage,preview,fields,fieldChildren,status,originalSaveRow,footer,heading,devkitLaunch,devkitPanel}=originals;
     if(fields)fields.replaceChildren(...fieldChildren);
     stage?.classList.remove("jf-avatar-studio-stage");
     stage?.querySelector(".jf-avatar-stage-topline")?.remove();
     stage?.querySelector(".jf-avatar-stage-bottomline")?.remove();
     if(preview){delete preview.dataset.avatarStudio;delete preview.dataset.avatarPlateName;delete preview.dataset.avatarPlateHandle;}
     status?.classList.remove("jf-avatar-stage-status");
+    devkitLaunch?.remove();devkitPanel?.remove();
     if(oldHead)oldHead.hidden=false;
     if(oldDescription)oldDescription.hidden=false;
     if(close)close.hidden=false;
