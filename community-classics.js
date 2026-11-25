@@ -80,7 +80,7 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
   app.post("/api/social-classics/testimonials/:username",wrap(async(req,res)=>{
     if(!safe(req,res))return;const viewer=await account(req);if(!viewer)return res.status(401).json({error:"Entre na conta para deixar um depoimento."});
     const target=await profile(req.params.username);if(!target)return res.status(404).json({error:"Perfil não encontrado."});if(viewer.id===target.id)return res.status(400).json({error:"Você não pode depor sobre si mesmo."});
-    const body=typeof req.body?.body==="string"?req.body.body.trim():"";if(!body||body.length>500)return res.status(400).json({error:"Depoimento de até 500 caracteres."});const now=Date.now(),last=actionTimes.get(viewer.id)||0;if(now-last<30000)return res.status(429).json({error:"Aguarde 30 segundos antes de enviar outro depoimento."});actionTimes.set(viewer.id,now);
+    const body=typeof req.body?.body==="string"?req.body.body.trim():"";if(!body||body.length>500)return res.status(400).json({error:"Depoimento de até 500 caracteres."});const now=Date.now(),last=actionTimes.get(viewer.id+":testimonial")||0;if(now-last<30000)return res.status(429).json({error:"Aguarde 30 segundos antes de enviar outro depoimento."});actionTimes.set(viewer.id+":testimonial",now);
     await pool.query("INSERT INTO junto_testimonials(profile_id,author_id,body) VALUES($1,$2,$3) ON CONFLICT DO NOTHING",[target.id,viewer.id,body]);res.status(201).json({ok:true,message:"Depoimento enviado para aprovação."});
   }));
   app.post("/api/social-classics/testimonials/:id/respond",wrap(async(req,res)=>{
@@ -98,7 +98,7 @@ function setupCommunityClassics(app,io,accounts,roomTransmitters){
   app.post("/api/social-classics/communities",wrap(async(req,res)=>{
     if(!safe(req,res))return;const viewer=await account(req);if(!viewer)return res.status(401).json({error:"Entre na conta para criar uma comunidade."});
     const name=typeof req.body?.name==="string"?req.body.name.trim():"",description=typeof req.body?.description==="string"?req.body.description.trim():"";
-    if(name.length<3||name.length>60||description.length>280)return res.status(400).json({error:"Nome de 3 a 60 caracteres; descrição até 280."});const now=Date.now(),last=actionTimes.get(viewer.id)||0;if(now-last<60000)return res.status(429).json({error:"Aguarde um minuto antes de criar outra comunidade."});actionTimes.set(viewer.id,now);
+    if(name.length<3||name.length>60||description.length>280)return res.status(400).json({error:"Nome de 3 a 60 caracteres; descrição até 280."});const now=Date.now(),last=actionTimes.get(viewer.id+":community")||0;if(now-last<60000)return res.status(429).json({error:"Aguarde um minuto antes de criar outra comunidade."});actionTimes.set(viewer.id+":community",now);
     const slug=name.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
     if(!slug)return res.status(400).json({error:"Escolha outro nome."});
     const id=require("node:crypto").randomUUID();
