@@ -41,6 +41,7 @@
     }).catch(error=>{name.textContent="Perfil não encontrado";motto.textContent=error.message;meta.textContent="";badges.textContent="Confira o endereço e tente novamente.";});
   }
   const unread=new Map();
+  const onlineIds=new Set();
   function setStatus(message){$("jfMsnStatus").textContent=message||"";}
   function setOpen(open){panel.hidden=!open;$("jfMsnOpen").setAttribute("aria-expanded",String(open));if(open){$("jfFriendsDrawer")?.setAttribute("hidden","");socket.emit("dm-list");}}
   function time(value){const date=new Date(value);return Number.isNaN(date.getTime())?"":date.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});}
@@ -55,7 +56,7 @@
       if(person.avatar&&/^data:image\/(png|jpeg|webp);base64,/i.test(person.avatar)){const img=document.createElement("img");img.src=person.avatar;img.alt="";avatar.append(img);}else avatar.textContent=(person.name||"?").slice(0,1).toUpperCase();
       const details=document.createElement("span");details.className="jf-msn-contact-details";
       const name=document.createElement("b");name.textContent=person.name||"Macaco";
-      const last=document.createElement("small");last.textContent=person.last_message||"Clique para iniciar uma conversa";
+      const last=document.createElement("small");last.textContent=(onlineIds.has(person.id)?"● online":"○ offline")+(person.motto?" · "+person.motto:person.last_message?" · "+person.last_message:"");
       details.append(name,last);button.append(avatar,details);
       const count=unread.has(person.id)?unread.get(person.id):(person.unread||0);if(count){const badge=document.createElement("i");badge.className="jf-msn-contact-unread";badge.textContent=count>9?"9+":String(count);button.append(badge);}
       button.addEventListener("click",()=>openConversation(person));list.append(button);
@@ -93,6 +94,12 @@
     event.preventDefault();const input=$("jfMsnInput"),text=input.value.trim();
     if(!text||!active)return;
     socket.emit("dm-send",{accountId:active.id,text});input.value="";input.focus();
+  });
+  socket.on("social-presence-state",payload=>{
+    onlineIds.clear();for(const id of Array.isArray(payload?.online)?payload.online:[])onlineIds.add(id);renderContacts();
+  });
+  socket.on("social-presence-update",payload=>{
+    if(!payload?.accountId)return;if(payload.online)onlineIds.add(payload.accountId);else onlineIds.delete(payload.accountId);renderContacts();
   });
   socket.on("dm-conversations",payload=>{
     contacts=Array.isArray(payload?.conversations)?payload.conversations:[];
