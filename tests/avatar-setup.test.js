@@ -30,7 +30,7 @@ test('avatar setup endpoint is authenticated, same-origin and saves the official
 });
 test('avatar setup rejects anonymous and cross-origin requests before writing',async()=>{
  let handler,writes=0,authorized=false,origin=true;
- const context={app:{post:(_route,fn)=>handler=fn;},sameOrigin:()=>origin,accountFromRequest:async()=>authorized?({id:'account'}):null,cleanProfile,pool:{query:async()=>{writes++;return {rowCount:1,rows:[{}]};}},safeAccount:x=>x,console};
+ const context={app:{post:(_route,fn)=>(handler=fn)},sameOrigin:()=>origin,accountFromRequest:async()=>authorized?({id:'account'}):null,cleanProfile,pool:{query:async()=>{writes++;return {rowCount:1,rows:[{}]};}},safeAccount:x=>x,console};
  vm.runInNewContext(account.slice(account.indexOf('  app.post("/api/avatar/setup"'),account.indexOf('  app.post("/api/account/username"')),context);
  const res=()=>({code:200,data:null,set(){return this;},status(code){this.code=code;return this;},json(data){this.data=data;return this;}});
  let r=res();await handler({body:{}},r);assert.equal(r.code,401);
