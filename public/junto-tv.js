@@ -6,9 +6,10 @@
   if (!socket || !dance) return;
   // Bitrate de publicação global, não um custo por espectador.
   const VIDEO_MAX_HEIGHT = 1080;
-  const VIDEO_MAX_FPS = 30;
+  const VIDEO_MAX_FPS = 30; // captura de tela
+  const VIDEO_LOCAL_MAX_FPS = 60; // arquivos locais: até 60 FPS, limitado à fonte
   const VIDEO_SCREEN_BITRATE = 3000000;
-  const VIDEO_LOCAL_BITRATE = 4000000; // bitrate de publicação do arquivo local; ajustado pelo LiveKit
+  const VIDEO_LOCAL_BITRATE = 8000000; // arquivos locais: 8 Mbps para preservar detalhe em 1080p60
 
   const style = document.createElement("style");
   style.textContent = [
@@ -110,7 +111,7 @@
             '<label>Vídeo do seu computador (não será enviado ao Render)<input type="file" id="jfTvFile" accept="video/*,.mkv,.avi,.mov,.mpg,.mpeg"></label>',
             '<div class="jf-tv-actions"><button type="button" id="jfTvStartLocal">Transmitir arquivo</button></div>',
             '<div id="jfTvLocalControls" class="jf-tv-actions" hidden><button type="button" id="jfTvLocalBack">−10s</button><button type="button" id="jfTvLocalPlay">Ⅱ Pausar</button><button type="button" id="jfTvLocalForward">+10s</button><label for="jfTvLocalSeek">Posição</label><input id="jfTvLocalSeek" type="range" min="0" max="1" step="0.1" value="0"><span id="jfTvLocalTime">0:00 / 0:00</span></div>',
-            '<p class="jf-tv-note">O arquivo fica no seu PC. Toda a sala recebe a reprodução por LiveKit. Só o ADM pausa e avança; o volume é individual.</p>',
+            '<p class="jf-tv-note">O arquivo fica no seu PC. A transmissão local usa até 1080p/60 FPS e 8 Mbps no LiveKit (dependendo do vídeo e da conexão). A taxa de quadros não supera o FPS original do arquivo. Só o ADM pausa e avança; o volume é individual.</p>',
           '</section>',
           '<section id="jfTvGameTools" class="jf-tv-tools" hidden>',
             '<label class="jf-tv-audio-choice"><input id="jfTvCaptureAudio" type="checkbox" checked> 🔊 Transmitir áudio da tela/aba</label>',
@@ -652,7 +653,7 @@
         if(generation!==lkGeneration||sourceStream!==stream){await roomInstance.disconnect();return false;}
         const options=track.kind==="video"?
           {name:"junto-tv-video",source:Client.Track.Source.ScreenShare,
-            videoEncoding:{maxBitrate:state?.mode==="local"?VIDEO_LOCAL_BITRATE:VIDEO_SCREEN_BITRATE,maxFramerate:VIDEO_MAX_FPS},simulcast:true}:
+            videoEncoding:{maxBitrate:state?.mode==="local"?VIDEO_LOCAL_BITRATE:VIDEO_SCREEN_BITRATE,maxFramerate:state?.mode==="local"?VIDEO_LOCAL_MAX_FPS:VIDEO_MAX_FPS},simulcast:true}:
           {name:"junto-tv-audio",source:Client.Track.Source.ScreenShareAudio};
         await roomInstance.localParticipant.publishTrack(track,options);
       }
