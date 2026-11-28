@@ -2,75 +2,69 @@
 
 # Junto.fm
 
-**Música, vídeo e convivência em tempo real.**
+**Música, vídeo e interação social em salas virtuais.**
 
-Uma plataforma web para compartilhar experiências de mídia e interação social em salas virtuais.
+Uma plataforma web para compartilhar mídia, conversar e interagir em tempo real.
 
-[**Acessar a aplicação**](https://junto-fm.onrender.com) · [**Vídeo de apresentação**](https://youtu.be/_s0JJDTq91Q)
+[Aplicação](https://junto-fm.onrender.com) · [Apresentação](https://youtu.be/_s0JJDTq91Q)
 
 </div>
 
 ---
 
-## Sobre
+## Visão geral
 
-A Junto.fm reúne recursos de comunicação e entretenimento em um ambiente web. O projeto explora salas virtuais nas quais os participantes podem conversar, compartilhar áudio e vídeo e interagir por meio de avatares e atividades sociais.
+A Junto.fm é um projeto web de entretenimento social. A plataforma reúne salas virtuais, comunicação em tempo real, compartilhamento de mídia e avatares personalizáveis em uma experiência comunitária.
 
-A aplicação está em **desenvolvimento contínuo**. A disponibilidade de determinados recursos depende da configuração dos serviços externos, das permissões do navegador e das condições de rede.
+O projeto está em desenvolvimento contínuo. Recursos que dependem de serviços externos podem exigir configuração adicional e estar sujeitos à disponibilidade desses serviços.
 
-## Principais recursos
+## Recursos
 
-- **Salas virtuais:** espaços para reunir participantes e compartilhar experiências.
-- **Chat em tempo real:** comunicação entre usuários conectados.
-- **Junto.TV:** recursos de vídeo compartilhado, sincronização e transmissão de mídia.
-- **Avatares 3D:** personalização e animações no ambiente The Símios.
-- **Recursos sociais:** contas, amizades e interação entre usuários.
-- **Conquistas e atividades:** mecanismos de engajamento dentro da plataforma.
+- **Salas virtuais:** ambientes para reunir participantes.
+- **Comunicação em tempo real:** chat e interação entre usuários.
+- **Junto.TV:** experiência de vídeo compartilhado e sincronização de mídia.
+- **Avatares 3D:** personalização, acessórios e animações.
+- **Recursos sociais:** contas, amizades, salas pessoais e atividades comunitárias.
+- **Temas visuais:** diferentes estilos de interface para personalizar a experiência.
 
-Os recursos podem apresentar diferenças entre navegadores e dispositivos. Consulte a aplicação para verificar a disponibilidade atual.
-
-## Demonstração
-
-[Assistir à apresentação da Junto.fm no YouTube](https://youtu.be/_s0JJDTq91Q)
+A disponibilidade e o comportamento dos recursos podem variar conforme o navegador, o dispositivo e a configuração do ambiente.
 
 ## Tecnologias
 
-| Camada | Tecnologias |
+| Área | Tecnologias |
 | --- | --- |
 | Interface | HTML, CSS e JavaScript |
 | Servidor | Node.js e Express |
 | Comunicação em tempo real | Socket.IO |
-| Mídia | APIs do navegador, WebRTC e LiveKit, conforme o recurso |
 | Banco de dados | PostgreSQL |
-| Integrações | Spotify e YouTube |
+| Gráficos e avatares 3D | Three.js |
+| Áudio e vídeo | WebRTC e LiveKit |
+| Integrações | Spotify e fontes de vídeo compatíveis |
 | Hospedagem | Render |
 
 ### Arquitetura simplificada
 
 ```text
 Navegador
-   │
-   ├── Interface web (HTML / CSS / JavaScript)
-   │
-   └── HTTPS / WebSocket
-             │
-       Node.js + Express
-             │
-       ├── Socket.IO
-       ├── PostgreSQL
-       └── Serviços de mídia e integrações externas
+  ├── Interface web
+  ├── Avatares e cenas 3D
+  └── HTTPS / WebSocket
+          │
+    Node.js + Express
+          ├── Socket.IO
+          ├── PostgreSQL
+          └── Serviços de mídia e integrações
 ```
 
-Este diagrama apresenta os componentes principais e não representa todos os fluxos internos da aplicação.
+O diagrama apresenta os principais componentes, sem detalhar todos os fluxos internos.
 
 ## Executar localmente
 
 ### Requisitos
 
-- Node.js
-- npm
-- PostgreSQL para recursos que utilizam persistência
-- Credenciais dos serviços externos necessários aos recursos que deseja testar
+- Node.js e npm
+- PostgreSQL para os recursos que utilizam persistência
+- Credenciais dos serviços externos que deseja testar
 
 ### Instalação
 
@@ -81,24 +75,20 @@ npm install
 npm start
 ```
 
-A aplicação será iniciada em:
+Por padrão, a aplicação é iniciada em [http://localhost:3000](http://localhost:3000).
 
-[http://localhost:3000](http://localhost:3000)
+### Variáveis de ambiente
 
-### Configuração
+1. Copie `.env.example` para `.env`.
+2. Preencha as variáveis necessárias para as integrações que pretende utilizar.
+3. Configure o banco de dados e os serviços externos conforme a documentação correspondente.
+4. Reinicie o servidor após alterar as configurações.
 
-1. Copie `.env.example` para um arquivo chamado `.env`.
-2. Preencha as variáveis necessárias para os serviços que pretende utilizar.
-3. Configure o banco de dados e as credenciais externas quando aplicável.
-4. Reinicie o servidor após alterar as variáveis.
-
-**Nunca envie credenciais, tokens ou arquivos `.env` para o repositório.** As variáveis de ambiente de produção devem ser configuradas no painel do serviço de hospedagem.
+**Não compartilhe nem envie arquivos `.env`, tokens, chaves de API ou segredos de sessão.** Configure os segredos de produção diretamente no painel do serviço de hospedagem.
 
 ## Testes
 
-O projeto inclui testes automatizados para recursos de salas, Junto.TV, comunidade e configuração de avatares.
-
-Comandos disponíveis:
+O repositório contém testes automatizados para funcionalidades de mídia, salas, comunidade e configuração de avatares.
 
 ```bash
 npm run test:tv
@@ -107,9 +97,9 @@ npm run test:community
 node --test tests/avatar-setup.test.js
 ```
 
-Os testes automatizados ajudam a validar comportamentos específicos, mas não substituem testes manuais em diferentes navegadores, dispositivos e redes.
+Os testes cobrem comportamentos específicos do código. A validação completa também exige testes manuais com serviços externos configurados e em diferentes navegadores e redes.
 
-## Documentação técnica
+## Documentação
 
 - [Configuração de autenticação administrativa](ADMIN-AUTH-SETUP.md)
 - [Configuração de contas Google](GOOGLE_ACCOUNTS_SETUP.md)
@@ -122,24 +112,22 @@ Os testes automatizados ajudam a validar comportamentos específicos, mas não s
 
 ## Implantação
 
-O repositório contém uma configuração de implantação para Render em [`render.yaml`](render.yaml). Recursos que dependem de serviços externos precisam de suas respectivas variáveis de ambiente configuradas no ambiente de produção.
+A configuração de implantação está definida em [`render.yaml`](render.yaml). Variáveis de ambiente e credenciais de serviços externos devem ser configuradas no ambiente de produção, não no código-fonte.
 
-Aplicação hospedada: [junto-fm.onrender.com](https://junto-fm.onrender.com)
+Aplicação: [junto-fm.onrender.com](https://junto-fm.onrender.com)
 
 ## Observações
 
-- A transmissão de áudio e vídeo depende de permissões do navegador, compatibilidade e conectividade.
-- Algumas conexões WebRTC podem exigir configuração de STUN/TURN ou serviços de mídia externos.
-- Integrações de terceiros estão sujeitas às suas próprias regras, limites e disponibilidade.
-- A Junto.fm não concede direitos de retransmissão de músicas, vídeos ou outros conteúdos protegidos. Os usuários são responsáveis por respeitar as licenças e os termos aplicáveis.
-- O projeto ainda não possui uma licença de código aberto definida.
+- Áudio e vídeo dependem de permissões do navegador, compatibilidade e conectividade.
+- Algumas conexões WebRTC podem exigir STUN/TURN ou serviços de mídia externos.
+- Integrações de terceiros estão sujeitas aos seus termos, limites e disponibilidade.
+- O projeto não concede direitos de retransmissão de músicas, vídeos ou outros conteúdos protegidos. Os usuários devem respeitar as licenças e os termos aplicáveis.
+- **O repositório ainda não declara uma licença de código aberto.** A reutilização e redistribuição do código não devem ser presumidas como autorizadas.
 
 ---
 
 <div align="center">
 
 **Junto.fm — compartilhar é melhor.**
-
-[Aplicação](https://junto-fm.onrender.com) · [Apresentação](https://youtu.be/_s0JJDTq91Q)
 
 </div>
