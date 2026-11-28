@@ -196,9 +196,15 @@ for(const danceButton of document.querySelectorAll('[data-room-dance]')){
 const SEAT_CALIBRATION_STORAGE='juntofm.quartos.seat-calibration.v1';
 const seatCalibrationDefaults={
  diningChair:{seatHeight:.73,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
- chair:{seatHeight:.41,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
+ chair:{seatHeight:.73,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0},
  bench:{seatHeight:.48,offsetX:0,offsetZ:-.1,bodyTilt:-7,yawOffset:-180},
  sofa:{seatHeight:.36,offsetX:0,offsetZ:0,bodyTilt:-7,yawOffset:0}
+};
+const SEAT_CALIBRATION_MIGRATION_KEY='juntofm.quartos.seat-calibration.migration.v2';
+const seatCalibrationLegacyChanges={
+ diningChair:{seatHeight:[.41,.73]},
+ chair:{seatHeight:[.41,.73]},
+ bench:{seatHeight:[.32,.48],offsetZ:[0,-.1],yawOffset:[0,-180]}
 };
 let seatCalibrationValues={},seatDevkitEnabled=false;
 function currentSeatCalibration(type){
@@ -224,6 +230,15 @@ function setupSeatDevkit(){
  try{
   const saved=JSON.parse(localStorage.getItem(SEAT_CALIBRATION_STORAGE)||'{}');
   if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
+   if(localStorage.getItem(SEAT_CALIBRATION_MIGRATION_KEY)!=='2'){
+    for(const [type,changes] of Object.entries(seatCalibrationLegacyChanges)){
+     const values=saved[type];if(!values||typeof values!=='object')continue;
+     for(const [field,[previousValue,nextValue]] of Object.entries(changes)){
+      if(Number(values[field])===previousValue)values[field]=nextValue;
+     }
+    }
+    try{localStorage.setItem(SEAT_CALIBRATION_STORAGE,JSON.stringify(saved));localStorage.setItem(SEAT_CALIBRATION_MIGRATION_KEY,'2');}catch(error){}
+   }
    for(const type of Object.keys(seatCalibrationDefaults))if(saved[type]&&typeof saved[type]==='object')seatCalibrationValues[type]=saved[type];
   }
  }catch(error){seatCalibrationValues={};}

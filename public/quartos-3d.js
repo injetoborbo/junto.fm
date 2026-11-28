@@ -28,7 +28,7 @@ const FURNITURE_ASSETS={
  bench:{file:"mobiliario/banco_praca.glb",height:0.72,seatHeight:0.48,city:true},
  planter:{file:"mobiliario/vaso_planta.glb",height:0.9,city:true},
  sofa:{file:"mobiliario/banco_praca.glb",height:0.78,seatHeight:0.36,city:true},
- chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.41},
+ chair:{file:"Kitchen/ap_dining_chair.glb",height:1.02,seatHeight:0.73},
  table:{file:"Living/ap_coffee_table.glb",height:0.62,surfaceHeight:0.43},
  bed:{file:"Living/ap_coffee_table.glb",height:0.52},
  shelf:{file:"Bedroom/ap_nightstand.glb",height:1.05,surfaceHeight:0.82},
