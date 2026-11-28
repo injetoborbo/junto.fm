@@ -2,7 +2,7 @@
   "name": "junto-fm",
   "version": "0.1.0",
   "private": true,
-  "description": "Protótipo de sala privada para transmitir áudio do navegador em tempo real",
+  "description": "Plataforma web de entretenimento social com salas virtuais, mídia compartilhada e comunicação em tempo real.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
