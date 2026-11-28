@@ -34,6 +34,12 @@ A proposta é simplificar algo que normalmente exige vários aplicativos: reunir
 
 As funcionalidades evoluem ao longo do desenvolvimento. A presença de um recurso no código não garante que ele esteja disponível em todos os dispositivos ou configurações.
 
+## Apresentação em vídeo
+
+Assista à demonstração do projeto e à apresentação de suas funcionalidades:
+
+[▶️ **Junto.fm — vídeo de apresentação no YouTube**](https://youtu.be/_s0JJDTq91Q)
+
 ## Problema e público-alvo
 
 **Problema:** amigos e comunidades que desejam ouvir música, assistir a vídeos e conversar à distância frequentemente precisam alternar entre várias ferramentas, o que pode dificultar a organização da experiência.
