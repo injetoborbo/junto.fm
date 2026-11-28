@@ -75,7 +75,7 @@ test("Fechar TV durante seletor de tela descarta captura tardia",async()=>{
 test("Arquivo local tem pausa, seek e monitor de volume separado da publicação",async()=>{
   const app=setup();app.el("jfTvFile").files=[{type:"video/mp4",name:"episode.mp4"}];
   await app.el("jfTvStartLocal").onclick();const video=app.videos[0],room=app.rooms[0],audio=app.contexts[0];
-  assert.equal(room.published.length,2);assert.equal(room.published[0].options.videoEncoding.maxBitrate,4000000);
+  assert.equal(room.published.length,2);assert.equal(room.published[0].options.videoEncoding.maxBitrate,8000000);
   assert.equal(app.el("jfTvLocalControls").hidden,false);
   await app.el("jfTvLocalPlay").onclick();assert.equal(video.paused,true);
   app.el("jfTvLocalSeek").value="70";app.el("jfTvLocalSeek").onchange();assert.equal(video.currentTime,70);
