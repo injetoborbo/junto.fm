@@ -1,89 +1,78 @@
 <div align="center">
 
-# 🎧 Junto.fm
+# Junto.fm
 
-### Música, vídeo e pessoas no mesmo lugar.
+**Música, vídeo e convivência em tempo real.**
 
-**Uma plataforma web de entretenimento social em tempo real.**
+Uma plataforma web para compartilhar experiências de mídia e interação social em salas virtuais.
 
-[**🌐 Acessar a plataforma**](https://junto-fm.onrender.com) · [**📖 Conhecer o projeto**](#sobre-o-projeto) · [**🧩 Tecnologias**](#tecnologias) · [**🚀 Executar localmente**](#executar-localmente)
+[**Acessar a aplicação**](https://junto-fm.onrender.com) · [**Vídeo de apresentação**](https://youtu.be/_s0JJDTq91Q)
 
 </div>
 
 ---
 
-## Sobre o projeto
+## Sobre
 
-A **Junto.fm** nasceu da ideia de aproximar pessoas que estão longe umas das outras por meio de experiências compartilhadas. Em uma única sala virtual, os participantes podem conversar, ouvir áudio transmitido por um usuário autorizado e acompanhar experiências audiovisuais em conjunto.
+A Junto.fm reúne recursos de comunicação e entretenimento em um ambiente web. O projeto explora salas virtuais nas quais os participantes podem conversar, compartilhar áudio e vídeo e interagir por meio de avatares e atividades sociais.
 
-A proposta é simplificar algo que normalmente exige vários aplicativos: reunir **mídia, conversa e interação social** no mesmo ambiente, acessível pelo navegador.
+A aplicação está em **desenvolvimento contínuo**. A disponibilidade de determinados recursos depende da configuração dos serviços externos, das permissões do navegador e das condições de rede.
 
-> **Situação do projeto:** aplicação experimental em evolução, com funcionalidades dependentes das permissões do navegador, da rede e da configuração dos serviços externos. O funcionamento deve ser validado em testes reais.
+## Principais recursos
 
-## Funcionalidades
+- **Salas virtuais:** espaços para reunir participantes e compartilhar experiências.
+- **Chat em tempo real:** comunicação entre usuários conectados.
+- **Junto.TV:** recursos de vídeo compartilhado, sincronização e transmissão de mídia.
+- **Avatares 3D:** personalização e animações no ambiente The Símios.
+- **Recursos sociais:** contas, amizades e interação entre usuários.
+- **Conquistas e atividades:** mecanismos de engajamento dentro da plataforma.
 
-| Área | O que oferece |
-| --- | --- |
-| 🎵 **Salas de áudio** | Criação e acesso a salas para experiências musicais compartilhadas. |
-| 💬 **Chat em tempo real** | Mensagens e interações entre participantes conectados. |
-| 📺 **Junto.TV** | Recursos de vídeo compartilhado, sincronização do YouTube e compartilhamento de tela, sujeitos às limitações técnicas de cada modo. |
-| 🐒 **The Símios** | Ambiente social interativo com avatares 3D, personalização e animações. |
-| 👥 **Contas e social** | Recursos de identidade, amizades e interação entre usuários. |
-| 🛡️ **Administração de salas** | Controles e permissões para organização e moderação das sessões. |
-| 🏆 **Conquistas** | Recursos de conquistas e acompanhamento de atividade. |
+Os recursos podem apresentar diferenças entre navegadores e dispositivos. Consulte a aplicação para verificar a disponibilidade atual.
 
-As funcionalidades evoluem ao longo do desenvolvimento. A presença de um recurso no código não garante que ele esteja disponível em todos os dispositivos ou configurações.
+## Demonstração
 
-## Apresentação em vídeo
-
-Assista à demonstração do projeto e à apresentação de suas funcionalidades:
-
-[▶️ **Junto.fm — vídeo de apresentação no YouTube**](https://youtu.be/_s0JJDTq91Q)
-
-## Problema e público-alvo
-
-**Problema:** amigos e comunidades que desejam ouvir música, assistir a vídeos e conversar à distância frequentemente precisam alternar entre várias ferramentas, o que pode dificultar a organização da experiência.
-
-**Solução proposta:** um ambiente web único, com salas virtuais e comunicação em tempo real, para tornar essas experiências mais integradas.
-
-**Público-alvo:** grupos de amigos, comunidades online e pessoas que procuram espaços digitais de convivência.
+[Assistir à apresentação da Junto.fm no YouTube](https://youtu.be/_s0JJDTq91Q)
 
 ## Tecnologias
 
-- **Front-end:** HTML, CSS e JavaScript.
-- **Servidor:** Node.js e Express.
-- **Comunicação em tempo real:** Socket.IO.
-- **Áudio e vídeo:** APIs de mídia do navegador e WebRTC, conforme o recurso.
-- **Persistência:** PostgreSQL via pacote `pg`.
-- **Integrações:** recursos associados a Spotify, YouTube e LiveKit, conforme a configuração e a implementação.
-- **Hospedagem:** configuração de implantação para **Render** em [`render.yaml`](render.yaml).
+| Camada | Tecnologias |
+| --- | --- |
+| Interface | HTML, CSS e JavaScript |
+| Servidor | Node.js e Express |
+| Comunicação em tempo real | Socket.IO |
+| Mídia | APIs do navegador, WebRTC e LiveKit, conforme o recurso |
+| Banco de dados | PostgreSQL |
+| Integrações | Spotify e YouTube |
+| Hospedagem | Render |
 
-### Visão simplificada da arquitetura
+### Arquitetura simplificada
 
 ```text
-           Participantes (navegador)
-                     │
-           Interface web (HTML/CSS/JS)
-                     │
-                HTTPS / WSS
-                     │
-           Node.js + Express
-                     │
-          ┌──────────┴──────────┐
-          │                     │
-       Socket.IO           PostgreSQL
-    Eventos de salas       Dados persistidos
-       e controles         quando aplicável
-
-   Mídia: WebRTC / APIs do navegador /
-   integrações externas, conforme o recurso.
+Navegador
+   │
+   ├── Interface web (HTML / CSS / JavaScript)
+   │
+   └── HTTPS / WebSocket
+             │
+       Node.js + Express
+             │
+       ├── Socket.IO
+       ├── PostgreSQL
+       └── Serviços de mídia e integrações externas
 ```
 
-A arquitetura acima é uma visão geral, não um diagrama de todas as conexões e serviços utilizados pela aplicação.
+Este diagrama apresenta os componentes principais e não representa todos os fluxos internos da aplicação.
 
 ## Executar localmente
 
-**Requisitos:** Node.js e npm instalados.
+### Requisitos
+
+- Node.js
+- npm
+- PostgreSQL para recursos que utilizam persistência
+- Credenciais dos serviços externos necessários aos recursos que deseja testar
+
+### Instalação
 
 ```bash
 git clone https://github.com/injetoborbo/junto.fm.git
@@ -92,64 +81,65 @@ npm install
 npm start
 ```
 
-Acesse **http://localhost:3000** no navegador. O HTML não deve ser aberto diretamente como arquivo local, porque o projeto depende do servidor Node.js.
+A aplicação será iniciada em:
 
-Para recursos que exigem credenciais, use [`.env.example`](.env.example) como referência e configure suas próprias variáveis de ambiente. **Não publique segredos ou arquivos `.env`.** Alguns recursos exigem serviços externos e HTTPS.
+[http://localhost:3000](http://localhost:3000)
 
-### Exemplo: compartilhar áudio de uma aba
+### Configuração
 
-1. Acesse a Junto.fm em um navegador compatível e entre em uma sala.
-2. Abra uma aba com a fonte de áudio autorizada.
-3. Inicie o compartilhamento de áudio da aba e conceda as permissões solicitadas pelo navegador.
-4. Os demais participantes entram na mesma sala e habilitam a reprodução, quando necessário.
+1. Copie `.env.example` para um arquivo chamado `.env`.
+2. Preencha as variáveis necessárias para os serviços que pretende utilizar.
+3. Configure o banco de dados e as credenciais externas quando aplicável.
+4. Reinicie o servidor após alterar as variáveis.
 
-A qualidade e a disponibilidade da transmissão dependem de permissões, conectividade, compatibilidade do navegador e configuração de WebRTC/STUN/TURN.
+**Nunca envie credenciais, tokens ou arquivos `.env` para o repositório.** As variáveis de ambiente de produção devem ser configuradas no painel do serviço de hospedagem.
 
-## Documentação e testes
+## Testes
 
-O repositório contém documentos de configuração e registros técnicos que ajudam a entender a evolução da aplicação:
+O projeto inclui testes automatizados para recursos de salas, Junto.TV, comunidade e configuração de avatares.
 
-- [Testes e limitações da Junto.TV](JUNTO_TV_TESTING.md)
-- [Configuração do LiveKit](LIVEKIT_TV_SETUP.md)
-- [Testes do ambiente de avatares](DANCE_FLOOR_TESTING.md)
-- [Otimização de tráfego na hospedagem](RENDER_BANDWIDTH.md)
+Comandos disponíveis:
+
+```bash
+npm run test:tv
+npm run test:rooms
+npm run test:community
+node --test tests/avatar-setup.test.js
+```
+
+Os testes automatizados ajudam a validar comportamentos específicos, mas não substituem testes manuais em diferentes navegadores, dispositivos e redes.
+
+## Documentação técnica
+
+- [Configuração de autenticação administrativa](ADMIN-AUTH-SETUP.md)
 - [Configuração de contas Google](GOOGLE_ACCOUNTS_SETUP.md)
+- [Configuração do LiveKit para Junto.TV](LIVEKIT_TV_SETUP.md)
+- [Testes e limitações da Junto.TV](JUNTO_TV_TESTING.md)
+- [Testes do ambiente de avatares](DANCE_FLOOR_TESTING.md)
+- [Documentação dos quartos](QUARTOS.md)
+- [Documentação do mural](MURAL.md)
+- [Otimização de tráfego no Render](RENDER_BANDWIDTH.md)
 
-Há também testes automatizados na pasta [`tests/`](tests). **Testes de código não substituem validações manuais com dispositivos e redes diferentes.**
+## Implantação
 
-## Contexto acadêmico
+O repositório contém uma configuração de implantação para Render em [`render.yaml`](render.yaml). Recursos que dependem de serviços externos precisam de suas respectivas variáveis de ambiente configuradas no ambiente de produção.
 
-A Junto.fm é um **projeto pessoal desenvolvido individualmente**, apresentado como **candidato à categoria “Projeto Profissional”** da atividade acadêmica de pós-aula.
+Aplicação hospedada: [junto-fm.onrender.com](https://junto-fm.onrender.com)
 
-O objetivo é demonstrar a aplicação de conceitos de desenvolvimento web, arquitetura, comunicação em tempo real, persistência de dados, segurança, testes e implantação em nuvem.
+## Observações
 
-**Enquadramento e participação em grupo ainda dependem de validação do professor.** Caso o projeto seja aceito para a atividade, as melhorias acadêmicas e as contribuições efetivas serão documentadas separadamente.
-
-O desenvolvimento contou com **apoio significativo de ferramentas de inteligência artificial**, sob direção, integração, testes e revisão do autor. O uso de IA não substitui a necessidade de compreender e explicar as decisões técnicas.
-
-### Próximos passos propostos
-
-- Aprimorar acessibilidade e experiência em dispositivos móveis.
-- Melhorar diagnósticos de conexão e mensagens de erro.
-- Fortalecer testes automatizados e registrar testes reais.
-- Avaliar recursos de histórico de sessões, estatísticas de uso e feedback.
-
-Esses itens são **propostas de evolução**, não funcionalidades anunciadas como concluídas.
-
-## Limitações e responsabilidade
-
-- Algumas redes podem impedir conexões WebRTC diretas.
-- Compartilhamento de tela, áudio e reprodução automática dependem do navegador.
-- Serviços de terceiros podem exigir credenciais, limitar funcionalidades ou mudar suas regras.
-- A aplicação não fornece direitos de retransmissão de músicas, filmes ou outros conteúdos protegidos: os usuários devem respeitar licenças e termos dos serviços.
-- O sistema é experimental e pode apresentar instabilidades.
+- A transmissão de áudio e vídeo depende de permissões do navegador, compatibilidade e conectividade.
+- Algumas conexões WebRTC podem exigir configuração de STUN/TURN ou serviços de mídia externos.
+- Integrações de terceiros estão sujeitas às suas próprias regras, limites e disponibilidade.
+- A Junto.fm não concede direitos de retransmissão de músicas, vídeos ou outros conteúdos protegidos. Os usuários são responsáveis por respeitar as licenças e os termos aplicáveis.
+- O projeto ainda não possui uma licença de código aberto definida.
 
 ---
 
 <div align="center">
 
-**Junto.fm — experiências ficam melhores quando são compartilhadas.**
+**Junto.fm — compartilhar é melhor.**
 
-[🌐 Abrir Junto.fm](https://junto-fm.onrender.com) · [⬆️ Voltar ao início](#-juntofm)
+[Aplicação](https://junto-fm.onrender.com) · [Apresentação](https://youtu.be/_s0JJDTq91Q)
 
 </div>
